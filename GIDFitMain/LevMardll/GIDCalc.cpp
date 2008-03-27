@@ -238,8 +238,8 @@ double GIDCalc::CalcChiSquare()
 	//Calculate ChiSquare - A little weird, since we aren't centered at zero
 	for(int i = 0; i < m_iQSize;i++)
 	{
-		if(m_dRealGIDErrors[i] != 0)
-			chisquare += (m_dRealGID[i]-m_dModelGID[i])*(m_dRealGID[i]-m_dModelGID[i])/m_dRealGIDErrors[i];
+		if(m_dRealGIDErrors[i] > 0)
+			chisquare += ((m_dRealGID[i]-m_dModelGID[i])*(m_dRealGID[i]-m_dModelGID[i]))/(m_dRealGIDErrors[i] * m_dRealGIDErrors[i]);
 	}
 	
 	return chisquare;

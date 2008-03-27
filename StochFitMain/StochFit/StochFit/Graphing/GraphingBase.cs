@@ -401,7 +401,7 @@ namespace StochasticModeling
         #endregion
 
 
-        public virtual void DeepCopy(Graphing graph)
+        public virtual void DeepCopy(GraphingBase graph)
         {
 
             //this allows the class to be completely self contained on a deep copy. the calling function doesn't need to 
@@ -428,7 +428,7 @@ namespace StochasticModeling
                 }
             }
 
-            GraphSize = new Size(439, 340);
+            GraphSize = graph.GraphSize;
             BorderState = graph.BorderState;
             Pane.YAxis.Type = graph.Pane.YAxis.Type;
             Pane.YAxis.MinorTic.Color = graph.Pane.YAxis.MinorTic.Color;
@@ -443,7 +443,7 @@ namespace StochasticModeling
         }
 
         //This gives us publication quality graphs
-        public void AlterGraph(Graphing oldgraph)
+        public void AlterGraph(GraphingBase oldgraph)
         {
             Clear();
             DeepCopy(oldgraph);
@@ -479,7 +479,7 @@ namespace StochasticModeling
             }
         }
 
-        public void Copy(Graphing graph)
+        public void Copy(GraphingBase graph)
         {
             m_cMyPane = graph.m_cMyPane.Clone();
             m_bThisisadeepcopy = false;
@@ -496,6 +496,21 @@ namespace StochasticModeling
             AddCurvetoGraph(list, name, color, symbol, symbolsize, isSmoothed);
             m_alDatainGraph.Add(name);
         }
+
+        public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, DashStyle style, bool isSmoothed)
+        {
+            PointPairList list = new PointPairList();
+            for (int i = 0; i < X.Length; i++)
+            {
+                list.Add(X[i], Y[i]);
+            }
+
+            AddCurvetoGraph(list, name, color, symbol, symbolsize, style, isSmoothed);
+            m_alDatainGraph.Add(name);
+
+        }
+
+      
 
         public Bitmap GetImage()
         {
@@ -578,6 +593,24 @@ namespace StochasticModeling
 
             if (isSmoothed == true)
                 myCurve.Line.IsSmooth = true;
+
+            AxisChange();
+            Invalidate();
+        }
+
+        protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, DashStyle style, bool isSmoothed)
+        {
+            LineItem myCurve = m_cMyPane.AddCurve(DataName, list, linecolor, type);
+            myCurve.Symbol.Fill = new Fill(Color.Red);
+            myCurve.Symbol.Size = symbolsize;
+            myCurve.Line.Style = style;
+            myCurve.Line.IsAntiAlias = true;
+
+            if (isSmoothed == true)
+                myCurve.Line.IsSmooth = true;
+
+            AxisChange();
+            Invalidate();
         }
 
         protected virtual void AddCurvetoGraph(PointPairList list, PointPairList elist, string DataName, Color linecolor, SymbolType type, int symbolsize)
@@ -600,6 +633,9 @@ namespace StochasticModeling
                 myECurve.Bar.Symbol.IsVisible = true;
                 myECurve.Bar.Symbol.Size = 1;
             }
+
+            AxisChange();
+            Invalidate();
         }
 
         public void RemoveGraphfromArray(string name)

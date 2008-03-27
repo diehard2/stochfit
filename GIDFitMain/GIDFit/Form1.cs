@@ -10,10 +10,11 @@ using System.Runtime.InteropServices;
 using System.IO;
 using System.Collections;
 using System.Text.RegularExpressions;
+using GIDFit;
 
 namespace GIDFit
 {
-    public partial class GIDFit : Form
+    public partial class GIDFit : GIDFormBase
     {
         Graphing GIDGraphobject;
         string GIDfilename;
@@ -44,7 +45,7 @@ namespace GIDFit
 
         public GIDFit()
         {
-            GIDGraphobject = new Graphing();
+            GIDGraphobject = new Graphing(string.Empty);
             FuncCBHolder = new ComboBox[6];
             PositCBHolder = new  TextBox[6];
             SigmaCBHolder = new  TextBox[6];
@@ -59,7 +60,7 @@ namespace GIDFit
         {
             //Setup the graph
             GIDGraphobject.CreateGraph(GIDGraph, "GID", "Qxy" ,"Intensity", AxisType.Linear);
-            GIDGraphobject.SetFont("Garamond", 20, 18);
+            GIDGraphobject.SetAllFonts("Garamond", 20, 18);
             GIDGraphobject.LegendState = false;
 
             FileNameTB.ReadOnly = true;
@@ -156,9 +157,8 @@ namespace GIDFit
                 }
 
                 FileNameTB.Text = GIDfilename;
-                GIDGraphobject.DBF = false;
-               
-                GIDGraphobject.LoadDataFiletoGraph(GIDfilename, "GID data", Color.Black, SymbolType.Circle, 5);
+                ReflData.Instance.SetReflData(GIDfilename, true);
+                GIDGraphobject.LoadDataFiletoGraph("GID data", Color.Black, SymbolType.Circle, 5);
                 LoadArrayswithData(GIDfilename);
               
                 //Get the scale value
@@ -171,57 +171,27 @@ namespace GIDFit
         private void LoadArrayswithData(string datafile)
         {
            //Get number of lines
-            int lines = 0;
-            using (StreamReader sr = new StreamReader(datafile))
-            {
-                String dataline;
-                while ((dataline = sr.ReadLine()) != null)
-                {
-                    lines++;
-                }
-            }
+            int datapoints = ReflData.Instance.GetNumberDataPoints;
 
-            RealGIDPoints = new double[lines];
-            RealGIDErrors = new double[lines];
-            ModelGIDPoints = new double[lines];
-            QRange = new double[lines];
+
+            RealGIDPoints = ReflData.Instance.GetReflData;
+            RealGIDErrors = ReflData.Instance.GetRErrors;
+            ModelGIDPoints = new double[datapoints];
+            QRange = ReflData.Instance.GetQData;
 
             for(int i = 0; i < 6; i++)
             {
-                IndividGraphs[i] = new double[QRange.Length];
+                IndividGraphs[i] = new double[datapoints];
             }
 
-           using (StreamReader sr = new StreamReader(datafile))
-           {
-                    String dataline;
-                    int currentline = 0;
-                    while ((dataline = sr.ReadLine()) != null)
-                    {
-                        //Parse text file
-                        Regex r = new Regex(@"\s");
-                        string[] temp = r.Split(dataline);
-                        ArrayList datastring = new ArrayList();
-                        for (int i = 0; i < temp.Length; i++)
-                        {
-                            if (temp[i] != "")
-                                datastring.Add(temp[i]);
-                        }
-                       
-                        QRange[currentline] = Double.Parse((string)datastring[0]);
-
-                        if (QSquaredCorrection == true)
-                        {
-                            RealGIDPoints[currentline] = Double.Parse((string)datastring[1]) * QRange[currentline] * QRange[currentline];
-                            RealGIDErrors[currentline] = Double.Parse((string)datastring[2]) * QRange[currentline] * QRange[currentline];
-                        }
-                        else
-                        {
-                            RealGIDPoints[currentline] = Double.Parse((string)datastring[1]);
-                            RealGIDErrors[currentline] = Double.Parse((string)datastring[2]);
-                        }
-                        currentline++;
-                    }
-             }
+            if (QSquaredCorrection)
+            {
+                for(int i = 0; i < datapoints; i++)
+                {
+                    RealGIDPoints[i] *= QRange[i] * QRange[i];
+                    RealGIDErrors[i] *= QRange[i]*QRange[i];
+                }
+            }
         }
      
         //Fit the data
@@ -295,7 +265,8 @@ namespace GIDFit
 
                     //Add our new graphs to the original graph
 
-                    GIDGraphobject.ClearModels();
+                    GIDGraphobject.Clear();
+                    GIDGraphobject.LoadDataFiletoGraph("GID data", Color.Black, SymbolType.Circle, 5);
 
                     if (numberoffuncs > 1)
                     {
@@ -559,6 +530,14 @@ namespace GIDFit
             win.ShowDialog(this);
         }
 
+        protected override void ValidateNumericalInput(object sender, CancelEventArgs e)
+        {
+            base.ValidateNumericalInput(sender, e);
+        }
 
+        protected override void ValidateIntegerInput(object sender, CancelEventArgs e)
+        {
+            base.ValidateIntegerInput(sender, e);
+        }
     }
 }

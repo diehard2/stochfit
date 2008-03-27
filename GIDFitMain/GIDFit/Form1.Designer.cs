@@ -124,6 +124,7 @@ namespace GIDFit
             this.SlopeTB.TabIndex = 0;
             this.SlopeTB.Text = "0";
             this.SlopeTB.Validated += new System.EventHandler(this.SlopeTB_Validated);
+            this.SlopeTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Intensity6TB
             // 
@@ -133,6 +134,7 @@ namespace GIDFit
             this.Intensity6TB.TabIndex = 25;
             this.Intensity6TB.Text = "10000";
             this.Intensity6TB.Validated += new System.EventHandler(this.Intensity6TB_Validated);
+            this.Intensity6TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Intensity5TB
             // 
@@ -142,6 +144,7 @@ namespace GIDFit
             this.Intensity5TB.TabIndex = 20;
             this.Intensity5TB.Text = "10000";
             this.Intensity5TB.Validated += new System.EventHandler(this.Intensity5TB_Validated);
+            this.Intensity5TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Intensity4TB
             // 
@@ -151,6 +154,7 @@ namespace GIDFit
             this.Intensity4TB.TabIndex = 15;
             this.Intensity4TB.Text = "10000";
             this.Intensity4TB.Validated += new System.EventHandler(this.Intensity4TB_Validated);
+            this.Intensity4TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Intensity3TB
             // 
@@ -160,6 +164,7 @@ namespace GIDFit
             this.Intensity3TB.TabIndex = 10;
             this.Intensity3TB.Text = "10000";
             this.Intensity3TB.Validated += new System.EventHandler(this.Intensity3TB_Validated);
+            this.Intensity3TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Intensity1TB
             // 
@@ -169,6 +174,7 @@ namespace GIDFit
             this.Intensity1TB.TabIndex = 0;
             this.Intensity1TB.Text = "10000";
             this.Intensity1TB.Validated += new System.EventHandler(this.Intensity1TB_Validated);
+            this.Intensity1TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Intensity2TB
             // 
@@ -178,6 +184,7 @@ namespace GIDFit
             this.Intensity2TB.TabIndex = 5;
             this.Intensity2TB.Text = "5000";
             this.Intensity2TB.Validated += new System.EventHandler(this.Intensity2TB_Validated);
+            this.Intensity2TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // ChiSquareTB
             // 
@@ -196,6 +203,7 @@ namespace GIDFit
             this.OffSetTB.TabIndex = 2;
             this.OffSetTB.Text = "25000";
             this.OffSetTB.Validated += new System.EventHandler(this.OffSetTB_Validated);
+            this.OffSetTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // label2
             // 
@@ -267,6 +275,7 @@ namespace GIDFit
             this.Gamma6TB.TabIndex = 28;
             this.Gamma6TB.Text = "0";
             this.Gamma6TB.Validated += new System.EventHandler(this.Gamma6TB_Validated);
+            this.Gamma6TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Gamma5TB
             // 
@@ -276,6 +285,7 @@ namespace GIDFit
             this.Gamma5TB.TabIndex = 23;
             this.Gamma5TB.Text = "0";
             this.Gamma5TB.Validated += new System.EventHandler(this.Gamma5TB_Validated);
+            this.Gamma5TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Gamma4TB
             // 
@@ -285,6 +295,7 @@ namespace GIDFit
             this.Gamma4TB.TabIndex = 18;
             this.Gamma4TB.Text = "0";
             this.Gamma4TB.Validated += new System.EventHandler(this.Gamma4TB_Validated);
+            this.Gamma4TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Gamma3TB
             // 
@@ -294,6 +305,7 @@ namespace GIDFit
             this.Gamma3TB.TabIndex = 13;
             this.Gamma3TB.Text = "0";
             this.Gamma3TB.Validated += new System.EventHandler(this.Gamma3TB_Validated);
+            this.Gamma3TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Gamma1TB
             // 
@@ -303,6 +315,7 @@ namespace GIDFit
             this.Gamma1TB.TabIndex = 3;
             this.Gamma1TB.Text = ".03";
             this.Gamma1TB.Validated += new System.EventHandler(this.Gamma1TB_Validated);
+            this.Gamma1TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Gamma2TB
             // 
@@ -312,6 +325,7 @@ namespace GIDFit
             this.Gamma2TB.TabIndex = 8;
             this.Gamma2TB.Text = "0";
             this.Gamma2TB.Validated += new System.EventHandler(this.Gamma2TB_Validated);
+            this.Gamma2TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // label7
             // 
@@ -330,6 +344,7 @@ namespace GIDFit
             this.Position6TB.TabIndex = 27;
             this.Position6TB.Text = "1.45";
             this.Position6TB.Validated += new System.EventHandler(this.Position6TB_Validated);
+            this.Position6TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Position5TB
             // 
@@ -339,6 +354,7 @@ namespace GIDFit
             this.Position5TB.TabIndex = 22;
             this.Position5TB.Text = "1.45";
             this.Position5TB.Validated += new System.EventHandler(this.Position5TB_Validated);
+            this.Position5TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Position4TB
             // 
@@ -348,6 +364,7 @@ namespace GIDFit
             this.Position4TB.TabIndex = 17;
             this.Position4TB.Text = "1.45";
             this.Position4TB.Validated += new System.EventHandler(this.Position4TB_Validated);
+            this.Position4TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Position3TB
             // 
@@ -357,6 +374,7 @@ namespace GIDFit
             this.Position3TB.TabIndex = 12;
             this.Position3TB.Text = "1.45";
             this.Position3TB.Validated += new System.EventHandler(this.Position3TB_Validated);
+            this.Position3TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Position1TB
             // 
@@ -366,6 +384,7 @@ namespace GIDFit
             this.Position1TB.TabIndex = 2;
             this.Position1TB.Text = "1.45";
             this.Position1TB.Validated += new System.EventHandler(this.Position1TB_Validated);
+            this.Position1TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Position2TB
             // 
@@ -375,6 +394,7 @@ namespace GIDFit
             this.Position2TB.TabIndex = 7;
             this.Position2TB.Text = "1.42";
             this.Position2TB.Validated += new System.EventHandler(this.Position2TB_Validated);
+            this.Position2TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // label6
             // 
@@ -393,6 +413,7 @@ namespace GIDFit
             this.Sigma6TB.TabIndex = 26;
             this.Sigma6TB.Text = "0.03";
             this.Sigma6TB.Validated += new System.EventHandler(this.Sigma6TB_Validated);
+            this.Sigma6TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Sigma5TB
             // 
@@ -402,6 +423,7 @@ namespace GIDFit
             this.Sigma5TB.TabIndex = 21;
             this.Sigma5TB.Text = "0.03";
             this.Sigma5TB.Validated += new System.EventHandler(this.Sigma5TB_Validated);
+            this.Sigma5TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Sigma4TB
             // 
@@ -411,6 +433,7 @@ namespace GIDFit
             this.Sigma4TB.TabIndex = 16;
             this.Sigma4TB.Text = "0.03";
             this.Sigma4TB.Validated += new System.EventHandler(this.Sigma4TB_Validated);
+            this.Sigma4TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Sigma3TB
             // 
@@ -420,6 +443,7 @@ namespace GIDFit
             this.Sigma3TB.TabIndex = 11;
             this.Sigma3TB.Text = "0.03";
             this.Sigma3TB.Validated += new System.EventHandler(this.Sigma3TB_Validated);
+            this.Sigma3TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Sigma1TB
             // 
@@ -429,6 +453,7 @@ namespace GIDFit
             this.Sigma1TB.TabIndex = 1;
             this.Sigma1TB.Text = "0.03";
             this.Sigma1TB.Validated += new System.EventHandler(this.Sigma1TB_Validated);
+            this.Sigma1TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // Sigma2TB
             // 
@@ -438,6 +463,7 @@ namespace GIDFit
             this.Sigma2TB.TabIndex = 6;
             this.Sigma2TB.Text = "0.03";
             this.Sigma2TB.Validated += new System.EventHandler(this.Sigma2TB_Validated);
+            this.Sigma2TB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // label5
             // 
@@ -469,6 +495,7 @@ namespace GIDFit
             this.Func2CoB.Name = "Func2CoB";
             this.Func2CoB.Size = new System.Drawing.Size(121, 21);
             this.Func2CoB.TabIndex = 9;
+            this.Func2CoB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             this.Func2CoB.SelectedIndexChanged += new System.EventHandler(this.Func2CoB_SelectedIndexChanged);
             // 
             // Func3CoB
@@ -483,6 +510,7 @@ namespace GIDFit
             this.Func3CoB.Name = "Func3CoB";
             this.Func3CoB.Size = new System.Drawing.Size(121, 21);
             this.Func3CoB.TabIndex = 14;
+            this.Func3CoB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             this.Func3CoB.SelectedIndexChanged += new System.EventHandler(this.Func3CoB_SelectedIndexChanged);
             // 
             // Func4CoB
@@ -497,6 +525,7 @@ namespace GIDFit
             this.Func4CoB.Name = "Func4CoB";
             this.Func4CoB.Size = new System.Drawing.Size(121, 21);
             this.Func4CoB.TabIndex = 19;
+            this.Func4CoB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             this.Func4CoB.SelectionChangeCommitted += new System.EventHandler(this.Func4CoB_SelectionChangeCommitted);
             // 
             // Func5CoB
@@ -511,6 +540,7 @@ namespace GIDFit
             this.Func5CoB.Name = "Func5CoB";
             this.Func5CoB.Size = new System.Drawing.Size(121, 21);
             this.Func5CoB.TabIndex = 24;
+            this.Func5CoB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             this.Func5CoB.SelectedIndexChanged += new System.EventHandler(this.Func5CoB_SelectedIndexChanged);
             // 
             // Func6CoB
@@ -525,6 +555,7 @@ namespace GIDFit
             this.Func6CoB.Name = "Func6CoB";
             this.Func6CoB.Size = new System.Drawing.Size(121, 21);
             this.Func6CoB.TabIndex = 29;
+            this.Func6CoB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             this.Func6CoB.SelectedIndexChanged += new System.EventHandler(this.Func6CoB_SelectedIndexChanged);
             // 
             // Func1CoB
@@ -539,6 +570,7 @@ namespace GIDFit
             this.Func1CoB.Name = "Func1CoB";
             this.Func1CoB.Size = new System.Drawing.Size(121, 21);
             this.Func1CoB.TabIndex = 4;
+            this.Func1CoB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             this.Func1CoB.SelectedIndexChanged += new System.EventHandler(this.Func1CoB_SelectedIndexChanged);
             // 
             // label3
@@ -591,7 +623,8 @@ namespace GIDFit
             this.FunctionNumberTB.Size = new System.Drawing.Size(100, 20);
             this.FunctionNumberTB.TabIndex = 1;
             this.FunctionNumberTB.Text = "2";
-            this.FunctionNumberTB.TextChanged += new System.EventHandler(this.FunctionNumberTB_TextChanged);
+            this.FunctionNumberTB.Validated += new System.EventHandler(this.FunctionNumberTB_TextChanged);
+            this.FunctionNumberTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
             // 
             // label9
             // 

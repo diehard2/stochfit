@@ -1,0 +1,2 @@
+1. add 4 column data to model dependent gui
+2. find better way to handle 4 column data

@@ -191,6 +191,7 @@ namespace StochasticModeling
             this.rhowater.Size = new System.Drawing.Size(122, 20);
             this.rhowater.TabIndex = 5;
             this.rhowater.Text = "9.38";
+            this.rhowater.Validated += new System.EventHandler(this.rhowater_TextChanged);
             this.rhowater.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // label1
@@ -918,14 +919,14 @@ namespace StochasticModeling
             // tutorialToolStripMenuItem
             // 
             this.tutorialToolStripMenuItem.Name = "tutorialToolStripMenuItem";
-            this.tutorialToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.tutorialToolStripMenuItem.Size = new System.Drawing.Size(115, 22);
             this.tutorialToolStripMenuItem.Text = "Tutorial";
             this.tutorialToolStripMenuItem.Click += new System.EventHandler(this.tutorialToolStripMenuItem_Click);
             // 
             // manualToolStripMenuItem
             // 
             this.manualToolStripMenuItem.Name = "manualToolStripMenuItem";
-            this.manualToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.manualToolStripMenuItem.Size = new System.Drawing.Size(115, 22);
             this.manualToolStripMenuItem.Text = "Manual";
             this.manualToolStripMenuItem.Click += new System.EventHandler(this.manualToolStripMenuItem_Click);
             // 

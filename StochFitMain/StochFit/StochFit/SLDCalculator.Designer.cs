@@ -60,13 +60,15 @@ namespace StochasticModeling
             this.panel1 = new System.Windows.Forms.Panel();
             this.panel2 = new System.Windows.Forms.Panel();
             this.label15 = new System.Windows.Forms.Label();
+            this.label16 = new System.Windows.Forms.Label();
+            this.SiTB = new System.Windows.Forms.TextBox();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
             // 
             // HsTB
             // 
-            this.HsTB.Location = new System.Drawing.Point(28, 30);
+            this.HsTB.Location = new System.Drawing.Point(28, 21);
             this.HsTB.Name = "HsTB";
             this.HsTB.Size = new System.Drawing.Size(89, 20);
             this.HsTB.TabIndex = 0;
@@ -76,7 +78,7 @@ namespace StochasticModeling
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(25, 14);
+            this.label1.Location = new System.Drawing.Point(25, 5);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(58, 13);
             this.label1.TabIndex = 1;
@@ -85,7 +87,7 @@ namespace StochasticModeling
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(25, 269);
+            this.label4.Location = new System.Drawing.Point(25, 260);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(63, 13);
             this.label4.TabIndex = 7;
@@ -93,7 +95,7 @@ namespace StochasticModeling
             // 
             // PsTB
             // 
-            this.PsTB.Location = new System.Drawing.Point(28, 285);
+            this.PsTB.Location = new System.Drawing.Point(28, 276);
             this.PsTB.Name = "PsTB";
             this.PsTB.Size = new System.Drawing.Size(89, 20);
             this.PsTB.TabIndex = 6;
@@ -103,7 +105,7 @@ namespace StochasticModeling
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(25, 218);
+            this.label5.Location = new System.Drawing.Point(25, 209);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(43, 13);
             this.label5.TabIndex = 9;
@@ -111,7 +113,7 @@ namespace StochasticModeling
             // 
             // OsTB
             // 
-            this.OsTB.Location = new System.Drawing.Point(28, 234);
+            this.OsTB.Location = new System.Drawing.Point(28, 225);
             this.OsTB.Name = "OsTB";
             this.OsTB.Size = new System.Drawing.Size(89, 20);
             this.OsTB.TabIndex = 8;
@@ -121,7 +123,7 @@ namespace StochasticModeling
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(25, 167);
+            this.label6.Location = new System.Drawing.Point(25, 158);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(47, 13);
             this.label6.TabIndex = 11;
@@ -129,7 +131,7 @@ namespace StochasticModeling
             // 
             // NsTB
             // 
-            this.NsTB.Location = new System.Drawing.Point(28, 183);
+            this.NsTB.Location = new System.Drawing.Point(28, 174);
             this.NsTB.Name = "NsTB";
             this.NsTB.Size = new System.Drawing.Size(89, 20);
             this.NsTB.TabIndex = 10;
@@ -139,7 +141,7 @@ namespace StochasticModeling
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(25, 119);
+            this.label7.Location = new System.Drawing.Point(25, 110);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(41, 13);
             this.label7.TabIndex = 13;
@@ -147,7 +149,7 @@ namespace StochasticModeling
             // 
             // CsTB
             // 
-            this.CsTB.Location = new System.Drawing.Point(28, 132);
+            this.CsTB.Location = new System.Drawing.Point(28, 123);
             this.CsTB.Name = "CsTB";
             this.CsTB.Size = new System.Drawing.Size(89, 20);
             this.CsTB.TabIndex = 12;
@@ -157,7 +159,7 @@ namespace StochasticModeling
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(25, 65);
+            this.label8.Location = new System.Drawing.Point(25, 56);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(60, 13);
             this.label8.TabIndex = 15;
@@ -165,7 +167,7 @@ namespace StochasticModeling
             // 
             // DsTB
             // 
-            this.DsTB.Location = new System.Drawing.Point(28, 81);
+            this.DsTB.Location = new System.Drawing.Point(28, 72);
             this.DsTB.Name = "DsTB";
             this.DsTB.Size = new System.Drawing.Size(89, 20);
             this.DsTB.TabIndex = 14;
@@ -175,7 +177,7 @@ namespace StochasticModeling
             // UseElemCB
             // 
             this.UseElemCB.AutoSize = true;
-            this.UseElemCB.Location = new System.Drawing.Point(28, 343);
+            this.UseElemCB.Location = new System.Drawing.Point(28, 367);
             this.UseElemCB.Name = "UseElemCB";
             this.UseElemCB.Size = new System.Drawing.Size(115, 17);
             this.UseElemCB.TabIndex = 16;
@@ -340,6 +342,8 @@ namespace StochasticModeling
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Controls.Add(this.label16);
+            this.panel1.Controls.Add(this.SiTB);
             this.panel1.Controls.Add(this.label3);
             this.panel1.Controls.Add(this.ElecTB);
             this.panel1.Controls.Add(this.label2);
@@ -386,6 +390,24 @@ namespace StochasticModeling
             this.label15.Size = new System.Drawing.Size(18, 13);
             this.label15.TabIndex = 27;
             this.label15.Text = "Or";
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Location = new System.Drawing.Point(26, 310);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(38, 13);
+            this.label16.TabIndex = 21;
+            this.label16.Text = "Silicon";
+            // 
+            // SiTB
+            // 
+            this.SiTB.Location = new System.Drawing.Point(29, 326);
+            this.SiTB.Name = "SiTB";
+            this.SiTB.Size = new System.Drawing.Size(89, 20);
+            this.SiTB.TabIndex = 20;
+            this.SiTB.Text = "0";
+            this.SiTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
             // 
             // SLDCalculator
             // 
@@ -444,5 +466,7 @@ namespace StochasticModeling
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.TextBox SiTB;
     }
 }

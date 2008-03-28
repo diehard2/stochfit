@@ -78,7 +78,7 @@ namespace StochasticModeling
             try
             {
                 return MWVol * (int.Parse(HsTB.Text) * -3.7390 + int.Parse(DsTB.Text) * 6.671 + int.Parse(OsTB.Text) * 5.803 +
-                   int.Parse(CsTB.Text) * 6.646 + int.Parse(PsTB.Text) * 5.13 + int.Parse(NsTB.Text) * 9.36) * 10;
+                   int.Parse(CsTB.Text) * 6.646 + int.Parse(PsTB.Text) * 5.13 + int.Parse(NsTB.Text) * 9.36 + int.Parse(SiTB.Text) * 4.1491) * 10;
             }
             catch
             {
@@ -92,7 +92,7 @@ namespace StochasticModeling
             try
             {
               return  MWVol * 0.000028179 * (int.Parse(HsTB.Text) * 1 + int.Parse(DsTB.Text) * 1 + int.Parse(OsTB.Text) * 8 +
-                int.Parse(CsTB.Text) * 6 + int.Parse(PsTB.Text) * 15 + int.Parse(NsTB.Text) * 7) * 1000000;
+                int.Parse(CsTB.Text) * 6 + int.Parse(PsTB.Text) * 15 + int.Parse(NsTB.Text) * 7 + int.Parse(SiTB.Text)* 14) * 1000000;
             }
             catch
             {
@@ -121,7 +121,7 @@ namespace StochasticModeling
              try
              {
                  return (int.Parse(HsTB.Text) * 1 + int.Parse(DsTB.Text) * 2 + int.Parse(OsTB.Text) * 16 +
-                        int.Parse(CsTB.Text) * 12 + int.Parse(PsTB.Text) * 30.97 + int.Parse(NsTB.Text) * 14);
+                        int.Parse(CsTB.Text) * 12 + int.Parse(PsTB.Text) * 30.97 + int.Parse(NsTB.Text) * 14 + int.Parse(SiTB.Text) * 28.085);
 
              }
              catch
@@ -178,7 +178,7 @@ namespace StochasticModeling
 
          private void UseElemCB_CheckedChanged(object sender, EventArgs e)
          {
-             HsTB.Enabled = OsTB.Enabled = PsTB.Enabled = CsTB.Enabled = DsTB.Enabled = NsTB.Enabled = UseElemCB.Checked;
+             SiTB.Enabled = HsTB.Enabled = OsTB.Enabled = PsTB.Enabled = CsTB.Enabled = DsTB.Enabled = NsTB.Enabled = UseElemCB.Checked;
              ElecTB.Enabled = !UseElemCB.Checked;
          }
 

@@ -107,7 +107,6 @@ namespace StochasticModeling
                 m_tbBoxSigmaArray[i].Text = ((double)3.25).ToString();
                 m_tbBoxLengthArray[i].Text = ((double)15.1).ToString();
             }
-            SubphaseSLD.Text = ((double)(9.38)).ToString();
 
             if (Z != null)
             {
@@ -135,7 +134,7 @@ namespace StochasticModeling
                   AxisType.Linear);
 
              if (Z != null)
-                 m_gRhoGraphing.LoadfromArray("Model Independent Fit", m_dZincrement, m_dRealRho, System.Drawing.Color.Black, SymbolType.None, 0, true);
+                 m_gRhoGraphing.LoadfromArray("Model Independent Fit", m_dZincrement, m_dRealRho, System.Drawing.Color.Black, SymbolType.None, 0, true, string.Empty);
 
              m_gRhoGraphing.SetAllFonts("Garamond", 20, 18);
 
@@ -235,8 +234,8 @@ namespace StochasticModeling
                             parameters.Length, m_dZincrement, m_dZincrement.Length, m_dRho, m_dBoxRho, m_dRho.Length);
                     }
 
-                        m_gRhoGraphing.LoadfromArray("Model Dependent Fit", m_dZincrement, m_dRho, System.Drawing.Color.Turquoise, SymbolType.None, 0, true);
-                        m_gRhoGraphing.LoadfromArray("Model Dependent Box Model", m_dZincrement, m_dBoxRho, System.Drawing.Color.Red, SymbolType.None, 0, false);
+                    m_gRhoGraphing.LoadfromArray("Model Dependent Fit", m_dZincrement, m_dRho, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
+                    m_gRhoGraphing.LoadfromArray("Model Dependent Box Model", m_dZincrement, m_dBoxRho, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
                 }
             }
             catch (Exception ex)

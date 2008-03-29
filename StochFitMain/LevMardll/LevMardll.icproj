@@ -5,7 +5,7 @@
 	Name="LevMardll"
 	ProjectGUID="{1942BC8C-3706-48D2-8D70-3BF4237A41CE}"
 	VCNestedProjectGUID="{A2D16FE7-CD5C-4D6A-81FE-3789D54D5D13}"
-	VCNestedProjectCRC32="1591033196"
+	VCNestedProjectCRC32="255986255"
 	VCNestedProjectFileName="LevMardll.vcproj"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -73,6 +73,7 @@
 				IntermediateDirectory="Release"
 				ConfigurationType="2"
 				CharacterSet="1"
+				CompilerName="0"
 				ProfileDirectory="../bin/dlls"/>
 			<Tool 
 				Name="CppCmplrTool"
@@ -82,7 +83,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="1"
 				EnableFiberSafeOptimizations="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LEVMARDLL_EXPORTS;HAVE_LAPACK"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LEVMARDLL_EXPORTS; HAVE_LAPACK"
 				RuntimeLibrary="2"
 				StructMemberAlignment="0"
 				UsePrecompiledHeader="0"

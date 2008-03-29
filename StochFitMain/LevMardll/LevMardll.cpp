@@ -501,7 +501,7 @@ extern "C" LEVMARDLL_API double StochFit(int boxes, double SLD, double SupSLD, d
 
 		locparameters[paramsize-1] = origguess[paramsize-1];
 		
-		dlevmar_dif(locRefl.objective, locparameters, xvec,  paramsize,QSize, 100, opts, locinfo, work,covar,(void*)(&locRefl)); 
+		dlevmar_dif(locRefl.objective, locparameters, xvec,  paramsize,QSize, 500, opts, locinfo, work,covar,(void*)(&locRefl)); 
 		
 		localanswer.SetContainer(locparameters,covar,paramsize,onesigma,locinfo[1], parampercs[6]);
 
@@ -697,8 +697,7 @@ extern "C" LEVMARDLL_API double ConstrainedStochFit(int boxes, double SLD, doubl
 		}
 		locparameters[paramsize-1] = origguess[paramsize-1];
 
-		dlevmar_bc_dif(locRefl.objective, locparameters, xvec,  paramsize,QSize, LL, UL,100,  opts, locinfo, work,covar,(void*)(&locRefl)); 
-	//	dlevmar_dif(locRefl.objective, locparameters, xvec,  paramsize,QSize, 100,  opts, locinfo, work,covar,(void*)(&locRefl)); 		
+		dlevmar_bc_dif(locRefl.objective, locparameters, xvec,  paramsize,QSize, LL, UL,500,  opts, locinfo, work,covar,(void*)(&locRefl)); 
 		localanswer.SetContainer(locparameters,covar,paramsize,onesigma,locinfo[1], parampercs[6]);
 
 		if(locinfo[1] < bestchisquare && localanswer.IsReasonable() == true)

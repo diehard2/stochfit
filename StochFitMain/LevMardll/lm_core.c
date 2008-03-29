@@ -275,11 +275,11 @@ if(!(k%100)){
        * SVD is the slowest but most accurate; LU offers a tradeoff between accuracy and speed
        */
 
-      issolved=AX_EQ_B_LU(jacTjac, jacTe, Dp, m);
+      //issolved=AX_EQ_B_LU(jacTjac, jacTe, Dp, m);
       //issolved=AX_EQ_B_CHOL(jacTjac, jacTe, Dp, m);
       //issolved=AX_EQ_B_QR(jacTjac, jacTe, Dp, m);
       //issolved=AX_EQ_B_QRLS(jacTjac, jacTe, Dp, m, m);
-      //issolved=AX_EQ_B_SVD(jacTjac, jacTe, Dp, m);
+      issolved=AX_EQ_B_SVD(jacTjac, jacTe, Dp, m);
 
 #else
       /* use the LU included with levmar */

@@ -60,21 +60,25 @@ namespace StochasticModeling
             }
             set
             {
-                FileInfo info = new FileInfo(value);
-                int counter = 0;
-                //Don't overwrite previous reports
-                while (true)
+                try
                 {
-                    if (counter == 0)
-                        m_sFilePDF = info.DirectoryName + "\\" + info.Name + ".pdf";
-                    else
-                        m_sFilePDF = info.DirectoryName + "\\" + info.Name + counter.ToString() + ".pdf";
+                    FileInfo info = new FileInfo(value);
+                    int counter = 0;
+                    //Don't overwrite previous reports
+                    while (true)
+                    {
+                        if (counter == 0)
+                            m_sFilePDF = info.DirectoryName + "\\" + info.Name + ".pdf";
+                        else
+                            m_sFilePDF = info.DirectoryName + "\\" + info.Name + counter.ToString() + ".pdf";
 
-                    if (!File.Exists(m_sFilePDF))
-                        break;
+                        if (!File.Exists(m_sFilePDF))
+                            break;
 
-                    counter++;
+                        counter++;
+                    }
                 }
+                catch{}
             }
         }
 

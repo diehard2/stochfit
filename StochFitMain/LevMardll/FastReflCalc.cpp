@@ -143,7 +143,9 @@ void FastReflcalc::MakeTheta(double* QRange, int QRangesize)
   reflinst->myrfdispatch();
   
   for(int i=0; i<n; ++i)
+  {
 	 x[i] = (log(reflinst->reflpt[i])-log(reflinst->Realrefl[i]))/fabs(log(reflinst->Realreflerrors[i]));
+  }
 
 }
 
@@ -201,21 +203,22 @@ void FastReflcalc::mytransmultsigrf(double* sintheta, double* sinsquaredtheta, i
 	double suprefindexsquared = suprefindex*suprefindex;
     double sigmacalc[20];
 
+	int neg = 0;
     for(int i =0; i<datapoints;i++)
 	{	
-		int neg = 0;
+		
 		for(int k = 1; k<nl;k++)
 		{
 			if((suprefindexsquared*sinsquaredtheta[i]-2.0*RhoArray[k]+2.0*RhoArray[0])<0)
 			{
-				neg = -1;
+				neg -= 1;
 				break;
 			}
 		}
 		if(neg ==0)
 		{
-			if(m_dQSpread < 0.005)
-				break;
+			/*if(m_dQSpread < 0.005 && neg == -5)
+				break;*/
 		}
 		else
 		{

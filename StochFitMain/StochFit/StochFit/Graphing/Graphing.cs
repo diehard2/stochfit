@@ -42,6 +42,9 @@ namespace StochasticModeling
         public double m_dSupSLD = 0;
         public double m_dlambda = 1.0;
         public bool m_bDBF = false;
+        private bool m_bdatafile = false;
+        private int lowqindex = 0;
+        private int highqindex = 10000;
         private bool m_bnegativeerrorval = false;
         private bool m_biszoomed = false;
         private bool m_bisXR = true;
@@ -103,10 +106,21 @@ namespace StochasticModeling
             AddMenuItem(menuStrip, "ClipCopy_tag", "ClipCopy_tag", "High Quality Copy", CopyMetatoClip);
             AddMenuItem(menuStrip, "SaveEMF_tag", "SaveEMF_tag", "Save High Quality Image", SaveEMFFile);
 
+            if (m_bdatafile)
+            {
+                AddMenuItem(menuStrip, "LowQCut_tag", "LowQCut_tag", "Select Low Q Cutoff", SelectLowQPoint);
+                AddMenuItem(menuStrip, "HighQCut_tag", "HighQCut_tag", "Select High Q Cutoff", SelectHighQPoint);
+                AddMenuItem(menuStrip, "ClearOffset_tag", "ClearOffset_tag", "Clear Offsets", ClearQOffsets);
+            }
+
+
             RemoveMenuItem(menuStrip, "copy");
             RemoveMenuItem(menuStrip, "set_default");
             RemoveMenuItem(menuStrip, "page_setup");
             RemoveMenuItem(menuStrip, "print");
+
+            //Pass the mouse position - can't use windows native version for some reason...
+             MousePosition = mousePt;
         }
 
         /// <summary>
@@ -118,16 +132,16 @@ namespace StochasticModeling
             m_biszoomed = false;
         }
       
-        protected override void AddCurvetoGraph(PointPairList list, PointPairList elist, string DataName, Color linecolor, SymbolType type, int symbolsize)
+        protected override void AddCurvetoGraph(PointPairList list, PointPairList elist, string DataName, Color linecolor, SymbolType type, int symbolsize, string tag)
         {
-            base.AddCurvetoGraph(list, elist, DataName, linecolor, type, symbolsize);
+            base.AddCurvetoGraph(list, elist, DataName, linecolor, type, symbolsize, tag);
             //We have to manually set the error bars if we have a negative value due to error
             SetAxisScale();
         }
 
-        protected override void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, bool isSmoothed)
+        protected override void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, bool isSmoothed, string tag)
         {
-            base.AddCurvetoGraph(list, DataName, linecolor, type, symbolsize, isSmoothed);
+            base.AddCurvetoGraph(list, DataName, linecolor, type, symbolsize, isSmoothed, tag);
             SetAxisScale();
         }
 
@@ -144,7 +158,7 @@ namespace StochasticModeling
                     if (m_bDBF == true)
                     {
                         if (m_bisXR && CalcQc(m_dSLD, m_dSupSLD, m_dlambda) > 0.005)
-                            Pane.YAxis.Scale.Min = 3e-5;
+                            Pane.YAxis.Scale.Min = 3e-4;
                         else
                             Pane.YAxis.Scale.Min = 1e-12;
                     }
@@ -167,6 +181,7 @@ namespace StochasticModeling
             try
             {
                 Clear();
+                m_bdatafile = true;
                 m_bnegativeerrorval = false;
 
                 double Qc = CalcQc(m_dSLD, m_dSupSLD, m_dlambda);
@@ -174,11 +189,15 @@ namespace StochasticModeling
                 PointPairList locReflerror = new PointPairList();
                 double poserrorval, negerrorval;
 
-
                 //Initialize our pointpairlists and add our data
                 //Add the real data
-                    RealReflData = new PointPairList(ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
-                    RealReflErrors = new PointPairList();
+
+                RealReflData = new PointPairList(ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
+
+                for (int i = 0; i < ReflData.Instance.GetNumberDataPoints; i++)
+                    RealReflData[i].Z = 1.0;
+
+                RealReflErrors = new PointPairList();
 
                     for (int i = 0; i < ReflData.Instance.GetNumberDataPoints; i++)
                     {
@@ -204,7 +223,7 @@ namespace StochasticModeling
 
                     SetAxisTitles("Q", "Intensity");
 
-                    AddCurvetoGraph(RealReflData, RealReflErrors, name, color, symbol, symbolsize);
+                    AddCurvetoGraph(RealReflData, RealReflErrors, name, color, symbol, symbolsize, string.Empty);
                 }
                 else
                 {
@@ -236,12 +255,22 @@ namespace StochasticModeling
                     else
                         SetAxisTitles("Q", "Intensity (RQ^4)");
 
-                    AddCurvetoGraph(locRefl, locReflerror, name, color, symbol, symbolsize);
+                    AddCurvetoGraph(locRefl, locReflerror, name, color, symbol, symbolsize, "realdatafile");
                 }
                 
                 m_alDatainGraph.Add(name);
                 //To account for the error file
                 m_alDatainGraph.Add(name);
+
+                if (highqindex < ReflData.Instance.GetNumberDataPoints || lowqindex > 0)
+                {
+                    SetBounds();
+
+                }
+                else
+                {
+                    highqindex = ReflData.Instance.GetNumberDataPoints;
+                }
             }
             catch
             {
@@ -298,7 +327,7 @@ namespace StochasticModeling
 
                             list.Add(Q, Refl);
                         }
-                        AddCurvetoGraph(list, plotname, color, symbol, symbolsize, isSmoothed);
+                        AddCurvetoGraph(list, plotname, color, symbol, symbolsize, isSmoothed, string.Empty);
                         m_alDatainGraph.Add(filename);
                     }
                 }
@@ -309,7 +338,7 @@ namespace StochasticModeling
             }
         }
 
-        public override void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, bool isSmoothed)
+        public override void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, bool isSmoothed, string tag)
         {
             RemoveGraphfromArray(name);
 
@@ -332,7 +361,7 @@ namespace StochasticModeling
                     list.Add(X[i], Y[i]);
                 }
             }
-            AddCurvetoGraph(list, name, color, symbol,symbolsize, isSmoothed);
+            AddCurvetoGraph(list, name, color, symbol,symbolsize, isSmoothed, string.Empty);
             m_alDatainGraph.Add(name);
         }
 
@@ -372,6 +401,109 @@ namespace StochasticModeling
             {
                 double term1 = Math.Sqrt(1 - Math.Pow((Qc / Q), 2.0));
                 return Math.Pow((1.0 - term1) / (1.0 + term1), 2.0);
+            }
+        }
+
+        private void SelectLowQPoint(object sender, System.EventArgs e)
+        {
+            CurveItem curve;
+            int nearest;
+            
+            Pane.FindNearestPoint(MousePosition, out curve, out nearest);
+
+            if (curve.NPts > ReflData.Instance.GetNumberDataPoints)
+            {
+                MessageBox.Show("You have attempted to selecte points on the wrong cuve. Please zoom in and try again");
+                return;
+            }
+
+            if (nearest + (ReflData.Instance.GetNumberDataPoints - highqindex) > ReflData.Instance.GetNumberDataPoints)
+            {
+                MessageBox.Show("Error in setting bounds");
+                return;
+            }
+
+                lowqindex = nearest;
+
+                SetBounds();
+        }
+
+
+
+        private void ClearQOffsets(object sender, System.EventArgs e)
+        {
+            int i = 0;
+            for (i = 0; i < Pane.CurveList.Count; i++)
+            {
+
+                if ((string)Pane.CurveList[i].Tag == "realdatafile")
+                    break;
+            }
+
+
+            for (int k = 0; k < Pane.CurveList[i].NPts; k++)
+                Pane.CurveList[i][k].Z = 0.0;
+
+            highqindex = ReflData.Instance.GetNumberDataPoints;
+            lowqindex = 0;
+
+            Invalidate();
+        }
+
+        private void SelectHighQPoint(object sender, System.EventArgs e)
+        {
+            CurveItem curve;
+            int nearest;
+
+            Pane.FindNearestPoint(MousePosition, out curve, out nearest);
+
+            if (curve.NPts > ReflData.Instance.GetNumberDataPoints)
+            {
+                MessageBox.Show("You have attempted to selecte points on the wrong cuve. Please zoom in and try again");
+                return;
+            }
+
+            if ((nearest - ReflData.Instance.GetNumberDataPoints) + lowqindex > ReflData.Instance.GetNumberDataPoints)
+            {
+                MessageBox.Show("Error in setting bounds");
+                return;
+            }
+
+            highqindex = nearest;
+
+            SetBounds();
+            
+        }
+
+        private void SetBounds()
+        {
+            if (highqindex > 0 || lowqindex > 0)
+            {
+
+                int i = 0;
+                for (i = 0; i < Pane.CurveList.Count; i++)
+                {
+
+                    if ((string)Pane.CurveList[i].Tag == "realdatafile")
+                        break;
+                }
+
+
+                for (int k = 0; k < Pane.CurveList[i].NPts; k++)
+                    Pane.CurveList[i][k].Z = 0.0;
+
+                if (highqindex > 0)
+                {
+                    for (int k = highqindex; k < Pane.CurveList[i].NPts; k++)
+                        Pane.CurveList[i][k].Z = 1.0;
+                }
+
+
+                for (int k = 0; k <= lowqindex; k++)
+                    Pane.CurveList[i][k].Z = 1.0;
+
+
+                Invalidate();
             }
         }
     }

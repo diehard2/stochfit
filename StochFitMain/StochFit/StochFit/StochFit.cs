@@ -192,8 +192,7 @@ namespace StochasticModeling
                     reflgraphobject.m_dSLD = Double.Parse(rhowater.Text);
                     reflgraphobject.m_dSupSLD = Double.Parse(SupSLDTB.Text);
                     reflgraphobject.m_dlambda = Double.Parse(wavelength.Text);
-                    reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
-
+                   
                     //Load the modeled files if they are available
                     if (File.Exists(settingsfile))
                     {
@@ -214,13 +213,13 @@ namespace StochasticModeling
 
                             if (File.Exists(tempfile))
                             {
-                                if (divbyfresnel == true)
-                                    reflgraphobject.SetAxisTitles("Q/Qc", "Intensity / Fresnel");
-                                else
-                                    reflgraphobject.SetAxisTitles("Q", "Intensity");
-
                                 reflgraphobject.m_bDBF = divbyfresnel;
                                 reflgraphobject.m_dSLD = double.Parse(rhowater.Text);
+                                reflgraphobject.m_dSupSLD = double.Parse(SupSLDTB.Text);
+                                reflgraphobject.m_dlambda = double.Parse(wavelength.Text);
+
+                                //Load the data file to the graph
+                                reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
                                 reflgraphobject.LoadFiletoGraph(tempfile.ToString(), modelreflname, "Model Independent Reflectivity", Color.Tomato, SymbolType.Square, 2, true);
                             }
 
@@ -231,42 +230,54 @@ namespace StochasticModeling
                         }
                         else
                         {
+                            //Load the data file to the graph
+                            reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
+
                             FileInfo info = new FileInfo(settingsfile);
+
                             if (File.Exists(info.DirectoryName + "\\pop.dat"))
                             {
-                              //Create a backup folder if we don't have one
-                              if(!System.IO.Directory.Exists(info.DirectoryName + "\\FitBackUp"))
-                                  System.IO.Directory.CreateDirectory(info.DirectoryName + "\\FitBackUp");
+                                //Create a backup folder if we don't have one
+                                if (!System.IO.Directory.Exists(info.DirectoryName + "\\FitBackUp"))
+                                    System.IO.Directory.CreateDirectory(info.DirectoryName + "\\FitBackUp");
 
-                              int index = 0;
-                              for (; ; )
-                              {
-                                  if (!System.IO.Directory.Exists(info.DirectoryName + "\\FitBackUp\\Fit" + index.ToString()))
-                                  {
-                                      System.IO.Directory.CreateDirectory(info.DirectoryName + "\\FitBackUp\\Fit" + index.ToString());
-                                      break;
-                                  }
-                                  index++;
-                              }
+                                int index = 0;
+                                for (; ; )
+                                {
+                                    if (!System.IO.Directory.Exists(info.DirectoryName + "\\FitBackUp\\Fit" + index.ToString()))
+                                    {
+                                        System.IO.Directory.CreateDirectory(info.DirectoryName + "\\FitBackUp\\Fit" + index.ToString());
+                                        break;
+                                    }
+                                    index++;
+                                }
                                 string fileloc = info.DirectoryName + "\\FitBackUp\\Fit" + index.ToString();
 
-                                
-                                File.Move(info.DirectoryName + "\\pop.dat", fileloc + "\\pop.dat" );
-                                File.Move(settingsfile, fileloc + "\\" + info.Name) ;
 
-                                if(File.Exists(info.DirectoryName + "\\rf.dat"))
+                                File.Move(info.DirectoryName + "\\pop.dat", fileloc + "\\pop.dat");
+                                File.Move(settingsfile, fileloc + "\\" + info.Name);
+
+                                if (File.Exists(info.DirectoryName + "\\rf.dat"))
                                     File.Move(info.DirectoryName + "\\rf.dat", fileloc + "\\rf.dat");
 
-                                if(File.Exists(info.DirectoryName + "\\rho.dat"))
+                                if (File.Exists(info.DirectoryName + "\\rho.dat"))
                                     File.Move(info.DirectoryName + "\\rho.dat", fileloc + "\\rho.dat");
 
-                                if(File.Exists(info.DirectoryName + "\\reflfile.dat"))
+                                if (File.Exists(info.DirectoryName + "\\reflfile.dat"))
                                     File.Move(info.DirectoryName + "\\reflfile.dat", fileloc + "\\reflfile.dat");
 
-                                if(File.Exists(info.DirectoryName + "\\reflrhofit.dat"))
+                                if (File.Exists(info.DirectoryName + "\\reflrhofit.dat"))
                                     File.Move(info.DirectoryName + "\\reflrhofit.dat", fileloc + "\\reflrhofit.dat");
                             }
                         }
+
+
+
+                    }
+                    else
+                    {
+                        //Load the data file to the graph
+                        reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
                     }
 
                     FileName.Text = origreflfilename;
@@ -353,7 +364,6 @@ namespace StochasticModeling
         private void Startbutton_Click(object sender, EventArgs e)
         {
             //Initialize Stochfit
-
             if (FileName.Text == string.Empty)
                 return;
 
@@ -414,7 +424,13 @@ namespace StochasticModeling
             ParametersBox.Enabled = false;
             Startbutton.Enabled = false;
             FittingParamBox.Enabled = false;
-            setResolutionOptionsToolStripMenuItem.Enabled = false;
+
+            setModelOptionsToolStripMenuItem.Enabled = setResolutionOptionsToolStripMenuItem.Enabled =
+              miscellaneousOptionsToolStripMenuItem.Enabled = false;
+
+            setModelOptionsToolStripMenuItem.DropDown.Enabled = setResolutionOptionsToolStripMenuItem.DropDown.Enabled =
+                miscellaneousOptionsToolStripMenuItem.DropDown.Enabled = false;
+
             Cancelbutton.Enabled = true;
             debugToolStripMenuItem.Enabled = false;
             LoadFile.Enabled = false;
@@ -614,7 +630,14 @@ namespace StochasticModeling
              myTimer.Stop();
              Cancel();
              Cancelbutton.Enabled = false;
-             FittingParamBox.Enabled = LoadFile.Enabled = Startbutton.Enabled = true;
+
+            setModelOptionsToolStripMenuItem.Enabled = setResolutionOptionsToolStripMenuItem.Enabled =
+              miscellaneousOptionsToolStripMenuItem.Enabled = false;
+
+             setModelOptionsToolStripMenuItem.DropDown.Enabled = setResolutionOptionsToolStripMenuItem.DropDown.Enabled =
+                 miscellaneousOptionsToolStripMenuItem.Enabled = true ;
+
+             ParametersBox.Enabled = FittingParamBox.Enabled = LoadFile.Enabled = Startbutton.Enabled = true;
          }
 
         private void UpdateGraphs()
@@ -631,10 +654,10 @@ namespace StochasticModeling
                     reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
 
                     if (Refl != null)
-                        reflgraphobject.LoadfromArray(modelreflname, Q, Refl, Color.Tomato, SymbolType.Square, 2, true);
+                        reflgraphobject.LoadfromArray(modelreflname, Q, Refl, Color.Tomato, SymbolType.Square, 2, true, string.Empty);
                     else
                     {
-                        string tempfile = origreflfilename + "rf.dat";
+                        string tempfile = ReflData.Instance.GetWorkingDirectory + "\\rf.dat";
 
                         if (File.Exists(tempfile))
                             reflgraphobject.LoadFiletoGraph(tempfile.ToString(), modelreflname, "Model Independent Reflectivity", Color.Tomato, SymbolType.Square, 2, true);
@@ -645,15 +668,15 @@ namespace StochasticModeling
                 else
                 {
                     if (colorswitch % 2 == 0)
-                        color = Color.Turquoise;
+                        color = Color.DeepSkyBlue;
                     else
                         color = Color.Tomato;
 
 
                     if (Q != null && Z != null)
                     {
-                       reflgraphobject.LoadfromArray(modelreflname, Q, Refl, color, SymbolType.Triangle, 2, true);
-                       rhographobject.LoadfromArray(rhomodelname, Z, Rho, color, SymbolType.None, 0, true);
+                        reflgraphobject.LoadfromArray(modelreflname, Q, Refl, color, SymbolType.Triangle, 2, true, string.Empty);
+                        rhographobject.LoadfromArray(rhomodelname, Z, Rho, color, SymbolType.None, 0, true, string.Empty);
                        colorswitch++;
                     }
                 }

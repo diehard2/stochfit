@@ -2,7 +2,7 @@
 :: Intel compiler, Microsoft Visual Studio, and the Intel MKL.
 :: You may have to change the paths below if you have a different version.
 
-SET MKLVER=10.0.012
+SET MKLVER=10.0.2.019
 SET UtilPath=%~dp0
 SET MKLPath=%ProgramFiles%\Intel\MKL\%MKLVER%\tools\builder
 SET VSPath=%ProgramFiles%\Microsoft Visual Studio 8\vc\bin
@@ -49,9 +49,9 @@ cd %UtilPath%
 
 ::Build the StochFit front end
 
-"%ProgramFiles%\Microsoft Visual Studio 8\Common7\IDE\devenv.exe" /rebuild Debug StochFit.sln 
-"%ProgramFiles%\Microsoft Visual Studio 8\Common7\IDE\devenv.exe" /rebuild Release StochFit.sln 
-"%ProgramFiles%\Microsoft Visual Studio 8\Common7\IDE\devenv.exe" /rebuild GIXOS StochFit.sln 
+::"%ProgramFiles%\Microsoft Visual Studio 8\Common7\IDE\devenv.exe" /rebuild Debug StochFit.sln 
+::"%ProgramFiles%\Microsoft Visual Studio 8\Common7\IDE\devenv.exe" /rebuild Release StochFit.sln 
+
 
 
 

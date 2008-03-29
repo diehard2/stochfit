@@ -333,9 +333,9 @@ namespace StochasticModeling
             }
          
             //Setup graphs
-            ReflGraphing.LoadfromArray("modelrefl", Qincrement, ReflectivityMap, System.Drawing.Color.Black, SymbolType.XCross, 4, true);
-            RhoGraphing.LoadfromArray("Model Dependent Fit", Z, ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true);
-            RhoGraphing.LoadfromArray("Model Dependent Box Fit", Z, BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false);
+            ReflGraphing.LoadfromArray("modelrefl", Qincrement, ReflectivityMap, System.Drawing.Color.Black, SymbolType.XCross, 4, true, string.Empty);
+            RhoGraphing.LoadfromArray("Model Dependent Fit", Z, ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
+            RhoGraphing.LoadfromArray("Model Dependent Box Fit", Z, BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
         }
 
         //Update our variables after validation
@@ -1176,7 +1176,7 @@ namespace StochasticModeling
         {
             tabControl1.SelectedIndex = 0;
             controlbox.Enabled = button1.Enabled = UndoFit.Enabled = button2.Enabled = LevenbergFit.Enabled = 
-                groupBox1.Enabled = tabControl1.Enabled = !onoff;
+             ConstraintsBT.Enabled = groupBox1.Enabled = tabControl1.Enabled = !onoff;
             loadingCircle1.Active = loadingCircle1.Visible = onoff;
         }
         

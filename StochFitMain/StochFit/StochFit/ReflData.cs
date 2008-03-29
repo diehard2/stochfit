@@ -25,6 +25,7 @@ using System.IO;
 using System.Collections;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 
 namespace StochasticModeling
 {
@@ -308,6 +309,7 @@ namespace StochasticModeling
             }
             catch
             {
+                MessageBox.Show("Could not add file");
                 return false;
             }
             return true;

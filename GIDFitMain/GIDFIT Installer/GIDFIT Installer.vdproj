@@ -21,19 +21,13 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_1BB1EB80F7ADE5AAEE63A9366F9C12A2"
-        "OwnerKey" = "8:_94EB32C8B2F04F50A4E533CC8CE549AA"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_36B0F6612B53307F6058CDF746D67C4E"
+        "MsmKey" = "8:_2086225D05F43767F25295AF3C84E1BC"
         "OwnerKey" = "8:_051D4F31EBDD435B98BE0E79001E5E24"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_73DE01844239405991908D998C7E7098"
+        "MsmKey" = "8:_5F4A9718E1524F27918A7C1041A7BA1A"
         "OwnerKey" = "8:_94EB32C8B2F04F50A4E533CC8CE549AA"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -51,26 +45,26 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_D80E50BB7BD04ABC88E717D61D4E7483"
+        "MsmKey" = "8:_C1443551798A40B0BDFABB679BC519E3"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_F9E14815E16B48F8A92F817E80DCCCAA"
-        "OwnerKey" = "8:_73DE01844239405991908D998C7E7098"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_36B0F6612B53307F6058CDF746D67C4E"
+        "MsmKey" = "8:_EFE0A8E582C044728BCDAA4D708207D2"
+        "OwnerKey" = "8:_5F4A9718E1524F27918A7C1041A7BA1A"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_051D4F31EBDD435B98BE0E79001E5E24"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_2086225D05F43767F25295AF3C84E1BC"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -91,6 +85,22 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Net.Framework.2.0"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 2.0"
+                    "ProductCode" = "8:Microsoft.Net.Framework.2.0"
+                    }
+                }
+            }
         }
         "Release"
         {
@@ -107,6 +117,22 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Net.Framework.2.0"
+                    {
+                    "Name" = "8:.NET Framework 2.0"
+                    "ProductCode" = "8:Microsoft.Net.Framework.2.0"
+                    }
+                }
+            }
         }
     }
     "Deployable"
@@ -136,34 +162,14 @@
         }
         "File"
         {
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_1BB1EB80F7ADE5AAEE63A9366F9C12A2"
-            {
-            "SourcePath" = "8:levmarmkl.dll"
-            "TargetName" = "8:levmarmkl.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_E1CAAAD02A1F47C49046FBDC42058B0C"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_36B0F6612B53307F6058CDF746D67C4E"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_2086225D05F43767F25295AF3C84E1BC"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
             "AssemblyAsmDisplayName" = "8:ZedGraph, Version=5.1.1.428, Culture=neutral, PublicKeyToken=02a83cbd123fcd60, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_36B0F6612B53307F6058CDF746D67C4E"
+                    "_2086225D05F43767F25295AF3C84E1BC"
                     {
                     "Name" = "8:ZedGraph.dll"
                     "Attributes" = "3:512"
@@ -207,9 +213,9 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D80E50BB7BD04ABC88E717D61D4E7483"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_C1443551798A40B0BDFABB679BC519E3"
             {
-            "SourcePath" = "8:..\\bin\\Release\\libmmd.dll"
+            "SourcePath" = "8:..\\bin\\dlls\\libmmd.dll"
             "TargetName" = "8:libmmd.dll"
             "Tag" = "8:"
             "Folder" = "8:_E1CAAAD02A1F47C49046FBDC42058B0C"
@@ -837,7 +843,7 @@
         }
         "MergeModule"
         {
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_73DE01844239405991908D998C7E7098"
+            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_5F4A9718E1524F27918A7C1041A7BA1A"
             {
             "UseDynamicProperties" = "11:TRUE"
             "IsDependency" = "11:TRUE"
@@ -851,7 +857,7 @@
             "Feature" = "8:"
             "IsolateTo" = "8:"
             }
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_F9E14815E16B48F8A92F817E80DCCCAA"
+            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_EFE0A8E582C044728BCDAA4D708207D2"
             {
             "UseDynamicProperties" = "11:TRUE"
             "IsDependency" = "11:TRUE"
@@ -898,7 +904,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_94EB32C8B2F04F50A4E533CC8CE549AA"
             {
-            "SourcePath" = "8:..\\bin\\Release\\LevmarDLL.dll"
+            "SourcePath" = "8:..\\bin\\release\\LevmarDLL.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_E1CAAAD02A1F47C49046FBDC42058B0C"

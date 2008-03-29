@@ -133,7 +133,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LEVMARDLL_EXPORTS;HAVE_LAPACK"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LEVMARDLL_EXPORTS; HAVE_LAPACK"
 				RuntimeLibrary="2"
 				StructMemberAlignment="0"
 				OpenMP="true"

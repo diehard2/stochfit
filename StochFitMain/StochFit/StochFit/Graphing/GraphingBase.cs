@@ -355,6 +355,10 @@ namespace StochasticModeling
             {
                 m_cMousePos = value;
             }
+            get
+            {
+                return m_cMousePos;
+            }
         }
 
         public CurveList GraphCurveList
@@ -485,7 +489,7 @@ namespace StochasticModeling
             m_bThisisadeepcopy = false;
         }
 
-        public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, bool isSmoothed)
+        public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, bool isSmoothed, string tag)
         {
             PointPairList list = new PointPairList();
             for (int i = 0; i < X.Length; i++)
@@ -493,11 +497,11 @@ namespace StochasticModeling
                     list.Add(X[i] , Y[i]);
             }
             
-            AddCurvetoGraph(list, name, color, symbol, symbolsize, isSmoothed);
+            AddCurvetoGraph(list, name, color, symbol, symbolsize, isSmoothed, tag);
             m_alDatainGraph.Add(name);
         }
 
-        public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, DashStyle style, bool isSmoothed)
+        public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, DashStyle style, bool isSmoothed, string tag)
         {
             PointPairList list = new PointPairList();
             for (int i = 0; i < X.Length; i++)
@@ -505,7 +509,7 @@ namespace StochasticModeling
                 list.Add(X[i], Y[i]);
             }
 
-            AddCurvetoGraph(list, name, color, symbol, symbolsize, style, isSmoothed);
+            AddCurvetoGraph(list, name, color, symbol, symbolsize, style, isSmoothed,tag);
             m_alDatainGraph.Add(name);
 
         }
@@ -584,12 +588,16 @@ namespace StochasticModeling
             }
         }
 
-        protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, bool isSmoothed)
+        protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, bool isSmoothed,string tag)
         {
             LineItem myCurve = m_cMyPane.AddCurve(DataName, list, linecolor, type);
-            myCurve.Symbol.Fill = new Fill(Color.Red);
+            myCurve.Symbol.Fill = new Fill(Color.Red,Color.DeepSkyBlue );
+            myCurve.Symbol.Fill.Type = FillType.GradientByZ;
+            myCurve.Symbol.Fill.RangeMin = 0;
+            myCurve.Symbol.Fill.RangeMax = 1;
             myCurve.Symbol.Size = symbolsize;
             myCurve.Line.IsAntiAlias = true;
+            myCurve.Tag = tag;
 
             if (isSmoothed == true)
                 myCurve.Line.IsSmooth = true;
@@ -598,13 +606,17 @@ namespace StochasticModeling
             Invalidate();
         }
 
-        protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, DashStyle style, bool isSmoothed)
+        protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, DashStyle style, bool isSmoothed, string tag)
         {
             LineItem myCurve = m_cMyPane.AddCurve(DataName, list, linecolor, type);
-            myCurve.Symbol.Fill = new Fill(Color.Red);
+            myCurve.Symbol.Fill = new Fill(Color.Red, Color.DeepSkyBlue);
+            myCurve.Symbol.Fill.Type = FillType.GradientByZ;
+            myCurve.Symbol.Fill.RangeMin = 0;
+            myCurve.Symbol.Fill.RangeMax = 1;
             myCurve.Symbol.Size = symbolsize;
             myCurve.Line.Style = style;
             myCurve.Line.IsAntiAlias = true;
+            myCurve.Tag = tag;
 
             if (isSmoothed == true)
                 myCurve.Line.IsSmooth = true;
@@ -613,13 +625,17 @@ namespace StochasticModeling
             Invalidate();
         }
 
-        protected virtual void AddCurvetoGraph(PointPairList list, PointPairList elist, string DataName, Color linecolor, SymbolType type, int symbolsize)
+        protected virtual void AddCurvetoGraph(PointPairList list, PointPairList elist, string DataName, Color linecolor, SymbolType type, int symbolsize, string tag)
         {
             LineItem myCurve = m_cMyPane.AddCurve(DataName, list, linecolor, type);
-            myCurve.Symbol.Fill = new Fill(Color.Red);
+            myCurve.Symbol.Fill = new Fill(Color.Red,Color.DeepSkyBlue);
+            myCurve.Symbol.Fill.Type = FillType.GradientByZ;
+            myCurve.Symbol.Fill.RangeMin = 0;
+            myCurve.Symbol.Fill.RangeMax = 1;
             myCurve.Symbol.Size = symbolsize;
             myCurve.Line.IsAntiAlias = true;
             myCurve.Line.IsSmooth = true;
+            myCurve.Tag = tag;
 
             if (elist != null)
             {

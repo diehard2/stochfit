@@ -864,28 +864,25 @@ void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int d
 	MyComplex indexsupsquared = indexsup * indexsup;
 	
 	int offset = 0;
+	int neg = 0;
     for(int i = 0; i< datapoints;i++)
 	{	
-		int neg = 0;
+		
 		for(int k = 0; k<nl;k++)
 		{
 			if((indexsupsquared.re*sinsquaredtheta[i]-doublenk[k].re+doublenk[0].re)<0)
 			{
-				neg = -1;
+				neg -= 1;
 				break;
 			}
 		}
 		if(neg == 0)
 		{
-			if(m_dQSpread < 0.005)
-			{
-				break;
-			}
+			/*if(m_dQSpread < 0.005 && neg == -5)
+					break;*/
 		}
 		else
-		{
 			offset = i;
-		}
 	}
 
 	#pragma omp parallel

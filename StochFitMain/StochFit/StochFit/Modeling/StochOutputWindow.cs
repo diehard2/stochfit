@@ -261,9 +261,9 @@ namespace StochasticModeling.Modeling
 
         private void UpdateGraphs(int index)
         {
-              RhoGraphing.LoadfromArray("Model Dependent Fit", Z[index], ElectronDensityArray[index], System.Drawing.Color.Turquoise, SymbolType.None, 0, true);
-              RhoGraphing.LoadfromArray("Model Dependent Box Fit", Z[index], BoxElectronDensityArray[index], System.Drawing.Color.Red, SymbolType.None, 0, false);
-              ReflGraphing.LoadfromArray("Model Dependent Fit", Qincrement, ReflectivityMap[index], System.Drawing.Color.Black, SymbolType.XCross, 4, true);
+            RhoGraphing.LoadfromArray("Model Dependent Fit", Z[index], ElectronDensityArray[index], System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
+            RhoGraphing.LoadfromArray("Model Dependent Box Fit", Z[index], BoxElectronDensityArray[index], System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
+            ReflGraphing.LoadfromArray("Model Dependent Fit", Qincrement, ReflectivityMap[index], System.Drawing.Color.Black, SymbolType.XCross, 4, true, string.Empty);
         }
 
         private string ModelParameterString(double[] parameters, double[] covar)

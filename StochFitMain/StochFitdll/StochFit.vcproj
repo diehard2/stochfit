@@ -133,7 +133,7 @@
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				WholeProgramOptimization="false"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GENFIT_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;STOCHFIT_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="1"
 				BasicRuntimeChecks="0"
@@ -293,14 +293,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Genfitdll.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\GenfitHarness.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Genome.cpp"
 				>
 			</File>
@@ -316,6 +308,14 @@
 				RelativePath=".\SimulatedAnnealing.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\StochFitDll.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\StochFitHarness.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -324,14 +324,6 @@
 			>
 			<File
 				RelativePath=".\ASA.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Genfitdll.h"
-				>
-			</File>
-			<File
-				RelativePath=".\GenfitHarness.h"
 				>
 			</File>
 			<File
@@ -360,6 +352,14 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StochFitDll.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StochFitHarness.h"
 				>
 			</File>
 		</Filter>

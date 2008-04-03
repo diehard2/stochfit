@@ -19,26 +19,26 @@
  */
 
 // The following ifdef block is the standard way of creating macros which make exporting 
-// from a DLL simpler. All files within this DLL are compiled with the GENFIT_API
+// from a DLL simpler. All files within this DLL are compiled with the STOCHFIT_API
 // symbol defined on the command line. this symbol should not be defined on any project
 // that uses this DLL. This way any other project whose source files include this file see 
-// GENFIT_API functions as being imported from a DLL, whereas this DLL sees symbols
+// STOCHFIT_API functions as being imported from a DLL, whereas this DLL sees symbols
 // defined with this macro as being exported.
-#ifdef GENFIT_EXPORTS
-#define GENFIT_API __declspec(dllexport)
+#ifdef STOCHFIT_EXPORTS
+#define STOCHFIT_API __declspec(dllexport)
 #else
-#define GENFIT_API __declspec(dllimport)
+#define STOCHFIT_API __declspec(dllimport)
 #endif
 
-extern "C" GENFIT_API int Init(LPCWSTR Directory, double Q[], double Refl[], double ReflError[], double QError[], int Qpoints, double rholipid,double rhoh2o,double supSLD, int parratlayers, double layerlength,
+extern "C" STOCHFIT_API void Init(LPCWSTR Directory, double Q[], double Refl[], double ReflError[], double QError[], int Qpoints, double rholipid,double rhoh2o,double supSLD, int parratlayers, double layerlength,
 							 double surfabs, double wavelength, double subabs, double supabs, BOOL UseSurfAbs, double leftoffset, double QErr, BOOL forcenorm, 
 							 double forcesig, BOOL debug, BOOL XRonly, double resolution,double totallength, BOOL impnorm, int objfunction);
-extern "C" GENFIT_API int GenPriority(int priority);
-extern "C" GENFIT_API int Start(int iterations);
-extern "C" GENFIT_API int Cancel();
-extern "C" GENFIT_API int GetData(double ZRange[],double Rho[],double QRange[], double Refl[] ,double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
-extern "C" GENFIT_API void SetSAParameters(int sigmasearch,int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, BOOL adaptive, int tempiter, int deciter, double gammadec);
+extern "C" STOCHFIT_API void GenPriority(int priority);
+extern "C" STOCHFIT_API void Start(int iterations);
+extern "C" STOCHFIT_API void Cancel();
+extern "C" STOCHFIT_API int GetData(double ZRange[],double Rho[],double QRange[], double Refl[] ,double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
+extern "C" STOCHFIT_API void SetSAParameters(int sigmasearch,int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, BOOL adaptive, int tempiter, int deciter, double gammadec);
 
-extern "C" GENFIT_API void ArraySizes(int* RhoSize, int* Reflsize);
-extern "C" GENFIT_API bool WarmedUp();
-extern "C" GENFIT_API void SAparams(double* lowestenergy, double* temp, int* mode);
+extern "C" STOCHFIT_API void ArraySizes(int* RhoSize, int* Reflsize);
+extern "C" STOCHFIT_API bool WarmedUp();
+extern "C" STOCHFIT_API void SAparams(double* lowestenergy, double* temp, int* mode);

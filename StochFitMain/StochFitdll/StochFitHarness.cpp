@@ -23,9 +23,9 @@
 #include "genome.h"
 #include "multilayer.h"
 #include "SimulatedAnnealing.h"
-#include "GenfitHarness.h"
+#include "StochFitHarness.h"
 
-Genfit::Genfit(LPCWSTR Directory, double* Q, double* Reflect, double* ReflErr, double* QErrors, int DatapointNum, double rholipid,double rhoh2o,double supSLD, int parratlayers, double layerlength,double surfabs, 
+StochFit::StochFit(LPCWSTR Directory, double* Q, double* Reflect, double* ReflErr, double* QErrors, int DatapointNum, double rholipid,double rhoh2o,double supSLD, int parratlayers, double layerlength,double surfabs, 
 			   double wavelength, double subaps, double supabs, BOOL usesurfabs, double leftoffset, double Qerr, BOOL forcenorm, 
 			   double forcesig, bool debug, bool XRonly, double resolution,double totallength, BOOL impnorm, int objfunc)
 {
@@ -70,7 +70,7 @@ Genfit::Genfit(LPCWSTR Directory, double* Q, double* Reflect, double* ReflErr, d
 	Initialize(Q, Reflect, ReflErr, QErrors, DatapointNum);
 }
 
-Genfit::~Genfit()
+StochFit::~StochFit()
 {
 	if(Zinc != NULL)
 	{
@@ -83,7 +83,7 @@ Genfit::~Genfit()
 	}
 }
 	
-void Genfit::Initialize(double* Q, double* Reflect, double* ReflError, double* QError, int PointCount)
+void StochFit::Initialize(double* Q, double* Reflect, double* ReflError, double* QError, int PointCount)
 {
 	 //////////////////////////////////////////////////////////
 	 /******** Setup Variables and ReflectivityClass ********/
@@ -196,7 +196,7 @@ void Genfit::Initialize(double* Q, double* Reflect, double* ReflError, double* Q
 	genome->UpdateBoundaries(NULL,NULL);
 }
 
-int Genfit::Processing()
+int StochFit::Processing()
 {
 
 	bool accepted = false;
@@ -248,7 +248,7 @@ int Genfit::Processing()
 	return 0;
 }
 
-void Genfit::UpdateFits(CReflCalc* ml, GARealGenome* genome, int currentiteration)
+void StochFit::UpdateFits(CReflCalc* ml, GARealGenome* genome, int currentiteration)
 {
 		//Check to see if we're updating
 		WaitForSingleObject(mutex,INFINITE);
@@ -292,14 +292,14 @@ void Genfit::UpdateFits(CReflCalc* ml, GARealGenome* genome, int currentiteratio
 		ReleaseMutex(mutex);
 }
 
-DWORD WINAPI Genfit::InterThread(LPVOID lParam)
+DWORD WINAPI StochFit::InterThread(LPVOID lParam)
 {
-	Genfit* Internalpointer = (Genfit*)lParam;
+	StochFit* Internalpointer = (StochFit*)lParam;
 	Internalpointer->Processing();
 	return 0;
 }
 
-int Genfit::Start(int iterations)
+int StochFit::Start(int iterations)
 {
 	m_itotaliterations = iterations;
 	DWORD dwDummy = 0;
@@ -307,7 +307,7 @@ int Genfit::Start(int iterations)
 	return 0;
 }
 
-int Genfit::Cancel()
+int StochFit::Cancel()
 {
 	DWORD dwdummy = 0;
 	m_bthreadstop = true;
@@ -321,7 +321,7 @@ int Genfit::Cancel()
 	return 0;
 }
 
-int Genfit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)
+int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)
 {
 	//Sleep while we are generating our output data
 	if(m_icurrentiteration != m_itotaliterations)
@@ -364,7 +364,7 @@ int Genfit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, doubl
 	return m_icurrentiteration;
 }
 
-int Genfit::Priority(int priority)
+int StochFit::Priority(int priority)
 {
 	//The higher priorities seem to sometimes cause race conditions and have
 	//been removed
@@ -395,7 +395,7 @@ int Genfit::Priority(int priority)
 	return 0;
 }
 
-void Genfit::WritetoFile(CReflCalc* ml, GARealGenome* genome, const char* filename)
+void StochFit::WritetoFile(CReflCalc* ml, GARealGenome* genome, const char* filename)
 {
 	
 
@@ -412,7 +412,7 @@ void Genfit::WritetoFile(CReflCalc* ml, GARealGenome* genome, const char* filena
 	outfile.close();
 }
 
-void Genfit::LoadFromFile(CReflCalc* ml, GARealGenome* genome,const char* filename, string fileloc )
+void StochFit::LoadFromFile(CReflCalc* ml, GARealGenome* genome,const char* filename, string fileloc )
 {
    GARealGenome genome1 = *genome;
    ifstream infile(filename);

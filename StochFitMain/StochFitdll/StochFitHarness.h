@@ -23,13 +23,13 @@
 #include "multilayer.h"
 #include "SA_Dispatcher.h"
 
-class Genfit
+class StochFit
 {
 	public:
-		Genfit(LPCWSTR Directory, double* Q, double* Refl, double* ReflErr, double* QError, int DatapointNum,	double rholipid,double rhoh2o, double supSLD, int parratlayers, double layerlength,double surfabs, 
+		StochFit(LPCWSTR Directory, double* Q, double* Refl, double* ReflErr, double* QError, int DatapointNum,	double rholipid,double rhoh2o, double supSLD, int parratlayers, double layerlength,double surfabs, 
 			   double wavelength, double subaps, double supabs, BOOL usesurfabs, double leftoffset, double QErr, BOOL forcenorm,
 			   double forcesig, bool debug, bool XRonly, double resolution,double totallength, BOOL impnorm, int objfunc);
-		~Genfit();
+		~StochFit();
 		int Start(int iterations);
 		int Cancel();
 		int Priority(int priority);

@@ -27,54 +27,160 @@ using System.Xml.Serialization;
 
 namespace StochasticModeling
 {
+    /// <summary>
+    /// Serializable class for holding model independent parameters
+    /// </summary>
     [Serializable]
     public class SettingsStruct
     {
         //Surface Settings
+        /// <summary>
+        /// Film SLD
+        /// </summary>
         public string SurflayerSLD;
+        /// <summary>
+        /// Film length
+        /// </summary>
         public string Surflayerlength;
+        /// <summary>
+        /// Film absorption
+        /// </summary>
         public string SurflayerAbs;
 
         //Substrate Settings
+        /// <summary>
+        /// Substrate SLD
+        /// </summary>
         public string SubSLD;
+        /// <summary>
+        /// Substrate absorption
+        /// </summary>
         public string SubAbs;
 
         //Superphase Settings
+        /// <summary>
+        /// Superphas SLD
+        /// </summary>
         public string SupSLD;
+        /// <summary>
+        /// Superphase absorption
+        /// </summary>
         public string SupAbs;
 
         //Misc Settings
+
+        /// <summary>
+        /// X-ray wavenlength
+        /// </summary>
         public string Wavelength;
+        /// <summary>
+        /// Number of small boxes
+        /// </summary>
         public string BoxCount;
+        /// <summary>
+        /// Number of iterations
+        /// </summary>
         public string Iterations;
+        /// <summary>
+        /// Number of iterations completed
+        /// </summary>
         public string IterationsCompleted;
+        /// <summary>
+        /// Error in Q
+        /// </summary>
         public string Percerror;
+        /// <summary>
+        /// True if correcting for imperfect normalization, false otherwise
+        /// </summary>
         public bool ImpNorm;
 
+        /// <summary>
+        /// System description
+        /// </summary>
         public string Title;
+        /// <summary>
+        /// Number of point per Angstrom in the electron density profile
+        /// </summary>
         public string Resolution;
+        /// <summary>
+        /// Estimated length of the film + subphase + superphase(set in SupOffset) + 7
+        /// </summary>
         public string length;
+        /// <summary>
+        /// Low Q offset in datapoints from the beginning of the curve
+        /// </summary>
         public string CritEdgeOffset;
+        /// <summary>
+        /// High Q offset in datapoints from the end of the curve
+        /// </summary>
         public string HighQOffset;
+        /// <summary>
+        /// The percentage of time spent searching the roughness parameter space
+        /// </summary>
         public string SigmaSearchPerc;
+        /// <summary>
+        /// ChiSquare value for the current fit
+        /// </summary>
         public string ChiSquare;
+        /// <summary>
+        /// True if absorption was used, false otherwise
+        /// </summary>
         public bool UseAbs;
+        /// <summary>
+        /// True if the first point in the reflectivity was forced be equal to 1.0
+        /// </summary>
         public bool Forcenorm;
+        /// <summary>
+        /// Algorithm for the model independent fit (Greedy search = 0; Simulated Annealing = 1; STUN Annealing = 2)
+        /// </summary>
         public string Algorithm;
+        /// <summary>
+        /// Fitness function. See documentation for further details
+        /// </summary>
         public string FitFunc;
+        /// <summary>
+        /// The distance in angstroms from Z = 0 to the first small box (default of 35)
+        /// </summary>
         public string SupOffset;
+        /// <summary>
+        /// Writes several debug files. This can be useful for determining the progression of a fit
+        /// </summary>
         public bool Debug;
+        /// <summary>
+        /// Severely penalizes fits with negative electron density
+        /// </summary>
         public bool ForceXR;
 
         //Annealing Settings
+        /// <summary>
+        /// Initial annealing temperature
+        /// </summary>
         public double AnnealInitTemp;
+        /// <summary>
+        /// Number of iterations before <see cref="AnnealInitTemp"/> is decreased
+        /// </summary>
         public int AnnealTempPlat;
+        /// <summary>
+        /// Percentage by which <see cref="AnnealInitTemp"/> is decreased after <see cref="AnnealTempPlat"/> iterations
+        /// </summary>
         public double AnnealSlope;
+        /// <summary>
+        /// The Gamma parameter for STUN tunneling
+        /// </summary>
         public double AnnealGamma;
+        /// <summary>
+        /// The STUN function utilized. See the documentation for more details
+        /// </summary>
         public int STUNfunc;
+        /// <summary>
+        /// Whether STUN annealing is adaptive or not
+        /// </summary>
         public bool STUNAdaptive;
         public int STUNtempiter;
         public int STUNdeciter;
+        /// <summary>
+        /// The percentage to change Gamma by depending on the circumstances in adaptive STUN annealing
+        /// </summary>
         public double STUNgammadec;
     }
 

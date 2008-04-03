@@ -23,7 +23,6 @@
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
 #include <windows.h>
-#include <mkl.h>
 #include <math.h>
 #include <malloc.h>
 #include <fstream>
@@ -35,6 +34,7 @@
 #include "myComplex.h"
 #include <atlbase.h>
 #include <string>
+#include "lm.h"
 
 using namespace MyComplexNumber;
 using namespace Random;

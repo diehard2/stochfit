@@ -30,17 +30,12 @@ using System.Globalization;
 
 namespace StochasticModeling.Modeling
 {
+    /// <summary>
+    /// Form for setting the Stochastic Tunneling parameters
+    /// </summary>
     public partial class STUNAnnealingParams : Form
     {
-        public STUNAnnealingParams()
-        {
-            //Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-            //Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
-
-            InitializeComponent();
-        }
-
-        public STUNAnnealingParams(double inittemp, int platnum, double tempslope, double gamma, int STUNfunc, bool STUNAdaptive,
+       public STUNAnnealingParams(double inittemp, int platnum, double tempslope, double gamma, int STUNfunc, bool STUNAdaptive,
                     int STUNtempiter,int STUNdeciter, double STUNgammadec)
         {
             //Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");

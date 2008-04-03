@@ -30,37 +30,36 @@
 #define LEVMARDLL_API __declspec(dllimport)
 #endif
 
-
-
-extern "C" LEVMARDLL_API double Reflfit(int boxes, double SLD, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
-			double info[], int infosize, BOOL onesigma);
 extern "C" LEVMARDLL_API double FastReflfit(LPCWSTR directory, int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
+			double QRange[],double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
 			double info[], int infosize, BOOL onesigma,BOOL writefiles, double QSpread, BOOL ImpNorm);
+
 extern "C" LEVMARDLL_API double ConstrainedFastReflfit(LPCWSTR directory, int boxes, double SLD,double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
+			double QRange[],double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
 			double info[], int infosize, BOOL onesigma,BOOL writefiles, double UL[], double LL[], double QSpread, BOOL ImpNorm);
-extern "C" LEVMARDLL_API double ReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize);
+
 extern "C" LEVMARDLL_API double FastReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize, double QSpread, BOOL impnorm);
+			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double QSpread, BOOL impnorm);
+
 extern "C" LEVMARDLL_API double Rhofit(LPCWSTR directory, int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
 			double ZRange[], int ZSize, double ED[], int EDsize, double covariance[],
 			int covarsize, double info[], int infosize, BOOL onesigma);
+
 extern "C" LEVMARDLL_API double RhoGenerate(int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
 			double ZRange[], int ZSize, double ED[], double BoxED[], int EDsize);
+
 extern "C" LEVMARDLL_API double StochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
+			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
 			double info[], int infosize, BOOL onesigma,BOOL writefiles, int iterations,double ParamArray[], int* paramarraysize, double paramperc[], double chisquarearray[], double covararray[],
 			double QSpread, BOOL ImpNorm);
+
 extern "C" LEVMARDLL_API double ConstrainedStochFit(int boxes, double SLD,double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
+			double QRange[],double QError[],  int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
 			double info[], int infosize, BOOL onesigma,BOOL writefiles, int iterations,double ParamArray[], int* paramarraysize, double parampercs[], double chisquarearray[], double covararray[],
 			double UL[], double LL[], double QSpread, BOOL ImpNorm);
 
-/* double precision LM, with & without jacobian */
-/* unconstrained minimization */
+/* Leave these in so the dll can also be used as a general purpose LS minimizer*/
+
 extern "C" LEVMARDLL_API int dlevmarder(
       void (*func)(double *p, double *hx, int m, int n, void *adata),
       void (*jacf)(double *p, double *j, int m, int n, void *adata),

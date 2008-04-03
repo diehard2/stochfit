@@ -30,16 +30,23 @@ using System.Globalization;
 
 namespace StochasticModeling
 {
+    /// <summary>
+    /// Simple output window for the least square fitting algorithm
+    /// </summary>
     public partial class LevmarOutput : Form
     {
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public LevmarOutput()
         {
-            //Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-            //Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
-
             InitializeComponent();
         }
 
+        /// <summary>
+        /// Displays the string to the form window
+        /// </summary>
+        /// <param name="display">Formatted output string</param>
         public void DisplayOutput(string display)
         {
             LevMarOut.Text = display;

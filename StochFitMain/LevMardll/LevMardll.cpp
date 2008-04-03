@@ -23,8 +23,6 @@
 
 #include "stdafx.h"
 #include "LevMardll.h"
-#include "lm.h"
-#include "ReflCalc.h"
 #include "FastReflCalc.h"
 #include "RhoCalc.h"
 #include "ParameterContainer.h"
@@ -129,90 +127,8 @@ extern "C" LEVMARDLL_API double RhoGenerate(int boxes, double SLD, double SupSLD
 	return 0;
 }
 
-extern "C" LEVMARDLL_API double Reflfit(int boxes, double SLD, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[], double covariance[],
-			int covarsize, double info[], int infosize, BOOL onesigma)
-{
-	Reflcalc Refl;
-	Refl.init(1.24,boxes,SLD,parameters,paramsize, Reflectivity, reflectivitysize, (bool)onesigma);
-	Refl.Realreflerrors = Errors;
-	Refl.MakeTheta(QRange,QSize);
-	
-	//Setup the fit
-	double opts[LM_OPTS_SZ];
-	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20;
-	opts[4]=-LM_DIFF_DELTA; // relevant only if the finite difference jacobian version is used 
-	
-	//Allocate a dummy array - Our real calculation is done in Refl.objective
-	double* xvec = new double[QSize] ;
-	for(int i = 0; i < QSize; i++)
-	{
-		xvec[i] = 0;
-	}
-
-	//Allocate workspace and our covariance matrix
-	double *work, *covar;
-	work=new double[((LM_DIF_WORKSZ(paramsize, QSize)+paramsize*QSize))];
-	covar=work+LM_DIF_WORKSZ(paramsize, QSize);
-
-	int ret = dlevmar_dif(Refl.objective, parameters, xvec,  paramsize,QSize, 1000, opts, info, work, covar,(void*)(&Refl)); 
-	
-	//Calculate the current reflectivity
-	if(onesigma == TRUE)
-	{
-		Refl.mkdensityonesigma(parameters,paramsize);
-		Refl.mkdensityboxmodel(parameters,paramsize, true);
-	}
-	else
-	{
-		Refl.mkdensity(parameters, paramsize);
-		Refl.mkdensityboxmodel(parameters,paramsize, false);
-	}
-
-	Refl.myrf();
-	double Qc = Refl.CalcQc(SLD);
-	double calcholder = 0;
-	double ChiSquare = 0;
-	//Calculate ChiSquare
-	for(int i = 0; i< QSize;i++)
-	{
-		calcholder = (Reflectivity[i]-Refl.reflpt[i])/Refl.CalcFresnelPoint(QRange[i], Qc);
-		ChiSquare += calcholder*calcholder/(Errors[i]/Refl.CalcFresnelPoint(QRange[i], Qc));
-	}
-	//ChiSquare /= QSize-paramsize;
-
-	//Calculate the standard deviations in the parameters
-	for(int i = 0; i< paramsize;i++)
-	{
-		covariance[i] = sqrt(covar[i*(paramsize+1)]);
-	}
-	
-	//Make output files
-
-	std::ofstream outrhofile("reflrhofit.dat");
-	for(int i = 0; i<Refl.Zlength;i++)
-	{
-		outrhofile<<Refl.ZIncrement[i] << ' ' << Refl.nk[i].re/Refl.nk[Refl.Zlength-1].re << ' ' << Refl.nkb[i].re/Refl.nkb[Refl.Zlength-1].re << std::endl;
-	}
-	outrhofile.close();
-	
-	
-	std::ofstream outreflfile("reflfile.dat");
-	for(int i = 0; i<QSize;i++)
-	{
-		outreflfile << QRange[i] << ' ' << Refl.reflpt[i] << ' ' << QRange[i]/Qc << ' ' << Refl.reflpt[i]/Refl.CalcFresnelPoint(QRange[i],Qc)<<std::endl;
-	}
-	outreflfile.close();
-
-	delete xvec;
-	delete work;
-
-	return ChiSquare;
-}
-
-
 extern "C" LEVMARDLL_API double FastReflfit(LPCWSTR directory, int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[], double covariance[],
+			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[], double covariance[],
 			int covarsize, double info[], int infosize, BOOL onesigma, BOOL writefiles, double QSpread, BOOL ImpNorm)
 {
 	USES_CONVERSION;
@@ -221,7 +137,7 @@ extern "C" LEVMARDLL_API double FastReflfit(LPCWSTR directory, int boxes, double
 	FastReflcalc Refl;
 	Refl.init(wavelength,boxes,SLD,SupSLD,parameters,paramsize, Reflectivity,Errors, reflectivitysize, (bool)onesigma,QSpread,1.0,ImpNorm);
 	Refl.Realreflerrors = Errors;
-	Refl.MakeTheta(QRange,QSize);
+	Refl.MakeTheta(QRange,QError,QSize);
 	
 	//Setup the fit
 
@@ -306,7 +222,7 @@ extern "C" LEVMARDLL_API double FastReflfit(LPCWSTR directory, int boxes, double
 }
 
 extern "C" LEVMARDLL_API double ConstrainedFastReflfit(LPCWSTR directory, int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[], double covariance[],
+			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[], double covariance[],
 			int covarsize, double info[], int infosize, BOOL onesigma, BOOL writefiles, double UL[], double LL[], double QSpread, BOOL ImpNorm)
 {
 	USES_CONVERSION;
@@ -316,7 +232,7 @@ extern "C" LEVMARDLL_API double ConstrainedFastReflfit(LPCWSTR directory, int bo
 	Refl.init(wavelength,boxes,SLD, SupSLD,parameters,paramsize, Reflectivity,Errors, reflectivitysize, (bool)onesigma, 
 		QSpread, 1.0, ImpNorm);
 	Refl.Realreflerrors = Errors;
-	Refl.MakeTheta(QRange,QSize);
+	Refl.MakeTheta(QRange,QError,QSize);
 	
 	//Setup the fit
 
@@ -401,14 +317,14 @@ extern "C" LEVMARDLL_API double ConstrainedFastReflfit(LPCWSTR directory, int bo
 }
 
 extern "C" LEVMARDLL_API double StochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covariance[], int covarsize, 
+			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covariance[], int covarsize, 
 			double info[], int infosize, BOOL onesigma,BOOL writefiles, int iterations, double ParamArray[], int* paramarraysize, double parampercs[], double chisquarearray[], double covararray[],
 			double QSpread, BOOL Impnorm)
 {
 	FastReflcalc Refl;
 	Refl.init(wavelength,boxes,SLD,SupSLD,parameters,paramsize, Reflectivity, Errors, reflectivitysize, (bool)onesigma, QSpread,1.0, Impnorm);
 	Refl.Realreflerrors = Errors;
-	Refl.MakeTheta(QRange,QSize);
+	Refl.MakeTheta(QRange, QError,QSize);
 	
 	//Setup the fit
 
@@ -456,7 +372,7 @@ extern "C" LEVMARDLL_API double StochFit(int boxes, double SLD, double SupSLD, d
 	FastReflcalc locRefl;
 	locRefl.init(wavelength,boxes,SLD,SupSLD,parameters,paramsize, Reflectivity, Errors, reflectivitysize, (bool)onesigma, QSpread,1.0, Impnorm);
 	locRefl.Realreflerrors = Errors;
-	locRefl.MakeTheta(QRange,QSize);
+	locRefl.MakeTheta(QRange, QError, QSize);
 
 	//Initialize random number generator
 	srand(time_seed());
@@ -594,7 +510,7 @@ return 0;
 }
 
 extern "C" LEVMARDLL_API double ConstrainedStochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covariance[], int covarsize, 
+			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covariance[], int covarsize, 
 			double info[], int infosize, BOOL onesigma,BOOL writefiles, int iterations, double ParamArray[], int* paramarraysize, double parampercs[], double chisquarearray[], double covararray[],
 			double UL[], double LL[], double QSpread, BOOL ImpNorm)
 {
@@ -602,7 +518,7 @@ extern "C" LEVMARDLL_API double ConstrainedStochFit(int boxes, double SLD, doubl
 	Refl.init(wavelength,boxes,SLD,SupSLD,parameters,paramsize, Reflectivity, Errors, reflectivitysize, (bool)onesigma,
 		QSpread,1.0,ImpNorm);
 	Refl.Realreflerrors = Errors;
-	Refl.MakeTheta(QRange,QSize);
+	Refl.MakeTheta(QRange,QError, QSize);
 	
 	//Setup the fit
 
@@ -652,7 +568,7 @@ extern "C" LEVMARDLL_API double ConstrainedStochFit(int boxes, double SLD, doubl
 	locRefl.init(wavelength,boxes,SLD,SupSLD,parameters,paramsize, Reflectivity, Errors, reflectivitysize, (bool)onesigma,
 		QSpread,1.0,ImpNorm);
 	locRefl.Realreflerrors = Errors;
-	locRefl.MakeTheta(QRange,QSize);
+	locRefl.MakeTheta(QRange, QError, QSize);
 	
 
 	//Initialize random number generator
@@ -794,30 +710,12 @@ for(int i = 0; i < allsolutions.size() && i < 1000 && allsolutions.size() > 0; i
 return 0;
 }
 
-//Deprecated
-extern "C" LEVMARDLL_API double ReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize)
-{
-	Reflcalc Refl;
-//	Refl.init(wavelength,boxes,SLD,SupSLD,parameters,paramsize, Reflectivity, reflectivitysize, false);
-	Refl.MakeTheta(QRange,QSize);
-	Refl.mkdensity(parameters,paramsize);
-	Refl.myrf();
-
-	for(int i = 0; i< reflectivitysize; i++)
-	{
-		Reflectivity[i] = Refl.reflpt[i];
-	}
-
-	return 0;
-}
-
 extern "C" LEVMARDLL_API double FastReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], int QSize, double Reflectivity[], int reflectivitysize, double QSpread, BOOL impnorm)
+			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double QSpread, BOOL impnorm)
 {
 	FastReflcalc FastRefl;
 	FastRefl.init(wavelength,boxes,SLD,SupSLD,parameters,paramsize, Reflectivity, NULL, reflectivitysize, false, QSpread, 1, impnorm);
-	FastRefl.MakeTheta(QRange,QSize);
+	FastRefl.MakeTheta(QRange,QError,QSize);
 	FastRefl.mkdensity(parameters,paramsize);
 	FastRefl.myrfdispatch();
 

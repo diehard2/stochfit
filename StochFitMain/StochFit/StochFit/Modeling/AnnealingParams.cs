@@ -31,18 +31,19 @@ using StochasticModeling;
 
 namespace StochasticModeling.Modeling
 {
+    /// <summary>
+    /// This form allows one to input the paramters for either Simulated Annealing or Stochastic Tunneling Annealing
+    /// </summary>
     public partial class AnnealingParams : StochFormBase
     {
-        public AnnealingParams()
-        {
-            InitializeComponent();
-        }
-
+        /// <summary>
+        /// Constructor for Annealing Parameters Form. 
+        /// </summary>
+        /// <param name="inittemp">Initial temperature</param>
+        /// <param name="platnum">Number of iterations before the temperature is decreased by tempslope</param>
+        /// <param name="tempslope">Fraction by which the temperature is decreased every platnum iterations</param>
         public AnnealingParams(double inittemp, int platnum, double tempslope)
         {
-            //Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-            //Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
-
             InitializeComponent();
 
             tempTB.Text = inittemp.ToString();
@@ -50,6 +51,12 @@ namespace StochasticModeling.Modeling
             slopeTB.Text = tempslope.ToString();
         }
 
+        /// <summary>
+        /// Allows for retrieving parameters defined by the user
+        /// </summary>
+        /// <param name="inittemp">Initial temperature</param>
+        /// <param name="platnum">Number of iterations before the temperature is decreased by tempslope</param>
+        /// <param name="tempslope">Fraction by which the temperature is decreased every platnum iterations</param>
         public void GetParams(out double inittemp, out int platnum, out double tempslope)
         {
             inittemp = double.Parse(tempTB.Text);
@@ -62,11 +69,23 @@ namespace StochasticModeling.Modeling
             this.Close();
         }
 
+        /// <summary>
+        /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+        /// in number entry
+        /// </summary>
+        /// <param name="sender">A textbox is expected as input</param>
+        /// <param name="e">return true if the number can be cast to a double or false if not</param>
         protected override void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
             base.ValidateNumericalInput(sender, e);
         }
 
+        /// <summary>
+        /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+        /// in number entry 
+        /// </summary>
+        /// <param name="sender">A textbox is expected as input</param>
+        /// <param name="e">return true if the number can be cast to an integer or false if not</param>
         protected override void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
             base.ValidateIntegerInput(sender, e);

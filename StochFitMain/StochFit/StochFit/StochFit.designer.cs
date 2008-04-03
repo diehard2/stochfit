@@ -746,6 +746,7 @@ namespace StochasticModeling
             this.critedgeoffTB.Name = "critedgeoffTB";
             this.critedgeoffTB.Size = new System.Drawing.Size(100, 23);
             this.critedgeoffTB.Text = "0";
+            this.critedgeoffTB.TextChanged += new System.EventHandler(this.critedgeoffTB_TextChanged);
             // 
             // highQOffsetToolStripMenuItem
             // 
@@ -760,6 +761,7 @@ namespace StochasticModeling
             this.HQoffsetTB.Name = "HQoffsetTB";
             this.HQoffsetTB.Size = new System.Drawing.Size(100, 23);
             this.HQoffsetTB.Text = "0";
+            this.HQoffsetTB.TextChanged += new System.EventHandler(this.HQoffsetTB_TextChanged);
             // 
             // setModelOptionsToolStripMenuItem
             // 

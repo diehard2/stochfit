@@ -42,15 +42,6 @@ namespace StochasticModeling
 {
     public partial class Rhomodeling : StochFormBase
     {
-        [DllImport("LevMardll.dll", EntryPoint = "Rhofit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        private static extern double Rhofit(string directory, int boxes, double SLD, double SupSLD, double[] parameters, int paramsize,
-			double[] ZRange, int ZSize, double[] ED, int EDsize, double[] covariance,
-			int covarsize, double[] info, int infosize, bool onesigma);
-
-        [DllImport("LevMardll.dll", EntryPoint = "RhoGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        private static extern double RhoGenerate(int boxes, double SLD, double supSLD, double[] parameters, int paramsize,
-           double[] ZRange, int ZSize, [Out] double[] ED, [Out] double[] BoxED, int EDSize);
-
         #region Variables
 
         private double m_dRoughness = 3;
@@ -79,6 +70,15 @@ namespace StochasticModeling
         private ArrayList m_alHeldParameters;
         #endregion
 
+        /// <summary>
+        /// Graphs and fits an Electron Density Profile against a user defined Electron Density Profile
+        /// </summary>
+        /// <param name="Z">Array of thickness data points</param>
+        /// <param name="ERho">Electron density of the profile to be fit</param>
+        /// <param name="roughness">The overall smoothing parameter found by the model independent fit</param>
+        /// <param name="leftoffset">The offset in Z for the first box</param>
+        /// <param name="subsld">The subphase SLD</param>
+        /// <param name="supsld">The superphase SLD</param>
         public Rhomodeling(double[] Z, double[] ERho, double roughness, string leftoffset, string subsld, string supsld)
         {
             InitializeComponent();
@@ -296,11 +296,6 @@ namespace StochasticModeling
                      parameters[2 * i + 2] = m_dLengthArray[i];
                      parameters[2 * i + 3] = m_dRhoArray[i];
                  }
-                
-                 m_dCovarArray = new double[parameters.Length];
-
-                 chisquaretb.Text = Rhofit(ReflData.Instance.GetWorkingDirectory, boxnumber, double.Parse(SubphaseSLD.Text),double.Parse(SupSLDTB.Text), parameters, parameters.Length,
-                        m_dZincrement, m_dZincrement.Length, m_dRealRho, m_dZincrement.Length, m_dCovarArray, m_dCovarArray.Length, info, info.Length, true).ToString("##.### E-0");
             }
             else
             {
@@ -326,12 +321,13 @@ namespace StochasticModeling
                     parameters[3 * i + 3] = m_dRhoArray[i];
                     parameters[3 * i + 4] = m_dSigmaArray[i];
                 }
-
-                m_dCovarArray = new double[parameters.Length];
-
-                chisquaretb.Text = Rhofit(ReflData.Instance.GetWorkingDirectory, boxnumber, double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), parameters, parameters.Length,
-                   m_dZincrement, m_dZincrement.Length, m_dRealRho, m_dZincrement.Length, m_dCovarArray, m_dCovarArray.Length, info, info.Length, false).ToString("##.### E-0");
             }
+
+            m_dCovarArray = new double[parameters.Length];
+
+            chisquaretb.Text = Rhofit(ReflData.Instance.GetWorkingDirectory, boxnumber, double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), parameters, parameters.Length,
+                   m_dZincrement, m_dZincrement.Length, m_dRealRho, m_dZincrement.Length, m_dCovarArray, m_dCovarArray.Length, info, info.Length, Holdsigma.Checked).ToString("##.### E-0");
+
 
             //Update paramters
             if (Holdsigma.Checked == true)

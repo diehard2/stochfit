@@ -79,7 +79,7 @@ void FastReflcalc::init(double xraylambda,int boxes, double subSLD, double SupSL
 	ImagArray = new double[boxnumber+2];
 }
 
-void FastReflcalc::MakeTheta(double* QRange, int QRangesize)
+void FastReflcalc::MakeTheta(double* QRange, double* QError, int QRangesize)
 {
 	m_idatapoints = QRangesize;
 
@@ -97,25 +97,55 @@ void FastReflcalc::MakeTheta(double* QRange, int QRangesize)
 	}
 	
 
-	for(int i = 0; i < m_idatapoints; i++)
+	//Calculate the qspread sinthetai's for resolution smearing
+	if(QError != NULL)
 	{
-		qspreadsinthetai[13*i] = sinthetai[i];
-		qspreadsinthetai[13*i+1] = sinthetai[i]*(1+1.2*m_dQSpread);
-		qspreadsinthetai[13*i+2] = sinthetai[i]*(1-1.2*m_dQSpread);
-		qspreadsinthetai[13*i+3] = sinthetai[i]*(1+1.0*m_dQSpread);
-		qspreadsinthetai[13*i+4] = sinthetai[i]*(1-1.0*m_dQSpread);
-		qspreadsinthetai[13*i+5] = sinthetai[i]*(1+0.8*m_dQSpread);
-		qspreadsinthetai[13*i+6] = sinthetai[i]*(1-0.8*m_dQSpread);
-		qspreadsinthetai[13*i+7] = sinthetai[i]*(1+0.6*m_dQSpread);
-		qspreadsinthetai[13*i+8] = sinthetai[i]*(1-0.6*m_dQSpread);
-		qspreadsinthetai[13*i+9] = sinthetai[i]*(1+0.4*m_dQSpread);
-		qspreadsinthetai[13*i+10] = sinthetai[i]*(1-0.4*m_dQSpread);
-		qspreadsinthetai[13*i+11] = sinthetai[i]*(1+0.2*m_dQSpread);
-		qspreadsinthetai[13*i+12] = sinthetai[i]*(1-0.2*m_dQSpread);
+		double holder = lambda/(4.0*M_PI);
 
-		if(qspreadsinthetai[13*i+2] < 0.0)
-			MessageBox(NULL, L"Error in QSpread please contact the author", NULL,NULL);
+		for(int i = 0; i < m_idatapoints; i++)
+		{
+			qspreadsinthetai[13*i] = sinthetai[i];
+			qspreadsinthetai[13*i+1] = holder*(QRange[i]+1.2*QError[i]);
+			qspreadsinthetai[13*i+2] = holder*(QRange[i]-1.2*QError[i]);
+			qspreadsinthetai[13*i+3] = holder*(QRange[i]+1.0*QError[i]);
+			qspreadsinthetai[13*i+4] = holder*(QRange[i]-1.0*QError[i]);
+			qspreadsinthetai[13*i+5] = holder*(QRange[i]+0.8*QError[i]);
+			qspreadsinthetai[13*i+6] = holder*(QRange[i]-0.8*QError[i]);
+			qspreadsinthetai[13*i+7] = holder*(QRange[i]+0.6*QError[i]);
+			qspreadsinthetai[13*i+8] = holder*(QRange[i]-0.6*QError[i]);
+			qspreadsinthetai[13*i+9] = holder*(QRange[i]+0.4*QError[i]);
+			qspreadsinthetai[13*i+10] = holder*(QRange[i]-0.4*QError[i]);
+			qspreadsinthetai[13*i+11] = holder*(QRange[i]+0.2*QError[i]);
+			qspreadsinthetai[13*i+12] = holder*(QRange[i]-0.2*QError[i]);
+
+			if(qspreadsinthetai[13*i+1] < 0.0)
+				MessageBox(NULL, L"Error in QSpread please contact the author - the program will now crash :(", NULL,NULL);
+		}
 	}
+	else
+	{
+		for(int i = 0; i < m_idatapoints; i++)
+		{
+			qspreadsinthetai[13*i] = sinthetai[i];
+			qspreadsinthetai[13*i+1] = sinthetai[i]*(1+1.2*m_dQSpread);
+			qspreadsinthetai[13*i+2] = sinthetai[i]*(1-1.2*m_dQSpread);
+			qspreadsinthetai[13*i+3] = sinthetai[i]*(1+1.0*m_dQSpread);
+			qspreadsinthetai[13*i+4] = sinthetai[i]*(1-1.0*m_dQSpread);
+			qspreadsinthetai[13*i+5] = sinthetai[i]*(1+0.8*m_dQSpread);
+			qspreadsinthetai[13*i+6] = sinthetai[i]*(1-0.8*m_dQSpread);
+			qspreadsinthetai[13*i+7] = sinthetai[i]*(1+0.6*m_dQSpread);
+			qspreadsinthetai[13*i+8] = sinthetai[i]*(1-0.6*m_dQSpread);
+			qspreadsinthetai[13*i+9] = sinthetai[i]*(1+0.4*m_dQSpread);
+			qspreadsinthetai[13*i+10] = sinthetai[i]*(1-0.4*m_dQSpread);
+			qspreadsinthetai[13*i+11] = sinthetai[i]*(1+0.2*m_dQSpread);
+			qspreadsinthetai[13*i+12] = sinthetai[i]*(1-0.2*m_dQSpread);
+
+			if(qspreadsinthetai[13*i+2] < 0.0)
+				MessageBox(NULL, L"Error in QSpread please contact the author", NULL,NULL);
+		}
+	}
+
+
 
 	for (int l = 0; l < m_idatapoints; l++)
 	{
@@ -462,7 +492,7 @@ void FastReflcalc::QsmearRf(double* qspreadrefl, double* refl, int datapoints)
 {
 	double calcholder;
 
-	#pragma ivdep
+	
 	for(int i = 0; i < datapoints; i++)
 	{
 		calcholder = 0;

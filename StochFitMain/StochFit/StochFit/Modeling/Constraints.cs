@@ -31,11 +31,18 @@ using StochasticModeling;
 
 namespace StochasticModeling.Modeling
 {
+    /// <summary>
+    /// This form allows one to enter constraints for the model dependent fitting routines
+    /// </summary>
     public partial class Constraints : StochFormBase
     {
         #region Variables
-        
-        public bool IsInitialized = false;
+
+        private bool IsInitialized;
+
+       
+
+        //public bool IsInitialized = false;
 
         int m_iboxcount;
 
@@ -59,6 +66,11 @@ namespace StochasticModeling.Modeling
         public double[] SigmaLowArray;
 
         #endregion
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="boxcount">Number of boxes in the fit</param>
         public Constraints(int boxcount)
         {
             InitializeComponent();
@@ -203,6 +215,20 @@ namespace StochasticModeling.Modeling
             }
         }
 
+        /// <summary>
+        /// Determine whether the constraints have been initialized
+        /// </summary>
+        public bool Initialized
+        {
+            get { return IsInitialized; }
+        }
+
+        /// <summary>
+        /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+        /// in number entry
+        /// </summary>
+        /// <param name="sender">A textbox is expected as input</param>
+        /// <param name="e">return true if the number can be cast to a double or false if not</param>
         protected override void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
             if(((TextBox)sender).Text != string.Empty)

@@ -38,15 +38,6 @@ namespace StochasticModeling.Modeling
 {
     public partial class StochOutputWindow : StochFormBase
     {
-        [DllImport("LevMardll.dll", EntryPoint = "FastReflGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern double FastReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double[] parameters, int paramsize,
-           double[] QRange, int QSize, [Out] double[] Reflectivity, int reflectivitysize, double QSpread, bool ImpNorm);
-
-        [DllImport("LevMardll.dll", EntryPoint = "RhoGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern double RhoGenerate(int boxes, double SLD, double SupSLD, double[] parameters, int paramsize,
-           double[] ZRange, int ZSize, [Out] double[] ED, [Out] double[] BoxED, int EDSize);
-
-
         double[][] ParameterArray;
         double[][] CovarArray;
         double[][] NewRParameter;
@@ -60,7 +51,7 @@ namespace StochasticModeling.Modeling
         double[][] LengthArray;
         double[][] SigmaArray;
         double[] SubRoughArray;
-        double[] Qincrement;
+        double[] Qincrement, QErrors;
         double[][] ReflectivityMap;
         double[] RealReflErrors;
         double[] RealRefl;
@@ -133,10 +124,10 @@ namespace StochasticModeling.Modeling
             //Setup the graphs
 
             ReflGraphing = new Graphing(string.Empty);
-            ReflGraphing.m_bDBF = true;
-            ReflGraphing.m_dSLD = SubSLD;
-            ReflGraphing.m_dSupSLD = SupSLD;
-            ReflGraphing.m_dlambda = wavelength;
+            ReflGraphing.DivbyFresnel = true;
+            ReflGraphing.SubSLD = SubSLD;
+            ReflGraphing.SupSLD = SupSLD;
+            ReflGraphing.Wavelength = wavelength;
             ReflGraphing.CreateGraph(ReflGraph, "Reflectivity", "Q/Qc", "Intensity / Fresnel", AxisType.Log);
             ReflGraphing.LoadDataFiletoGraph("Reflectivity Data", System.Drawing.Color.Black, SymbolType.Circle, 5);
             ReflGraphing.SetAllFonts("Garamond", 22, 18);
@@ -185,7 +176,7 @@ namespace StochasticModeling.Modeling
                     NewEParameter[i].Length, Z[i], Z[i].Length, ElectronDensityArray[i], BoxElectronDensityArray[i], ElectronDensityArray.Length);
 
                 FastReflGenerate(m_iboxes, m_dSubSLD, m_dSupSLD, wavelength, NewRParameter[i], NewRParameter[i].Length,
-                  Qincrement, Qincrement.Length, ReflectivityMap[i], ReflectivityMap[i].Length, QSpread, Impnorm);
+                  Qincrement, QErrors, Qincrement.Length, ReflectivityMap[i], ReflectivityMap[i].Length, QSpread, Impnorm);
             }
 
             ModelLB.SelectedIndex = 0;
@@ -344,6 +335,7 @@ namespace StochasticModeling.Modeling
             Qincrement = ReflData.Instance.GetQData;
             RealRefl = ReflData.Instance.GetReflData;
             RealReflErrors = ReflData.Instance.GetRErrors;
+            QErrors = ReflData.Instance.GetQErrors;
 
             //Allocate room for the rest of the arrays
             for (int i = 0; i < ParameterArray.Length; i++)

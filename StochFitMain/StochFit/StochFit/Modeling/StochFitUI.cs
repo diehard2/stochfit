@@ -31,8 +31,14 @@ using StochasticModeling;
 
 namespace StochasticModeling.Modeling
 {
+    /// <summary>
+    /// This class allows the user to set parameters for the stochastic search of the parameter space
+    /// </summary>
     public partial class StochFitUI : StochFormBase
     {
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public StochFitUI()
         {
             InitializeComponent();
@@ -144,11 +150,23 @@ namespace StochasticModeling.Modeling
             }
         }
 
+        /// <summary>
+        /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+        /// in number entry 
+        /// </summary>
+        /// <param name="sender">A textbox is expected as input</param>
+        /// <param name="e">return true if the number can be cast to a double or false if not</param>
         protected override void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
             base.ValidateNumericalInput(sender, e);
         }
 
+        /// <summary>
+        /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+        /// in number entry 
+        /// </summary>
+        /// <param name="sender">A textbox is expected as input</param>
+        /// <param name="e">return true if the number can be cast to an integer or false if not</param>
         protected override void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
             base.ValidateIntegerInput(sender, e);

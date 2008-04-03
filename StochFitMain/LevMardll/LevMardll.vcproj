@@ -317,10 +317,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ReflCalc.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\RhoCalc.cpp"
 				>
 			</File>
@@ -384,10 +380,6 @@
 			</File>
 			<File
 				RelativePath=".\random.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ReflCalc.h"
 				>
 			</File>
 			<File

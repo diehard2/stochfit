@@ -27,7 +27,6 @@ using System.Windows.Forms;
 using ZedGraph;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Collections;
 using StochasticModeling.Properties;
@@ -40,28 +39,12 @@ using System.Globalization;
 
 namespace StochasticModeling
 {
+    /// <summary>
+    /// Main GUI for the StochFit program
+    /// </summary>
     public partial class Stochfit : StochFormBase
     {
-        [DllImport("stochfitdll.dll", EntryPoint = "Init", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-            private static extern int Init(string directory, double[] Q, double[] Refl, double[] ReflError, double[] QErr, int Qpoints, double rholipid, double rhoh2o, double supSLD, int parratlayers,
-            double layerlength, double slABS, double XRlambda, double SubAbs, double SupAbs, bool UseAbs, double leftoffset, double Qerr, bool forcenorm, 
-            double forcesigma, bool debug, bool XRonly,double resolution,double totallength, bool impnorm, int objfunc);
-        [DllImport("stochfitdll.dll", EntryPoint = "GenPriority", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-            private static extern int GenPriority(int priority);
-        [DllImport("stochfitdll.dll", EntryPoint = "Start", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-            private static extern int Start(int iterations);
-        [DllImport("stochfitdll.dll", EntryPoint = "Cancel", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-            private static extern int Cancel();
-        [DllImport("stochfitdll.dll", EntryPoint = "GetData", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-            private static extern int GetData(double[] ZRange, double[] Rho, double[] QRange, double[] Refl, out double roughness, out double chisquare, out double goodnessoffit, out bool isfinished);
-        [DllImport("stochfitdll.dll", EntryPoint = "SetSAParameters", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-            private static extern void SetSAParameters(int sigmasearch, int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, bool adaptive, int tempiter, int deciter, double gammadec);
-        [DllImport("stochfitdll.dll", EntryPoint = "ArraySizes", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-            private static extern void ArraySizes(out int RhoSize, out int Reflsize);
-        [DllImport("stochfitdll.dll", EntryPoint = "WarmedUp", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-            private static extern bool WarmedUp();
-        [DllImport("stochfitdll.dll", EntryPoint = "SAparams", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-            private static extern void SAparams(out double lowestenergy, out double temp, out int mode);
+        #region Variables
 
         string origreflfilename;
         double m_droughness = 0;
@@ -96,7 +79,10 @@ namespace StochasticModeling
         bool m_bmodelreset = false;
         bool m_bIsXR = true;
         int previnstanceiter = 0;
-       
+
+        #endregion
+
+        #region Constructor and Form Setup
         /// <summary>
         /// Default constructor
         /// </summary>
@@ -109,7 +95,7 @@ namespace StochasticModeling
             rhographobject = new Graphing(string.Empty);
             modelreflname = "Model Independent Reflectivity";
             rhomodelname = "rhomodel";
-            
+
             //Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
             //Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
             InitializeComponent();
@@ -141,7 +127,7 @@ namespace StochasticModeling
             rhographobject.LegendState = false;
             progressBar1.Style = ProgressBarStyle.Continuous;
             progressBar1.ForeColor = Color.AliceBlue;
-            
+
             FileName.ReadOnly = true;
             ParametersBox.Enabled = false;
             Priority.Enabled = false;
@@ -163,6 +149,9 @@ namespace StochasticModeling
                 SAModelabel.Visible = false;
                 SATempTB.Visible = false;
             }
+
+            //Setup the callback if the graph updates the bounds
+            reflgraphobject.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
         }
 
         private void LoadFile_Click(object sender, EventArgs e)
@@ -186,13 +175,14 @@ namespace StochasticModeling
                     ReflData.Instance.SetReflData(origreflfilename, !errorsAreInVarianceToolStripMenuItem.Checked);
 
                     settingsfile = origreflfilename + "settings.xml";
-                    reflgraphobject.m_bDBF = fresnelcb.Checked;
+                    reflgraphobject.DivbyFresnel = fresnelcb.Checked;
                     divbyfresnel = fresnelcb.Checked;
                     reflgraphobject.SetAllFonts("Garamond", 20, 18);
-                    reflgraphobject.m_dSLD = Double.Parse(rhowater.Text);
-                    reflgraphobject.m_dSupSLD = Double.Parse(SupSLDTB.Text);
-                    reflgraphobject.m_dlambda = Double.Parse(wavelength.Text);
-                   
+                    reflgraphobject.SubSLD = Double.Parse(rhowater.Text);
+                    reflgraphobject.SupSLD = Double.Parse(SupSLDTB.Text);
+                    reflgraphobject.Wavelength = Double.Parse(wavelength.Text);
+                    reflgraphobject.GetHighQOffset = ReflData.Instance.GetNumberDataPoints;
+                    reflgraphobject.GetLowQOffset = 0;
                     //Load the modeled files if they are available
                     if (File.Exists(settingsfile))
                     {
@@ -213,10 +203,10 @@ namespace StochasticModeling
 
                             if (File.Exists(tempfile))
                             {
-                                reflgraphobject.m_bDBF = divbyfresnel;
-                                reflgraphobject.m_dSLD = double.Parse(rhowater.Text);
-                                reflgraphobject.m_dSupSLD = double.Parse(SupSLDTB.Text);
-                                reflgraphobject.m_dlambda = double.Parse(wavelength.Text);
+                                reflgraphobject.DivbyFresnel = divbyfresnel;
+                                reflgraphobject.SubSLD = double.Parse(rhowater.Text);
+                                reflgraphobject.SupSLD = double.Parse(SupSLDTB.Text);
+                                reflgraphobject.Wavelength = double.Parse(wavelength.Text);
 
                                 //Load the data file to the graph
                                 reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
@@ -285,7 +275,7 @@ namespace StochasticModeling
                     Priority.Enabled = true;
                     Startbutton.Enabled = true;
                     Rhomodel.Enabled = true;
-
+                    reflgraphobject.SetBounds();
 
                     if (UseAbsCB.Checked == false)
                     {
@@ -299,6 +289,88 @@ namespace StochasticModeling
             {
                 MessageBox.Show("Error loading the previous run");
             }
+        }
+        private void LoadZ(string filename)
+        {
+            using (StreamReader sr = new StreamReader(filename))
+            {
+                string dataline;
+                int linecount = 0;
+
+                while ((dataline = sr.ReadLine()) != null)
+                    linecount++;
+
+                Z = new double[linecount];
+                Rho = new double[linecount];
+            }
+            using (StreamReader sr = new StreamReader(filename))
+            {
+                string dataline;
+                int linecount = 0;
+
+                while ((dataline = sr.ReadLine()) != null)
+                {
+                    Regex r = new Regex(@"\s");
+                    string[] temp = r.Split(dataline);
+                    ArrayList datastring = new ArrayList();
+                    for (int i = 0; i < temp.Length; i++)
+                    {
+                        if (temp[i] != "")
+                            datastring.Add(temp[i]);
+                    }
+
+                    Z[linecount] = Double.Parse((string)datastring[0]);
+                    Rho[linecount] = Double.Parse((string)datastring[1]);
+                    linecount++;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Save and Load Settings
+
+        private void WriteSettings()
+        {
+            MySettings PrevSettings = new MySettings();
+
+            PrevSettings.Settings.SurflayerSLD = Rholipid.Text;
+            PrevSettings.Settings.Surflayerlength = layerlength.Text;
+            PrevSettings.Settings.SurflayerAbs = SurfAbs.Text;
+            PrevSettings.Settings.Algorithm = AlgorithmCB.Text;
+            PrevSettings.Settings.FitFunc = objectiveCB.Text;
+            PrevSettings.Settings.SubSLD = rhowater.Text;
+            PrevSettings.Settings.SubAbs = SubAbs.Text;
+            PrevSettings.Settings.Wavelength = wavelength.Text;
+            PrevSettings.Settings.BoxCount = Boxlayers.Text;
+            PrevSettings.Settings.Iterations = Iterations.Text;
+            PrevSettings.Settings.IterationsCompleted = progressBar1.Value.ToString();
+            PrevSettings.Settings.ChiSquare = ChiSquareTB.Text;
+            PrevSettings.Settings.Title = TitleTB.Text;
+            PrevSettings.Settings.Resolution = ResolutionTB.Text;
+            PrevSettings.Settings.length = TotlengthTB.Text;
+            PrevSettings.Settings.CritEdgeOffset = critedgeoffTB.Text;
+            PrevSettings.Settings.SigmaSearchPerc = SigmaSearchTB.Text;
+            PrevSettings.Settings.UseAbs = UseAbsCB.Checked;
+            PrevSettings.Settings.HighQOffset = HQoffsetTB.Text;
+            PrevSettings.Settings.SupOffset = SupoffsetTB.Text;
+            PrevSettings.Settings.SupSLD = SupSLDTB.Text;
+            PrevSettings.Settings.SupAbs = SupAbsTB.Text;
+            PrevSettings.Settings.Forcenorm = ForceNormCB.Checked;
+            PrevSettings.Settings.AnnealInitTemp = m_dAnnealtemp;
+            PrevSettings.Settings.AnnealSlope = m_dAnnealslope;
+            PrevSettings.Settings.AnnealTempPlat = m_iAnnealplat;
+            PrevSettings.Settings.AnnealGamma = m_dSTUNGamma;
+            PrevSettings.Settings.ImpNorm = ImpNormCB.Checked;
+            PrevSettings.Settings.Percerror = QErrTB.Text;
+            PrevSettings.Settings.Debug = debugToolStripMenuItem.Checked;
+            PrevSettings.Settings.ForceXR = forceXRToolStripMenuItem1.Checked;
+            PrevSettings.Settings.STUNAdaptive = m_bSTUNAdaptive;
+            PrevSettings.Settings.STUNdeciter = m_iSTUNdeciter;
+            PrevSettings.Settings.STUNfunc = m_iSTUNfunc;
+            PrevSettings.Settings.STUNgammadec = m_dSTUNgammadec;
+            PrevSettings.Settings.STUNtempiter = m_iSTUNtempiter;
+            PrevSettings.WriteSettings(settingsfile);
         }
 
         private bool LoadSettings()
@@ -361,6 +433,10 @@ namespace StochasticModeling
             }
         }
 
+        #endregion
+
+        #region Start and Cancel Events
+
         private void Startbutton_Click(object sender, EventArgs e)
         {
             //Initialize Stochfit
@@ -393,26 +469,26 @@ namespace StochasticModeling
             double[] re = new double[newdatapoints];
             double[] qe = null;
 
-            if (ReflData.Instance.HaveErrorinQ) 
-               qe = new double[newdatapoints];
-            
+            if (ReflData.Instance.HaveErrorinQ)
+                qe = new double[newdatapoints];
+
             //Move the data into truncated arrays so we don't have to constantly recalculate in the numerically intensive portions
             for (int i = int.Parse(critedgeoffTB.Text); i < ReflData.Instance.GetNumberDataPoints - int.Parse(HQoffsetTB.Text); i++)
             {
                 q[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetQDataPt(i);
                 r[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetReflDataPt(i);
                 re[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetRErrorPt(i);
-                
-                if(qe != null)
+
+                if (qe != null)
                     qe[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetQErrorPt(i);
             }
-            
-            Init(info.DirectoryName, q, r, re, qe, newdatapoints, Double.Parse(Rholipid.Text), Double.Parse(rhowater.Text),Double.Parse(SupSLDTB.Text),
+
+            Init(info.DirectoryName, q, r, re, qe, newdatapoints, Double.Parse(Rholipid.Text), Double.Parse(rhowater.Text), Double.Parse(SupSLDTB.Text),
                     Int32.Parse(Boxlayers.Text), Double.Parse(layerlength.Text),
                      Double.Parse(SurfAbs.Text), Double.Parse(wavelength.Text), Double.Parse(SubAbs.Text), Double.Parse(SupAbsTB.Text), UseAbsCB.Checked, Double.Parse(SupoffsetTB.Text), Double.Parse(QErrTB.Text), ForceNormCB.Checked,
                      Double.Parse(SigTSTB.Text), debugToolStripMenuItem.Checked, forceXRToolStripMenuItem1.Checked, double.Parse(ResolutionTB.Text), double.Parse(TotlengthTB.Text), ImpNormCB.Checked, objectiveCB.SelectedIndex);
-            
-            SetSAParameters(int.Parse(SigmaSearchTB.Text), AlgorithmCB.SelectedIndex, m_dAnnealtemp,m_iAnnealplat,m_dAnnealslope,m_dSTUNGamma,m_iSTUNfunc,m_bSTUNAdaptive, m_iSTUNtempiter, m_iSTUNdeciter, m_dSTUNgammadec);
+
+            SetSAParameters(int.Parse(SigmaSearchTB.Text), AlgorithmCB.SelectedIndex, m_dAnnealtemp, m_iAnnealplat, m_dAnnealslope, m_dSTUNGamma, m_iSTUNfunc, m_bSTUNAdaptive, m_iSTUNtempiter, m_iSTUNdeciter, m_dSTUNgammadec);
             Start(iterations);
             GenPriority(Priority.SelectedIndex);
 
@@ -449,50 +525,45 @@ namespace StochasticModeling
             }
         }
 
-        private void WriteSettings()
+        private void Cancelbutton_Click(object sender, EventArgs e)
         {
-            MySettings PrevSettings = new MySettings();
-
-            PrevSettings.Settings.SurflayerSLD = Rholipid.Text;
-            PrevSettings.Settings.Surflayerlength = layerlength.Text;
-            PrevSettings.Settings.SurflayerAbs = SurfAbs.Text;
-            PrevSettings.Settings.Algorithm = AlgorithmCB.Text;
-            PrevSettings.Settings.FitFunc = objectiveCB.Text;
-            PrevSettings.Settings.SubSLD = rhowater.Text;
-            PrevSettings.Settings.SubAbs = SubAbs.Text;
-            PrevSettings.Settings.Wavelength = wavelength.Text;
-            PrevSettings.Settings.BoxCount = Boxlayers.Text;
-            PrevSettings.Settings.Iterations = Iterations.Text;
-            PrevSettings.Settings.IterationsCompleted = progressBar1.Value.ToString();
-            PrevSettings.Settings.ChiSquare = ChiSquareTB.Text;
-            PrevSettings.Settings.Title = TitleTB.Text;
-            PrevSettings.Settings.Resolution = ResolutionTB.Text;
-            PrevSettings.Settings.length = TotlengthTB.Text;
-            PrevSettings.Settings.CritEdgeOffset = critedgeoffTB.Text;
-            PrevSettings.Settings.SigmaSearchPerc = SigmaSearchTB.Text;
-            PrevSettings.Settings.UseAbs = UseAbsCB.Checked;
-            PrevSettings.Settings.HighQOffset = HQoffsetTB.Text;
-            PrevSettings.Settings.SupOffset = SupoffsetTB.Text;
-            PrevSettings.Settings.SupSLD = SupSLDTB.Text;
-            PrevSettings.Settings.SupAbs = SupAbsTB.Text;
-            PrevSettings.Settings.Forcenorm = ForceNormCB.Checked;
-            PrevSettings.Settings.AnnealInitTemp = m_dAnnealtemp;
-            PrevSettings.Settings.AnnealSlope = m_dAnnealslope;
-            PrevSettings.Settings.AnnealTempPlat = m_iAnnealplat;
-            PrevSettings.Settings.AnnealGamma = m_dSTUNGamma;
-            PrevSettings.Settings.ImpNorm = ImpNormCB.Checked;
-            PrevSettings.Settings.Percerror = QErrTB.Text;
-            PrevSettings.Settings.Debug = debugToolStripMenuItem.Checked;
-            PrevSettings.Settings.ForceXR = forceXRToolStripMenuItem1.Checked;
-            PrevSettings.Settings.STUNAdaptive = m_bSTUNAdaptive;
-            PrevSettings.Settings.STUNdeciter = m_iSTUNdeciter;
-            PrevSettings.Settings.STUNfunc = m_iSTUNfunc;
-            PrevSettings.Settings.STUNgammadec = m_dSTUNgammadec;
-            PrevSettings.Settings.STUNtempiter = m_iSTUNtempiter;
-            PrevSettings.WriteSettings(settingsfile);
+            if (MessageBox.Show("Verify fitting cancellation", "Cancelling", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                Canceled();
         }
 
-      
+        private void Canceled()
+        {
+            WriteSettings();
+            myTimer.Stop();
+            CancelFit();
+            Cancelbutton.Enabled = false;
+
+            setModelOptionsToolStripMenuItem.Enabled = setResolutionOptionsToolStripMenuItem.Enabled =
+              miscellaneousOptionsToolStripMenuItem.Enabled = false;
+
+            setModelOptionsToolStripMenuItem.DropDown.Enabled = setResolutionOptionsToolStripMenuItem.DropDown.Enabled =
+                miscellaneousOptionsToolStripMenuItem.Enabled = true;
+
+            ParametersBox.Enabled = FittingParamBox.Enabled = LoadFile.Enabled = Startbutton.Enabled = true;
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (Cancelbutton.Enabled == true)
+            {
+                if (MessageBox.Show("Verify fitting cancellation", "Cancelling", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    WriteSettings();
+                    CancelFit();
+                    Thread.Sleep(700);
+                }
+                else
+                    e.Cancel = true;
+            }
+        }
+        #endregion
+
+        #region Data Update Routines
         private void OnUpdateTimer(object source, ElapsedEventArgs e)
         {
             //Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
@@ -541,7 +612,7 @@ namespace StochasticModeling
                     SAlowenergyTB.Text = lowestenergy.ToString("#.#### E-000");
                     SATempTB.Text = temp.ToString("#.#### E-000");
                     //if (mode > 0)
-                        SAModeTB.Text = "Annealing";
+                    SAModeTB.Text = "Annealing";
                     //else
                     //{
                     //    if (double.Parse(ChiSquareTB.Text) > 2)
@@ -581,64 +652,6 @@ namespace StochasticModeling
                 m_bupdating = false;
             }
         }
-       
-        private void LoadZ(string filename)
-        {
-            using (StreamReader sr = new StreamReader(filename))
-            {
-                string dataline;
-                int linecount = 0;
-
-                while ((dataline = sr.ReadLine()) != null)
-                    linecount++;
-
-                Z = new double[linecount];
-                Rho = new double[linecount];
-            }
-            using (StreamReader sr = new StreamReader(filename))
-            {
-                string dataline;
-                int linecount = 0;
- 
-                while ((dataline = sr.ReadLine()) != null)
-                {
-                    Regex r = new Regex(@"\s");
-                    string[] temp = r.Split(dataline);
-                    ArrayList datastring = new ArrayList();
-                    for (int i = 0; i < temp.Length; i++)
-                    {
-                        if (temp[i] != "")
-                            datastring.Add(temp[i]);
-                    }
-
-                    Z[linecount] = Double.Parse((string)datastring[0]);
-                    Rho[linecount] = Double.Parse((string)datastring[1]);
-                    linecount++;
-                }
-            }
-        }
-
-        private void Cancelbutton_Click(object sender, EventArgs e)
-        {
-            if (MessageBox.Show("Verify fitting cancellation", "Cancelling", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                Canceled();
-        }
-
-        private void Canceled()
-         {
-             WriteSettings();
-             myTimer.Stop();
-             Cancel();
-             Cancelbutton.Enabled = false;
-
-            setModelOptionsToolStripMenuItem.Enabled = setResolutionOptionsToolStripMenuItem.Enabled =
-              miscellaneousOptionsToolStripMenuItem.Enabled = false;
-
-             setModelOptionsToolStripMenuItem.DropDown.Enabled = setResolutionOptionsToolStripMenuItem.DropDown.Enabled =
-                 miscellaneousOptionsToolStripMenuItem.Enabled = true ;
-
-             ParametersBox.Enabled = FittingParamBox.Enabled = LoadFile.Enabled = Startbutton.Enabled = true;
-         }
 
         private void UpdateGraphs()
         {
@@ -646,11 +659,11 @@ namespace StochasticModeling
             {
                 Color color;
                 reflgraphobject.IsXR = m_bIsXR;
-                
-                if ((divbyfresnel != reflgraphobject.m_bDBF || m_bmodelreset == true) && origreflfilename != string.Empty)
+
+                if ((divbyfresnel != reflgraphobject.DivbyFresnel || m_bmodelreset == true) && origreflfilename != string.Empty)
                 {
                     reflgraphobject.Clear();
-                    reflgraphobject.m_bDBF = divbyfresnel;
+                    reflgraphobject.DivbyFresnel = divbyfresnel;
                     reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
 
                     if (Refl != null)
@@ -677,7 +690,7 @@ namespace StochasticModeling
                     {
                         reflgraphobject.LoadfromArray(modelreflname, Q, Refl, color, SymbolType.Triangle, 2, true, string.Empty);
                         rhographobject.LoadfromArray(rhomodelname, Z, Rho, color, SymbolType.None, 0, true, string.Empty);
-                       colorswitch++;
+                        colorswitch++;
                     }
                 }
             }
@@ -687,51 +700,10 @@ namespace StochasticModeling
             }
         }
 
-        private void Priority_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            //The highest two priorities were... problematic
-            GenPriority(Priority.SelectedIndex);
-        }
-
-        private void fresnelcb_CheckedChanged(object sender, EventArgs e)
-        {
-            divbyfresnel = fresnelcb.Checked;
-
-            if(m_bIsXR)
-                UpdateGraphs();
-        }
-
-        private void progressBar1_MouseHover(object sender, EventArgs e)
-        {
-            toolTip1.SetToolTip(progressBar1, "Iteration: " + progressBar1.Value.ToString());
-        }
-
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            if (Cancelbutton.Enabled == true)
-            {
-                if (MessageBox.Show("Verify fitting cancellation", "Cancelling", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                {
-                    WriteSettings();
-                    Cancel();
-                    Thread.Sleep(700);
-                }
-                else
-                    e.Cancel = true;
-            }
-        }
-
-        private void Rhomodel_Click(object sender, EventArgs e)
-        {
-            UpdateReportParameters();
-            Rhomodeling RhoModel = new Rhomodeling(Z, Rho, m_droughness, SupoffsetTB.Text, rhowater.Text, SupSLDTB.Text);
-            RhoModel.Show();
-        }
-
         private void UpdateReportParameters()
         {
             ReportGenerator g = ReportGenerator.Instance;
-         
+
             //Record the parameters
             g.ClearMainInformation();
 
@@ -742,26 +714,26 @@ namespace StochasticModeling
 
             g.SetMainInformation = (String.Format("Surface SLD: {0}\n", Rholipid.Text));
             g.SetMainInformation = (String.Format("Surface layer height: {0}\n", layerlength.Text));
-          
+
             if (UseAbsCB.Checked == true)
                 g.SetMainInformation = String.Format("Surface layer absoption: {0}\n", SurfAbs.Text);
             else
                 g.SetMainInformation = "The surface layer was treated as transparent\n";
-           
+
             g.SetMainInformation = (String.Format("Superphase SLD: {0}\n", SupSLDTB.Text));
-            
+
             if (UseAbsCB.Checked == true)
                 g.SetMainInformation = String.Format("Superphase absorption: {0}\n", SupAbsTB.Text);
             else
                 g.SetMainInformation = "The superphase layer was treated as transparent\n";
 
             g.SetMainInformation = (String.Format("Subphase SLD: {0}\n", rhowater.Text));
-            
+
             if (UseAbsCB.Checked == true)
                 g.SetMainInformation = String.Format("Subphase absoption: {0}\n", SubAbs.Text);
             else
                 g.SetMainInformation = "The surface layer was treated as transparent\n";
-           
+
             g.SetMainInformation = "\n";
             g.SetMainInformation = String.Format("Number of layers in the reflectivity: {0}\n", Boxlayers.Text);
             g.SetMainInformation = String.Format("Iterations completed: {0}\n", string.Format("{0}", progressBar1.Value * 80));
@@ -770,14 +742,25 @@ namespace StochasticModeling
             g.SetMainInformation = String.Format("Roughness Search Percentage: {0} %\n", SigmaSearchTB.Text);
             g.SetMainInformation = String.Format("X-ray wavelength: {0}\n", wavelength.Text);
             g.SetMainInformation = String.Format("Percent error in Q: {0}\n", QErrTB.Text);
-            
-            if(ImpNormCB.Checked)
+
+            if (ImpNormCB.Checked)
                 g.SetMainInformation = "The normalization constant was allowed to vary\n";
-            if(ForceNormCB.Checked)
+            if (ForceNormCB.Checked)
                 g.SetMainInformation = "Normalization of the curve was forced\n";
 
             g.SetMainInformation = String.Format("Fit Score for the reflectivity: {0}\n", FitScoreTB.Text);
             g.SetMainInformation = String.Format("Chi Square for the reflectivity: {0}\n", ChiSquareTB.Text);
+        }
+
+        #endregion
+
+        #region Launch Other Windows
+
+        private void Rhomodel_Click(object sender, EventArgs e)
+        {
+            UpdateReportParameters();
+            Rhomodeling RhoModel = new Rhomodeling(Z, Rho, m_droughness, SupoffsetTB.Text, rhowater.Text, SupSLDTB.Text);
+            RhoModel.Show();
         }
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -802,42 +785,11 @@ namespace StochasticModeling
                 {
                     Process.Start(ReportGenerator.Instance.DataFileName);
                 }
-                catch{}
+                catch { }
             }
             else
             {
                 MessageBox.Show("Please load a file before generating a report");
-            }
-        }
-
-        private void ShowSATBs(bool onoff)
-        {
-             SATempTB.Visible = SAModelabel.Visible = SATemplabel.Visible = SALow.Visible = SAlowenergyTB.Visible = SAModeTB.Visible = onoff;
-        }
-
-        private void AlgorithmCB_DropDownClosed(object sender, EventArgs e)
-        {
-            if (AlgorithmCB.SelectedIndex == 1)
-            {
-                AnnealingParams anneal = new AnnealingParams(m_dAnnealtemp, m_iAnnealplat, m_dAnnealslope);
-                
-                anneal.ShowDialog(this);
-                anneal.GetParams(out m_dAnnealtemp,out m_iAnnealplat,out m_dAnnealslope);
-                ShowSATBs(true);
-            }
-            else if (AlgorithmCB.SelectedIndex == 2)
-            {
-                STUNAnnealingParams anneal = new STUNAnnealingParams(m_dAnnealtemp, m_iAnnealplat, m_dAnnealslope, m_dSTUNGamma, m_iSTUNfunc,m_bSTUNAdaptive,
-                    m_iSTUNtempiter,m_iSTUNdeciter, m_dSTUNgammadec);
-        
-                anneal.ShowDialog(this);
-                anneal.GetParams(out m_dAnnealtemp, out m_iAnnealplat, out m_dAnnealslope, out m_dSTUNGamma, out m_iSTUNfunc,
-                    out m_bSTUNAdaptive, out m_iSTUNtempiter, out m_iSTUNdeciter, out m_dSTUNgammadec);
-                ShowSATBs(true);
-            }
-            else
-            {
-                ShowSATBs(false);
             }
         }
 
@@ -850,29 +802,36 @@ namespace StochasticModeling
                 proc.StartInfo = new ProcessStartInfo(temp);
                 proc.Start();
             }
-            catch 
+            catch
             {
                 MessageBox.Show("Error launching pdf. Please make sure Acrobat is installed");
             }
         }
 
-        private void SupSLDTB_TextChanged(object sender, EventArgs e)
+        private void AlgorithmCB_DropDownClosed(object sender, EventArgs e)
         {
-                reflgraphobject.m_dSupSLD = Double.Parse(SupSLDTB.Text);
-                m_bmodelreset = true;
-                UpdateGraphs();
-        }
+            if (AlgorithmCB.SelectedIndex == 1)
+            {
+                AnnealingParams anneal = new AnnealingParams(m_dAnnealtemp, m_iAnnealplat, m_dAnnealslope);
 
-        private void rhowater_TextChanged(object sender, EventArgs e)
-        {
-                reflgraphobject.m_dSLD = Double.Parse(rhowater.Text);
-                m_bmodelreset = true;
-                UpdateGraphs();
-        }
+                anneal.ShowDialog(this);
+                anneal.GetParams(out m_dAnnealtemp, out m_iAnnealplat, out m_dAnnealslope);
+                ShowSATBs(true);
+            }
+            else if (AlgorithmCB.SelectedIndex == 2)
+            {
+                STUNAnnealingParams anneal = new STUNAnnealingParams(m_dAnnealtemp, m_iAnnealplat, m_dAnnealslope, m_dSTUNGamma, m_iSTUNfunc, m_bSTUNAdaptive,
+                    m_iSTUNtempiter, m_iSTUNdeciter, m_dSTUNgammadec);
 
-        private void UseAbsCB_CheckedChanged(object sender, EventArgs e)
-        {
-            SubAbs.Enabled = SupAbsTB.Enabled = SurfAbs.Enabled = UseAbsCB.Checked;
+                anneal.ShowDialog(this);
+                anneal.GetParams(out m_dAnnealtemp, out m_iAnnealplat, out m_dAnnealslope, out m_dSTUNGamma, out m_iSTUNfunc,
+                    out m_bSTUNAdaptive, out m_iSTUNtempiter, out m_iSTUNdeciter, out m_dSTUNgammadec);
+                ShowSATBs(true);
+            }
+            else
+            {
+                ShowSATBs(false);
+            }
         }
 
         private void sLDCalculatorToolStripMenuItem_Click(object sender, EventArgs e)
@@ -881,48 +840,151 @@ namespace StochasticModeling
             SLD.ShowDialog();
         }
 
-         
-
-         protected override void MenuItem_Check(object sender, EventArgs e)
-         {
-             base.MenuItem_Check(sender, e);
-         }
-
-         protected override void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
-         {
-             base.ValidateNumericalInput(sender, e);
-         }
-
-         protected override void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
-         {
-             base.ValidateIntegerInput(sender, e);
-         }
-
-         private void errorsAreInVarianceToolStripMenuItem_Click(object sender, EventArgs e)
-         {
-             MenuItem_Check(sender, e);
-             ReflData.Instance.SetReflData(origreflfilename, !errorsAreInVarianceToolStripMenuItem.Checked);
-             m_bmodelreset = true;
-             UpdateGraphs();
-         }
-
-         private void forceRQ4GraphingToolStripMenuItem_Click(object sender, EventArgs e)
-         {
-             base.MenuItem_Check(sender, e);
-             
-             m_bIsXR = !forceRQ4GraphingToolStripMenuItem.Checked;
-             m_bmodelreset = true;
-             UpdateGraphs();
-         }
-
-        private void debugToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            base.MenuItem_Check(sender, e);
-        }
-
         private void manualToolStripMenuItem_Click(object sender, EventArgs e)
         {
             MessageBox.Show("The manual is not included in this distribution");
         }
+        #endregion
+
+        #region StochFit Miscellaneous Update Routines
+
+        private void Priority_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            //The highest two priorities were... problematic
+            GenPriority(Priority.SelectedIndex);
+        }
+
+        private void fresnelcb_CheckedChanged(object sender, EventArgs e)
+        {
+            divbyfresnel = fresnelcb.Checked;
+
+            if (m_bIsXR)
+                UpdateGraphs();
+        }
+
+        private void progressBar1_MouseHover(object sender, EventArgs e)
+        {
+            toolTip1.SetToolTip(progressBar1, "Iteration: " + progressBar1.Value.ToString());
+        }
+
+        private void ShowSATBs(bool onoff)
+        {
+            SATempTB.Visible = SAModelabel.Visible = SATemplabel.Visible = SALow.Visible = SAlowenergyTB.Visible = SAModeTB.Visible = onoff;
+        }
+
+        private void SupSLDTB_TextChanged(object sender, EventArgs e)
+        {
+            reflgraphobject.SupSLD = Double.Parse(SupSLDTB.Text);
+            m_bmodelreset = true;
+            UpdateGraphs();
+        }
+
+        private void rhowater_TextChanged(object sender, EventArgs e)
+        {
+            reflgraphobject.SubSLD = Double.Parse(rhowater.Text);
+            m_bmodelreset = true;
+            UpdateGraphs();
+        }
+
+        private void UseAbsCB_CheckedChanged(object sender, EventArgs e)
+        {
+            SubAbs.Enabled = SupAbsTB.Enabled = SurfAbs.Enabled = UseAbsCB.Checked;
+        }
+
+        private void errorsAreInVarianceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MenuItem_Check(sender, e);
+            ReflData.Instance.SetReflData(origreflfilename, !errorsAreInVarianceToolStripMenuItem.Checked);
+            m_bmodelreset = true;
+            UpdateGraphs();
+        }
+
+        private void forceRQ4GraphingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            base.MenuItem_Check(sender, e);
+
+            m_bIsXR = !forceRQ4GraphingToolStripMenuItem.Checked;
+            m_bmodelreset = true;
+            UpdateGraphs();
+        }
+
+        private void debugToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            base.MenuItem_Check(sender, e);
+        } 
+        #endregion
+
+        #region Base Methods
+        protected override void MenuItem_Check(object sender, EventArgs e)
+        {
+            base.MenuItem_Check(sender, e);
+        }
+
+        protected override void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            base.ValidateNumericalInput(sender, e);
+        }
+
+        protected override void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            base.ValidateIntegerInput(sender, e);
+        } 
+        #endregion
+
+        #region Offset functions
+
+        private void PointChanged(object sender, EventArgs e)
+        {
+            critedgeoffTB.Text = reflgraphobject.GetLowQOffset.ToString();
+            HQoffsetTB.Text = (ReflData.Instance.GetNumberDataPoints - reflgraphobject.GetHighQOffset).ToString();
+        }
+
+        private void critedgeoffTB_Validated(object sender, EventArgs e)
+        {
+            reflgraphobject.GetLowQOffset = int.Parse(critedgeoffTB.Text);
+            reflgraphobject.SetBounds();
+        }
+
+        private void HQoffsetTB_Validated(object sender, EventArgs e)
+        {
+            reflgraphobject.GetHighQOffset = int.Parse(HQoffsetTB.Text);
+            reflgraphobject.SetBounds();
+        }
+
+
+
+        private void critedgeoffTB_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                Convert.ToInt32(critedgeoffTB.Text);
+            }
+            catch
+            {
+                MessageBox.Show("Error in input - An integer was expected");
+                critedgeoffTB.Text = "0";
+                return;
+            }
+            reflgraphobject.GetLowQOffset = int.Parse(critedgeoffTB.Text);
+            reflgraphobject.SetBounds();
+        }
+
+        private void HQoffsetTB_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                Convert.ToInt32(HQoffsetTB.Text);
+            }
+            catch
+            {
+                MessageBox.Show("Error in input - An integer was expected");
+                HQoffsetTB.Text = "0";
+                return;
+            }
+            reflgraphobject.GetHighQOffset = ReflData.Instance.GetNumberDataPoints - int.Parse(HQoffsetTB.Text);
+            reflgraphobject.SetBounds();
+        } 
+        #endregion
     }
+
 }

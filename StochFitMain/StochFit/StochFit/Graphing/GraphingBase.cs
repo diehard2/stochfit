@@ -136,7 +136,10 @@ namespace StochasticModeling
     }
 
 
-
+/// <summary>
+/// Base class for using the ZedGraph graphing control for a scatter plot. While this class can be extended, it also
+/// functions
+/// </summary>
     public class GraphingBase
     {
         private ZedGraphControl m_cZG;
@@ -591,7 +594,7 @@ namespace StochasticModeling
         protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, bool isSmoothed,string tag)
         {
             LineItem myCurve = m_cMyPane.AddCurve(DataName, list, linecolor, type);
-            myCurve.Symbol.Fill = new Fill(Color.Red,Color.DeepSkyBlue );
+            myCurve.Symbol.Fill = new Fill(Color.DeepSkyBlue,Color.Red );
             myCurve.Symbol.Fill.Type = FillType.GradientByZ;
             myCurve.Symbol.Fill.RangeMin = 0;
             myCurve.Symbol.Fill.RangeMax = 1;
@@ -609,7 +612,7 @@ namespace StochasticModeling
         protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, DashStyle style, bool isSmoothed, string tag)
         {
             LineItem myCurve = m_cMyPane.AddCurve(DataName, list, linecolor, type);
-            myCurve.Symbol.Fill = new Fill(Color.Red, Color.DeepSkyBlue);
+            myCurve.Symbol.Fill = new Fill(Color.DeepSkyBlue,Color.Red);
             myCurve.Symbol.Fill.Type = FillType.GradientByZ;
             myCurve.Symbol.Fill.RangeMin = 0;
             myCurve.Symbol.Fill.RangeMax = 1;
@@ -628,7 +631,7 @@ namespace StochasticModeling
         protected virtual void AddCurvetoGraph(PointPairList list, PointPairList elist, string DataName, Color linecolor, SymbolType type, int symbolsize, string tag)
         {
             LineItem myCurve = m_cMyPane.AddCurve(DataName, list, linecolor, type);
-            myCurve.Symbol.Fill = new Fill(Color.Red,Color.DeepSkyBlue);
+            myCurve.Symbol.Fill = new Fill(Color.DeepSkyBlue,Color.Red);
             myCurve.Symbol.Fill.Type = FillType.GradientByZ;
             myCurve.Symbol.Fill.RangeMin = 0;
             myCurve.Symbol.Fill.RangeMax = 1;

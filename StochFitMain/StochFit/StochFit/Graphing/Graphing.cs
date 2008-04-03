@@ -38,22 +38,52 @@ namespace StochasticModeling
     /// </summary>
     public class Graphing:GraphingBase
     {
-        public double m_dSLD = 0;
-        public double m_dSupSLD = 0;
-        public double m_dlambda = 1.0;
-        public bool m_bDBF = false;
+        private double m_dSubSLD = 0;
+        private double m_dSupSLD = 0;
+        private double m_dlambda = 1.0;
+        private bool m_bDBF = false;
+
+       
+
+
         private bool m_bdatafile = false;
         private int lowqindex = 0;
-        private int highqindex = 10000;
+        private int highqindex = 0;
         private bool m_bnegativeerrorval = false;
         private bool m_biszoomed = false;
         private bool m_bisXR = true;
         private PointPairList RealReflData, RealReflErrors;
         CultureInfo CI_US = new CultureInfo("en-US");
 
+        /// <summary>
+        /// Called if the bounds on the curve are changed
+        /// </summary>
+        /// <param name="sender">null</param>
+        /// <param name="e">null</param>
+        public delegate void ChangedEventHandler(object sender, EventArgs e);
+        
+        /// <summary>
+        /// Event to subsribe to if the bounds are changed
+        /// </summary>
+        public event ChangedEventHandler ChangedBounds;
+
+      
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="name">Name of the graph. Can be string.Empty</param>
         public Graphing(string name):base(name)
         {}
 
+        /// <summary>
+        /// Create the graph
+        /// </summary>
+        /// <param name="zgc">The associated ZedGraph control. Can be null</param>
+        /// <param name="Title">Title for the graph</param>
+        /// <param name="XAxis">Title for the X axis</param>
+        /// <param name="YAxis">Title for the Y axis</param>
+        /// <param name="blog">Graphed as log(Y) if true, no scaling if false</param>
         public override void CreateGraph(ZedGraphControl zgc, string Title, string XAxis, string YAxis, AxisType blog)
         {
             base.CreateGraph(zgc, Title, XAxis, YAxis, blog);
@@ -132,6 +162,16 @@ namespace StochasticModeling
             m_biszoomed = false;
         }
       
+        /// <summary>
+        /// Add a curve to the graph
+        /// </summary>
+        /// <param name="list">The X,Y list of data points</param>
+        /// <param name="elist">The list of errors associated with list</param>
+        /// <param name="DataName">Name for the curve to be displayed in the legend</param>
+        /// <param name="linecolor">Color for the line</param>
+        /// <param name="type">Type of symbol for the curve</param>
+        /// <param name="symbolsize">Size of the symbols on the curve </param>
+        /// <param name="tag">An internal name for the curve</param>
         protected override void AddCurvetoGraph(PointPairList list, PointPairList elist, string DataName, Color linecolor, SymbolType type, int symbolsize, string tag)
         {
             base.AddCurvetoGraph(list, elist, DataName, linecolor, type, symbolsize, tag);
@@ -139,6 +179,16 @@ namespace StochasticModeling
             SetAxisScale();
         }
 
+        /// <summary>
+        /// Add a curve to the graph
+        /// </summary>
+        /// <param name="list">The X,Y list of data points</param>
+        /// <param name="DataName">Name for the curve to be displayed in the legend</param>
+        /// <param name="linecolor">Color for the line</param>
+        /// <param name="type">Type of symbol for the curve</param>
+        /// <param name="symbolsize">Size of the symbols on the curve </param>
+        /// <param name="isSmoothed">The curve is antialiased if true</param>
+        /// <param name="tag">An internal name for the curve</param>
         protected override void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, bool isSmoothed, string tag)
         {
             base.AddCurvetoGraph(list, DataName, linecolor, type, symbolsize, isSmoothed, tag);
@@ -157,7 +207,7 @@ namespace StochasticModeling
                 {
                     if (m_bDBF == true)
                     {
-                        if (m_bisXR && CalcQc(m_dSLD, m_dSupSLD, m_dlambda) > 0.005)
+                        if (m_bisXR && CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda) > 0.005)
                             Pane.YAxis.Scale.Min = 3e-4;
                         else
                             Pane.YAxis.Scale.Min = 1e-12;
@@ -184,7 +234,7 @@ namespace StochasticModeling
                 m_bdatafile = true;
                 m_bnegativeerrorval = false;
 
-                double Qc = CalcQc(m_dSLD, m_dSupSLD, m_dlambda);
+                double Qc = CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda);
                 PointPairList locRefl = new PointPairList();
                 PointPairList locReflerror = new PointPairList();
                 double poserrorval, negerrorval;
@@ -262,6 +312,9 @@ namespace StochasticModeling
                 //To account for the error file
                 m_alDatainGraph.Add(name);
 
+                if (highqindex == 0)
+                    highqindex = ReflData.Instance.GetNumberDataPoints;
+
                 if (highqindex < ReflData.Instance.GetNumberDataPoints || lowqindex > 0)
                 {
                     SetBounds();
@@ -278,6 +331,7 @@ namespace StochasticModeling
             }
         }
 
+
         public void LoadFiletoGraph(string datafile, string filename, string plotname, Color color, SymbolType symbol, int symbolsize, bool isSmoothed)
         {
             try
@@ -288,7 +342,7 @@ namespace StochasticModeling
                 if (datafile != string.Empty)
                 {
                     PointPairList list = new PointPairList();
-                    double Qc = CalcQc(m_dSLD, m_dSupSLD, m_dlambda);
+                    double Qc = CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda);
                     using (StreamReader sr = new StreamReader(datafile))
                     {
                         String dataline;
@@ -345,7 +399,7 @@ namespace StochasticModeling
             PointPairList list = new PointPairList();
             if (m_bDBF)
             {
-                double Qc = CalcQc(m_dSLD, m_dSupSLD, m_dlambda);
+                double Qc = CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda);
                 for (int i = 0; i < X.Length; i++)
                 {
                     if (Qc > 0.005 && m_bisXR)
@@ -367,7 +421,7 @@ namespace StochasticModeling
 
         protected override void GetPointList(double[] X, double[] Y, ref PointPairList List)
         {
-            double Qc = CalcQc(m_dSLD, m_dSupSLD, m_dlambda);
+            double Qc = CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda);
 
             for (int i = 0; i < X.Length; i++)
             {
@@ -424,8 +478,9 @@ namespace StochasticModeling
             }
 
                 lowqindex = nearest;
-
+                
                 SetBounds();
+                OnChanged(this, null);
         }
 
 
@@ -448,6 +503,7 @@ namespace StochasticModeling
             lowqindex = 0;
 
             Invalidate();
+            OnChanged(this, null);
         }
 
         private void SelectHighQPoint(object sender, System.EventArgs e)
@@ -472,10 +528,12 @@ namespace StochasticModeling
             highqindex = nearest;
 
             SetBounds();
+
+            OnChanged(this, null);
             
         }
 
-        private void SetBounds()
+        public void SetBounds()
         {
             if (highqindex > 0 || lowqindex > 0)
             {
@@ -505,6 +563,75 @@ namespace StochasticModeling
 
                 Invalidate();
             }
+        }
+
+        /// <summary>
+        /// Get/Set the offset for the high Q portion of the curve
+        /// </summary>
+        public int GetHighQOffset
+        {
+            get
+            { return highqindex; }
+            set
+            { highqindex = value;}
+        }
+
+        /// <summary>
+        /// Get/Set the offset for the low Q portion of the curve
+        /// </summary>
+        public int GetLowQOffset
+        {
+            get
+            { return lowqindex;}
+            set
+            { lowqindex = value;}
+        }
+
+        /// <summary>
+        /// Get/Set the scattering length density of the substrate
+        /// </summary>
+        public double SubSLD
+        {
+            get { return m_dSubSLD; }
+            set { m_dSubSLD = value; }
+        }
+
+        /// <summary>
+        /// Get/Set the scattering length density of the superphase
+        /// </summary>
+        public double SupSLD
+        {
+            get { return m_dSupSLD; }
+            set { m_dSupSLD = value; }
+        }
+
+        /// <summary>
+        /// Get/Set whether the graph should be divided by Fresnel
+        /// </summary>
+        public bool DivbyFresnel
+        {
+            get { return m_bDBF; }
+            set { m_bDBF = value; }
+        }
+
+        /// <summary>
+        /// Get/Set the wavelength of light in Angstroms
+        /// </summary>
+        public double Wavelength
+        {
+            get { return m_dlambda; }
+            set { m_dlambda = value; }
+        }
+
+        /// <summary>
+        /// Communicate with the graphing class. This will let us know if we've changed boundaries
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected virtual void OnChanged(object sender, EventArgs e)
+        {
+            if (ChangedBounds != null)
+                ChangedBounds(sender, e);
         }
     }
 }

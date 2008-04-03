@@ -26,6 +26,7 @@ using System.Collections;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Threading;
 
 namespace StochasticModeling
 {
@@ -33,14 +34,15 @@ namespace StochasticModeling
 /// This class holds the reflectivity data loaded from the file. It is expected that the data be in the format of 
 /// Q, R, Variance in R, Variance in Q. It is implemented as a Singleton
 /// </summary>
-    public sealed class ReflData
+    public sealed class ReflData:IComparer
     {
         /// <summary>
         /// The instance of the Singleton class ReflData
         /// </summary>
         public static readonly ReflData Instance = new ReflData();
 
-        private double[] refldata;
+        private double[][] refldata;
+        private double[] refldataarray;
         private double[] qdata;
         private double[] rerrors;
         private double[] qerrors;
@@ -60,7 +62,7 @@ namespace StochasticModeling
             get
             {
                 if (refldata != null)
-                    return (double[])refldata.Clone();
+                    return (double[])refldataarray.Clone();
                 else
                     return null;
             }
@@ -74,7 +76,7 @@ namespace StochasticModeling
         public double GetReflDataPt(int index)
         {
             if (refldata != null)
-                return refldata[index];
+                return refldataarray[index];
             else
                 return -1;
         }
@@ -216,7 +218,8 @@ namespace StochasticModeling
             string dataline;
             ArrayList datastring = new ArrayList();
             Regex r = new Regex(@"\s");
-          
+            bool haveQdata = false;
+
             try
             {
                 //Count the lines in the file while ignoring blank lines, negative reflectivities, and errors <= 0
@@ -236,6 +239,9 @@ namespace StochasticModeling
                                     datastring.Add(temp[i]);
                             }
 
+                            if (temp.Length == 4)
+                                haveQdata = true;
+
                             if (Double.Parse((string)datastring[1], m_CI) > 0.0 && Double.Parse((string)datastring[2], m_CI) >= 0.0)
                                 lines++;
 
@@ -245,10 +251,17 @@ namespace StochasticModeling
                 }
 
                 //Setup all of our arrays
-                refldata = new double[lines];
-                qdata = new double[lines];
-                rerrors = new double[lines];
-                qerrors = new double[lines];
+                refldata = new double[lines][];
+
+                for(int i = 0; i < lines; i++)
+                {
+                    if (haveQdata == true)
+                        refldata[i] = new double[4];
+                    else
+                        refldata[i] = new double[3];
+                }
+
+            
                 datapointcount = lines;
 
                 //Read in the data
@@ -276,26 +289,26 @@ namespace StochasticModeling
                                 if (temp.Length < 3)
                                     return false;
 
-                                qdata[j] = Double.Parse((string)datastring[0], m_CI);
-                                refldata[j] = Double.Parse((string)datastring[1], m_CI);
+                                refldata[j][0] = Double.Parse((string)datastring[0], m_CI);
+                                refldata[j][1] = Double.Parse((string)datastring[1], m_CI);
 
                                 if (IsSD)
                                 {
-                                    rerrors[j] = Double.Parse((string)datastring[2], m_CI);
+                                    refldata[j][2] = Double.Parse((string)datastring[2], m_CI);
 
                                     if (temp.Length == 4)
                                     {
-                                        qerrors[j] = Double.Parse((string)datastring[3], m_CI);
+                                        refldata[j][3] = Double.Parse((string)datastring[3], m_CI);
                                         haveQerr = true;
                                     }
                                 }
                                 else
                                 {
-                                    rerrors[j] = Math.Sqrt(Double.Parse((string)datastring[2], m_CI));
+                                    refldata[j][2] = Math.Sqrt(Double.Parse((string)datastring[2], m_CI));
 
                                     if (temp.Length == 4)
                                     {
-                                        qerrors[j] = Math.Sqrt(Double.Parse((string)datastring[3], m_CI));
+                                        refldata[j][3] = Math.Sqrt(Double.Parse((string)datastring[3], m_CI));
                                         haveQerr = true;
                                     }
                                 }
@@ -306,13 +319,208 @@ namespace StochasticModeling
                         }
                     }
                 }
+           
+
+            //Check if our data monotonically increases in Q. Some beamlines don't patch data
+            bool outoforderq = false;
+
+            for (int i = 0; i < GetNumberDataPoints - 1; i++)
+            {
+                if (refldata[i + 1][0] < refldata[i][0])
+                {
+                    outoforderq = true;
+                    break;
+                }
+            }
+
+            if (outoforderq == true)
+            {
+                if (MessageBox.Show("Some of your Q data is out of order. Would you like to attempt rudimentary patching",
+                    string.Empty, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    //Patch data
+                    DataPatch(outoforderq, true);
+                }
+                else
+                    DataPatch(outoforderq, false);
+            }
+            else
+                DataPatch(outoforderq, false);
+            
+            return true;
+
+        }
+        catch
+        {
+            MessageBox.Show("Could not add file");
+            return false;
+        }
+       }
+
+        private void DataPatch(bool outoforderq, bool patch)
+        {
+
+            try
+            {
+                double[][] refldatatemp;
+                bool nooverlapregion = false;
+
+                if (patch == true)
+                {
+
+                    for (int i = 0; i < GetNumberDataPoints - 1; i++)
+                    {
+
+                        ArrayList beginindex = new ArrayList();
+                        ArrayList endindex = new ArrayList();
+                        int overlapcount = 0;
+
+                        //We have a discontinuity in Q - find the jump back. If we don't have an actual overlap,
+                        //ignore and sort
+                        if (refldata[i + 1][0] < refldata[i][0])
+                        {
+                            //Find our overlap points
+                            for (int counter1 = 0; counter1 <= i; counter1++)
+                            {
+                                for (int counter2 = i + 1; counter2 < GetNumberDataPoints; counter2++)
+                                {
+                                    if (refldata[counter1][0] == refldata[counter2][0] && counter1 != counter2)
+                                    {
+                                        beginindex.Add(counter1);
+                                        endindex.Add(counter2);
+                                        overlapcount++;
+                                    }
+                                }
+
+                            }
+
+                            //We have non monotonically increasing q, but no overlap region
+                            if (overlapcount == 0)
+                                nooverlapregion = true;
+
+                            //We have our overlap region
+                            if (overlapcount > 0)
+                            {
+                                double shift = 0;
+
+                                for(int counter1 = 0; counter1 < overlapcount; counter1++)
+                                     shift += refldata[(int)beginindex[counter1]][1]/refldata[(int)endindex[counter1]][1];
+
+                                shift /= overlapcount;
+
+                               //Multiply the curve
+                               refldatatemp = new double[refldata.Length - overlapcount][];
+                               int indexoffset = 0;
+                               for(int counter = 0; counter < GetNumberDataPoints; counter++)
+                               {
+                                   if (counter < i + 1)
+                                   {
+                                       bool isoverlappt = false;
+
+                                       refldatatemp[counter] = (double[])refldata[counter].Clone();
+
+                                       for (int counter1 = 0; counter1 < overlapcount; counter1++)
+                                       {
+                                           if (counter == (int)beginindex[counter1])
+                                           {
+                                               isoverlappt = true;
+                                               indexoffset++;
+                                           }
+                                       }
+
+                                       if (isoverlappt == false)
+                                           refldatatemp[counter - indexoffset] = (double[])refldata[counter].Clone();
+
+                                   }
+                                   else
+                                   {
+                                       refldata[counter][1] *= shift;
+                                       refldata[counter][2] *= shift;
+
+                                      
+                                       refldatatemp[counter - indexoffset] = (double[])refldata[counter].Clone();
+
+
+                                   }
+                               }
+                                refldata = null;
+                                refldata = refldatatemp.Clone() as double[][];
+                                i = 0;
+                                datapointcount -= overlapcount;
+
+                            }
+                        }
+
+                    }
+
+                    if (nooverlapregion)
+                        MessageBox.Show("There were areas of discontinuity in Q, where no overlap was detected");
+
+
+                    MoveintoArrays(true);
+
+                }
+                else
+                {
+                    //Move into our arrays
+                    MoveintoArrays(outoforderq);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void MoveintoArrays(bool outoforderq)
+        {
+            //Sort the arrays if we are out of order to prevent ugly graphing and prog crash
+            if (outoforderq == true)
+                Array.Sort(refldata, this);
+
+            refldataarray = new double[GetNumberDataPoints];
+            qdata = new double[GetNumberDataPoints];
+            rerrors = new double[GetNumberDataPoints];
+
+            if (HaveErrorinQ == true)
+                qerrors = new double[GetNumberDataPoints];
+
+
+            for (int i = 0; i < GetNumberDataPoints; i++)
+            {
+                qdata[i] = refldata[i][0];
+                refldataarray[i] = refldata[i][1];
+                rerrors[i] = refldata[i][2];
+
+                if (haveQerr)
+                    qerrors[i] = refldata[i][3];
+            }
+        }
+
+
+        #region IComparer Members
+
+        int IComparer.Compare(object x, object y)
+        {
+            double[] x1 = null;
+            double[] x2 = null;
+
+            try
+            {
+               x1  = (double[])x;
+               x2  = (double[])y;
             }
             catch
-            {
-                MessageBox.Show("Could not add file");
-                return false;
-            }
-            return true;
+            { }
+           
+            if (x1 != null && x2 != null)
+                return x1[0].CompareTo(x2[0]);
+            else if (x1 == null)
+                return -1000;
+            else
+                return 1000;
         }
+
+        #endregion
     }
 }

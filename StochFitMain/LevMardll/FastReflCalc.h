@@ -63,7 +63,7 @@ public:
 	~FastReflcalc();
 	void QsmearRf(double* qspreadrefl, double* refl, int datapoints);
     void init(double xraylambda,int boxnumber, double subSLD, double SupSLD, double* p, int pcount, double* RealRefl, double* RealReflErrors, int RealRefllength, bool onesigma, double QSpread, double normfactor, BOOL impnorm);
-    void MakeTheta(double* QRange, int QRangesize);
+    void MakeTheta(double* QRange, double* QError, int QRangesize);
 
 	double* originalparams;
 	//Density calcs

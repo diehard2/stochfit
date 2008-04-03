@@ -31,13 +31,16 @@ using StochasticModeling;
 
 namespace StochasticModeling
 {
+    /// <summary>
+    /// Scattering Length Density Calculator for X-ray and Neutrons
+    /// </summary>
      public partial class SLDCalculator : StochFormBase
     {
+         /// <summary>
+         /// Constructor
+         /// </summary>
         public SLDCalculator()
         {
-            //Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-            //Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
-
             InitializeComponent();
 
             DensTB.Text = ((double)(0.998)).ToString();
@@ -188,11 +191,23 @@ namespace StochasticModeling
              ApmTB.Enabled = ThickTB.Enabled = !UseDensCB.Checked;
          }
 
+         /// <summary>
+         /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+         /// in number entry
+         /// </summary>
+         /// <param name="sender">A textbox is expected as input</param>
+         /// <param name="e">return true if the number can be cast to a double or false if not</param>
          protected override void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
          {
              base.ValidateNumericalInput(sender, e);
          }
 
+         /// <summary>
+         /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+         /// in number entry 
+         /// </summary>
+         /// <param name="sender">A textbox is expected as input</param>
+         /// <param name="e">return true if the number can be cast to an integer or false if not</param>
          protected override void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
          {
              base.ValidateIntegerInput(sender, e);

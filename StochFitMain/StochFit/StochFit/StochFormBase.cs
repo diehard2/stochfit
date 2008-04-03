@@ -67,10 +67,59 @@ namespace StochasticModeling
             double[] QRange, double[] QErrors, int QSize, double[] Reflectivity, int reflectivitysize, double[] Errors, double[] covar, int covarsize, double[] info, int infosize, bool onesigma, bool writefiles,
             double[] UL, double[] LL, double QSpread, bool ImpNorm);
 
+        /// <summary>
+        /// Generates a reflectivity using the Nevot-Croce correction to the Parratt recursion
+        /// </summary>
+        /// <param name="boxes">Number of boxes in the model</param>
+        /// <param name="SLD">Subphase SLD</param>
+        /// <param name="SupSLD">Superphase SLD</param>
+        /// <param name="wavelength">X-ray wavelength</param>
+        /// <param name="parameters">Parameter array. See code for setup</param>
+        /// <param name="paramsize">Element count of parameters</param>
+        /// <param name="QRange">Array of Q values to calculate reflectivity points for</param>
+        /// <param name="QError">Array of error in Q. Can be NULL</param>
+        /// <param name="QSize">QRange element count</param>
+        /// <param name="Reflectivity">Allocated array of QSize elements that recieves the </param>
+        /// <param name="reflectivitysize">Element count of the reflectivity array</param>
+        /// <param name="QSpread">Percent error in Q</param>
+        /// <param name="ImpNorm">True if the curve is believed to be imperfectly normalized, false otherwise</param>
+        /// <returns></returns>
         [DllImport("LevMardll.dll", EntryPoint = "FastReflGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         protected static extern double FastReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double[] parameters, int paramsize,
             double[] QRange, double[] QError, int QSize, double[] Reflectivity, int reflectivitysize, double QSpread, bool ImpNorm);
 
+        /// <summary>
+        /// Performs a constrained Levenberg-Marquadt least squares fit of the data
+        /// </summary>
+        /// <param name="boxes">Number of boxes in the model</param>
+        /// <param name="SLD">Subphase SLD</param>
+        /// <param name="SupSLD">Superphase SLD</param>
+        /// <param name="wavelength">X-ray wavelength</param>
+        /// <param name="parameters">Parameter array. See code for setup</param>
+        /// <param name="paramsize">Element count of parameters</param>
+        /// <param name="QRange">Array of Q values to calculate reflectivity points for</param>
+        /// <param name="QError">Array of error in Q. Can be NULL</param>
+        /// <param name="QSize">QRange element count</param>
+        /// <param name="Reflectivity">Allocated array of QSize elements that recieves the </param>
+        /// <param name="reflectivitysize">Element count of the reflectivity array</param>
+        /// <param name="Errors">Array of errors in the reflectivity data</param>
+        /// <param name="covar"></param>
+        /// <param name="covarsize"></param>
+        /// <param name="info"></param>
+        /// <param name="infosize"></param>
+        /// <param name="onesigma"></param>
+        /// <param name="writefiles"></param>
+        /// <param name="iterations"></param>
+        /// <param name="ParamArray"></param>
+        /// <param name="paramarraysize"></param>
+        /// <param name="parampercs"></param>
+        /// <param name="chisquarearray"></param>
+        /// <param name="Covararray"></param>
+        /// <param name="UL"></param>
+        /// <param name="LL"></param>
+        /// <param name="QSpread">Percent error in Q</param>
+        /// <param name="ImpNorm">True if the curve is believed to be imperfectly normalized, false otherwise</param>   
+        /// <returns></returns>
         [DllImport("LevMardll.dll", EntryPoint = "ConstrainedStochFit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         protected static extern double ConstrainedStochFit(int boxes, double SLD, double SupSLD, double wavelength, double[] parameters, int paramsize,
             double[] QRange, double[] QErrors, int QSize, double[] Reflectivity, int reflectivitysize, double[] Errors, double[] covar, int covarsize, double[] info, int infosize, bool onesigma, bool writefiles, int iterations,
@@ -97,7 +146,7 @@ namespace StochasticModeling
             int covarsize, double[] info, int infosize, bool onesigma);
 
         [DllImport("stochfitdll.dll", EntryPoint = "Init", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern int Init(string directory, double[] Q, double[] Refl, double[] ReflError, double[] QErr, int Qpoints, double rholipid, double rhoh2o, double supSLD, int parratlayers,
+        protected static extern void Init(string directory, double[] Q, double[] Refl, double[] ReflError, double[] QErr, int Qpoints, double rholipid, double rhoh2o, double supSLD, int parratlayers,
             double layerlength, double slABS, double XRlambda, double SubAbs, double SupAbs, bool UseAbs, double leftoffset, double Qerr, bool forcenorm,
              double forcesigma, bool debug, bool XRonly, double resolution, double totallength, bool impnorm, int objfunc);
        
@@ -107,7 +156,7 @@ namespace StochasticModeling
         /// <param name="priority">Integer corresponding to priority. 0 = Idle, 1 = Below Idle, 2 = Normal</param>
         /// <returns></returns>
         [DllImport("stochfitdll.dll", EntryPoint = "GenPriority", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern int GenPriority(int priority);
+        protected static extern void GenPriority(int priority);
         
         /// <summary>
         /// Starts the model idependent fitting process 
@@ -115,14 +164,14 @@ namespace StochasticModeling
         /// <param name="iterations">Number of iterations to run the model independent fit</param>
         /// <returns></returns>
         [DllImport("stochfitdll.dll", EntryPoint = "Start", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern int Start(int iterations);
+        protected static extern void Start(int iterations);
         
         /// <summary>
         /// Cancel the model independent fit
         /// </summary>
         /// <returns></returns>
         [DllImport("stochfitdll.dll", EntryPoint = "Cancel", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern int CancelFit();
+        protected static extern void CancelFit();
         
         /// <summary>
         /// Retrieves the data from the model independent algorithm

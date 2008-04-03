@@ -176,7 +176,13 @@ namespace StochasticModeling
         /// Whether STUN annealing is adaptive or not
         /// </summary>
         public bool STUNAdaptive;
+        /// <summary>
+        /// The number of iterations before the adaptive STUN method increases or decreases the temperature
+        /// </summary>
         public int STUNtempiter;
+        /// <summary>
+        /// The number of iterations before the adaptive STUN algorithm reduces the average STUN value
+        /// </summary>
         public int STUNdeciter;
         /// <summary>
         /// The percentage to change Gamma by depending on the circumstances in adaptive STUN annealing

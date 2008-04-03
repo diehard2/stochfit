@@ -78,6 +78,17 @@ namespace StochasticModeling
 
         #endregion
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="roughness">Overall roughness value</param>
+        /// <param name="inLength">Length array with element count boxnumber</param>
+        /// <param name="inRho">Electron density array with element count boxnumber</param>
+        /// <param name="inSigma">Roughness array with element count boxnumber</param>
+        /// <param name="boxnumber">The number of boxes in the model</param>
+        /// <param name="holdsigma">True if the film is to be treated as an elastic sheet, false otherwise</param>
+        /// <param name="subphase">Substrate SLD</param>
+        /// <param name="superphase">Superphase SLD</param>
         public Reflmodeling(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase)
         {
             InitializeComponent();
@@ -547,8 +558,6 @@ namespace StochasticModeling
                 {
                     bfitting = true;
                     chisquaretb.Text = outwin.GetParameters(out parameters, out covar);
-                    parameters = outwin.selectedmodel;
-                    covar = outwin.selectedcovar;
                 }
             }
 

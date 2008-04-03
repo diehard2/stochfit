@@ -51,12 +51,12 @@ namespace StochasticModeling.Modeling
 
             //Cutoff for errors. Any solution with errors greater than this percentage
             //of the parameter value will be discarded
-
             ErrorCutTB.Text = "30";
         }
 
-        #region Methods to get film parameters
-
+        /// <summary>
+        /// Get the number of iterations to run the parameter space search
+        /// </summary>
         public int IterationCount
         {
             get
@@ -65,89 +65,29 @@ namespace StochasticModeling.Modeling
             }
         }
 
-        public double LengthHigh
-        {
-            get
-            {
-                return double.Parse(LengthHighTB.Text);
-            }
-        }
-
-        public double LengthLow
-        {
-            get
-            {
-                return double.Parse(LengthLowTB.Text);
-            }
-        }
-
-        public double EDHigh
-        {
-            get
-            {
-                return double.Parse(EDHighTB.Text);
-            }
-        }
-
-        public double EDLow
-        {
-            get
-            {
-                return double.Parse(EDLowTB.Text);
-            }
-        }
-
-        public double RoughHigh
-        {
-            get
-            {
-                return double.Parse(RoughHighTB.Text);
-            }
-        }
-
-        public double RoughLow
-        {
-            get
-            {
-                return double.Parse(RoughLowTB.Text);
-            }
-        }
-
-        public int PercentCutoff
-        {
-            get
-            {
-                if (ErrCutCB.Checked == true)
-                    return int.Parse(ErrorCutTB.Text);
-                else
-                    return -1;
-            }
-        }
-
-        #endregion
-
+        /// <summary>
+        /// Returns the ranges for the paramters to vary by
+        /// </summary>
+        /// <param name="parampercs"></param>
         public void GetParamPercs(ref double[] parampercs)
         {
             //Fill ED, length, and roughness in that order
-            parampercs[0] = LengthHigh/100.0;
-            parampercs[1] = LengthLow / 100.0;
-            parampercs[2] = EDHigh / 100.0;
-            parampercs[3] = EDLow / 100.0;
-            parampercs[4] = RoughHigh / 100.0;
-            parampercs[5] = RoughLow / 100.0;
-            parampercs[6] = PercentCutoff / 100.0;
+            parampercs[0] = double.Parse(LengthHighTB.Text) / 100.0;
+            parampercs[1] = double.Parse(LengthLowTB.Text) / 100.0;
+            parampercs[2] = double.Parse(EDHighTB.Text) / 100.0;
+            parampercs[3] = double.Parse(EDLowTB.Text) / 100.0;
+            parampercs[4] = double.Parse(RoughHighTB.Text) / 100.0;
+            parampercs[5] = double.Parse(RoughLowTB.Text) / 100.0;
+            
+            if(ErrCutCB.Checked)
+                parampercs[6] = (double)int.Parse(ErrorCutTB.Text) / 100.0;
+            else
+                parampercs[6] = -1;
         }
 
         private void ErrCutCB_CheckedChanged(object sender, EventArgs e)
         {
-            if (ErrCutCB.Checked == true)
-            {
-                ErrorCutTB.Enabled = true;
-            }
-            else
-            {
-                ErrorCutTB.Enabled = false;
-            }
+            ErrorCutTB.Enabled = ErrCutCB.Checked;
         }
 
         /// <summary>

@@ -1046,10 +1046,7 @@ namespace StochasticModeling
                 if (outwin.ShowDialog() != DialogResult.Cancel)
                 {
                     chisquaretb.Text = outwin.GetParameters(out parameters, out covar);
-                    parameters = outwin.selectedmodel;
-                    covar = outwin.selectedcovar;
                     bfitting = true;
-
                 }
             }
 

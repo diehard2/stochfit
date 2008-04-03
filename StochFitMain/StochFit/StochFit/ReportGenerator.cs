@@ -31,8 +31,14 @@ using System.Windows.Forms;
 
 namespace StochasticModeling
 {
+    /// <summary>
+    /// Singleton class that collects information to be written into a pdf report using itextsharp
+    /// </summary>
     public sealed class ReportGenerator
     {
+        /// <summary>
+        /// The publicly available instance of the class. All functions are called through instance
+        /// </summary>
         public static readonly ReportGenerator Instance = new ReportGenerator();
 
         private ArrayList m_alMainInformation;
@@ -52,6 +58,9 @@ namespace StochasticModeling
             m_pLine = new Phrase();
         }
 
+        /// <summary>
+        /// Get/Set the name for the report. The pdf extension is automatically included at the end
+        /// </summary>
         public string DataFileName
         {
             get
@@ -82,12 +91,18 @@ namespace StochasticModeling
             }
         }
 
+        /// <summary>
+        /// Clears the information from the model independent portion of the report
+        /// </summary>
         public void ClearMainInformation()
         {
             if(m_alMainInformation.Count > 0)
                 m_alMainInformation.Clear();
         }
 
+        /// <summary>
+        /// Set information for the model independent portion of the report
+        /// </summary>
         public string SetMainInformation
         {
             set
@@ -97,12 +112,18 @@ namespace StochasticModeling
             }
         }
 
+        /// <summary>
+        /// Clear information related to the electron density profile fitting
+        /// </summary>
         public void ClearRhoModelInfo()
         {
             if(m_alRhoModelingInformation.Count > 0)
                 m_alRhoModelingInformation.Clear();
         }
 
+        /// <summary>
+        /// Add an ArrayList of formatted text to the electron density fitting portion of the report
+        /// </summary>
         public ArrayList SetRhoModelInfo
         {
             set
@@ -115,12 +136,18 @@ namespace StochasticModeling
             }
         }
 
+        /// <summary>
+        /// Clears the information in the model dependent fitting report section
+        /// </summary>
         public void ClearReflModelInfo()
         {
             if(m_alReflModelingInformation.Count > 0)
                 m_alReflModelingInformation.Clear();
         }
 
+        /// <summary>
+        /// Set the information for the model dependent reflectivity fit
+        /// </summary>
         public ArrayList SetReflModelInfo
         {
             set
@@ -224,6 +251,9 @@ namespace StochasticModeling
             document.Add(datatable);
         }
 
+        /// <summary>
+        /// Generate the pdf report
+        /// </summary>
         public void GeneratePDFReport()
         {
             try

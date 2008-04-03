@@ -36,6 +36,9 @@ using System.Globalization;
 
 namespace StochasticModeling.Modeling
 {
+    /// <summary>
+    /// Displays the fits collected from the stochastic parameter space search
+    /// </summary>
     public partial class StochOutputWindow : StochFormBase
     {
         double[][] ParameterArray;
@@ -60,17 +63,30 @@ namespace StochasticModeling.Modeling
         bool m_bonesigma;
         bool m_bimpnorm;
         int m_iboxes;
-        public double[] selectedmodel;
-        public double[] selectedcovar;
-        public double selectedchisquare;
+        private double[] selectedmodel;
+        private double[] selectedcovar;
+        private double selectedchisquare;
         Graphing ReflGraphing;
         Graphing RhoGraphing;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="FullParameterArray">Contains all of the parameters for all of the fits. This is parsed
+        /// internally</param>
+        /// <param name="ParameterArraysize">The total number of fits contained in FullParameterArray</param>
+        /// <param name="paramsize">The element count of each parameter set contained in FullParameterArray </param>
+        /// <param name="FullChisquareArray">The array of all chisquare valued for each fit</param>
+        /// <param name="FullCovariance">The covariance matrix for each fit</param>
+        /// <param name="OneSigma">True if the fits were performed treating the system as an elastic sheet, false otherwise</param>
+        /// <param name="boxes">The number of boxes for the fit</param>
+        /// <param name="SubSLD">The substrate SLD</param>
+        /// <param name="SupSLD">The superphase SLD</param>
+        /// <param name="wavelength">The x-ray wavelength used</param>
+        /// <param name="QSpread">The percent error in Q used (if applicable)</param>
+        /// <param name="Impnorm">True if the fit was performed assuming an imperfect normalization, false otherwise</param>
         public StochOutputWindow(double[] FullParameterArray, int ParameterArraysize, int paramsize, double[] FullChisquareArray, double[] FullCovariance, bool OneSigma, int boxes, double SubSLD, double SupSLD, double wavelength, double QSpread, bool Impnorm)
         {
-            //Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-            //Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
-
             InitializeComponent();
             ParameterArray = new double[ParameterArraysize][];
             CovarArray = new double[ParameterArraysize][];
@@ -134,9 +150,7 @@ namespace StochasticModeling.Modeling
 
             RhoGraphing = new Graphing(string.Empty);
             RhoGraphing.CreateGraph(RhoGraph, "Electron Density Profile", "Z", "Normalized Electron Density",
-              AxisType.Linear);
-
-            
+                                    AxisType.Linear);
 
             RhoGraphing.SetAllFonts("Garamond", 20, 18);
             //Get our Q data into a useable form
@@ -182,6 +196,7 @@ namespace StochasticModeling.Modeling
             ModelLB.SelectedIndex = 0;
             ModelLB.Focus();
 
+            //Play a chime when the stochastic methods are complete
             System.Media.SystemSounds.Exclamation.Play();
         }
 
@@ -330,7 +345,7 @@ namespace StochasticModeling.Modeling
             }
         }
 
-       public void FillRealData()
+       private void FillRealData()
         {
             Qincrement = ReflData.Instance.GetQData;
             RealRefl = ReflData.Instance.GetReflData;

@@ -27,6 +27,8 @@ using System.Xml.Serialization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
+#pragma warning disable 1591
+
 namespace StochasticModeling.Settings
 {
 

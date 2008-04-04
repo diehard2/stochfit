@@ -19,7 +19,7 @@
  */
 
 #pragma once
-#include "multilayer.h"
+#include "ReflCalc.h"
 #include "ParamVector.h"
 #include "SimulatedAnnealing.h"
 #include "ASA.h"

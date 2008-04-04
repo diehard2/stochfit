@@ -20,7 +20,7 @@
 
 #include "stdafx.h"
 #include "ParamVector.h"
-#include "multilayer.h"
+#include "ReflCalc.h"
 
 // Multilayer reflection and transmission
 // The calculation scheme used can be found in 
@@ -104,7 +104,7 @@ void CReflCalc::init(int numberofdatapoints, double xraylambda,double d0, BOOL u
 		#endif
 	}
 
-//	omp_set_num_threads(m_iuseableprocessors);
+	omp_set_num_threads(m_iuseableprocessors);
 
 	//Arrays for the electron density and twice the electron density
     nk = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl,64);
@@ -597,6 +597,7 @@ double CReflCalc::objective(ParamVector * g)
 	m_dChiSquare = 0;
     m_dgoodnessoffit = 0;
 
+	//Log difference
 	if(objectivefunction == 0)
 	{
 		for(int i = 0; i< counter; i++)
@@ -609,7 +610,7 @@ double CReflCalc::objective(ParamVector * g)
 	}
 	else if (objectivefunction == 1)
 	{
-		
+		//Inverse difference
 		for(int i = 0; i< counter; i++)
 		{
 			calcholder1 = yi[i]/reflpt[i];
@@ -624,73 +625,36 @@ double CReflCalc::objective(ParamVector * g)
 		m_dgoodnessoffit /= counter+1;
 	}
 	else if (objectivefunction == 2)
-	{
-		for(int i = 0; i < m_idatapoints; i++)
+	{	//Log difference with errors
+		for(int i = 0; i< counter; i++)
 		{
-			objarray[i] = log10(yi[i]/reflpt[i]);
-			objarray[i] *= objarray[i] ;
-			objarray[i] /= fabs(log10(eyi[i]));
+			calcholder1 = log(yi[i])-log(reflpt[i]);
+			m_dgoodnessoffit += calcholder1*calcholder1/log(eyi[i]*eyi[i]);
 		}
 
-		for(int i = 0; i <counter; count++ )
-		{
-			holder = 0;
-			int j;
-			for(j = i; xi[j] < 0.1*count && j < m_idatapoints;j++)
-			{
-				holder += objarray[j];
-			}
-			
-			//Sanity check - don't allow 4 or fewer points to have the
-			//same weight as 20 points
-			if(m_idatapoints-i < 5)
-			{
-				for(;j<m_idatapoints;j++)
-				{
-					holder += objarray[j];
-				}
-			}
-
-			m_dgoodnessoffit += holder/(double)(j-i);
-			i = j;
-		}
+		m_dgoodnessoffit /= counter+1;
 	}
 	else if (objectivefunction == 3)
 	{
-		for(int i = 0; i < m_idatapoints; i++)
+		//Inverse difference with errors
+		for(int i = 0; i< counter; i++)
 		{
-			objarray[i] = (yi[i]/fresnelcurve[i]-reflpt[i]/fresnelcurve[i]);
-			objarray[i] *= objarray[i] ;
-			objarray[i] /= eyi[i]/fresnelcurve[i];
-		}
-
-		for(int i = 0; i < counter; count++ )
-		{
-			holder = 0;
-			int j;
-			for(j = i; xi[j] < 0.1*count && j < m_idatapoints;j++)
-			{
-				holder += objarray[j];
-			}
+			calcholder1 = yi[i]/reflpt[i];
 			
-			//Sanity check - don't allow 4 or fewer points to have the
-			//same weight as 20 points
-			if(m_idatapoints-i < 5)
-			{
-				for(;j<m_idatapoints;j++)
-				{
-					holder += objarray[j];
-				}
-			}
+			if(calcholder1 < 1.0)
+				calcholder1 = 1.0/calcholder1;
 
-			m_dgoodnessoffit += holder/(double)(j-i);
-			i = j;
+			double errormap = yi[i]/eyi[i];
+			m_dgoodnessoffit +=(1.0-calcholder1)*(1.0-calcholder1)*errormap;
 		}
+
+		m_dgoodnessoffit /= counter+1;
+		
 
 	}
 	else if(objectivefunction == 4)
 	{
-
+		//R/Rf error
 		for(int i = 0; i< counter; i++)
 		{
 			calcholder1 = (yi[i]/fresnelcurve[i]-reflpt[i]/fresnelcurve[i]);
@@ -740,8 +704,6 @@ void CReflCalc::myrf(double* sintheta, double* sinsquaredtheta, int datapoints, 
 	MyComplex<double> indexsupsquared = indexsup * indexsup;
 	MyComplex<double> zero;
 	
-			//Set the number of OpenMP threads
-	//omp_set_num_threads(m_iuseableprocessors);	
 	#pragma omp parallel
 	{
 		//Figure out the number of the thread we're currently in

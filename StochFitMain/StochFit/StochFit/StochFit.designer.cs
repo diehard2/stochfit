@@ -804,8 +804,8 @@ namespace StochasticModeling
             this.objectiveCB.Items.AddRange(new object[] {
             "Log(R) Cost Function",
             "Inverse Cost Function",
-            "Averaged Log10(R) Chi Square",
-            "Averaged R/Rf Chi Square",
+            "Log(R) Cost Function with errors",
+            "Inverse Cost Function with errors",
             "R/Rf Chi Square"});
             this.objectiveCB.Name = "objectiveCB";
             this.objectiveCB.Size = new System.Drawing.Size(200, 23);

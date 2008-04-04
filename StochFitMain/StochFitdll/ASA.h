@@ -21,7 +21,7 @@
 #pragma once
 #include "../ASA/asa_base.h"
 #include "ParamVector.h"
-#include "multilayer.h"
+#include "ReflCalc.h"
 
 class ASA :	public ASA_Base
 {

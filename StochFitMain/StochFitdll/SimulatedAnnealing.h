@@ -19,7 +19,7 @@
  */
 
 #pragma once
-#include "multilayer.h"
+#include "ReflCalc.h"
 #include "ParamVector.h"
 
 class SimAnneal

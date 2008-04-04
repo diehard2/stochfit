@@ -21,7 +21,7 @@
 
 #include "stdafx.h"
 #include "ParamVector.h"
-#include "multilayer.h"
+#include "ReflCalc.h"
 #include "SimulatedAnnealing.h"
 #include "StochFitHarness.h"
 

@@ -549,7 +549,7 @@ namespace StochasticModeling
 
         public void SetBounds()
         {
-            if (highqindex > 0 || lowqindex > 0)
+            if ((highqindex > 0 || lowqindex > 0) && Pane.CurveList.Count > 0)
             {
 
                 int i = 0;

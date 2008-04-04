@@ -305,19 +305,23 @@ namespace StochasticModeling.Settings
         {
             if (File.Exists(settingsfile))
             {
-                try
-                {
+                //try
+                //{
+                    if (settingsfile.Length >= 260)
+                    {
+                        throw new Exception("File Path has to many characters, please relocate");
+                    }
                     FileStream settings = new FileStream(settingsfile, FileMode.Open);
                     XmlSerializer xmls = new XmlSerializer(typeof(SettingsStruct));
                     Settings = (SettingsStruct)xmls.Deserialize(settings);
                     settings.Close();
                     return true;
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.Forms.MessageBox.Show(ex.Message + " - settings file is likely from an older Stochfit version");
-                    return false;
-                }
+                //}
+                //catch (Exception ex)
+                //{
+                //    System.Windows.Forms.MessageBox.Show(ex.Message + " - settings file is likely from an older Stochfit version");
+                //    return false;
+                //}
             }
             else
             {

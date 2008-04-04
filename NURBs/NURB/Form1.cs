@@ -12,21 +12,16 @@ namespace NURB
     public partial class Form1 : Form
     {
         GraphingBase m_gSpline;
-        double[] m_dx;
-        double[] m_dy;
-        double[] m_dz;
-        double[] m_dspline_x;
-        double[] m_dspline_y;
-        double[] m_dspline_z;
+        double[] m_dx, m_dy, m_dz, m_dspline_x, m_dspline_y, m_dspline_z;
         ControlPoints[] m_CP;
         NURBGenerator nurbgen;
 
         //Change this to change the degree of the spline
-        int degree = 6;
+        int degree = 3;
         //Number of points in the spline
         int numbsplinepts = 200;
         //The number of control points. Must be at least degree+1
-        int numbercontrolpoints = 7;
+        int numbercontrolpoints = 15;
 
 
         public Form1()

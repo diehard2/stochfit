@@ -57,6 +57,7 @@ namespace NURB
     class NURBGenerator
     {
         float[] m_fKnotVector;
+       
         /// <summary>
         /// Sets up the Knot Vector to pass to the Cox De-Boor algorithm
         /// </summary>

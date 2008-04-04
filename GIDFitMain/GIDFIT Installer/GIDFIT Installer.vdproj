@@ -21,14 +21,20 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_2086225D05F43767F25295AF3C84E1BC"
+        "MsmKey" = "8:_1720DEDCCC6E07366FA97800B4810998"
         "OwnerKey" = "8:_051D4F31EBDD435B98BE0E79001E5E24"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_5F4A9718E1524F27918A7C1041A7BA1A"
+        "MsmKey" = "8:_4D12609F2F224C26B49F76EC14AB13D7"
         "OwnerKey" = "8:_94EB32C8B2F04F50A4E533CC8CE549AA"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_6550FA9DCBB14FA7B5ACAD72F77A31F5"
+        "OwnerKey" = "8:_4D12609F2F224C26B49F76EC14AB13D7"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -39,20 +45,14 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_9EBEF8F910C4263A5677E3462710D477"
-        "OwnerKey" = "8:_94EB32C8B2F04F50A4E533CC8CE549AA"
+        "MsmKey" = "8:_AA9972C57E954AE7B7E3F3E95205AFAA"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_C1443551798A40B0BDFABB679BC519E3"
         "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_EFE0A8E582C044728BCDAA4D708207D2"
-        "OwnerKey" = "8:_5F4A9718E1524F27918A7C1041A7BA1A"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -64,7 +64,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_2086225D05F43767F25295AF3C84E1BC"
+        "OwnerKey" = "8:_1720DEDCCC6E07366FA97800B4810998"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -162,14 +162,14 @@
         }
         "File"
         {
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_2086225D05F43767F25295AF3C84E1BC"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_1720DEDCCC6E07366FA97800B4810998"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
             "AssemblyAsmDisplayName" = "8:ZedGraph, Version=5.1.1.428, Culture=neutral, PublicKeyToken=02a83cbd123fcd60, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_2086225D05F43767F25295AF3C84E1BC"
+                    "_1720DEDCCC6E07366FA97800B4810998"
                     {
                     "Name" = "8:ZedGraph.dll"
                     "Attributes" = "3:512"
@@ -193,12 +193,12 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9EBEF8F910C4263A5677E3462710D477"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_AA9972C57E954AE7B7E3F3E95205AFAA"
             {
-            "SourcePath" = "8:libguide40.dll"
-            "TargetName" = "8:libguide40.dll"
+            "SourcePath" = "8:..\\bin\\dlls\\FakeGID.txt"
+            "TargetName" = "8:FakeGID.txt"
             "Tag" = "8:"
-            "Folder" = "8:_E1CAAAD02A1F47C49046FBDC42058B0C"
+            "Folder" = "8:_7C77A8DC06164EE9B05CAB81F652BC6B"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -210,7 +210,7 @@
             "PackageAs" = "3:1"
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_C1443551798A40B0BDFABB679BC519E3"
@@ -843,7 +843,7 @@
         }
         "MergeModule"
         {
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_5F4A9718E1524F27918A7C1041A7BA1A"
+            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_4D12609F2F224C26B49F76EC14AB13D7"
             {
             "UseDynamicProperties" = "11:TRUE"
             "IsDependency" = "11:TRUE"
@@ -857,7 +857,7 @@
             "Feature" = "8:"
             "IsolateTo" = "8:"
             }
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_EFE0A8E582C044728BCDAA4D708207D2"
+            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_6550FA9DCBB14FA7B5ACAD72F77A31F5"
             {
             "UseDynamicProperties" = "11:TRUE"
             "IsDependency" = "11:TRUE"
@@ -876,7 +876,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_051D4F31EBDD435B98BE0E79001E5E24"
             {
-            "SourcePath" = "8:..\\GIDFit\\obj\\Release\\GIDFit.exe"
+            "SourcePath" = "8:..\\GIDFit\\obj\\Debug\\GIDFit.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_E1CAAAD02A1F47C49046FBDC42058B0C"
@@ -904,7 +904,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_94EB32C8B2F04F50A4E533CC8CE549AA"
             {
-            "SourcePath" = "8:..\\bin\\release\\LevmarDLL.dll"
+            "SourcePath" = "8:..\\bin\\Debug\\LevMardll.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_E1CAAAD02A1F47C49046FBDC42058B0C"

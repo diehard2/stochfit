@@ -125,7 +125,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/QaxWPST /Qansi-alias  /Qprec-div- "
+				AdditionalOptions="/QaxWTPS /Qansi-alias  /Qprec-div-"
 				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="false"
@@ -293,11 +293,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Genome.cpp"
+				RelativePath=".\multilayer.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\multilayer.cpp"
+				RelativePath=".\ParamVector.cpp"
 				>
 			</File>
 			<File
@@ -327,10 +327,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Genome.h"
-				>
-			</File>
-			<File
 				RelativePath=".\multilayer.h"
 				>
 			</File>
@@ -339,11 +335,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ParamVector.h"
+				>
+			</File>
+			<File
 				RelativePath=".\random.h"
 				>
 			</File>
 			<File
 				RelativePath=".\SA_Dispatcher.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SettingsStruct.h"
 				>
 			</File>
 			<File

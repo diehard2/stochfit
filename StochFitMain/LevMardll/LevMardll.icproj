@@ -5,7 +5,7 @@
 	Name="LevMardll"
 	ProjectGUID="{1942BC8C-3706-48D2-8D70-3BF4237A41CE}"
 	VCNestedProjectGUID="{A2D16FE7-CD5C-4D6A-81FE-3789D54D5D13}"
-	VCNestedProjectCRC32="393744097"
+	VCNestedProjectCRC32="558157422"
 	VCNestedProjectFileName="LevMardll.vcproj"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -199,8 +199,6 @@
 		<File 
 			RelativePath=".\stdafx.h"/>
 		<File 
-			RelativePath=".\Axb.c"/>
-		<File 
 			RelativePath=".\LevMar\Axb.c"/>
 		<File 
 			RelativePath=".\FastReflCalc.cpp"/>
@@ -216,8 +214,6 @@
 			RelativePath=".\LevMar\lmlec.c"/>
 		<File 
 			RelativePath=".\LMRoutines.cpp"/>
-		<File 
-			RelativePath=".\misc.c"/>
 		<File 
 			RelativePath=".\LevMar\misc.c"/>
 		<File 

@@ -30,9 +30,8 @@
 #define STOCHFIT_API __declspec(dllimport)
 #endif
 
-extern "C" STOCHFIT_API void Init(LPCWSTR Directory, double Q[], double Refl[], double ReflError[], double QError[], int Qpoints, double rholipid,double rhoh2o,double supSLD, int parratlayers, double layerlength,
-							 double surfabs, double wavelength, double subabs, double supabs, BOOL UseSurfAbs, double leftoffset, double QErr, BOOL forcenorm, 
-							 double forcesig, BOOL debug, BOOL XRonly, double resolution,double totallength, BOOL impnorm, int objfunction);
+
+extern "C" STOCHFIT_API void Init(ReflSettings initstruct);
 extern "C" STOCHFIT_API void GenPriority(int priority);
 extern "C" STOCHFIT_API void Start(int iterations);
 extern "C" STOCHFIT_API void Cancel();

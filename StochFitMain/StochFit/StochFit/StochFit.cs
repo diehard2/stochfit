@@ -36,6 +36,7 @@ using System.Timers;
 using System.Diagnostics;
 using StochasticModeling.Modeling;
 using System.Globalization;
+using StochasticModeling.Settings;
 
 namespace StochasticModeling
 {
@@ -330,6 +331,58 @@ namespace StochasticModeling
 
         #region Save and Load Settings
 
+        private void GetReflSettings(ref ReflSettings settings)
+        {
+            FileInfo info = new FileInfo(origreflfilename);
+            int newdatapoints = ReflData.Instance.GetNumberDataPoints - int.Parse(critedgeoffTB.Text) - int.Parse(HQoffsetTB.Text);
+
+            double[] q = new double[newdatapoints];
+            double[] r = new double[newdatapoints];
+            double[] re = new double[newdatapoints];
+            double[] qe = null;
+
+            if (ReflData.Instance.HaveErrorinQ)
+                qe = new double[newdatapoints];
+
+            //Move the data into truncated arrays so we don't have to constantly recalculate in the numerically intensive portions
+            for (int i = int.Parse(critedgeoffTB.Text); i < ReflData.Instance.GetNumberDataPoints - int.Parse(HQoffsetTB.Text); i++)
+            {
+                q[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetQDataPt(i);
+                r[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetReflDataPt(i);
+                re[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetRErrorPt(i);
+
+                if (qe != null)
+                    qe[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetQErrorPt(i);
+            }
+
+            settings.SetStruct.Directory = info.DirectoryName;
+
+            settings.SetArrays(q, r, re, qe, newdatapoints);
+
+            settings.SetStruct.QPoints = newdatapoints;
+            settings.SetStruct.FilmSLD = Double.Parse(Rholipid.Text);
+            settings.SetStruct.SubSLD = Double.Parse(rhowater.Text);
+            settings.SetStruct.SupSLD = Double.Parse(SupSLDTB.Text);
+            settings.SetStruct.Boxes = Int32.Parse(Boxlayers.Text);
+            settings.SetStruct.FilmLength = Double.Parse(layerlength.Text);
+            settings.SetStruct.FilmAbs = Double.Parse(SurfAbs.Text);
+            settings.SetStruct.Wavelength = Double.Parse(wavelength.Text);
+            settings.SetStruct.SubAbs = Double.Parse(SubAbs.Text);
+            settings.SetStruct.SupAbs = Double.Parse(SupAbsTB.Text);
+            settings.SetStruct.UseSurfAbs = UseAbsCB.Checked;
+            settings.SetStruct.Leftoffset = Double.Parse(SupoffsetTB.Text);
+            settings.SetStruct.QErr = Double.Parse(QErrTB.Text);
+            settings.SetStruct.Forcenorm = ForceNormCB.Checked;
+            settings.SetStruct.Forcesig = Double.Parse(SigTSTB.Text);
+            settings.SetStruct.Debug = debugToolStripMenuItem.Checked;
+            settings.SetStruct.XRonly = forceXRToolStripMenuItem1.Checked;
+            settings.SetStruct.Resolution = int.Parse(ResolutionTB.Text);
+            settings.SetStruct.Totallength = double.Parse(TotlengthTB.Text);
+            settings.SetStruct.Impnorm = ImpNormCB.Checked;
+            settings.SetStruct.Objectivefunction = objectiveCB.SelectedIndex;
+
+        }
+
         private void WriteSettings()
         {
             MySettings PrevSettings = new MySettings();
@@ -461,32 +514,11 @@ namespace StochasticModeling
                 iterations = int.Parse(Iterations.Text) - progressBar1.Value;
             }
 
-            FileInfo info = new FileInfo(origreflfilename);
-            int newdatapoints = ReflData.Instance.GetNumberDataPoints - int.Parse(critedgeoffTB.Text) - int.Parse(HQoffsetTB.Text);
+            
+            ReflSettings settings = new ReflSettings();
+            GetReflSettings(ref settings);
 
-            double[] q = new double[newdatapoints];
-            double[] r = new double[newdatapoints];
-            double[] re = new double[newdatapoints];
-            double[] qe = null;
-
-            if (ReflData.Instance.HaveErrorinQ)
-                qe = new double[newdatapoints];
-
-            //Move the data into truncated arrays so we don't have to constantly recalculate in the numerically intensive portions
-            for (int i = int.Parse(critedgeoffTB.Text); i < ReflData.Instance.GetNumberDataPoints - int.Parse(HQoffsetTB.Text); i++)
-            {
-                q[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetQDataPt(i);
-                r[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetReflDataPt(i);
-                re[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetRErrorPt(i);
-
-                if (qe != null)
-                    qe[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetQErrorPt(i);
-            }
-
-            Init(info.DirectoryName, q, r, re, qe, newdatapoints, Double.Parse(Rholipid.Text), Double.Parse(rhowater.Text), Double.Parse(SupSLDTB.Text),
-                    Int32.Parse(Boxlayers.Text), Double.Parse(layerlength.Text),
-                     Double.Parse(SurfAbs.Text), Double.Parse(wavelength.Text), Double.Parse(SubAbs.Text), Double.Parse(SupAbsTB.Text), UseAbsCB.Checked, Double.Parse(SupoffsetTB.Text), Double.Parse(QErrTB.Text), ForceNormCB.Checked,
-                     Double.Parse(SigTSTB.Text), debugToolStripMenuItem.Checked, forceXRToolStripMenuItem1.Checked, double.Parse(ResolutionTB.Text), double.Parse(TotlengthTB.Text), ImpNormCB.Checked, objectiveCB.SelectedIndex);
+            Init(settings.SetStruct);
 
             SetSAParameters(int.Parse(SigmaSearchTB.Text), AlgorithmCB.SelectedIndex, m_dAnnealtemp, m_iAnnealplat, m_dAnnealslope, m_dSTUNGamma, m_iSTUNfunc, m_bSTUNAdaptive, m_iSTUNtempiter, m_iSTUNdeciter, m_dSTUNgammadec);
             Start(iterations);

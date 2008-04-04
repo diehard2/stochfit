@@ -19,7 +19,7 @@
 int multi_compare (const void *ii, const void *jj);
 ASA_Base* ptr;
 
-ASA_Base::ASA_Base(string filename, int paramcount): m_bASAOpen(false),m_inumber_asa_open(0),m_bASA_print(false),m_sfile_name(filename),
+ASA_Base::ASA_Base(wstring filename, int paramcount): m_bASAOpen(false),m_inumber_asa_open(0),m_bASA_print(false),m_sfile_name(filename),
 m_irecursive_asa_open(0),m_bincl_stdout(true), m_bASA_recursive(false), ptr_asa_out(NULL), m_bASA_print_intermed(false),
 m_basa_print_more(false),m_bdropped_parameters(false),m_basa_sample(false),m_buser_reanneal_parameters(false), 
 multi_min(false),user_initial_cost_temp(false), ratio_temperature_scales(false), delta_parameters(false),
@@ -2195,11 +2195,11 @@ void ASA_Base::cost_derivatives ()
       
 		current_generated_state.cost = CalcCostFunc(current_generated_state.parameter);
 
-        if (cost_function_test (current_generated_state.cost, current_generated_state.parameter) == 0) 
+       /* if (cost_function_test (current_generated_state.cost, current_generated_state.parameter) == 0) 
 		{
           exit_status = INVALID_COST_FUNCTION_DERIV;
           return;
-        }
+        }*/
 
         if (valid_state_generated_flag == FALSE)
           ++m_inumber_invalid_generated_states;
@@ -2433,7 +2433,7 @@ if(!m_sfile_name.empty())
 
 		if(m_bASA_print)
 		{
-			if(m_sfile_name == "STDOUT")
+			if(m_sfile_name == L"STDOUT")
 			{
 				if(m_bincl_stdout)
 					ptr_asa_out = stdout;
@@ -2441,9 +2441,9 @@ if(!m_sfile_name.empty())
 			else
 			{
 				if(m_bASA_recursive)
-					ptr_asa_out = fopen(m_sfile_name.c_str(), "a");
+					ptr_asa_out = _wfopen(m_sfile_name.c_str(), L"a");
 				else
-					ptr_asa_out = fopen(m_sfile_name.c_str(), "w");
+					ptr_asa_out = _wfopen(m_sfile_name.c_str(), L"w");
 			}
 		}
 	}

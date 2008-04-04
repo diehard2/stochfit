@@ -24,9 +24,12 @@ using System.Text;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
-namespace StochasticModeling
+namespace StochasticModeling.Settings
 {
+
     /// <summary>
     /// Serializable class for holding model independent parameters
     /// </summary>
@@ -188,6 +191,105 @@ namespace StochasticModeling
         /// The percentage to change Gamma by depending on the circumstances in adaptive STUN annealing
         /// </summary>
         public double STUNgammadec;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 8)]
+    public struct ModelSettings
+    {
+        public string Directory;
+        public IntPtr Q;
+        public IntPtr Refl;
+        public IntPtr ReflError;
+        public IntPtr QError;
+        public int QPoints;
+        public double SubSLD;
+        public double FilmSLD;
+        public double SupSLD;
+        public int Boxes;
+        public double FilmAbs;
+        public double SubAbs;
+        public double SupAbs;
+        public double Wavelength;
+        public bool UseSurfAbs;
+        public double Leftoffset;
+        public double QErr;
+        public bool Forcenorm;
+        public double Forcesig;
+        public bool Debug;
+        public bool XRonly;
+        public int Resolution;
+        public double Totallength;
+        public double FilmLength;
+        public bool Impnorm;
+        public int Objectivefunction;
+
+    }
+   
+
+    
+    public class ReflSettings:IDisposable
+    {
+        public ModelSettings SetStruct = new ModelSettings();
+        private bool disposed = false;
+
+        ~ReflSettings()
+        {
+            Dispose(false);
+        }
+
+        public void SetArrays(double[] iQ, double[] iR, double[] iRerr, double[] iQerr, int iQSize)
+        {
+            int size = Marshal.SizeOf(iQ[0])*iQ.Length;
+
+            SetStruct.Q = Marshal.AllocHGlobal(size);
+            SetStruct.Refl = Marshal.AllocHGlobal(size);
+            SetStruct.ReflError = Marshal.AllocHGlobal(size);
+
+            if (iQerr != null)
+                SetStruct.QError = Marshal.AllocHGlobal(size);
+            else
+                SetStruct.QError = IntPtr.Zero;
+
+            Marshal.Copy(iQ, 0, SetStruct.Q, iQ.Length);
+            Marshal.Copy(iR, 0, SetStruct.Refl, iR.Length);
+            Marshal.Copy(iRerr, 0, SetStruct.ReflError, iRerr.Length);
+
+            if (iQerr != null)
+                Marshal.Copy(iQerr, 0, SetStruct.QError, iQerr.Length);
+           
+        }
+
+        #region IDisposable Members
+
+        void IDisposable.Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                // Call the appropriate methods to clean up
+                // unmanaged resources here.
+                // If disposing is false,
+                // only the following code is executed.
+                if (SetStruct.Q != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(SetStruct.Q);
+                    Marshal.FreeHGlobal(SetStruct.Refl);
+                    Marshal.FreeHGlobal(SetStruct.ReflError);
+
+                    if (SetStruct.QError != IntPtr.Zero)
+                        Marshal.FreeHGlobal(SetStruct.QError);
+                }
+                // Note disposing has been done.
+                disposed = true;
+            }
+        }
+
+        #endregion
     }
 
     class MySettings

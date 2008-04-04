@@ -21,7 +21,7 @@
 #include "stdafx.h"
 #include "SimulatedAnnealing.h"
 
-SimAnneal::SimAnneal(bool debug, string directory): m_bisiterminimum(false), 
+SimAnneal::SimAnneal(bool debug, wstring directory): m_bisiterminimum(false), 
 	m_ipoorsolutionacc(0),m_inumberpoorsol(0),m_daverageSTUNval(0), m_sdirectory(directory), m_bdebugging(debug)
 {}
 
@@ -47,8 +47,8 @@ void SimAnneal::Initialize(double inittemp, double plattime, double gamma, doubl
 
 	if(m_bdebugging)
 	{
-		debugfile.open(string(m_sdirectory + string("\\debug.txt")).c_str());
-		rejfile.open(string(m_sdirectory + string("\\rejfile.txt")).c_str());
+		debugfile.open(wstring(m_sdirectory + wstring(L"\\debug.txt")).c_str());
+		rejfile.open(wstring(m_sdirectory + wstring(L"\\rejfile.txt")).c_str());
 	}
 	
 	//Initialize the random number generator
@@ -64,15 +64,15 @@ SimAnneal::~SimAnneal()
 	}
 }
 
-void SimAnneal::InitializeParameters(double step, GARealGenome* genome, CReflCalc* ml0, int sigmasearch, int algorithm)
+void SimAnneal::InitializeParameters(double step, ParamVector* params, CReflCalc* m_cRefl, int sigmasearch, int algorithm)
 {
-	temp_genome = *genome;
+	temp_params = *params;
 	mc_stepsize = step;
-	multi = ml0;
+	multi = m_cRefl;
 	m_isigmasearch = sigmasearch;
 	m_ialgorithm = algorithm;
 
-	m_dbestsolution = m_dState1 = ml0->objective(genome);
+	m_dbestsolution = m_dState1 = m_cRefl->objective(params);
 }
 
 bool SimAnneal::EvaluateGreedy(double bestval, double curval)
@@ -293,13 +293,13 @@ double SimAnneal::GetLowestEnergy()
 	return m_dbestsolution;
 }
 
-bool SimAnneal::Iteration(GARealGenome* genome)
+bool SimAnneal::Iteration(ParamVector* params)
 {
 	bool accepted = false;
 	m_bisiterminimum = false;
 	
-	temp_genome = *genome;
-	m_dState2 = TakeStep(&temp_genome);
+	temp_params = *params;
+	m_dState2 = TakeStep(&temp_params);
 
 	//Don't allow for negative ED in XR case
 	if(m_dState2 == -1)
@@ -324,7 +324,7 @@ bool SimAnneal::Iteration(GARealGenome* genome)
 
 	if(accepted)
 	{
-		*genome = temp_genome;
+		*params = temp_params;
 		m_dState1 = m_dState2;
 
 		if(m_dState1 == m_dbestsolution)
@@ -338,16 +338,16 @@ bool SimAnneal::IsIterMinimum()
 	return m_bisiterminimum;
 }
 
-double SimAnneal::TakeStep(GARealGenome* genome)
+double SimAnneal::TakeStep(ParamVector* params)
 {
-		double surfabs = genome->getSurfAbs();
-		double impnorm = genome->getImpNorm();
-		double rough = genome->getroughness();
+		double surfabs = params->getSurfAbs();
+		double impnorm = params->getImpNorm();
+		double rough = params->getroughness();
 		double roughmult = 5.0/3.0;
 		int randvar = 0;
 		
 		//Pick the box we're going to mutate
-		int ii= random(genome->GetInitializationLength()-1,0);
+		int ii= random(params->GetInitializationLength()-1,0);
 
 		//Only mutate for the actual guessed fuzzy layer length 
 		if(random(100,0) > m_isigmasearch)
@@ -355,78 +355,78 @@ double SimAnneal::TakeStep(GARealGenome* genome)
 				double mutmax;
 				double mutmin;
 				
-				double mutate = random(genome->GetMutatableParameter(ii) + mc_stepsize,
-									genome->GetMutatableParameter(ii) - mc_stepsize);
+				double mutate = random(params->GetMutatableParameter(ii) + mc_stepsize,
+									params->GetMutatableParameter(ii) - mc_stepsize);
 
 				//if(ii != 0)
 				//{
-				//	mutmax =  max(genome->GetMutatableParameter(ii-1), genome->GetMutatableParameter(ii+1))+.1;
-				//	mutmin = min(genome->GetMutatableParameter(ii-1), genome->GetMutatableParameter(ii+1))-.1;
+				//	mutmax =  max(params->GetMutatableParameter(ii-1), params->GetMutatableParameter(ii+1))+.1;
+				//	mutmin = min(params->GetMutatableParameter(ii-1), params->GetMutatableParameter(ii+1))-.1;
 				//	
 				//	if(mutate > mutmax)
-				//		genome->SetMutatableParameter(ii, mutmax);
+				//		params->SetMutatableParameter(ii, mutmax);
 				//	else if(mutate < mutmin)
-				//		genome->SetMutatableParameter(ii, mutmin);
+				//		params->SetMutatableParameter(ii, mutmin);
 				//	else
-				//		genome->SetMutatableParameter(ii, mutate);
+				//		params->SetMutatableParameter(ii, mutate);
 				//}
 				//else
 				//{
-				//	if(mutate > genome->GetMutatableParameter(ii+1) + .1)
-				//		genome->SetMutatableParameter(ii,genome->GetMutatableParameter(ii+1)+0.1);
-				//	else if(mutate < genome->GetMutatableParameter(ii+1) - .1)
-				//		genome->SetMutatableParameter(ii, genome->GetMutatableParameter(ii+1) - 0.1);
+				//	if(mutate > params->GetMutatableParameter(ii+1) + .1)
+				//		params->SetMutatableParameter(ii,params->GetMutatableParameter(ii+1)+0.1);
+				//	else if(mutate < params->GetMutatableParameter(ii+1) - .1)
+				//		params->SetMutatableParameter(ii, params->GetMutatableParameter(ii+1) - 0.1);
 				//	else
-				//		genome->SetMutatableParameter(ii, mutate);
+				//		params->SetMutatableParameter(ii, mutate);
 				//}
-				genome->SetMutatableParameter(ii, mutate);
+				params->SetMutatableParameter(ii, mutate);
 				
 		}
 		else
 		{
 			//Split our sigma search into an absorption search and/or imperfect normalization search
-			if(genome->Get_FixImpNorm())
+			if(params->Get_FixImpNorm())
 			{
-				if(genome->Get_UseSurfAbs())
+				if(params->Get_UseSurfAbs())
 				{
 					randvar = random(2,0);
 
 					if(randvar == 0)
-						genome->setSurfAbs(random(genome->getSurfAbs()*(1.0+mc_stepsize),genome->getSurfAbs()*(1.0-mc_stepsize)));
-					else if (randvar == 1 && genome->Get_FixedRoughness() == false)
-						genome->setroughness(random(genome->getroughness()*(1+roughmult*mc_stepsize),genome->getroughness()*(1-roughmult*mc_stepsize)));
+						params->setSurfAbs(random(params->getSurfAbs()*(1.0+mc_stepsize),params->getSurfAbs()*(1.0-mc_stepsize)));
+					else if (randvar == 1 && params->Get_FixedRoughness() == false)
+						params->setroughness(random(params->getroughness()*(1+roughmult*mc_stepsize),params->getroughness()*(1-roughmult*mc_stepsize)));
 					else
-						genome->setImpNorm(random(genome->getImpNorm()*(1.0+mc_stepsize),genome->getImpNorm()*(1.0-mc_stepsize)));
+						params->setImpNorm(random(params->getImpNorm()*(1.0+mc_stepsize),params->getImpNorm()*(1.0-mc_stepsize)));
 				}
 				else
 				{
 					int randvar = random(1,0);
-					if(randvar == 0 && genome->Get_FixedRoughness() == false)
-						genome->setroughness(random(genome->getroughness()*(1+roughmult*mc_stepsize),genome->getroughness()*(1-roughmult*mc_stepsize)));
+					if(randvar == 0 && params->Get_FixedRoughness() == false)
+						params->setroughness(random(params->getroughness()*(1+roughmult*mc_stepsize),params->getroughness()*(1-roughmult*mc_stepsize)));
 					else
-						genome->setImpNorm(random(genome->getImpNorm()*(1.0+mc_stepsize),genome->getImpNorm()*(1.0-mc_stepsize)));
+						params->setImpNorm(random(params->getImpNorm()*(1.0+mc_stepsize),params->getImpNorm()*(1.0-mc_stepsize)));
 						
 					
 				}
 			}
 			else
 			{
-				if(genome->Get_UseSurfAbs())
+				if(params->Get_UseSurfAbs())
 				{
 					if(random(1,0) == 1)
-						genome->setSurfAbs(random(genome->getSurfAbs()*(1.0+mc_stepsize),genome->getSurfAbs()*(1.0-mc_stepsize)));
-					else if(genome->Get_FixedRoughness() == false)
-						genome->setroughness(random(genome->getroughness()*(1+roughmult*mc_stepsize),genome->getroughness()*(1-roughmult*mc_stepsize)));
+						params->setSurfAbs(random(params->getSurfAbs()*(1.0+mc_stepsize),params->getSurfAbs()*(1.0-mc_stepsize)));
+					else if(params->Get_FixedRoughness() == false)
+						params->setroughness(random(params->getroughness()*(1+roughmult*mc_stepsize),params->getroughness()*(1-roughmult*mc_stepsize)));
 				}
 				else
 				{
-					if(genome->Get_FixedRoughness() == false)
+					if(params->Get_FixedRoughness() == false)
 					{
-						genome->setroughness(random(genome->getroughness()*(1+roughmult*mc_stepsize),genome->getroughness()*(1-roughmult*mc_stepsize)));
+						params->setroughness(random(params->getroughness()*(1+roughmult*mc_stepsize),params->getroughness()*(1-roughmult*mc_stepsize)));
 					}
 				}
 			}
 		}
 
-	return multi->objective(genome);
+	return multi->objective(params);
 }

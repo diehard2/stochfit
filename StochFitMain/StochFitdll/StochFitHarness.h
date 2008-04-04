@@ -19,16 +19,15 @@
  */
 
 #pragma once
-#include "genome.h"
+#include "ParamVector.h"
 #include "multilayer.h"
 #include "SA_Dispatcher.h"
+
 
 class StochFit
 {
 	public:
-		StochFit(LPCWSTR Directory, double* Q, double* Refl, double* ReflErr, double* QError, int DatapointNum,	double rholipid,double rhoh2o, double supSLD, int parratlayers, double layerlength,double surfabs, 
-			   double wavelength, double subaps, double supabs, BOOL usesurfabs, double leftoffset, double QErr, BOOL forcenorm,
-			   double forcesig, bool debug, bool XRonly, double resolution,double totallength, BOOL impnorm, int objfunc);
+		StochFit(ReflSettings initstruct);
 		~StochFit();
 		int Start(int iterations);
 		int Cancel();
@@ -50,10 +49,10 @@ class StochFit
 
 	private:
 		int Processing();
-		void LoadFromFile(CReflCalc* ml, GARealGenome* genome, const char* filename, string fileloc);
+		void LoadFromFile(CReflCalc* ml, ParamVector* params, const wchar_t* filename, wstring fileloc);
 		static DWORD WINAPI InterThread(LPVOID lParam);
-		void WritetoFile(CReflCalc* ml, GARealGenome* genome, const char* filename);
-		void UpdateFits(CReflCalc* ml, GARealGenome* genome, int currentiteration);
+		void WritetoFile(CReflCalc* ml, ParamVector* params, const wchar_t* filename);
+		void UpdateFits(CReflCalc* ml, ParamVector* params, int currentiteration);
 	    void Initialize(double* Q, double* Refl, double* ReflError, double* QError, int PointCount);
 	
 
@@ -62,7 +61,7 @@ class StochFit
 		double* Rho;
 		double* Refl;
 		
-		string m_Directory;
+		wstring m_Directory;
 		HANDLE m_hThread;
 		HANDLE mutex;
 		BOOL m_bupdated;
@@ -94,6 +93,6 @@ class StochFit
 		int m_iparratlayers;
 		int m_ipriority;
 
-		CReflCalc ml0;
-		GARealGenome* genome;
+		CReflCalc m_cRefl;
+		ParamVector* params;
 };

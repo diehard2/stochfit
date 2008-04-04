@@ -226,7 +226,7 @@ void FastReflcalc::mytransmultsigrf(double* sintheta, double* sinsquaredtheta, i
 	//Generate the Parratt reflectivity layers
 	int nl = boxnumber+2;
 	double k0 = 2.0*M_PI/lambda;
-	MyComplex imaginary(0.0,1.0);
+	MyComplex<double> imaginary(0.0,1.0);
 	int offset = 0;
 
 	double suprefindex = 1-RhoArray[0];
@@ -256,30 +256,30 @@ void FastReflcalc::mytransmultsigrf(double* sintheta, double* sinsquaredtheta, i
 		}
 	}
 	
-	MyComplex lengthmultiplier = -1.0*MyComplex(0.0,1.0)/2.0 ;
-	MyComplex kk[20];
+	MyComplex<double> lengthmultiplier = -1.0*MyComplex<double>(0.0,1.0)/2.0 ;
+	MyComplex<double> kk[20];
 	double dkk[20];
-	MyComplex ak[20];
+	MyComplex<double> ak[20];
 	double drj[20];
-	MyComplex rj[20];
-	MyComplex Rj[20];
+	MyComplex<double> rj[20];
+	MyComplex<double> Rj[20];
 	double dQj[20];
-	MyComplex Qj[20];
-	MyComplex holder;
+	MyComplex<double> Qj[20];
+	MyComplex<double> holder;
 
 	//Boundary conditions
 	Rj[nl-1] = 0.0;
 	ak[0] = 1.0;
 	ak[nl-1] = 1.0;
 
-	MyComplex doublenk[20];
-	MyComplex lengthcalc[20];
+	MyComplex<double> doublenk[20];
+	MyComplex<double> lengthcalc[20];
 	
 
 	//Move some calcs out of the loop
 	for(int i = 0; i<nl;i++)
 	{
-		doublenk[i]=-2.0*MyComplex(RhoArray[i],0);
+		doublenk[i]=-2.0*MyComplex<double>(RhoArray[i],0);
 		lengthcalc[i] = lengthmultiplier*LengthArray[i];
 		sigmacalc[i] = -2.0*SigmaArray[i]*SigmaArray[i];
 	}
@@ -398,9 +398,9 @@ void FastReflcalc::Rhocalculate(double Zoffset,double* ZIncrement, double* Lengt
 
 	//Create arrays so we don't have to redo this calculation for every data point
 
-	double* distarray = (double*)_aligned_malloc((refllayers+1)*sizeof(double),16);
-	double* rhoarray = (double*)_aligned_malloc((refllayers+1)*sizeof(double),16);
-	double* rougharray = (double*)_aligned_malloc((refllayers+1)*sizeof(double),16);
+	double* distarray = (double*)_aligned_malloc((refllayers+1)*sizeof(double),64);
+	double* rhoarray = (double*)_aligned_malloc((refllayers+1)*sizeof(double),64);
+	double* rougharray = (double*)_aligned_malloc((refllayers+1)*sizeof(double),64);
 
 	//Calculate the portions of the e-density equation that don't need to be repeated
 	

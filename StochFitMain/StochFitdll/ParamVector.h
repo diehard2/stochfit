@@ -21,13 +21,13 @@
 #pragma once
 #include "stdafx.h"
 
-class GARealGenome 
+class ParamVector 
 {
 	private:
-		vector <float> gnome;
-		vector <float> data_params;
-		vector <float> data_params_high_val;
-		vector <float> data_params_low_val;
+		vector <double> gnome;
+		vector <double> data_params;
+		vector <double> data_params_high_val;
+		vector <double> data_params_low_val;
 		int length;
 		bool m_binitialized;
 		bool m_bfixroughness;
@@ -42,12 +42,12 @@ class GARealGenome
 		void SetBounds(float lowrough, float highrough, float highimp, float highabs);
 
 	public:
-		GARealGenome(int l, float force_sig, bool use_surf_abs, bool fix_impnorm);
-		GARealGenome();
-		int RealGenomeSize();
+		ParamVector(int l, float force_sig, bool use_surf_abs, bool fix_impnorm);
+		ParamVector();
+		int RealparamsSize();
 		int GetInitializationLength();
 		int ParamCount();
-		float GetRealGenome(int i);
+		float GetRealparams(int i);
 		float GetMutatableParameter(int i);
 		int SetMutatableParameter(int i,float x);
 		float getroughness();

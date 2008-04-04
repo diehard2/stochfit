@@ -20,24 +20,24 @@
 
 #include "ASA.h"
 
-ASA::ASA(bool debug, string filename, int paramcount):ASA_Base(filename,paramcount), m_ifuncevals(0), m_i_acc(0),
+ASA::ASA(bool debug, wstring filename, int paramcount):ASA_Base(filename,paramcount), m_ifuncevals(0), m_i_acc(0),
 		m_bfailed(false)
 {
 		m_bASA_print = debug;
 		m_bASA_print_intermed = debug;
 		m_bincl_stdout = debug;
-		m_basa_print_more = debug;
+		m_basa_print_more = false;
 }
 
 ASA::~ASA(void)
 {
 }
 
-void ASA::Initialize(int paramcount, GARealGenome* genome, CReflCalc* multi)
+void ASA::Initialize(int paramcount, ParamVector* params, CReflCalc* multi)
 {
 	SetNumParameters(paramcount);
 	m_cmulti = multi;
-	m_cgenome = *genome;
+	m_cparams = *params;
 
 	asa_alloc();
 
@@ -49,21 +49,21 @@ void ASA::Initialize(int paramcount, GARealGenome* genome, CReflCalc* multi)
 	}
 }
 
-bool ASA::Iteration(GARealGenome* genome)
+bool ASA::Iteration(ParamVector* params)
 {
 	if(m_bfailed == false)
 	{
 		asa_iteration();
-		bool success = genome->CopyArraytoGene(current_generated_state.parameter);
+		bool success = params->CopyArraytoGene(current_generated_state.parameter);
 		if(success == false)
 			MessageBox(NULL,L"4",NULL,NULL);
 	
 
 		if(Options.N_Accepted > m_i_acc)
 		{
-			if(m_cgenome.CopyArraytoGene(best_generated_state.parameter)== false)
+			if(m_cparams.CopyArraytoGene(best_generated_state.parameter)== false)
 				MessageBox(NULL,L"test5",NULL,NULL);
-			m_cgenome.UpdateBoundaries(m_dparameter_maximum, m_dparameter_minimum);
+			m_cparams.UpdateBoundaries(m_dparameter_maximum, m_dparameter_minimum);
 			m_i_acc = Options.N_Accepted;
 			return true;
 		}
@@ -92,9 +92,9 @@ double ASA::cost_function (double *x, double *parameter_lower_bound, double *par
 	
 
 
-	if(m_cgenome.CopyArraytoGene(x) == true)
+	if(m_cparams.CopyArraytoGene(x) == true)
 	{
-		fitscore = m_cmulti->objective(&m_cgenome);
+		fitscore = m_cmulti->objective(&m_cparams);
 
 		if(fitscore > 0)
 		{
@@ -145,7 +145,7 @@ int ASA::initialize_parameters(double *cost_parameters, double *parameter_lower_
 		Options.Acceptance_Frequency_Modulus = 100;
 		Options.Generated_Frequency_Modulus = 10000;
 		Options.Reanneal_Cost = 1;
-		Options.Reanneal_Parameters = 0;
+		Options.Reanneal_Parameters = 1;
 
 		Options.Delta_X = 0.05;
 		Options.User_Tangents = FALSE;
@@ -173,7 +173,7 @@ int ASA::initialize_parameters(double *cost_parameters, double *parameter_lower_
 
 		//user_initial_cost_temp = true;
 		/* store the parameter ranges */
-		m_cgenome.UpdateBoundaries(parameter_upper_bound, parameter_lower_bound);
+		m_cparams.UpdateBoundaries(parameter_upper_bound, parameter_lower_bound);
 
 
 	   /* store the initial parameter types */
@@ -184,7 +184,7 @@ int ASA::initialize_parameters(double *cost_parameters, double *parameter_lower_
    
    /* store the initial parameter values */
    for (int index = 0; index < parameter_dimension ; ++index) 
-	  cost_parameters[index] = m_cgenome.GetMutatableParameter(index);
+	  cost_parameters[index] = m_cparams.GetMutatableParameter(index);
 
    //ASA options that are not currently used
 	if(user_initial_parameters_temps)

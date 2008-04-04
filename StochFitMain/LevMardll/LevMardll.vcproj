@@ -316,10 +316,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Axb.c"
-				>
-			</File>
-			<File
 				RelativePath=".\FastReflCalc.cpp"
 				>
 			</File>
@@ -345,10 +341,6 @@
 			</File>
 			<File
 				RelativePath=".\LMRoutines.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\misc.c"
 				>
 			</File>
 			<File

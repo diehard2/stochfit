@@ -5,7 +5,7 @@
 	Name="StochFitdll"
 	ProjectGUID="{0500C168-FD63-4DFE-8D66-C449E4D9E19B}"
 	VCNestedProjectGUID="{8FEF7E88-7B8D-44E8-BBE6-9ECB9DE5B5B1}"
-	VCNestedProjectCRC32="114579306"
+	VCNestedProjectCRC32="1650551138"
 	VCNestedProjectFileName="StochFit.vcproj"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -102,7 +102,7 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="1"
 				DebugInformationFormat="0"
-				AdditionalOptions="/QaxWPST /Qansi-alias  /Qprec-div- "
+				AdditionalOptions="/QaxWTPS /Qansi-alias  /Qprec-div-"
 				OpenMP="1"
 				FlushDenormalResultsToZero="1"
 				Parallelization="1"/>
@@ -203,15 +203,17 @@
 		<File 
 			RelativePath=".\ASA.h"/>
 		<File 
-			RelativePath=".\Genome.h"/>
-		<File 
 			RelativePath=".\multilayer.h"/>
 		<File 
 			RelativePath=".\MyComplex.h"/>
 		<File 
+			RelativePath=".\ParamVector.h"/>
+		<File 
 			RelativePath=".\random.h"/>
 		<File 
 			RelativePath=".\SA_Dispatcher.h"/>
+		<File 
+			RelativePath=".\SettingsStruct.h"/>
 		<File 
 			RelativePath=".\SimulatedAnnealing.h"/>
 		<File 
@@ -223,9 +225,9 @@
 		<File 
 			RelativePath=".\ASA.cpp"/>
 		<File 
-			RelativePath=".\Genome.cpp"/>
-		<File 
 			RelativePath=".\multilayer.cpp"/>
+		<File 
+			RelativePath=".\ParamVector.cpp"/>
 		<File 
 			RelativePath=".\SA_Dispatcher.cpp"/>
 		<File 

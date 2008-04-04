@@ -20,7 +20,6 @@
 
 #pragma once
 #pragma warning(disable : 4391)
-
 #pragma warning(disable : 4996) 
 #pragma warning(disable : 1786) 
 #pragma warning(disable : 810)
@@ -40,6 +39,7 @@
 #include "random.h"
 #include <xmmintrin.h>
 #include <mmintrin.h>
+#include "SettingsStruct.h"
 
 
 //Define CHECKREFLCALC to see how the actual reflectivity calculation is proceeding
@@ -51,7 +51,7 @@
 
 //Maximum number of processors to run the reflectivity calculation on
 #define MAX_OMP_THREADS 6
-#define M_PI	3.1415926535897932384626433 
+#define M_PI	3.1415926535897932384623233 
 
 using namespace MyComplexNumber;
 using namespace Random;

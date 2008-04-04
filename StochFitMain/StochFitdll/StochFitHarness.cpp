@@ -20,61 +20,54 @@
 
 
 #include "stdafx.h"
-#include "genome.h"
+#include "ParamVector.h"
 #include "multilayer.h"
 #include "SimulatedAnnealing.h"
 #include "StochFitHarness.h"
 
-StochFit::StochFit(LPCWSTR Directory, double* Q, double* Reflect, double* ReflErr, double* QErrors, int DatapointNum, double rholipid,double rhoh2o,double supSLD, int parratlayers, double layerlength,double surfabs, 
-			   double wavelength, double subaps, double supabs, BOOL usesurfabs, double leftoffset, double Qerr, BOOL forcenorm, 
-			   double forcesig, bool debug, bool XRonly, double resolution,double totallength, BOOL impnorm, int objfunc)
+StochFit::StochFit(ReflSettings initstruct)
 {
-
-	//Needed for the unicode strings from C#
-	USES_CONVERSION;
-
-
-	m_Directory = W2A(Directory);
-	m_dsubSLD = rhoh2o;
-	m_dfilmSLD = rholipid;
-	m_iparratlayers = parratlayers;
-	m_dlayerlength = layerlength;
-	m_dsurfabs = surfabs;
-	m_dwavelength = wavelength;
-	m_dsubabs = subaps;
+	m_Directory = initstruct.Directory;
+	m_dsubSLD = initstruct.SubSLD;
+	m_dfilmSLD = initstruct.FilmSLD;
+	m_iparratlayers = initstruct.Boxes;
+	m_dlayerlength = initstruct.FilmLength;
+	m_dsurfabs = initstruct.FilmAbs;
+	m_dwavelength = initstruct.Wavelength;
+	m_dsubabs = initstruct.SubAbs;
 	m_bthreadstop = false;
 	m_bupdated = FALSE;
-	m_bimpnorm = FALSE;
+	m_bimpnorm = initstruct.Impnorm;
 	m_icurrentiteration = 0;
 	m_ipriority = 2;
-	m_busesurfabs = usesurfabs;
+	m_busesurfabs = initstruct.UseSurfAbs;
 	m_isearchalgorithm = 0;
 	m_dRoughness = 3;
 	m_bwarmedup = false;
-	m_dleftoffset = leftoffset;
-	m_dQerr = Qerr;
-	m_dsupSLD = supSLD;
-	m_dsupabs = supabs;
-	m_dforcesig = forcesig;
-	m_bdebugging = debug;
+	m_dleftoffset = initstruct.Leftoffset;
+	m_dQerr = initstruct.QErr;
+	m_dsupSLD = initstruct.SupSLD;
+	m_dsupabs = initstruct.SupAbs;
+	m_dforcesig = initstruct.Forcesig;
+	m_bdebugging = initstruct.Debug;
 	SA = new SA_Dispatcher();
-	m_bforcenorm = forcenorm;
-	m_bXRonly = XRonly;
-	m_dresolution = resolution;
-	m_dtotallength = totallength;
-	m_bimpnorm = impnorm;
-	objectivefunction = objfunc;
+	m_bforcenorm = initstruct.Forcenorm;
+	m_bXRonly = initstruct.XRonly;
+	m_dresolution = initstruct.Resolution;
+	m_dtotallength = initstruct.Totallength;
+	m_bimpnorm = initstruct.Impnorm;
+	objectivefunction = initstruct.Objectivefunction;
 	mutex = CreateMutex(NULL,FALSE,L"SyncObj");
 
 	
-	Initialize(Q, Reflect, ReflErr, QErrors, DatapointNum);
+	Initialize(initstruct.Q, initstruct.Refl, initstruct.ReflError, initstruct.QError, initstruct.QPoints);
 }
 
 StochFit::~StochFit()
 {
 	if(Zinc != NULL)
 	{
-		delete genome;
+		delete params;
 		
 		if(SA != NULL)
 			delete SA;
@@ -92,14 +85,15 @@ void StochFit::Initialize(double* Q, double* Reflect, double* ReflError, double*
 	 /******** Setup Variables and ReflectivityClass ********/
 	 ////////////////////////////////////////////////////////
 	double resolution;
-	
+	double waveconst =  m_dwavelength*m_dwavelength/(2.0*M_PI);
+
 	// Set the densities and absorbances
-	m_dfilmSLD *= 1e-6 * m_dwavelength*m_dwavelength/(2.0*M_PI);
-	m_dsubSLD *= 1e-6 * m_dwavelength*m_dwavelength/(2.0*M_PI);
-	m_dsupSLD *= 1e-6 * m_dwavelength*m_dwavelength/(2.0*M_PI);
-	double betafilm = m_dsurfabs * m_dwavelength*m_dwavelength/(2.0*M_PI);
-	double betasubphase = m_dsubabs * m_dwavelength*m_dwavelength/(2.0*M_PI);
-	double betasuperphase = m_dsupabs * m_dwavelength*m_dwavelength/(2.0*M_PI);
+	m_dfilmSLD *= 1e-6 * waveconst;
+	m_dsubSLD *= 1e-6 * waveconst;
+	m_dsupSLD *= 1e-6 * waveconst;
+	double betafilm = m_dsurfabs * waveconst;
+	double betasubphase = m_dsubabs * waveconst;
+	double betasuperphase = m_dsupabs * waveconst;
 
 	//Default of 3 points per Angstrom - Seems to be a good number
 	//The computational degree of difficulty scales linearly with the number of
@@ -115,67 +109,67 @@ void StochFit::Initialize(double* Q, double* Reflect, double* ReflError, double*
 	//7 extra Angstroms of file, and 40 Angstroms of subphase
 
 	if(m_dtotallength > 0)
-		ml0.totalsize = m_dtotallength; 
+		m_cRefl.totalsize = m_dtotallength; 
 	else
-        ml0.totalsize = m_dleftoffset + m_dlayerlength + 7 + 40;
+        m_cRefl.totalsize = m_dleftoffset + m_dlayerlength + 7 + 40;
 
 	//Set the film property
-    ml0.rho_a = m_dfilmSLD; 
+    m_cRefl.rho_a = m_dfilmSLD; 
 
 	if(m_busesurfabs == TRUE)
 	{
-		ml0.beta_a = betafilm;
-		ml0.beta_sub = betasubphase;
-		ml0.beta_sup = betasuperphase;
+		m_cRefl.beta_a = betafilm;
+		m_cRefl.beta_sub = betasubphase;
+		m_cRefl.beta_sup = betasuperphase;
 	}
 	else
 	{
-		ml0.beta_a = 0;
-		ml0.beta_sub = 0;
-		ml0.beta_sup = 0;
+		m_cRefl.beta_a = 0;
+		m_cRefl.beta_sub = 0;
+		m_cRefl.beta_sup = 0;
 	}
 
-	//Setup the genome - We start with a slightly roughened ED curve 
-	genome = new GARealGenome(m_iparratlayers,m_dforcesig,m_busesurfabs, m_bimpnorm);
-	genome->SetSupphase(m_dsupSLD/m_dfilmSLD);
+	//Setup the params - We start with a slightly roughened ED curve 
+	params = new ParamVector(m_iparratlayers,m_dforcesig,m_busesurfabs, m_bimpnorm);
+	params->SetSupphase(m_dsupSLD/m_dfilmSLD);
 
 
 	int actuallipidlength = (int)ceil((m_iparratlayers)*(m_dlayerlength/(m_dlayerlength+7.0)));
 
 	for(int i = 0 ; i <= actuallipidlength; i++)
-		genome->SetMutatableParameter(i,1.0);
+		params->SetMutatableParameter(i,1.0);
 
 	for(int i = actuallipidlength+1; i < m_iparratlayers; i++)
-		genome->SetMutatableParameter(i,m_dsubSLD/m_dfilmSLD);	
+		params->SetMutatableParameter(i,m_dsubSLD/m_dfilmSLD);	
 		
-	genome->SetSubphase(m_dsubSLD/m_dfilmSLD);
+	params->SetSubphase(m_dsubSLD/m_dfilmSLD);
 
-	ml0.m_dboxsize = (m_dlayerlength+7.0)/(m_iparratlayers);
+	m_cRefl.m_dboxsize = (m_dlayerlength+7.0)/(m_iparratlayers);
 
 	//Initialize the multilayer class
-	ml0.init(ml0.totalsize*resolution,m_dwavelength,dz0,m_busesurfabs,m_iparratlayers, m_dleftoffset, m_bforcenorm, m_dQerr, m_bXRonly);
-	ml0.SetupRef(Q, Reflect, ReflError, QError, PointCount, genome);
-	ml0.objectivefunction = objectivefunction;
-	ml0.m_bImpNorm = m_bimpnorm;
+	m_cRefl.init(m_cRefl.totalsize*resolution,m_dwavelength,dz0,m_busesurfabs,m_iparratlayers, m_dleftoffset, m_bforcenorm, m_dQerr, m_bXRonly);
+	m_cRefl.SetupRef(Q, Reflect, ReflError, QError, PointCount, params);
+	m_cRefl.objectivefunction = objectivefunction;
+	m_cRefl.m_bImpNorm = m_bimpnorm;
 	
 	//Set the output file names
-    ml0.fnpop = m_Directory + string("\\pop.dat");
-    ml0.fnrf = m_Directory + string("\\rf.dat");
-    ml0.fnrho = m_Directory + string("\\rho.dat");
+    m_cRefl.fnpop = m_Directory + wstring(L"\\pop.dat");
+    m_cRefl.fnrf = m_Directory + wstring(L"\\rf.dat");
+    m_cRefl.fnrho = m_Directory + wstring(L"\\rho.dat");
  
 	 /////////////////////////////////////////////////////
      /******** Prepare Arrays for the Front End ********/
 	////////////////////////////////////////////////////
 
-	m_irhocount = ml0.totalsize*resolution;
+	m_irhocount = m_cRefl.totalsize*resolution;
 
 	#ifndef CHECKREFLCALC
 		if(m_dQerr > 0)
-			m_irefldatacount = ml0.m_idatapoints;
+			m_irefldatacount = m_cRefl.m_idatapoints;
 		else
-			m_irefldatacount = ml0.tarraysize;
+			m_irefldatacount = m_cRefl.tarraysize;
 	#else
-		m_irefldatacount = ml0.m_idatapoints;
+		m_irefldatacount = m_cRefl.m_idatapoints;
 	#endif
 
 	Zinc = new double[m_irhocount];
@@ -187,10 +181,10 @@ void StochFit::Initialize(double* Q, double* Reflect, double* ReflError, double*
 	m_bwarmedup = true;
 
 	//If we have a population already, load it
-	LoadFromFile(&ml0,genome, ml0.fnpop.c_str(), m_Directory);
+	LoadFromFile(&m_cRefl,params, m_cRefl.fnpop.c_str(), m_Directory);
 
-	// Update the constraints on the genome
-	genome->UpdateBoundaries(NULL,NULL);
+	// Update the constraints on the params
+	params->UpdateBoundaries(NULL,NULL);
 }
 
 int StochFit::Processing()
@@ -205,7 +199,7 @@ int StochFit::Processing()
 	//.03 works well
 	double mc_step=0.03;
 
-	SA->InitializeParameters(mc_step, genome, &ml0, m_sigmasearch, m_isearchalgorithm);
+	SA->InitializeParameters(mc_step, params, &m_cRefl, m_sigmasearch, m_isearchalgorithm);
 	
 	if(SA->CheckForFailure() == true)
 	{
@@ -216,44 +210,44 @@ int StochFit::Processing()
 	//Main loop
 	 for(int isteps=0;(isteps < m_itotaliterations) && (m_bthreadstop == false);isteps++)
 	 {
-			accepted = SA->Iteration(genome);
+			accepted = SA->Iteration(params);
 		   
 		
 			if(accepted)
 			{
-				m_dChiSquare = ml0.m_dChiSquare;
-				m_dGoodnessOfFit = ml0.m_dgoodnessoffit;
+				m_dChiSquare = m_cRefl.m_dChiSquare;
+				m_dGoodnessOfFit = m_cRefl.m_dgoodnessoffit;
 			}
 		
-			UpdateFits(&ml0, genome, isteps);
+			UpdateFits(&m_cRefl, params, isteps);
 
 			//Write the population file every 5000 iterations
 			if((isteps+1)%5000 == 0 || m_bthreadstop == true || isteps == m_itotaliterations-1)
 			{
-				WritetoFile(&ml0, genome, ml0.fnpop.c_str());
+				WritetoFile(&m_cRefl, params, m_cRefl.fnpop.c_str());
 			}
 
 			//Write out the population file for the best minimum found so far
 			if(m_isearchalgorithm != 0 && SA->Get_IsIterMinimum())
-				WritetoFile(&ml0, genome, (m_Directory + string("\\BestSASolution.txt")).c_str());
+				WritetoFile(&m_cRefl, params, wstring(m_Directory + L"\\BestSASolution.txt").c_str());
 
 	 }
 
 	//Update the arrays one last time
-	UpdateFits(&ml0, genome, m_icurrentiteration);
+	UpdateFits(&m_cRefl, params, m_icurrentiteration);
 
 	return 0;
 }
 
-void StochFit::UpdateFits(CReflCalc* ml, GARealGenome* genome, int currentiteration)
+void StochFit::UpdateFits(CReflCalc* ml, ParamVector* params, int currentiteration)
 {
 		//Check to see if we're updating
 		WaitForSingleObject(mutex,INFINITE);
 		
 		if(m_bupdated == TRUE)
 		{
-			ml->genomerf(genome);
-			m_dRoughness = genome->getroughness();
+			ml->paramsrf(params);
+			m_dRoughness = params->getroughness();
 			
 
 			for(int i = 0; i<m_irhocount;i++)
@@ -406,28 +400,28 @@ int StochFit::Priority(int priority)
 	return 0;
 }
 
-void StochFit::WritetoFile(CReflCalc* ml, GARealGenome* genome, const char* filename)
+void StochFit::WritetoFile(CReflCalc* ml, ParamVector* params, const wchar_t* filename)
 {
 	
 
 	ofstream outfile;
 	outfile.open(filename);
-	outfile<< genome->getroughness() <<' '<< ml->beta_a*genome->getSurfAbs()*(2.*M_PI)/m_dwavelength*m_dwavelength <<
-		' '<< SA->Get_Temp() <<' '<< genome->getImpNorm() << ' ' << SA->Get_AveragefSTUN() << endl;
+	outfile<< params->getroughness() <<' '<< ml->beta_a*params->getSurfAbs()*(2.*M_PI)/m_dwavelength*m_dwavelength <<
+		' '<< SA->Get_Temp() <<' '<< params->getImpNorm() << ' ' << SA->Get_AveragefSTUN() << endl;
 
-	for(int i = 0; i < genome->RealGenomeSize(); i++)
+	for(int i = 0; i < params->RealparamsSize(); i++)
 	{
-		outfile<<genome->GetRealGenome(i)<< endl;
+		outfile<<params->GetRealparams(i)<< endl;
 	}
 
 	outfile.close();
 }
 
-void StochFit::LoadFromFile(CReflCalc* ml, GARealGenome* genome,const char* filename, string fileloc )
+void StochFit::LoadFromFile(CReflCalc* ml, ParamVector* params,const wchar_t* filename, wstring fileloc )
 {
-   GARealGenome genome1 = *genome;
+   ParamVector params1 = *params;
    ifstream infile(filename);
-   int size = genome->RealGenomeSize();
+   int size = params->RealparamsSize();
    int counter = 0;
    bool kk = true;
    double beta = 0;
@@ -443,18 +437,18 @@ void StochFit::LoadFromFile(CReflCalc* ml, GARealGenome* genome,const char* file
        double ED, roughness;
        infile >> roughness >> beta >> currenttemp >> normfactor >> avgfSTUN;
    
-       genome1.setroughness(roughness);
+       params1.setroughness(roughness);
 
-	   while(!infile.eof() && i < genome1.RealGenomeSize())
+	   while(!infile.eof() && i < params1.RealparamsSize())
 	   {
             if(infile>>ED)
 			{
 				if(i == 0)
-					genome1.SetSupphase(ED);
-				else if (i == genome1.RealGenomeSize()-1)
-					genome1.SetSubphase(ED);
+					params1.SetSupphase(ED);
+				else if (i == params1.RealparamsSize()-1)
+					params1.SetSubphase(ED);
 				else
-				    genome1.SetMutatableParameter(i-1,ED);
+				    params1.SetMutatableParameter(i-1,ED);
 				
 				counter++;
 				i++;
@@ -480,18 +474,18 @@ void StochFit::LoadFromFile(CReflCalc* ml, GARealGenome* genome,const char* file
     
     if(kk == true)
 	{
-		*genome = genome1;
+		*params = params1;
 		ml->beta_a = beta*m_dwavelength*m_dwavelength/(2.0*M_PI);
 		SA->Set_Temp(1.0/currenttemp);
-		genome->setImpNorm(normfactor);
+		params->setImpNorm(normfactor);
 		SA->Set_AveragefSTUN(avgfSTUN);
     }
 	infile.close();
 
 	//If we're resuming, and we were Tunneling, load the best file
-	if(kk == true && string(filename).find("BestSASolution.txt") == string::npos)
+	if(kk == true && wstring(filename).find(L"BestSASolution.txt") == wstring::npos)
 	{
-		LoadFromFile(ml,genome, string(fileloc+"BestSASolution.txt").c_str(), fileloc);
+		LoadFromFile(ml,params, wstring(fileloc+L"BestSASolution.txt").c_str(), fileloc);
 	}
 
 }

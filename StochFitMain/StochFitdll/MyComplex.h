@@ -25,19 +25,20 @@
 namespace MyComplexNumber{
 
 	//Complex Class definition
-	struct MyComplex
-	{
-	public:
-		double re;
-		double im;
 
-		MyComplex(double real = 0, double imaginary = 0)
+	template <class T> struct MyComplex
+	{
+	  public:
+		T re;
+		T im;
+
+		MyComplex(T real = 0, T imaginary = 0)
 		{
 			re = real;
 			im = imaginary;
 		}
 		//overload addition, subtraction, multiplication, division
-		MyComplex& operator=(const MyComplex& comp) 
+		MyComplex<T>& operator=(const MyComplex<T>& comp) 
 		{
 			re = comp.re;
 			im = comp.im;
@@ -45,7 +46,7 @@ namespace MyComplexNumber{
 			return *this;
 		} 
 
-		MyComplex& operator=(const double comp) 
+		MyComplex<T>& operator=(const double comp) 
 		{
 			re = comp;
 			im = 0.0;
@@ -53,82 +54,89 @@ namespace MyComplexNumber{
 			return *this;
 		} 
 
-		const MyComplex operator*(const double s) 
+		//template<class D> operator MyComplex<D> () const;
+
+		const MyComplex<T> operator*(const T s) 
 		{
 			
-			return MyComplex(s*re,s*im);
+			return MyComplex<T>(s*re,s*im);
 		} 
 
-		friend const MyComplex operator*(MyComplex lhs, MyComplex rhs)
+		friend const MyComplex<T> operator*(MyComplex<T> lhs, MyComplex<T> rhs)
 		{
 			return MyComplex((lhs.re*rhs.re-lhs.im*rhs.im),(lhs.re*rhs.im+lhs.im*rhs.re));
 
 		}
 
-		friend const MyComplex operator/(MyComplex lhs, MyComplex rhs)
+		friend const MyComplex<T> operator/(MyComplex<T> lhs, MyComplex<T> rhs)
 		{
 			double denom = rhs.re*rhs.re+rhs.im*rhs.im;
 			
-			return MyComplex((lhs.re*rhs.re+lhs.im*rhs.im)/denom,(lhs.im*rhs.re-lhs.re*rhs.im)/denom);
+			return MyComplex<T>((lhs.re*rhs.re+lhs.im*rhs.im)/denom,(lhs.im*rhs.re-lhs.re*rhs.im)/denom);
 		}
 
 		
-		friend MyComplex operator+(MyComplex lhs,MyComplex rhs)
+		friend MyComplex<T> operator+(MyComplex lhs,MyComplex rhs)
 		{
-			return MyComplex(lhs.re+rhs.re,lhs.im+rhs.im);
+			return MyComplex<T>(lhs.re+rhs.re,lhs.im+rhs.im);
 		}
 
-		friend const MyComplex operator-(const MyComplex lhs, const MyComplex rhs)
+		friend const MyComplex<T> operator-(const MyComplex lhs, const MyComplex rhs)
 		{
-			return MyComplex(lhs.re-rhs.re,lhs.im-rhs.im);
+			return MyComplex<T>(lhs.re-rhs.re,lhs.im-rhs.im);
 		}
 	};
 
 	//Complex functions
-	inline MyComplex compexp(MyComplex comp)
+	/*template<class T> template<class D> MyComplex<T>::operator MyComplex<D>() const
 	{
-		double exponent = exp(comp.re);
-		return MyComplex(exponent*cos(comp.im),exponent*sin(comp.im));
+		return MyComplex<D>(re, im);
+	}*/
+
+	template <class T> inline MyComplex<T> compexp(MyComplex<T> comp)
+	{
+		T exponent = exp(comp.re);
+		return MyComplex<T>(exponent*cos(comp.im),exponent*sin(comp.im));
 	}
 
-	inline MyComplex compcos(MyComplex comp)
+	template <class T> inline MyComplex<T> compcos(MyComplex<T> comp)
 	{
 		return MyComplex(cos(comp.re)*cosh(comp.im),0-(sin(comp.re)*sinh(comp.im)));
 	}
 
-	inline MyComplex compsin(MyComplex comp)
+	template <class T> inline MyComplex<T> compsin(MyComplex<T> comp)
 	{
 		return MyComplex(sin(comp.re)*cosh(comp.im),cos(comp.re)*sinh(comp.im));
 	}
 
-	inline double comparg(MyComplex comp)
+	template <class T> inline T comparg(MyComplex<T> comp)
 	{
 		return atan2(comp.im, comp.re);
 	}
 
-	inline MyComplex compsqrt(MyComplex comp)
+	template <class T> inline MyComplex<T> compsqrt(MyComplex<T> comp)
 	{
 		//Use the half angle relation to calculate the square root. Prevents buffer
 		//over/under flows. Don't change this code. This problem actually occurs
-		double mag;
-		double theta;
-		double sqrtholder;
+		T mag;
+		T theta;
+		T sqrtholder;
 
 		if(comp.im != 0)
 		{
 			mag = sqrt(comp.re*comp.re+comp.im*comp.im);
 			theta = atan2(comp.im,(comp.re+mag));
 			sqrtholder = sqrt(mag);
-			return MyComplex(sqrtholder*cos(theta),sqrtholder*sin(theta));
+			return MyComplex<T>(sqrtholder*cos(theta),sqrtholder*sin(theta));
 		}
 		
 		if(comp.re < 0)
-			return MyComplex(0, sqrt(abs(comp.re)));
+			return MyComplex<T>(0, sqrt(abs(comp.re)));
 
-		return MyComplex(sqrt(comp.re),0);
+		return MyComplex<T>(sqrt(comp.re),0);
 	};
 
-	inline double compabs(MyComplex comp)
+	template <class T> inline T compabs(MyComplex<T> comp)
 	{
 		//While inefficient, this prevents buffer under/overflows - from Numerical Recipes in C++
 		double placeholder=0;
@@ -151,8 +159,8 @@ namespace MyComplexNumber{
 		
 	};
 	
-	inline MyComplex cln(MyComplex comp)
+	template <class T> inline MyComplex<T> cln(MyComplex<T> comp)
 	{
-		return MyComplex(log(compabs(comp)),comparg(comp));
+		return MyComplex<T>(log(compabs(comp)),comparg(comp));
 	}
 }

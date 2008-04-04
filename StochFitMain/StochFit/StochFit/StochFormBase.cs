@@ -26,6 +26,7 @@ using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using StochasticModeling.Settings;
 using System.Runtime.InteropServices;
 
 namespace StochasticModeling
@@ -235,36 +236,9 @@ namespace StochasticModeling
         /// <summary>
         /// Initialize the model independent fitting procedures. This must be called before any other model independent routines
         /// </summary>
-        /// <param name="directory">The working directory for the fit. This is usually the same directory as the data file</param>
-        /// <param name="Q">Array containing Q data of size Qpoints</param>
-        /// <param name="Refl">Array containing reflectvity data of size Qpoints</param>
-        /// <param name="ReflError">Array containing reflectivity errors of size Qpoints</param>
-        /// <param name="QErr">Array containing error in Q of size Qpoints</param>
-        /// <param name="Qpoints">Number of elements in Q</param>
-        /// <param name="rholipid">The average SLD of the film</param>
-        /// <param name="rhoh2o">The SLD of the substrate</param>
-        /// <param name="supSLD">The SLD of the superphase</param>
-        /// <param name="parratlayers">The number of small boxes</param>
-        /// <param name="layerlength">Estimation of the film thickness</param>
-        /// <param name="slABS">Estimation of the film absorption</param>
-        /// <param name="XRlambda">X-ray wavelenght in Angstroms</param>
-        /// <param name="SubAbs">Substrate absorption</param>
-        /// <param name="SupAbs">Superphase absorption</param>
-        /// <param name="UseAbs">True if using absorption, false otherwise</param>
-        /// <param name="leftoffset">Offset in thickness (Z) before the first small box appears. The default is 35</param>
-        /// <param name="Qerr">The percent error in Q if the data does not have a fourth column</param>
-        /// <param name="forcenorm">True if the first point in the generated reflectivity is forced to be 1. The entire reflectivity is then scaled</param>
-        /// <param name="forcesigma">If greater than 0, the roughness parameter in the curve is not allowed to vary</param>
-        /// <param name="debug">If true, debug files are written into the specified directory</param>
-        /// <param name="XRonly">Heavily penalizes negative electron density</param>
-        /// <param name="resolution">Number of electron density points per Angstrom</param>
-        /// <param name="totallength">The total length of the electron density profile</param>
-        /// <param name="impnorm">True if the data is imperfectly normalized</param>
-        /// <param name="objfunc">Chooses the objective function. Valid range 0 to 4. See the code documentation for a more detailed explanation</param>
+        /// <param name="settings">Struct of type <see cref="ModelSettings"/> containing all parameters</param>
         [DllImport("stochfitdll.dll", EntryPoint = "Init", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern void Init(string directory, double[] Q, double[] Refl, double[] ReflError, double[] QErr, int Qpoints, double rholipid, double rhoh2o, double supSLD, int parratlayers,
-            double layerlength, double slABS, double XRlambda, double SubAbs, double SupAbs, bool UseAbs, double leftoffset, double Qerr, bool forcenorm,
-             double forcesigma, bool debug, bool XRonly, double resolution, double totallength, bool impnorm, int objfunc);
+        protected static extern void Init(ModelSettings settings);
        
         /// <summary>
         /// Sets the windows priority of the model independent algorithm thread
@@ -399,9 +373,5 @@ namespace StochasticModeling
          {
              ((ToolStripMenuItem)sender).Checked = !((ToolStripMenuItem)sender).Checked;
          }
-
-   
-
-        
     }
 }

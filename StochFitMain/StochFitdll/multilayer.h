@@ -19,24 +19,24 @@
  */
 
 #pragma once
-#include "Genome.h"
+#include "ParamVector.h"
 
 class CReflCalc {
 private:
-	MyComplex *doublenk;
+	MyComplex<double> *doublenk;
 	double *tsinsquaredthetai,*sinsquaredthetai,*qspreadsinsquaredthetai,*qspreadreflpt,*qspreadsinthetai;
 
 
 	void impnorm(double* refl, int datapoints, bool isimprefl);
 	void mytransparentrf(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl);
-	void mkdensity(GARealGenome *g);
-	void mkdensitytrans(GARealGenome* g);
+	void mkdensity(ParamVector *g);
+	void mkdensitytrans(ParamVector* g);
 	void QsmearRf(double* qspreadreflpt, double* reflpt, int datapoints);
 	void myrf(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl);
 	bool CheckDensity();
 
 	double m_dQSpread;
-	double CalcQc(GARealGenome g);
+	double CalcQc(ParamVector g);
 	double CalcFresnelPoint(double Q, double Qc);
 	int Qpoints;
  
@@ -44,13 +44,13 @@ private:
 	int m_ihighEDduplicatepts;
 	bool m_bXRonly;
 public:
-	MyComplex *nk;
+	MyComplex<double> *nk;
 	//Variables
 
 	//File names
-	string fnpop;
-	string fnrf;
-	string fnrho;
+	wstring fnpop;
+	wstring fnrf;
+	wstring fnrho;
 
     double dz0;
 	double m_dboxsize;
@@ -74,21 +74,21 @@ public:
 	float* edspacingarray;
 	int m_iuseableprocessors;
 
-	MyComplex* m_ckk;
+	MyComplex<double>* m_ckk;
 	double* m_dkk;
-	MyComplex* m_cak;
-	MyComplex* m_crj;
+	MyComplex<double>* m_cak;
+	MyComplex<double>* m_crj;
 	double* m_drj;
-	MyComplex* m_cRj;
+	MyComplex<double>* m_cRj;
 
 	//Member functions
-	
+	CReflCalc();
 	~CReflCalc();
 	
     void init(int layernumber,double xraylambda,double dz, BOOL mbusesurfabs,int parratlayers, double leftoffset, BOOL forcenorm, double qspread, bool XRonly);
-	void SetupRef(double* Q, double* Refl, double* ReflError, double* QError, int PointCount, GARealGenome* genome);
-    double objective(GARealGenome  *g);
-    void genomerf(GARealGenome *g);
+	void SetupRef(double* Q, double* Refl, double* ReflError, double* QError, int PointCount, ParamVector* params);
+    double objective(ParamVector  *g);
+    void paramsrf(ParamVector *g);
     
 	int objectivefunction;
 	double beta_sub;

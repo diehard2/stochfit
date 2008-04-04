@@ -19,9 +19,9 @@
  */
 
 #include "stdafx.h"
-#include "genome.h"
+#include "ParamVector.h"
 
-GARealGenome::GARealGenome(int l,  float force_sig, bool use_surf_abs, bool fix_impnorm):m_bfixroughness(false),
+ParamVector::ParamVector(int l,  float force_sig, bool use_surf_abs, bool fix_impnorm):m_bfixroughness(false),
 m_busesurfabs(false), m_bfiximpnorm(false), m_bXROnly(false), m_binitialized(false), m_isurfabs_index(-1), m_iimpnorm_index(-1),
 m_iroughness_index(-1)
 {
@@ -75,12 +75,12 @@ m_iroughness_index(-1)
 	
 }
 
-GARealGenome::GARealGenome():m_bfixroughness(false),m_busesurfabs(false), m_bfiximpnorm(false), m_bXROnly(false), m_binitialized(false)
+ParamVector::ParamVector():m_bfixroughness(false),m_busesurfabs(false), m_bfiximpnorm(false), m_bXROnly(false), m_binitialized(false)
 {
 	m_binitialized = false;
 }
 
-void GARealGenome::SetBounds(float lowrough, float highrough, float highimp, float highabs)
+void ParamVector::SetBounds(float lowrough, float highrough, float highimp, float highabs)
 {
 	if(m_binitialized)
 	{ 
@@ -126,7 +126,7 @@ void GARealGenome::SetBounds(float lowrough, float highrough, float highimp, flo
 	}
 }
 
-void GARealGenome::UpdateBoundaries(double* high, double* low)
+void ParamVector::UpdateBoundaries(double* high, double* low)
 {
 	SetBounds(0.1,8.0,10000,10000);
 
@@ -149,7 +149,7 @@ void GARealGenome::UpdateBoundaries(double* high, double* low)
 	}
 	
 }
-int GARealGenome::RealGenomeSize()
+int ParamVector::RealparamsSize()
 {
 	if(m_binitialized)
 		return(length+2);
@@ -157,17 +157,17 @@ int GARealGenome::RealGenomeSize()
 		return 0;
 }
 
-int GARealGenome::ParamCount()
+int ParamVector::ParamCount()
 {
 	return m_dparameter_size;
 }
  
-int GARealGenome::GetInitializationLength()
+int ParamVector::GetInitializationLength()
 {
 	return length;
 }
 
-float GARealGenome::GetRealGenome(int i)
+float ParamVector::GetRealparams(int i)
 {
 	if(m_binitialized)
 	{
@@ -181,19 +181,19 @@ float GARealGenome::GetRealGenome(int i)
 
 }
 
-void GARealGenome::SetSubphase(float subval)
+void ParamVector::SetSubphase(float subval)
 {
 	if(m_binitialized)
 		gnome.at(length+1) = subval;
 }
 
-void GARealGenome::SetSupphase(float supval)
+void ParamVector::SetSupphase(float supval)
 {
 	if(m_binitialized)
 		gnome.at(0) = supval;
 }
 
-float GARealGenome::GetMutatableParameter(int i)
+float ParamVector::GetMutatableParameter(int i)
 {
 	if(m_binitialized)
 		return data_params.at(i);
@@ -202,7 +202,7 @@ float GARealGenome::GetMutatableParameter(int i)
 }
 
 
-int GARealGenome::SetMutatableParameter(int i,float val)
+int ParamVector::SetMutatableParameter(int i,float val)
 {
 	if(m_binitialized)
 	{
@@ -222,7 +222,7 @@ int GARealGenome::SetMutatableParameter(int i,float val)
 		return -1;
 }
 
-float GARealGenome::GetUpperBounds(int index)
+float ParamVector::GetUpperBounds(int index)
 {
 	if(m_binitialized && index < m_dparameter_size)
 		return data_params_high_val.at(index);
@@ -230,7 +230,7 @@ float GARealGenome::GetUpperBounds(int index)
 		return -1;
 }
 
-float GARealGenome::GetLowerBounds(int index)
+float ParamVector::GetLowerBounds(int index)
 {
 	if(m_binitialized && index < m_dparameter_size)
 		return data_params_low_val.at(index);
@@ -238,7 +238,7 @@ float GARealGenome::GetLowerBounds(int index)
 		return -1;
 }
 
-float GARealGenome::getroughness()
+float ParamVector::getroughness()
 {
 	if(m_binitialized)
 	{
@@ -251,7 +251,7 @@ float GARealGenome::getroughness()
 		return -1;
 }
 
-int GARealGenome::setroughness(float rough)
+int ParamVector::setroughness(float rough)
 {
 	if(m_binitialized)
 	{
@@ -269,7 +269,7 @@ int GARealGenome::setroughness(float rough)
 		return -1;
 }
 
-float GARealGenome::getImpNorm()
+float ParamVector::getImpNorm()
 {
 	if(m_binitialized)
 	{
@@ -282,7 +282,7 @@ float GARealGenome::getImpNorm()
 		return -1;
 }
 
-int GARealGenome::setImpNorm(float norm)
+int ParamVector::setImpNorm(float norm)
 {
 	if(m_binitialized)
 	{
@@ -303,7 +303,7 @@ int GARealGenome::setImpNorm(float norm)
 		return -1;
 }
 
-float GARealGenome::getSurfAbs()
+float ParamVector::getSurfAbs()
 {
 	if(m_binitialized)
 	{
@@ -316,7 +316,7 @@ float GARealGenome::getSurfAbs()
 		return -1;
 }
 
-int GARealGenome::setSurfAbs(float surfabs)
+int ParamVector::setSurfAbs(float surfabs)
 {
 	if(m_binitialized)
 	{
@@ -338,7 +338,7 @@ int GARealGenome::setSurfAbs(float surfabs)
 }
 
 
-bool GARealGenome::CopyArraytoGene(double* myarray)
+bool ParamVector::CopyArraytoGene(double* myarray)
 {
 	bool succeeded = true;
 

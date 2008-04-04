@@ -19,7 +19,7 @@
  */
 
 #include "stdafx.h"
-#include "genome.h"
+#include "ParamVector.h"
 #include "multilayer.h"
 
 // Multilayer reflection and transmission
@@ -29,35 +29,44 @@
 
 CReflCalc::~CReflCalc()
 {
-	_mm_free(nk);
-	_mm_free(xi);
-	_mm_free(yi);
-	_mm_free(sinthetai);
-	_mm_free(reflpt);
-	_mm_free(dataout);
-	_mm_free(tsinthetai);
-	_mm_free(qarray);
-	_mm_free(sinsquaredthetai);
-	_mm_free(tsinsquaredthetai);
-	_mm_free(eyi);
-	_mm_free(doublenk);
-	_mm_free(distarray);
-	_mm_free(rhoarray);
-	_mm_free(imagrhoarray);
-	_mm_free(m_ckk);
-	_mm_free(m_dkk);
-	_mm_free(m_cak);
-	_mm_free(m_crj);
-	_mm_free(m_drj);
-	_mm_free(m_cRj);
-	_mm_free(edspacingarray);
-	_mm_free(objarray);
-	_mm_free(fresnelcurve);
-	_mm_free(qspreadsinsquaredthetai);
-	_mm_free(qspreadreflpt);
-	_mm_free(qspreadsinthetai);
-	_mm_free(exi);
+	try
+	{
+		_mm_free(nk);
+		_mm_free(xi);
+		_mm_free(yi);
+		_mm_free(sinthetai);
+		_mm_free(reflpt);
+		_mm_free(dataout);
+		_mm_free(tsinthetai);
+		_mm_free(qarray);
+		_mm_free(sinsquaredthetai);
+		_mm_free(tsinsquaredthetai);
+		_mm_free(eyi);
+		_mm_free(doublenk);
+		_mm_free(distarray);
+		_mm_free(rhoarray);
+		_mm_free(imagrhoarray);
+		_mm_free(m_ckk);
+		_mm_free(m_dkk);
+		_mm_free(m_cak);
+		_mm_free(m_crj);
+		_mm_free(m_drj);
+		_mm_free(m_cRj);
+		_mm_free(edspacingarray);
+		_mm_free(objarray);
+		_mm_free(fresnelcurve);
+		_mm_free(qspreadsinsquaredthetai);
+		_mm_free(qspreadreflpt);
+		_mm_free(qspreadsinthetai);
+
+		if(exi != NULL)
+			_mm_free(exi);
+	}
+	catch(wchar_t* str){}
 }
+
+CReflCalc::CReflCalc():exi(NULL),eyi(NULL),xi(NULL),yi(NULL)
+{}
 
 void CReflCalc::init(int numberofdatapoints, double xraylambda,double d0, BOOL usesurfabs, int parratlayers, double leftoffset, BOOL forcenorm, double Qspread, bool XRonly)
 {
@@ -72,7 +81,6 @@ void CReflCalc::init(int numberofdatapoints, double xraylambda,double d0, BOOL u
 	m_dQSpread = Qspread/100;
 	m_ihighEDduplicatepts = 0;
 	m_ilowEDduplicatepts = 0;
-	
 	m_bXRonly = XRonly;
 
 	//Setup OpenMP - currently a maximum of 6 processors is allowed. After a certain number
@@ -99,16 +107,16 @@ void CReflCalc::init(int numberofdatapoints, double xraylambda,double d0, BOOL u
 //	omp_set_num_threads(m_iuseableprocessors);
 
 	//Arrays for the electron density and twice the electron density
-    nk = (MyComplex*)_mm_malloc(sizeof(MyComplex)*nl,64);
-    doublenk = (MyComplex*)_mm_malloc(sizeof(MyComplex)*nl,64);
+    nk = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl,64);
+    doublenk = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl,64);
 
 	//Create the scratch arrays for the reflectivity calculation
-	m_ckk = (MyComplex*)_mm_malloc(sizeof(MyComplex)*nl*m_iuseableprocessors,64);
+	m_ckk = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl*m_iuseableprocessors,64);
 	m_dkk = (double*)_mm_malloc(sizeof(double)*nl*m_iuseableprocessors,64);
-	m_cak = (MyComplex*)_mm_malloc(sizeof(MyComplex)*nl*m_iuseableprocessors,64);
-	m_crj = (MyComplex*)_mm_malloc(sizeof(MyComplex)*nl*m_iuseableprocessors,64);
+	m_cak = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl*m_iuseableprocessors,64);
+	m_crj = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl*m_iuseableprocessors,64);
 	m_drj = (double*)_mm_malloc(sizeof(double)*nl*m_iuseableprocessors,64);
-	m_cRj = (MyComplex*)_mm_malloc(sizeof(MyComplex)*nl*m_iuseableprocessors,64);
+	m_cRj = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl*m_iuseableprocessors,64);
 
 	//Create scratch arrays for the electron density calculation
 	distarray = (float*)_mm_malloc((parratlayers+2)*sizeof(float),64);
@@ -127,13 +135,16 @@ void CReflCalc::init(int numberofdatapoints, double xraylambda,double d0, BOOL u
 	}
 }
 
-void CReflCalc::SetupRef(double* Q, double* Refl, double* ReflError, double* QError, int PointCount, GARealGenome* genome)
+void CReflCalc::SetupRef(double* Q, double* Refl, double* ReflError, double* QError, int PointCount, ParamVector* params)
 {
 	//Now create our xi,yi,dyi, and thetai
 	m_idatapoints = PointCount;
 	xi = (double*)_mm_malloc(PointCount*sizeof(double),64);
 	yi = (double*)_mm_malloc(PointCount*sizeof(double),64);
-	exi = (double*)_mm_malloc(PointCount*sizeof(double),64);
+	
+	if(QError != NULL)
+		exi = (double*)_mm_malloc(PointCount*sizeof(double),64);
+	
 	eyi = (double*)_mm_malloc(PointCount*sizeof(double),64);
 
 	sinthetai = (double*)_mm_malloc(PointCount*sizeof(double),64);
@@ -274,10 +285,10 @@ void CReflCalc::SetupRef(double* Q, double* Refl, double* ReflError, double* QEr
 	//Setup the objective array
 	objarray = (double*)_mm_malloc(m_idatapoints*sizeof(double), 64);
 
-	//Setup the fresnel curve - we store the electron density portion of the refractive index in the genome
+	//Setup the fresnel curve - we store the electron density portion of the refractive index in the params
 	fresnelcurve = (double*)_mm_malloc(m_idatapoints*sizeof(double), 64);
 
-	double Qc = CalcQc(*genome);
+	double Qc = CalcQc(*params);
 
 	for(int i = 0; i < m_idatapoints; i++)
 	{
@@ -287,7 +298,7 @@ void CReflCalc::SetupRef(double* Q, double* Refl, double* ReflError, double* QEr
 
 
 //Write output files
-void CReflCalc::genomerf(GARealGenome * g)
+void CReflCalc::paramsrf(ParamVector * g)
 {
     ofstream rhoout(fnrho.c_str());
   
@@ -357,17 +368,17 @@ void CReflCalc::genomerf(GARealGenome * g)
 //For lipid and lipid protein films, the absorbance is negligible
 
 
-void CReflCalc::mkdensitytrans(GARealGenome* g)
+void CReflCalc::mkdensitytrans(ParamVector* g)
 {
-	int refllayers = g->RealGenomeSize()-1;
+	int refllayers = g->RealparamsSize()-1;
 	int reflpoints = nl;
 	float roughness = g->getroughness();
 	
 	if(g->getroughness() < 0.000000001)
 		roughness = 1/1e-6;
 
-	roughness = 1.0/( roughness * sqrt(2.0));
-	float supersld = g->GetRealGenome(0)*rho_a;
+	roughness = 1.0f/( roughness * sqrt(2.0f));
+	float supersld = g->GetRealparams(0)*rho_a;
 	
 	//Don't delete this, otherwise the reflectivity calculation won't work sometimes
 	nk[0].im = 0.0;
@@ -379,7 +390,7 @@ void CReflCalc::mkdensitytrans(GARealGenome* g)
 		#pragma ivdep
 		for(int k = 0; k < refllayers; k++)	
 		{
-			rhoarray[k] = rho_a*(g->GetRealGenome(k+1)-g->GetRealGenome(k))*0.5;
+			rhoarray[k] = rho_a*(g->GetRealparams(k+1)-g->GetRealparams(k))*0.5;
 		}
 		
 
@@ -393,11 +404,11 @@ void CReflCalc::mkdensitytrans(GARealGenome* g)
 			{
 				dist = (edspacingarray[i]-distarray[k] )*roughness;
 
-				if(dist > 6.0)
+				if(dist > 6.0f)
 				{
 					nk[i].re += (rhoarray[k])*(2.0);
 				}
-				else if(dist > -6.0)
+				else if(dist > -6.0f)
 				{
 					nk[i].re += (rhoarray[k])*(1.0+erf(dist));
 				}
@@ -433,33 +444,33 @@ void CReflCalc::mkdensitytrans(GARealGenome* g)
 		}
 }
 
-void CReflCalc::mkdensity(GARealGenome* g)
+void CReflCalc::mkdensity(ParamVector* g)
 {
-	int refllayers = g->RealGenomeSize()-1;
+	int refllayers = g->RealparamsSize()-1;
 	int reflpoints = nl;
 	float roughness = g->getroughness() * sqrt(2.0);
-	float supersld = g->GetRealGenome(0)*rho_a;
+	float supersld = g->GetRealparams(0)*rho_a;
 	
 	#pragma omp parallel
 	{	
 		#pragma omp for schedule(guided)
 		for(int k = 0; k < refllayers; k++)
 		{
-			rhoarray[k] = rho_a*(g->GetRealGenome(k+1)-g->GetRealGenome(k))/2.0;
+			rhoarray[k] = rho_a*(g->GetRealparams(k+1)-g->GetRealparams(k))/2.0;
 			
 			//Imag calculation
 			if(k == 0)
 			{
-				imagrhoarray[k] = (beta_a* g->getSurfAbs() * g->GetRealGenome(k+1)/g->GetRealGenome(refllayers) - beta_sup)/2.0;
+				imagrhoarray[k] = (beta_a* g->getSurfAbs() * g->GetRealparams(k+1)/g->GetRealparams(refllayers) - beta_sup)/2.0;
 			}
 			else if(k == refllayers-1)
 			{
-				imagrhoarray[k] = (beta_sub - beta_a* g->getSurfAbs() * g->GetRealGenome(k)/g->GetRealGenome(refllayers))/2.0;
+				imagrhoarray[k] = (beta_sub - beta_a* g->getSurfAbs() * g->GetRealparams(k)/g->GetRealparams(refllayers))/2.0;
 			}
 			else
 			{
-				imagrhoarray[k] = (beta_a* g->getSurfAbs() * g->GetRealGenome(k+1)/g->GetRealGenome(refllayers) - 
-					beta_a * g->getSurfAbs()* g->GetRealGenome(k)/g->GetRealGenome(refllayers))/2.0;
+				imagrhoarray[k] = (beta_a* g->getSurfAbs() * g->GetRealparams(k+1)/g->GetRealparams(refllayers) - 
+					beta_a * g->getSurfAbs()* g->GetRealparams(k)/g->GetRealparams(refllayers))/2.0;
 			}
 		}
 
@@ -529,11 +540,10 @@ bool CReflCalc::CheckDensity()
 	return true;
 }
 
-double CReflCalc::objective(GARealGenome * g)
+double CReflCalc::objective(ParamVector * g)
 {
     double sy=0.0,sy2=0.0,b = 0.0;
 	int counter = m_idatapoints;
-	double sigma;
 
 	if(m_bUseSurfAbs == false)
 		mkdensitytrans(g);
@@ -725,10 +735,10 @@ void CReflCalc::impnorm(double* refl, int datapoints, bool isimprefl)
 void CReflCalc::myrf(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl)
 {
 	//Calculate some complex constants to keep them out of the loop
-	MyComplex lengthmultiplier = -2.0*MyComplex(0.0,1.0)*dz0 ;
-	MyComplex indexsup = 1.0 - nk[0];
-	MyComplex indexsupsquared = indexsup * indexsup;
-	MyComplex zero;
+	MyComplex<double> lengthmultiplier = -2.0*MyComplex<double>(0.0,1.0)*dz0 ;
+	MyComplex<double> indexsup = 1.0 - nk[0];
+	MyComplex<double> indexsupsquared = indexsup * indexsup;
+	MyComplex<double> zero;
 	
 			//Set the number of OpenMP threads
 	//omp_set_num_threads(m_iuseableprocessors);	
@@ -739,12 +749,12 @@ void CReflCalc::myrf(double* sintheta, double* sinsquaredtheta, int datapoints, 
 		int arrayoffset = threadnum*nl;
 
 		double* dkk = m_dkk+arrayoffset;
-		MyComplex* kk = m_ckk+arrayoffset;
-		MyComplex* ak = m_cak+arrayoffset;
+		MyComplex<double>* kk = m_ckk+arrayoffset;
+		MyComplex<double>* ak = m_cak+arrayoffset;
 		double* drj = m_drj+arrayoffset;
-		MyComplex* rj= m_crj+arrayoffset;
-		MyComplex* Rj= m_cRj+arrayoffset;
-		MyComplex cholder, tempk1, tempk2;
+		MyComplex<double>* rj= m_crj+arrayoffset;
+		MyComplex<double>* Rj= m_cRj+arrayoffset;
+		MyComplex<double> cholder, tempk1, tempk2;
 		double holder;
 		
 		/********Boundary conditions********/
@@ -859,9 +869,9 @@ void CReflCalc::myrf(double* sintheta, double* sinsquaredtheta, int datapoints, 
 void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl)
 {
 	////Calculate some complex constants to keep them out of the loop
-	MyComplex lengthmultiplier = -2.0*MyComplex(0.0,1.0)*dz0;
-	MyComplex indexsup = 1.0 - nk[0];
-	MyComplex indexsupsquared = indexsup * indexsup;
+	MyComplex<double> lengthmultiplier = -2.0*MyComplex<double>(0.0,1.0)*dz0;
+	MyComplex<double> indexsup = 1.0 - nk[0];
+	MyComplex<double> indexsupsquared = indexsup * indexsup;
 	
 	int offset = 0;
 	int neg = 0;
@@ -878,8 +888,8 @@ void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int d
 		}
 		if(neg == 0)
 		{
-			/*if(m_dQSpread < 0.005 && neg == -5)
-					break;*/
+			if(m_dQSpread < 0.005)
+					break;
 		}
 		else
 			offset = i;
@@ -892,12 +902,12 @@ void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int d
 		int arrayoffset = threadnum*nl;
 
 		double* dkk = m_dkk+arrayoffset;
-		MyComplex* kk = m_ckk+arrayoffset;
-		MyComplex* ak = m_cak+arrayoffset;
+		MyComplex<double>* kk = m_ckk+arrayoffset;
+		MyComplex<double>* ak = m_cak+arrayoffset;
 		double* drj = m_drj+arrayoffset;
-		MyComplex* rj= m_crj+arrayoffset;
-		MyComplex* Rj= m_cRj+arrayoffset;
-		MyComplex cholder, tempk1, tempk2, zero;
+		MyComplex<double>* rj= m_crj+arrayoffset;
+		MyComplex<double>* Rj= m_cRj+arrayoffset;
+		MyComplex<double> cholder, tempk1, tempk2, zero;
 		double holder, dtempk1, dtempk2;
 		
 		/********Boundary conditions********/
@@ -1129,13 +1139,13 @@ void CReflCalc::QsmearRf(double* qspreadreflpt, double* refl, int datapoints)
 		refl[i] = calcholder/6.211;
 	}
 }
-double CReflCalc::CalcQc(GARealGenome g)
+double CReflCalc::CalcQc(ParamVector g)
 {
 	//Critical Q for an interface.		
 	double prefactor = 4 * M_PI/lambda;
 	
-	return prefactor * sqrt(2.0 * rho_a*(g.GetRealGenome(g.RealGenomeSize()-1)-g.GetRealGenome(0))/
-		(1-(lambda*lambda/(2.0*M_PI))*g.GetRealGenome(0)*rho_a));
+	return prefactor * sqrt(2.0 * rho_a*(g.GetRealparams(g.RealparamsSize()-1)-g.GetRealparams(0))/
+		(1-(lambda*lambda/(2.0*M_PI))*g.GetRealparams(0)*rho_a));
 }
 
 double CReflCalc::CalcFresnelPoint(double Q, double Qc)

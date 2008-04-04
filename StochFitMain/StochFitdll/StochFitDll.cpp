@@ -25,6 +25,7 @@
 #include "StochFitDll.h"
 #include "StochFitHarness.h"
 
+
 BOOL APIENTRY DllMain( HANDLE hModule, 
                        DWORD  ul_reason_for_call, 
                        LPVOID lpReserved
@@ -41,15 +42,12 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     return TRUE;
 }
 
-//The global genfit
+//The global stochfit class pointer
 StochFit* stochfit;
 
-extern "C" STOCHFIT_API void Init(LPCWSTR Directory, double Q[], double Refl[], double ReflError[], double QError[], int Qpoints,double rholipid,double rhoh2o, double supSLD, int parratlayers, double layerlength,
-							 double surfabs, double wavelength, double subabs, double supabs, BOOL UseSurfAbs, double leftoffset, double QErr, 
-							 BOOL forcenorm, double forcesig, BOOL debug, BOOL XRonly, double resolution,double totallength, BOOL impnorm, int objectivefunction)
+extern "C" STOCHFIT_API void Init(ReflSettings initstruct)
 {
-	stochfit = new StochFit(Directory, Q, Refl, ReflError, QError, Qpoints, rholipid, rhoh2o, supSLD, parratlayers, layerlength, surfabs, wavelength, subabs, supabs, UseSurfAbs,leftoffset, QErr, forcenorm,
-				forcesig, (bool)debug, XRonly, resolution, totallength, impnorm,objectivefunction);
+	stochfit = new StochFit(initstruct);
 }
 
 extern "C" STOCHFIT_API void GenPriority(int priority)

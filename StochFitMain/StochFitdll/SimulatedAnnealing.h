@@ -20,20 +20,20 @@
 
 #pragma once
 #include "multilayer.h"
-#include "Genome.h"
+#include "ParamVector.h"
 
 class SimAnneal
 {
 	private:
 
 		//Variables
-		GARealGenome temp_genome;
+		ParamVector temp_params;
 		CReflCalc* multi;
 
 		int m_iIteration;
 		int m_iPlattime;
 		long double m_dTemp;
-		string m_sdirectory;
+		wstring m_sdirectory;
 
 		//Variables for tracking acceptance and rejection
 		int m_ipoorsolutionacc;
@@ -51,8 +51,8 @@ class SimAnneal
 		int m_iSTUNfunc;
 		int m_itempiter;
 		double mc_stepsize;
-		ofstream debugfile;
-		ofstream rejfile;
+		wofstream debugfile;
+		wofstream rejfile;
 		std::deque<double> Q;
 		
 		//Functions
@@ -65,15 +65,15 @@ class SimAnneal
 		int m_isigmasearch;
 		int m_ialgorithm;
 		double m_dState1, m_dState2;
-		double TakeStep(GARealGenome* genome);
+		double TakeStep(ParamVector* params);
 	
 public:
-	SimAnneal(bool debug, std::string directory);
+	SimAnneal(bool debug, std::wstring directory);
 		~SimAnneal();
 		void Initialize(double inittemp, double tempplateautime, double gamma, double slope, bool adaptive, int tempiter, 
 			int STUNfunc, int deciter, double gammadec);
-		bool Iteration(GARealGenome* genome);
-		void InitializeParameters(double step, GARealGenome* genome, CReflCalc* ml0, int simgasearch, int algorithm);
+		bool Iteration(ParamVector* params);
+		void InitializeParameters(double step, ParamVector* params, CReflCalc* m_cRefl, int simgasearch, int algorithm);
 		bool EvaluateGreedy(double bestval, double curval);
 		bool EvaluateSA(double bestval, double curval);
 		bool EvaluateSTUN(long double bestval,long double curval);

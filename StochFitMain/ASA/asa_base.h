@@ -171,7 +171,7 @@ class ASA_Base
 		int m_inumber_asa_open;
 		int m_irecursive_asa_open;
 		FILE *ptr_asa_out;            /* file ptr to output file */
-		string m_sfile_name;
+		wstring m_sfile_name;
 		bool m_bASA_initialized;		
 
 		int m_inumber_parameters;
@@ -299,7 +299,7 @@ class ASA_Base
 		int GetNumberParameters(int paramcount){return m_inumber_parameters;}
 	
 	public:
-		ASA_Base(string filename, int paramcount);
+		ASA_Base(wstring filename, int paramcount);
 		~ASA_Base();
 
 		void asa_alloc();

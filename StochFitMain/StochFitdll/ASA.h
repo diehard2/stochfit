@@ -20,14 +20,14 @@
 
 #pragma once
 #include "../ASA/asa_base.h"
-#include "genome.h"
+#include "ParamVector.h"
 #include "multilayer.h"
 
 class ASA :	public ASA_Base
 {
 private:
 
-	GARealGenome m_cgenome;
+	ParamVector m_cparams;
 	CReflCalc* m_cmulti;
 
 	int m_ifuncevals;
@@ -42,12 +42,12 @@ private:
 	int m_i_acc;
 	bool m_bfailed;
 public:
-	ASA(bool debug, string filename, int paramcount);
+	ASA(bool debug, wstring filename, int paramcount);
 	~ASA(void);
 
-	bool Iteration(GARealGenome* genome);
+	bool Iteration(ParamVector* params);
 	
-	void Initialize(int paramcount, GARealGenome* genome, CReflCalc* multi);
+	void Initialize(int paramcount, ParamVector* params, CReflCalc* multi);
 	bool CheckFailure(){return m_bfailed;}
 
 	

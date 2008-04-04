@@ -25,12 +25,12 @@ SA_Dispatcher::SA_Dispatcher()
 {
 }
 
-void SA_Dispatcher::Initialize(bool debug, bool ASAonoff, string directory)
+void SA_Dispatcher::Initialize(bool debug, bool ASAonoff, wstring directory)
 {
 	if(ASAonoff == false)
 		m_cSA = new SimAnneal(debug, directory);
 	else
-		m_cASA = new ASA(debug, directory + string("\\asa_out.txt"), 0);
+		m_cASA = new ASA(debug, directory + wstring(L"\\asa_out.txt"), 0);
 
 	m_bUseASA = ASAonoff;
 }
@@ -52,21 +52,21 @@ void SA_Dispatcher::Initialize_Subsytem(double inittemp, double tempplateautime,
 	
 }
 
-void SA_Dispatcher::InitializeParameters(double step, GARealGenome *genome, CReflCalc *ml0, int sigmasearch, int algorithm)
+void SA_Dispatcher::InitializeParameters(double step, ParamVector *params, CReflCalc *m_cRefl, int sigmasearch, int algorithm)
 {
 	if(m_bUseASA == false)
-		m_cSA->InitializeParameters(step, genome, ml0, sigmasearch, algorithm);
+		m_cSA->InitializeParameters(step, params, m_cRefl, sigmasearch, algorithm);
 	else
-		m_cASA->Initialize(genome->ParamCount(),genome,ml0);
+		m_cASA->Initialize(params->ParamCount(),params,m_cRefl);
 
 }
 
-bool SA_Dispatcher::Iteration(GARealGenome *genome)
+bool SA_Dispatcher::Iteration(ParamVector *params)
 {
 	if(m_bUseASA == false)
-		return m_cSA->Iteration(genome);
+		return m_cSA->Iteration(params);
 	else 
-		return m_cASA->Iteration(genome);
+		return m_cASA->Iteration(params);
 }
 
 bool SA_Dispatcher::CheckForFailure()

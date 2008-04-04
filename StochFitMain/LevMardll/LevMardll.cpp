@@ -110,7 +110,7 @@ extern "C" LEVMARDLL_API double Rhofit(LPCWSTR directory, int boxes, double SLD,
 	return ChiSquare;
 }
 
-extern "C" LEVMARDLL_API double RhoGenerate(int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
+extern "C" LEVMARDLL_API void RhoGenerate(int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
 			double ZRange[], int ZSize, double ED[], double BoxED[], int EDsize)
 {
 	RhoCalc Rho;
@@ -123,8 +123,6 @@ extern "C" LEVMARDLL_API double RhoGenerate(int boxes, double SLD, double SupSLD
 		ED[i] = Rho.nk[i];
 		BoxED[i] = Rho.nkb[i];
 	}
-
-	return 0;
 }
 
 extern "C" LEVMARDLL_API double FastReflfit(LPCWSTR directory, int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
@@ -316,7 +314,7 @@ extern "C" LEVMARDLL_API double ConstrainedFastReflfit(LPCWSTR directory, int bo
 	return ChiSquare;
 }
 
-extern "C" LEVMARDLL_API double StochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
+extern "C" LEVMARDLL_API void StochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
 			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covariance[], int covarsize, 
 			double info[], int infosize, BOOL onesigma,BOOL writefiles, int iterations, double ParamArray[], int* paramarraysize, double parampercs[], double chisquarearray[], double covararray[],
 			double QSpread, BOOL Impnorm)
@@ -505,11 +503,9 @@ for(int i = 0; i < allsolutions.size() && i < 1000 && allsolutions.size() > 0; i
 	chisquarearray[i] = (allsolutions.at(i).GetScore());
 }
 *paramarraysize = min(allsolutions.size(),999);
-
-return 0;
 }
 
-extern "C" LEVMARDLL_API double ConstrainedStochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
+extern "C" LEVMARDLL_API void ConstrainedStochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
 			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covariance[], int covarsize, 
 			double info[], int infosize, BOOL onesigma,BOOL writefiles, int iterations, double ParamArray[], int* paramarraysize, double parampercs[], double chisquarearray[], double covararray[],
 			double UL[], double LL[], double QSpread, BOOL ImpNorm)
@@ -537,8 +533,8 @@ extern "C" LEVMARDLL_API double ConstrainedStochFit(int boxes, double SLD, doubl
 	memcpy(origguess, parameters, sizeof(double)*paramsize);
 
 	//Starting solution
-//	dlevmar_dif(Refl.objective, parameters, xvec,  paramsize,QSize, 1000, opts, info, NULL, NULL,(void*)(&Refl)); 
 	dlevmar_bc_dif(Refl.objective, parameters, xvec,  paramsize,QSize, LL, UL,100,  opts, info, NULL,NULL,(void*)(&Refl)); 
+	
 	if(onesigma == true)
 		Refl.mkdensityonesigma(parameters,paramsize);
 	else
@@ -705,12 +701,9 @@ for(int i = 0; i < allsolutions.size() && i < 1000 && allsolutions.size() > 0; i
 
 }
 *paramarraysize = min(allsolutions.size(),999);
-
-
-return 0;
 }
 
-extern "C" LEVMARDLL_API double FastReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
+extern "C" LEVMARDLL_API void FastReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
 			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double QSpread, BOOL impnorm)
 {
 	FastReflcalc FastRefl;
@@ -723,7 +716,5 @@ extern "C" LEVMARDLL_API double FastReflGenerate(int boxes, double SLD, double S
 	{
 		Reflectivity[i] = FastRefl.reflpt[i];
 	}
-
-	return 0;
 }
 

@@ -38,7 +38,6 @@ extern "C" STOCHFIT_API void Start(int iterations);
 extern "C" STOCHFIT_API void Cancel();
 extern "C" STOCHFIT_API int GetData(double ZRange[],double Rho[],double QRange[], double Refl[] ,double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
 extern "C" STOCHFIT_API void SetSAParameters(int sigmasearch,int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, BOOL adaptive, int tempiter, int deciter, double gammadec);
-
 extern "C" STOCHFIT_API void ArraySizes(int* RhoSize, int* Reflsize);
 extern "C" STOCHFIT_API bool WarmedUp();
 extern "C" STOCHFIT_API void SAparams(double* lowestenergy, double* temp, int* mode);

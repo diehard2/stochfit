@@ -57,7 +57,7 @@ StochFit::StochFit(LPCWSTR Directory, double* Q, double* Reflect, double* ReflEr
 	m_dsupabs = supabs;
 	m_dforcesig = forcesig;
 	m_bdebugging = debug;
-		SA = new SA_Dispatcher(debug, false, m_Directory);
+	SA = new SA_Dispatcher();
 	m_bforcenorm = forcenorm;
 	m_bXRonly = XRonly;
 	m_dresolution = resolution;
@@ -75,7 +75,10 @@ StochFit::~StochFit()
 	if(Zinc != NULL)
 	{
 		delete genome;
-		delete SA;
+		
+		if(SA != NULL)
+			delete SA;
+
 		delete[] Zinc;
 		delete[] Qinc;
 		delete[] Rho;
@@ -88,11 +91,8 @@ void StochFit::Initialize(double* Q, double* Reflect, double* ReflError, double*
 	 //////////////////////////////////////////////////////////
 	 /******** Setup Variables and ReflectivityClass ********/
 	 ////////////////////////////////////////////////////////
-
-
 	double resolution;
 	
-
 	// Set the densities and absorbances
 	m_dfilmSLD *= 1e-6 * m_dwavelength*m_dwavelength/(2.0*M_PI);
 	m_dsubSLD *= 1e-6 * m_dwavelength*m_dwavelength/(2.0*M_PI);
@@ -104,7 +104,6 @@ void StochFit::Initialize(double* Q, double* Reflect, double* ReflError, double*
 	//Default of 3 points per Angstrom - Seems to be a good number
 	//The computational degree of difficulty scales linearly with the number of
 	//data points
-
 	if(m_dresolution == 0)
 		resolution = 3.0;
 	else
@@ -150,8 +149,6 @@ void StochFit::Initialize(double* Q, double* Reflect, double* ReflError, double*
 		genome->SetMutatableParameter(i,m_dsubSLD/m_dfilmSLD);	
 		
 	genome->SetSubphase(m_dsubSLD/m_dfilmSLD);
-	
-	
 
 	ml0.m_dboxsize = (m_dlayerlength+7.0)/(m_iparratlayers);
 
@@ -319,6 +316,20 @@ int StochFit::Cancel()
 	CloseHandle(m_hThread);
 	m_hThread = NULL;
 	return 0;
+}
+
+void StochFit::InitializeSA(int sigmasearch, int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, BOOL adaptive, int tempiter, int STUNdeciter, double gammadec)
+{
+	if(algorithm == 3)
+		SA->Initialize(m_bdebugging, true, m_Directory);
+	else
+		SA->Initialize(m_bdebugging, false, m_Directory);
+
+	SA->Initialize_Subsytem(inittemp,platiter,gamma ,slope, adaptive, tempiter,STUNfunc, STUNdeciter,gammadec);
+	m_sigmasearch = sigmasearch;
+	m_isearchalgorithm = algorithm;
+
+
 }
 
 int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)

@@ -457,8 +457,8 @@ namespace StochasticModeling
                     //Check for constraints
                     if (constr.Initialized == true)
                     {
-                        UL[2 * i + 1] = constr.LengthHighArray[i];
-                        LL[2 * i + 1] = constr.LengthLowArray[i];
+                        UL[2 * i + 1] = constr.ThickHighArray[i];
+                        LL[2 * i + 1] = constr.ThickLowArray[i];
                         UL[2 * i + 2] = constr.RhoHighArray[i];
                         LL[2 * i + 2] = constr.RhoLowArray[i];
                     }
@@ -541,8 +541,8 @@ namespace StochasticModeling
                     //Check for constraints
                     if (constr.Initialized == true)
                     {
-                        UL[3 * i + 1] = constr.LengthHighArray[i];
-                        LL[3 * i + 1] = constr.LengthLowArray[i];
+                        UL[3 * i + 1] = constr.ThickHighArray[i];
+                        LL[3 * i + 1] = constr.ThickLowArray[i];
                         UL[3 * i + 2] = constr.RhoHighArray[i];
                         LL[3 * i + 2] = constr.RhoLowArray[i];
                         UL[3 * i + 3] = constr.SigmaHighArray[i];
@@ -904,8 +904,8 @@ namespace StochasticModeling
                     //Check for constraints
                     if (constr.Initialized == true)
                     {
-                        UL[2 * i + 1] = constr.LengthHighArray[i];
-                        LL[2 * i + 1] = constr.LengthLowArray[i];
+                        UL[2 * i + 1] = constr.ThickHighArray[i];
+                        LL[2 * i + 1] = constr.ThickLowArray[i];
                         UL[2 * i + 2] = constr.RhoHighArray[i];
                         LL[2 * i + 2] = constr.RhoLowArray[i];
                     }
@@ -990,8 +990,8 @@ namespace StochasticModeling
                     //Check for constraints
                     if (constr.Initialized == true)
                     {
-                        UL[3 * i + 1] = constr.LengthHighArray[i];
-                        LL[3 * i + 1] = constr.LengthLowArray[i];
+                        UL[3 * i + 1] = constr.ThickHighArray[i];
+                        LL[3 * i + 1] = constr.ThickLowArray[i];
                         UL[3 * i + 2] = constr.RhoHighArray[i];
                         LL[3 * i + 2] = constr.RhoLowArray[i];
                         UL[3 * i + 3] = constr.SigmaHighArray[i];

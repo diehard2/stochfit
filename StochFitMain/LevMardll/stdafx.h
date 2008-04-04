@@ -20,21 +20,17 @@
 
 #pragma once
 
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
-
-#include <windows.h>
 #include <math.h>
-#include <malloc.h>
 #include <fstream>
 #include <omp.h>
 #include <ctime>
 #include <vector>
 #include <algorithm>
-#include "random.h"
-#include "myComplex.h"
 #include <atlbase.h>
 #include <string>
-#include "lm.h"
+#include "..\StochFitDll\random.h"
+#include "..\StochFitDll\mycomplex.h"
+#include ".\Levmar\lm.h"
 
 using namespace MyComplexNumber;
 using namespace Random;

@@ -823,7 +823,8 @@ namespace StochasticModeling
             this.AlgorithmCB.Items.AddRange(new object[] {
             "Greedy Search",
             "Simulated Annealing",
-            "Stochastic Tunneling"});
+            "Stochastic Tunneling",
+            "ASA Annealing"});
             this.AlgorithmCB.Name = "AlgorithmCB";
             this.AlgorithmCB.Size = new System.Drawing.Size(200, 23);
             this.AlgorithmCB.DropDownClosed += new System.EventHandler(this.AlgorithmCB_DropDownClosed);
@@ -841,7 +842,7 @@ namespace StochasticModeling
             this.setSigmaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.SigTSTB});
             this.setSigmaToolStripMenuItem.Name = "setSigmaToolStripMenuItem";
-            this.setSigmaToolStripMenuItem.Size = new System.Drawing.Size(126, 22);
+            this.setSigmaToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.setSigmaToolStripMenuItem.Text = "Set Sigma";
             // 
             // SigTSTB

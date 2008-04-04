@@ -85,7 +85,7 @@ namespace StochasticModeling
         /// <param name="ImpNorm">True if the curve is believed to be imperfectly normalized, false otherwise</param>
         /// <returns></returns>
         [DllImport("LevMardll.dll", EntryPoint = "FastReflGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern double FastReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double[] parameters, int paramsize,
+        protected static extern void FastReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double[] parameters, int paramsize,
             double[] QRange, double[] QError, int QSize, double[] Reflectivity, int reflectivitysize, double QSpread, bool ImpNorm);
 
         /// <summary>
@@ -103,48 +103,164 @@ namespace StochasticModeling
         /// <param name="Reflectivity">Allocated array of QSize elements that recieves the </param>
         /// <param name="reflectivitysize">Element count of the reflectivity array</param>
         /// <param name="Errors">Array of errors in the reflectivity data</param>
-        /// <param name="covar"></param>
+        /// <param name="covar">The original covariance array to fill</param>
+        /// <param name="covarsize">Element count of covar</param>
+        /// <param name="info">Array of size 6, returns information pertaining to the fit</param>
+        /// <param name="infosize">Element count of info</param>
+        /// <param name="onesigma">If the film is to be treated as an elastic sheet, set to true</param>
+        /// <param name="writefiles">Set to true to write files</param>
+        /// <param name="iterations">Total number of iterations for the stochastic fitting</param>
+        /// <param name="ParamArray">Returns the array of all fits. Allocated to a size of 1000 * paramsize</param>
+        /// <param name="paramarraysize">Element count of ParamArray</param>
+        /// <param name="parampercs">The percentage by which each parameter can vary, with an element count of 6. 1 and 2 correspond to the thickness
+        /// of the file, 2 and 3 correspond to the electron density, and 4 and 5 correspond to the roughness</param>
+        /// <param name="chisquarearray">Array of Chi square values for each model found</param>
+        /// <param name="Covararray">Covariance array for each model found</param>
+        /// <param name="UL">Array of upper limits of paramsize elements for each parameter in ParamArray</param>
+        /// <param name="LL">Array of lower limits of paramsize elements for each parameter in ParamArray</param>
+        /// <param name="QSpread">Percent error in Q</param>
+        /// <param name="ImpNorm">True if the curve is believed to be imperfectly normalized, false otherwise</param>   
+        [DllImport("LevMardll.dll", EntryPoint = "ConstrainedStochFit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        protected static extern void ConstrainedStochFit(int boxes, double SLD, double SupSLD, double wavelength, double[] parameters, int paramsize,
+            double[] QRange, double[] QError, int QSize, double[] Reflectivity, int reflectivitysize, double[] Errors, double[] covar, int covarsize, double[] info, int infosize, bool onesigma, bool writefiles, int iterations,
+            double[] ParamArray, out int paramarraysize, double[] parampercs, double[] chisquarearray, double[] Covararray, double[] UL, double[] LL, double QSpread, bool ImpNorm);
+
+        /// <summary>
+        /// Generates a smoothed and box electron density profile
+        /// </summary>
+        /// <param name="boxes"></param>
+        /// <param name="SLD"></param>
+        /// <param name="SupSLD"></param>
+        /// <param name="parameters"></param>
+        /// <param name="paramsize"></param>
+        /// <param name="ZRange"></param>
+        /// <param name="ZSize"></param>
+        /// <param name="ED"></param>
+        /// <param name="BoxED"></param>
+        /// <param name="EDSize"></param>
+        [DllImport("LevMardll.dll", EntryPoint = "RhoGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        protected static extern void RhoGenerate(int boxes, double SLD, double SupSLD, double[] parameters, int paramsize,
+           double[] ZRange, int ZSize, double[] ED, double[] BoxED, int EDSize);
+
+        /// <summary>
+        /// Performs a Levenberg-Marquadt least squares fit of the data
+        /// </summary>
+        /// <param name="directory">The working directory</param>
+        /// <param name="boxes">Number of boxes in the model</param>
+        /// <param name="SLD">Subphase SLD</param>
+        /// <param name="SupSLD">Superphase SLD</param>
+        /// <param name="wavelength">Wavelength in Angstroms</param>
+        /// <param name="parameters">The parameter array</param>
+        /// <param name="paramsize">The size of the parameter array</param>
+        /// <param name="QRange">Q array</param>
+        /// <param name="QErrors">Error in Q array if it exists. NULL otherwise</param>
+        /// <param name="QSize">Size of QRange</param>
+        /// <param name="Reflectivity">Array that will recieve the reflectivity</param>
+        /// <param name="reflectivitysize">Size of Reflectivity</param>
+        /// <param name="Errors">Array containing the error for Reflectivity in standard deviation</param>
+        /// <param name="covar">Array which recieves the covariance matrix</param>
+        /// <param name="covarsize">Size of covar</param>
+        /// <param name="info">Array which recieves information regarding the terminating conditions of the fit</param>
+        /// <param name="infosize">Size of info</param>
+        /// <param name="onesigma">True if the system can be treated as an elastic sheet</param>
+        /// <param name="writefiles">Write output files to the specified directory</param>
+        /// <param name="Qspread">Error in Q as a fixed percentage</param>
+        /// <param name="ImpNorm">Choose whether to correct the reflectivity for imperfect normalization</param>
+        /// <returns>The Chi square value for the fit</returns>
+        [DllImport("LevMardll.dll", EntryPoint = "FastReflfit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        protected static extern double FastReflfit(string directory, int boxes, double SLD, double SupSLD, double wavelength, double[] parameters, int paramsize,
+            double[] QRange, double[] QErrors, int QSize, double[] Reflectivity, int reflectivitysize, double[] Errors, double[] covar, int covarsize, double[] info, int infosize,
+            bool onesigma, bool writefiles, double Qspread, bool ImpNorm);
+
+        /// <summary>
+        /// Performs a constrained Levenberg-Marquadt least squares fit of the data
+        /// </summary>
+        /// <param name="boxes">Number of boxes in the model</param>
+        /// <param name="SLD">Subphase SLD</param>
+        /// <param name="SupSLD">Superphase SLD</param>
+        /// <param name="wavelength">X-ray wavelength</param>
+        /// <param name="parameters">Parameter array. See code for setup</param>
+        /// <param name="paramsize">Element count of parameters</param>
+        /// <param name="QRange">Array of Q values to calculate reflectivity points for</param>
+        /// <param name="QError">Array of error in Q. Can be NULL</param>
+        /// <param name="QSize">QRange element count</param>
+        /// <param name="Reflectivity">Allocated array of QSize elements that recieves the </param>
+        /// <param name="reflectivitysize">Element count of the reflectivity array</param>
+        /// <param name="Errors">Array of errors in the reflectivity data</param>
+        /// <param name="covar">The original covariance array to fill</param>
+        /// <param name="covarsize">Element count of covar</param>
+        /// <param name="info">Array of size 6, returns information pertaining to the fit</param>
+        /// <param name="infosize">Element count of info</param>
+        /// <param name="onesigma">If the film is to be treated as an elastic sheet, set to true</param>
+        /// <param name="writefiles">Set to true to write files</param>
+        /// <param name="iterations">Total number of iterations for the stochastic fitting</param>
+        /// <param name="ParamArray">Returns the array of all fits. Allocated to a size of 1000 * paramsize</param>
+        /// <param name="paramarraysize">Element count of ParamArray</param>
+        /// <param name="parampercs">The percentage by which each parameter can vary, with an element count of 6. 1 and 2 correspond to the thickness
+        /// of the file, 2 and 3 correspond to the electron density, and 4 and 5 correspond to the roughness</param>
+        /// <param name="chisquarearray">Array of Chi square values for each model found</param>
+        /// <param name="Covararray">Covariance array for each model found</param>
+        /// <param name="QSpread">Percent error in Q</param>
+        /// <param name="ImpNorm">True if the curve is believed to be imperfectly normalized, false otherwise</param>  
+        [DllImport("LevMardll.dll", EntryPoint = "StochFit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        protected static extern void StochFit(int boxes, double SLD, double SupSLD, double wavelength, double[] parameters, int paramsize,
+            double[] QRange, double[] QError, int QSize, double[] Reflectivity, int reflectivitysize, double[] Errors, double[] covar, int covarsize, double[] info,
+            int infosize, bool onesigma, bool writefiles, int iterations, double[] ParamArray, out int paramarraysize, double[] parampercs, double[] chisquarearray, double[] Covararray,
+            double QSpread, bool ImpNorm);
+        
+        /// <summary>
+        /// Fits an electron density profile to the electron density profile generated by the model independent fit
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <param name="boxes"></param>
+        /// <param name="SLD"></param>
+        /// <param name="SupSLD"></param>
+        /// <param name="parameters"></param>
+        /// <param name="paramsize"></param>
+        /// <param name="ZRange"></param>
+        /// <param name="ZSize"></param>
+        /// <param name="ED"></param>
+        /// <param name="EDsize"></param>
+        /// <param name="covariance"></param>
         /// <param name="covarsize"></param>
         /// <param name="info"></param>
         /// <param name="infosize"></param>
         /// <param name="onesigma"></param>
-        /// <param name="writefiles"></param>
-        /// <param name="iterations"></param>
-        /// <param name="ParamArray"></param>
-        /// <param name="paramarraysize"></param>
-        /// <param name="parampercs"></param>
-        /// <param name="chisquarearray"></param>
-        /// <param name="Covararray"></param>
-        /// <param name="UL"></param>
-        /// <param name="LL"></param>
-        /// <param name="QSpread">Percent error in Q</param>
-        /// <param name="ImpNorm">True if the curve is believed to be imperfectly normalized, false otherwise</param>   
         /// <returns></returns>
-        [DllImport("LevMardll.dll", EntryPoint = "ConstrainedStochFit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern double ConstrainedStochFit(int boxes, double SLD, double SupSLD, double wavelength, double[] parameters, int paramsize,
-            double[] QRange, double[] QErrors, int QSize, double[] Reflectivity, int reflectivitysize, double[] Errors, double[] covar, int covarsize, double[] info, int infosize, bool onesigma, bool writefiles, int iterations,
-            double[] ParamArray, out int paramarraysize, double[] parampercs, double[] chisquarearray, double[] Covararray, double[] UL, double[] LL, double Qspread, bool ImpNorm);
-
-        [DllImport("LevMardll.dll", EntryPoint = "RhoGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern double RhoGenerate(int boxes, double SLD, double SupSLD, double[] parameters, int paramsize,
-           double[] ZRange, int ZSize, double[] ED, double[] BoxED, int EDSize);
-
-        [DllImport("LevMardll.dll", EntryPoint = "FastReflfit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern double FastReflfit(string directory, int boxes, double SLD, double SupSLD, double wavelength, double[] parameters, int paramsize,
-            double[] QRange, double[] QErrors, int QSize, double[] Reflectivity, int reflectivitysize, double[] Errors, double[] covar, int covarsize, double[] info, int infosize,
-            bool onesigma, bool writefiles, double Qspread, bool correctfornorm);
-     
-        [DllImport("LevMardll.dll", EntryPoint = "StochFit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern double StochFit(int boxes, double SLD, double SupSLD, double wavelength, double[] parameters, int paramsize,
-            double[] QRange, double[] QErrors, int QSize, double[] Reflectivity, int reflectivitysize, double[] Errors, double[] covar, int covarsize, double[] info,
-            int infosize, bool onesigma, bool writefiles, int iterations, double[] ParamArray, out int paramarraysize, double[] paramperc, double[] chisquarearray, double[] Covararray,
-            double QSpread, bool correctfornorm);
-        
         [DllImport("LevMardll.dll", EntryPoint = "Rhofit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         protected static extern double Rhofit(string directory, int boxes, double SLD, double SupSLD, double[] parameters, int paramsize,
             double[] ZRange, int ZSize, double[] ED, int EDsize, double[] covariance,
             int covarsize, double[] info, int infosize, bool onesigma);
 
+        /// <summary>
+        /// Initialize the model independent fitting procedures. This must be called before any other model independent routines
+        /// </summary>
+        /// <param name="directory">The working directory for the fit. This is usually the same directory as the data file</param>
+        /// <param name="Q">Array containing Q data of size Qpoints</param>
+        /// <param name="Refl">Array containing reflectvity data of size Qpoints</param>
+        /// <param name="ReflError">Array containing reflectivity errors of size Qpoints</param>
+        /// <param name="QErr">Array containing error in Q of size Qpoints</param>
+        /// <param name="Qpoints">Number of elements in Q</param>
+        /// <param name="rholipid">The average SLD of the film</param>
+        /// <param name="rhoh2o">The SLD of the substrate</param>
+        /// <param name="supSLD">The SLD of the superphase</param>
+        /// <param name="parratlayers">The number of small boxes</param>
+        /// <param name="layerlength">Estimation of the film thickness</param>
+        /// <param name="slABS">Estimation of the film absorption</param>
+        /// <param name="XRlambda">X-ray wavelenght in Angstroms</param>
+        /// <param name="SubAbs">Substrate absorption</param>
+        /// <param name="SupAbs">Superphase absorption</param>
+        /// <param name="UseAbs">True if using absorption, false otherwise</param>
+        /// <param name="leftoffset">Offset in thickness (Z) before the first small box appears. The default is 35</param>
+        /// <param name="Qerr">The percent error in Q if the data does not have a fourth column</param>
+        /// <param name="forcenorm">True if the first point in the generated reflectivity is forced to be 1. The entire reflectivity is then scaled</param>
+        /// <param name="forcesigma">If greater than 0, the roughness parameter in the curve is not allowed to vary</param>
+        /// <param name="debug">If true, debug files are written into the specified directory</param>
+        /// <param name="XRonly">Heavily penalizes negative electron density</param>
+        /// <param name="resolution">Number of electron density points per Angstrom</param>
+        /// <param name="totallength">The total length of the electron density profile</param>
+        /// <param name="impnorm">True if the data is imperfectly normalized</param>
+        /// <param name="objfunc">Chooses the objective function. Valid range 0 to 4. See the code documentation for a more detailed explanation</param>
         [DllImport("stochfitdll.dll", EntryPoint = "Init", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         protected static extern void Init(string directory, double[] Q, double[] Refl, double[] ReflError, double[] QErr, int Qpoints, double rholipid, double rhoh2o, double supSLD, int parratlayers,
             double layerlength, double slABS, double XRlambda, double SubAbs, double SupAbs, bool UseAbs, double leftoffset, double Qerr, bool forcenorm,
@@ -188,6 +304,20 @@ namespace StochasticModeling
         [DllImport("stochfitdll.dll", EntryPoint = "GetData", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         protected static extern int GetData(double[] ZRange, double[] Rho, double[] QRange, double[] Refl, out double roughness, out double chisquare, out double goodnessoffit, out bool isfinished);
         
+        /// <summary>
+        /// Set the simulated annealing parameters
+        /// </summary>
+        /// <param name="sigmasearch">The percentage of time to search the roughness space</param>
+        /// <param name="algorithm">The algorithm used to anneal. 0 = greedy search, 1 = Simulated Annealing, 2 = STUN Annealing</param>
+        /// <param name="inittemp">Initial annealing temperature</param>
+        /// <param name="platiter">The number of iterations before the temperature is decreased</param>
+        /// <param name="slope">The fraction by which the temperature is decreases after platiter iterations</param>
+        /// <param name="gamma">The STUN tunneling parameter</param>
+        /// <param name="STUNfunc">The STUN funtion to use in remapping the error surface. See the code for more details</param>
+        /// <param name="adaptive">Whether or not STUN is adaptive</param>
+        /// <param name="tempiter">The number of iterations before the adaptive STUN alters the temperature</param>
+        /// <param name="deciter">The number of iterations before decreasing the expected average STUN value</param>
+        /// <param name="gammadec">The amount by which gamma decreases after platiter iterations</param>
         [DllImport("stochfitdll.dll", EntryPoint = "SetSAParameters", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         protected static extern void SetSAParameters(int sigmasearch, int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, bool adaptive, int tempiter, int deciter, double gammadec);
         

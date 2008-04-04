@@ -439,6 +439,14 @@ namespace StochasticModeling
 
         
         //Anyone can use the next two fucntions from anywhere. These should perhaps be moved
+
+        /// <summary>
+        /// Calculate the critical Q for a system
+        /// </summary>
+        /// <param name="dSLD">Substrate SLD</param>
+        /// <param name="SupSLD">Superphase SLD</param>
+        /// <param name="lambda">X-ray wavelength</param>
+        /// <returns>Critical Q</returns>
         static public double CalcQc(double dSLD, double SupSLD, double lambda)
         {
             if (dSLD - SupSLD > 0)
@@ -447,6 +455,12 @@ namespace StochasticModeling
                 return 0;
         }
 
+        /// <summary>
+        /// Calculates the value of a Fresnel curve at a given Q and Qc
+        /// </summary>
+        /// <param name="Q">Q value</param>
+        /// <param name="Qc">Critical Q for the system</param>
+        /// <returns>Fresnel reflectivity point</returns>
         static public double CalcFresnelPoint(double Q, double Qc)
         {
             if (Q <= Qc)

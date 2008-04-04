@@ -38,22 +38,22 @@ extern "C" LEVMARDLL_API double ConstrainedFastReflfit(LPCWSTR directory, int bo
 			double QRange[],double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
 			double info[], int infosize, BOOL onesigma,BOOL writefiles, double UL[], double LL[], double QSpread, BOOL ImpNorm);
 
-extern "C" LEVMARDLL_API double FastReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
+extern "C" LEVMARDLL_API void FastReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
 			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double QSpread, BOOL impnorm);
 
 extern "C" LEVMARDLL_API double Rhofit(LPCWSTR directory, int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
 			double ZRange[], int ZSize, double ED[], int EDsize, double covariance[],
 			int covarsize, double info[], int infosize, BOOL onesigma);
 
-extern "C" LEVMARDLL_API double RhoGenerate(int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
+extern "C" LEVMARDLL_API void RhoGenerate(int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
 			double ZRange[], int ZSize, double ED[], double BoxED[], int EDsize);
 
-extern "C" LEVMARDLL_API double StochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
+extern "C" LEVMARDLL_API void StochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
 			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
 			double info[], int infosize, BOOL onesigma,BOOL writefiles, int iterations,double ParamArray[], int* paramarraysize, double paramperc[], double chisquarearray[], double covararray[],
 			double QSpread, BOOL ImpNorm);
 
-extern "C" LEVMARDLL_API double ConstrainedStochFit(int boxes, double SLD,double SupSLD, double wavelength, double parameters[], int paramsize,
+extern "C" LEVMARDLL_API void ConstrainedStochFit(int boxes, double SLD,double SupSLD, double wavelength, double parameters[], int paramsize,
 			double QRange[],double QError[],  int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
 			double info[], int infosize, BOOL onesigma,BOOL writefiles, int iterations,double ParamArray[], int* paramarraysize, double parampercs[], double chisquarearray[], double covararray[],
 			double UL[], double LL[], double QSpread, BOOL ImpNorm);

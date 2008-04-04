@@ -5,7 +5,7 @@
 	Name="LevMardll"
 	ProjectGUID="{1942BC8C-3706-48D2-8D70-3BF4237A41CE}"
 	VCNestedProjectGUID="{A2D16FE7-CD5C-4D6A-81FE-3789D54D5D13}"
-	VCNestedProjectCRC32="1002619010"
+	VCNestedProjectCRC32="393744097"
 	VCNestedProjectFileName="LevMardll.vcproj"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -193,15 +193,7 @@
 		<File 
 			RelativePath=".\LevMardll.h"/>
 		<File 
-			RelativePath=".\lm.h"/>
-		<File 
-			RelativePath=".\misc.h"/>
-		<File 
-			RelativePath=".\MyComplex.h"/>
-		<File 
 			RelativePath=".\ParameterContainer.h"/>
-		<File 
-			RelativePath=".\random.h"/>
 		<File 
 			RelativePath=".\RhoCalc.h"/>
 		<File 
@@ -209,19 +201,25 @@
 		<File 
 			RelativePath=".\Axb.c"/>
 		<File 
+			RelativePath=".\LevMar\Axb.c"/>
+		<File 
 			RelativePath=".\FastReflCalc.cpp"/>
 		<File 
 			RelativePath=".\LevMardll.cpp"/>
 		<File 
-			RelativePath=".\lm.c"/>
+			RelativePath=".\LevMar\lm.c"/>
 		<File 
-			RelativePath=".\lmbc.c"/>
+			RelativePath=".\LevMar\lmbc.c"/>
 		<File 
-			RelativePath=".\lmlec.c"/>
+			RelativePath=".\LevMar\lmblec.c"/>
+		<File 
+			RelativePath=".\LevMar\lmlec.c"/>
 		<File 
 			RelativePath=".\LMRoutines.cpp"/>
 		<File 
 			RelativePath=".\misc.c"/>
+		<File 
+			RelativePath=".\LevMar\misc.c"/>
 		<File 
 			RelativePath=".\RhoCalc.cpp"/>
 		<File 

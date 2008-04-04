@@ -5,7 +5,7 @@
 	Name="StochFitdll"
 	ProjectGUID="{0500C168-FD63-4DFE-8D66-C449E4D9E19B}"
 	VCNestedProjectGUID="{8FEF7E88-7B8D-44E8-BBE6-9ECB9DE5B5B1}"
-	VCNestedProjectCRC32="304155100"
+	VCNestedProjectCRC32="114579306"
 	VCNestedProjectFileName="StochFit.vcproj"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -26,7 +26,7 @@
 			<Tool 
 				Name="CppCmplrTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GENFIT_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;STOCHFIT_EXPORTS"
 				MinimalRebuild="1"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -203,10 +203,6 @@
 		<File 
 			RelativePath=".\ASA.h"/>
 		<File 
-			RelativePath=".\Genfitdll.h"/>
-		<File 
-			RelativePath=".\GenfitHarness.h"/>
-		<File 
 			RelativePath=".\Genome.h"/>
 		<File 
 			RelativePath=".\multilayer.h"/>
@@ -221,11 +217,11 @@
 		<File 
 			RelativePath=".\stdafx.h"/>
 		<File 
+			RelativePath=".\StochFitDll.h"/>
+		<File 
+			RelativePath=".\StochFitHarness.h"/>
+		<File 
 			RelativePath=".\ASA.cpp"/>
-		<File 
-			RelativePath=".\Genfitdll.cpp"/>
-		<File 
-			RelativePath=".\GenfitHarness.cpp"/>
 		<File 
 			RelativePath=".\Genome.cpp"/>
 		<File 
@@ -234,6 +230,10 @@
 			RelativePath=".\SA_Dispatcher.cpp"/>
 		<File 
 			RelativePath=".\SimulatedAnnealing.cpp"/>
+		<File 
+			RelativePath=".\StochFitDll.cpp"/>
+		<File 
+			RelativePath=".\StochFitHarness.cpp"/>
 	</Files>
 </VisualStudioProject>
 

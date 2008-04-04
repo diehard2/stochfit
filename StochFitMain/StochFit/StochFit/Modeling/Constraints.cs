@@ -38,17 +38,24 @@ namespace StochasticModeling.Modeling
     {
         #region Variables
 
-        private bool IsInitialized;
-
-       
-
-        //public bool IsInitialized = false;
-
+        private bool IsInitialized = false;
         int m_iboxcount;
 
+        /// <summary>
+        /// Minimum allowed value of the roughness
+        /// </summary>
         public double SubRoughMin;
+        /// <summary>
+        /// Maximum allowed value of the roughness
+        /// </summary>
         public double SubRoughMax;
+        /// <summary>
+        /// Maximum allowed value of the normalization constant
+        /// </summary>
         public double NormMax;
+        /// <summary>
+        /// Minimum allowed value of the normalization constant
+        /// </summary>
         public double NormMin;
 
         TextBox[] TBRhoHighArray;
@@ -58,11 +65,29 @@ namespace StochasticModeling.Modeling
         TextBox[] TBSigmaHighArray;
         TextBox[] TBSigmaLowArray;
 
+        /// <summary>
+        /// Maximum allowed value of the electron density of a box
+        /// </summary>
         public double[] RhoHighArray;
+        /// <summary>
+        /// Minimum allowed value of the electron density of a box
+        /// </summary>
         public double[] RhoLowArray;
-        public double[] LengthHighArray;
-        public double[] LengthLowArray;
+        /// <summary>
+        /// Maximum allowed value of the thickness of a box
+        /// </summary>
+        public double[] ThickHighArray;
+        /// <summary>
+        /// Minimum allowed value of the thickness of a box
+        /// </summary>
+        public double[] ThickLowArray;
+        /// <summary>
+        /// Maximum allowed value of the rougness of an interface
+        /// </summary>
         public double[] SigmaHighArray;
+        /// <summary>
+        /// Minimum allowed value of the roughness of an interface
+        /// </summary>
         public double[] SigmaLowArray;
 
         #endregion
@@ -81,8 +106,8 @@ namespace StochasticModeling.Modeling
 
             RhoHighArray = new double[boxcount];
             RhoLowArray = new double[boxcount];
-            LengthHighArray = new double[boxcount];
-            LengthLowArray = new double[boxcount];
+            ThickHighArray = new double[boxcount];
+            ThickLowArray = new double[boxcount];
             SigmaHighArray = new double[boxcount];
             SigmaLowArray = new double[boxcount];
 
@@ -95,8 +120,8 @@ namespace StochasticModeling.Modeling
             {
                 RhoHighArray[i] = 10000;
                 RhoLowArray[i] = -10000;
-                LengthHighArray[i] = 10000;
-                LengthLowArray[i] = -10000;
+                ThickHighArray[i] = 10000;
+                ThickLowArray[i] = -10000;
                 SigmaHighArray[i] = 10000;
                 SigmaLowArray[i] = -10000;
             }
@@ -180,9 +205,9 @@ namespace StochasticModeling.Modeling
                 if (TBSigmaLowArray[i].Text != string.Empty)
                     SigmaLowArray[i] = double.Parse(TBSigmaLowArray[i].Text);
                 if (TBLengthHighArray[i].Text != string.Empty)
-                    LengthHighArray[i] = double.Parse(TBLengthHighArray[i].Text);
+                    ThickHighArray[i] = double.Parse(TBLengthHighArray[i].Text);
                 if (TBLengthLowArray[i].Text != string.Empty)
-                    LengthLowArray[i] = double.Parse(TBLengthLowArray[i].Text);
+                    ThickLowArray[i] = double.Parse(TBLengthLowArray[i].Text);
             }
 
             this.Close();

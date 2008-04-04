@@ -285,6 +285,37 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\LevMar\Axb.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GIXOS|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\Axb.c"
 				>
 			</File>
@@ -297,15 +328,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\lm.c"
+				RelativePath=".\LevMar\lm.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lmbc.c"
+				RelativePath=".\LevMar\lmbc.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lmlec.c"
+				RelativePath=".\LevMar\lmblec.c"
+				>
+			</File>
+			<File
+				RelativePath=".\LevMar\lmlec.c"
 				>
 			</File>
 			<File
@@ -315,6 +350,37 @@
 			<File
 				RelativePath=".\misc.c"
 				>
+			</File>
+			<File
+				RelativePath=".\LevMar\misc.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GIXOS|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\RhoCalc.cpp"
@@ -363,23 +429,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\lm.h"
-				>
-			</File>
-			<File
-				RelativePath=".\misc.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MyComplex.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ParameterContainer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\random.h"
 				>
 			</File>
 			<File

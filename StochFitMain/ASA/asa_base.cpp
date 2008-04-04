@@ -19,8 +19,8 @@
 int multi_compare (const void *ii, const void *jj);
 ASA_Base* ptr;
 
-ASA_Base::ASA_Base(string filename, int paramcount): m_bASAOpen(false),m_inumber_asa_open(0),m_bASA_print(true),m_sfile_name(filename),
-m_irecursive_asa_open(0),m_bincl_stdout(true), m_bASA_recursive(false), ptr_asa_out(NULL), m_bASA_print_intermed(true),
+ASA_Base::ASA_Base(string filename, int paramcount): m_bASAOpen(false),m_inumber_asa_open(0),m_bASA_print(false),m_sfile_name(filename),
+m_irecursive_asa_open(0),m_bincl_stdout(true), m_bASA_recursive(false), ptr_asa_out(NULL), m_bASA_print_intermed(false),
 m_basa_print_more(false),m_bdropped_parameters(false),m_basa_sample(false),m_buser_reanneal_parameters(false), 
 multi_min(false),user_initial_cost_temp(false), ratio_temperature_scales(false), delta_parameters(false),
 user_initial_parameters_temps(false),user_cost_schedule(false),optional_data_dbl(false), optional_data_ptr(false),
@@ -31,7 +31,7 @@ m_bno_param_temp_test(true), m_bno_cost_temp_test(true), exit_status(0), valid_s
 m_buser_param_init(false), m_buser_cost_func(false), temperature_scale_cost(0), m_bASA_initialized(false)
 {
 	ptr = this;
-	ASA_Output_System();
+	
 	Options.Asa = (void*)this;
 
 }
@@ -178,6 +178,7 @@ void ASA_Base::asa_alloc()
 
 int ASA_Base::asa_init()
 {
+  ASA_Output_System();
   double log_new_temperature_ratio;
 
   //Initialize the random seed
@@ -614,6 +615,7 @@ int ASA_Base::asa_init()
 		  }
 
 		  Options.Sequential_Parameters = start_sequence - 1;
+		  
 		  m_bASA_initialized = true;
 
 		  return 0;
@@ -1141,7 +1143,7 @@ int ASA_Base::asa_iteration()
 			  initial_cost_temperature = tmp_var_db + (double) EPS_DOUBLE;
 			}
 		  }
-	}
+		}
 
 		  reanneal ();
 
@@ -2455,7 +2457,7 @@ else
 	m_bincl_stdout = false;
 }
 
-	if(m_bASA_print)
+	if(m_bASA_print && m_bASA_recursive == true)
 		fprintf (ptr_asa_out, "\n\n\t\t number_asa_open = %d\n",m_inumber_asa_open);
 }
 

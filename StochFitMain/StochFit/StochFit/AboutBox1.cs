@@ -53,11 +53,13 @@ namespace StochasticModeling
 
         public string Description()
         {
-            string descript = "StochFit was written by Stephen Danauskas, and is based on the algorithm by Dongxu Li. The following open source packages were used:" + Environment.NewLine + Environment.NewLine;
+            string descript = "StochFit was written by Stephen Danauskas. The following open source packages were used:" + Environment.NewLine + Environment.NewLine;
             descript += "levmar (http://www.ics.forth.gr/~lourakis/levmar) - LM non-linear regression" + Environment.NewLine;
             descript += "itextsharp (http://sourceforge.net/projects/itextsharp) - PDF authoring library" + Environment.NewLine;
             descript += "ZedGraph (http://sourceforge.net/projects/zedgraph) - Graphing library" + Environment.NewLine;
             descript += "LoadingCircle(http://www.codeproject.com/cs/miscctrl/mrg_loadingcircle.asp)" + Environment.NewLine;
+            descript += "This product includes software developed by Lester Ingber and other contributors." + Environment.NewLine;
+
             return descript;
         }
 

@@ -508,7 +508,7 @@ namespace StochasticModeling
                 miscellaneousOptionsToolStripMenuItem.DropDown.Enabled = false;
 
             Cancelbutton.Enabled = true;
-            debugToolStripMenuItem.Enabled = false;
+       
             LoadFile.Enabled = false;
 
             previtertime = DateTime.Now;
@@ -539,7 +539,7 @@ namespace StochasticModeling
             Cancelbutton.Enabled = false;
 
             setModelOptionsToolStripMenuItem.Enabled = setResolutionOptionsToolStripMenuItem.Enabled =
-              miscellaneousOptionsToolStripMenuItem.Enabled = false;
+              miscellaneousOptionsToolStripMenuItem.Enabled = true;
 
             setModelOptionsToolStripMenuItem.DropDown.Enabled = setResolutionOptionsToolStripMenuItem.DropDown.Enabled =
                 miscellaneousOptionsToolStripMenuItem.Enabled = true;
@@ -915,16 +915,34 @@ namespace StochasticModeling
         #endregion
 
         #region Base Methods
+
+        /// <summary>
+        /// Sets the "check" state on a menu item
+        /// </summary>
+        /// <param name="sender">Expects a ToolStripMenuItem</param>
+        /// <param name="e"></param>
         protected override void MenuItem_Check(object sender, EventArgs e)
         {
             base.MenuItem_Check(sender, e);
         }
 
+        /// <summary>
+        /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+        /// in number entry
+        /// </summary>
+        /// <param name="sender">A textbox is expected as input</param>
+        /// <param name="e">return true if the number can be cast to a double or false if not</param>
         protected override void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
             base.ValidateNumericalInput(sender, e);
         }
 
+        /// <summary>
+        /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+        /// in number entry 
+        /// </summary>
+        /// <param name="sender">A textbox is expected as input</param>
+        /// <param name="e">return true if the number can be cast to an integer or false if not</param>
         protected override void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
             base.ValidateIntegerInput(sender, e);

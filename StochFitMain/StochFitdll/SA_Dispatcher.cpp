@@ -21,7 +21,11 @@
 #include "stdafx.h"
 #include "SA_Dispatcher.h"
 
-SA_Dispatcher::SA_Dispatcher(bool debug, bool ASAonoff, string directory)
+SA_Dispatcher::SA_Dispatcher()
+{
+}
+
+void SA_Dispatcher::Initialize(bool debug, bool ASAonoff, string directory)
 {
 	if(ASAonoff == false)
 		m_cSA = new SimAnneal(debug, directory);

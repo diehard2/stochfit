@@ -186,13 +186,13 @@ namespace StochasticModeling
         }
 
         
-        public void SetSize(Rectangle rect)
-        {
-            //Resizing of these controls can be difficult. It is better to handle it from the GUI side
-            // zg.Location = new Point( 10, 10 );
-            //// Leave a small margin around the outside of the control
-            // zg.Size = new Size(rect.Width - 300, rect.Height - 300);
-        }
+        //public void SetSize(Rectangle rect)
+        //{
+        //    //Resizing of these controls can be difficult. It is better to handle it from the GUI side
+        //    // zg.Location = new Point( 10, 10 );
+        //    //// Leave a small margin around the outside of the control
+        //    // zg.Size = new Size(rect.Width - 300, rect.Height - 300);
+        //}
 
         public void AddMenuItem(ContextMenuStrip menustrip, string name, string tag, string text, EventHandler handler)
         {

@@ -30,7 +30,7 @@ using System.Globalization;
 namespace StochasticModeling
 {
     /// <remarks>
-    /// This class creates a MasterPane using a Zedgraph control <seealso cref="http://zedgraph.org/wiki/index.php?title=Main_Page"/>
+    /// This class creates a MasterPane using a Zedgraph control
     /// that collects all of the graphical output for the program and 
     /// </remarks>
     public partial class MasterPaneForm : Form

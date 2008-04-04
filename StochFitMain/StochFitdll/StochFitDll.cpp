@@ -90,9 +90,7 @@ extern "C" STOCHFIT_API  void SetSAParameters(int sigmasearch, int algorithm, do
 {
 		if(stochfit != NULL)
 		{
-			stochfit->SA->Initialize_Subsytem(inittemp,platiter,gamma ,slope, adaptive, tempiter,STUNfunc, STUNdeciter,gammadec);
-			stochfit->m_sigmasearch = sigmasearch;
-			stochfit->m_isearchalgorithm = algorithm;
+			stochfit->InitializeSA(sigmasearch, algorithm, inittemp, platiter, slope, gamma, STUNfunc, adaptive, tempiter, STUNdeciter, gammadec);
 		}
 }
 

@@ -34,9 +34,10 @@ private:
 	ASA* m_cASA;
 
 public: 
-	SA_Dispatcher(bool debug, bool ASAonoff, std::string directory);
+	SA_Dispatcher();
 	~SA_Dispatcher();
 
+	void Initialize(bool debug, bool ASAonoff, std::string directory);
 	void Initialize_Subsytem(double inittemp, double tempplateautime, double gamma, double slope, bool adaptive, int tempiter, 
 			int STUNfunc, int deciter, double gammadec);
 	void InitializeParameters(double step, GARealGenome* genome, CReflCalc* ml0, int sigmasearch, int algorithm);

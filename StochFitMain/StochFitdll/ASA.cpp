@@ -26,7 +26,7 @@ ASA::ASA(bool debug, string filename, int paramcount):ASA_Base(filename,paramcou
 		m_bASA_print = debug;
 		m_bASA_print_intermed = debug;
 		m_bincl_stdout = debug;
-		m_basa_print_more = false;
+		m_basa_print_more = debug;
 }
 
 ASA::~ASA(void)
@@ -54,14 +54,14 @@ bool ASA::Iteration(GARealGenome* genome)
 	if(m_bfailed == false)
 	{
 		asa_iteration();
-		bool success = genome->CopyArraytoGene(last_saved_state.parameter);
+		bool success = genome->CopyArraytoGene(current_generated_state.parameter);
 		if(success == false)
 			MessageBox(NULL,L"4",NULL,NULL);
 	
 
 		if(Options.N_Accepted > m_i_acc)
 		{
-			if(m_cgenome.CopyArraytoGene(last_saved_state.parameter)== false)
+			if(m_cgenome.CopyArraytoGene(best_generated_state.parameter)== false)
 				MessageBox(NULL,L"test5",NULL,NULL);
 			m_cgenome.UpdateBoundaries(m_dparameter_maximum, m_dparameter_minimum);
 			m_i_acc = Options.N_Accepted;
@@ -124,58 +124,61 @@ int ASA::initialize_parameters(double *cost_parameters, double *parameter_lower_
 		double *cost_tangents, double *cost_curvature, long parameter_dimension, int *parameter_int_real, USER_DEFINES *USER_OPTIONS)
 {
 
-	//Settings
-	Options.Limit_Acceptances = 99999;
-  Options.Limit_Generated = 999999;
-  Options.Limit_Invalid_Generated_States = 10000000;
-  Options.Accepted_To_Generated_Ratio = 1.0E-3;
+		//Settings
+		Options.Limit_Acceptances = 99999;
+		Options.Limit_Generated = 999999;
+		Options.Limit_Invalid_Generated_States = 10000000;
+		Options.Accepted_To_Generated_Ratio = 1.0E-4;
 
- Options.Cost_Precision = 1.0E-18;
-  Options.Maximum_Cost_Repeat =0;
- Options.Number_Cost_Samples = 5;
- Options.Temperature_Ratio_Scale = 1.0E-8;
- Options.Cost_Parameter_Scale_Ratio = .1;
- Options.Temperature_Anneal_Scale = 100.0;
+		Options.Cost_Precision = 1.0E-30;
+		Options.Maximum_Cost_Repeat = 0;
+		Options.Number_Cost_Samples = 5;
+		Options.Temperature_Ratio_Scale = .1;
+		Options.Cost_Parameter_Scale_Ratio = 1;
+		Options.Temperature_Anneal_Scale = 100.0;
 
-  Options.Include_Integer_Parameters = FALSE;
-  Options.User_Initial_Parameters = FALSE;
-  Options.Sequential_Parameters = -1;
-  Options.Initial_Parameter_Temperature = .1;
+		Options.Include_Integer_Parameters = FALSE;
+		Options.User_Initial_Parameters = FALSE;
+		Options.Sequential_Parameters = -1;
+		Options.Initial_Parameter_Temperature = .05;
 
-  Options.Acceptance_Frequency_Modulus = 100;
-  Options.Generated_Frequency_Modulus = 1000;
-  Options.Reanneal_Cost = -3;
-  Options.Reanneal_Parameters = FALSE;
+		Options.Acceptance_Frequency_Modulus = 100;
+		Options.Generated_Frequency_Modulus = 10000;
+		Options.Reanneal_Cost = 1;
+		Options.Reanneal_Parameters = 0;
 
-  Options.Delta_X = 0.01;
-  Options.User_Tangents = FALSE;
-  Options.Curvature_0 = -1;
-  Options.Asa_Recursive_Level = 0;
+		Options.Delta_X = 0.05;
+		Options.User_Tangents = FALSE;
+		Options.Curvature_0 = -1;
+		Options.Asa_Recursive_Level = 0;
+		
+		/* Fit_Local, Iter_Max and Penalty may be set adaptively - for Simplex fit */
+		//asatest.Options.Penalty = 1000;
+		//asatest.Options.Fit_Local = 1;
+		//asatest.Options.Iter_Max = 500;
+		 
+		user_generating_function = false;
+		user_initial_parameters_temps = true;
+		user_initial_cost_temp = false;
 
-  /* Fit_Local, Iter_Max and Penalty may be set adaptively - for Simplex fit */
-  //asatest.Options.Penalty = 1000;
-  //asatest.Options.Fit_Local = 1;
-  //asatest.Options.Iter_Max = 500;
-	     
-user_generating_function = true;
-user_initial_parameters_temps = true;
-user_initial_cost_temp = true;
-
- multi_min = false;
- m_basa_sample = false;
- m_blocalfit = false;
+		multi_min = false;
+		m_basa_sample = false;
+		m_blocalfit = false;
+		//
+		m_bquench_cost = false;
+	
  
  
- Options.Generating_Distrib = GenerateDistrib;
+		Options.Generating_Distrib = GenerateDistrib;
 
-	//user_initial_cost_temp = true;
-    /* store the parameter ranges */
-    m_cgenome.UpdateBoundaries(parameter_upper_bound, parameter_lower_bound);
+		//user_initial_cost_temp = true;
+		/* store the parameter ranges */
+		m_cgenome.UpdateBoundaries(parameter_upper_bound, parameter_lower_bound);
 
 
-   /* store the initial parameter types */
-   for (int index = 0; index < parameter_dimension; ++index)
-    parameter_int_real[index] = REAL_TYPE;
+	   /* store the initial parameter types */
+	   for (int index = 0; index < parameter_dimension; ++index)
+			parameter_int_real[index] = REAL_TYPE;
 
    //Set the initial parameter temperature, and the 
    
@@ -193,13 +196,13 @@ user_initial_cost_temp = true;
 	
 	if(user_initial_cost_temp)
 	{
-	    USER_OPTIONS->User_Cost_Temperature = 5.936648E+09;
+	    USER_OPTIONS->User_Cost_Temperature = 10.0;
 	}
 
 	if(delta_parameters)
 	{
         for (int index = 0; index < parameter_dimension; ++index)
-			USER_OPTIONS->User_Delta_Parameter[index] = 0.01;
+			USER_OPTIONS->User_Delta_Parameter[index] = 0.05;
 	}
 
 	if(quench_parameters)
@@ -231,7 +234,8 @@ double GenerateDistrib(LONG_INT* seed, LONG_INT parameter_dimension, long int in
 
 	if(((USER_DEFINES*)Options_tmp)->N_Generated < 100000)
 		return random(1.05*parameter_v, 0.95*parameter_v);
-	else
+	else if(((USER_DEFINES*)Options_tmp)->N_Generated < 2000000)
 		return random(1.03*parameter_v, 0.97*parameter_v);
-
+	else
+		return random(1.01*parameter_v, 0.99*parameter_v);
 }

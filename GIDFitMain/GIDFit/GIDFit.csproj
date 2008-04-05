@@ -97,4 +97,8 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup>
+    <PostBuildEvent>copy ..\..\bin\dlls\libmmd.dll ..\..\bin\Release
+copy ..\..\bin\dlls\levmarmkl.dll ..\..\bin\Release</PostBuildEvent>
+  </PropertyGroup>
 </Project>

@@ -281,4 +281,10 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <PropertyGroup>
+    <PostBuildEvent>copy ..\..\bin\levmarmkl.dll $(OutDir)
+copy ..\..\bin\libmmd.dll  $(OutDir)
+copy ..\..\bin\libguide40.dll $(OutDir)
+copy ..\..\bin\genf.ico $(OutDir)</PostBuildEvent>
+  </PropertyGroup>
 </Project>

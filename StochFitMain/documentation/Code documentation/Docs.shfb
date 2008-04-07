@@ -1,6 +1,6 @@
 ﻿<project schemaVersion="1.6.0.2">
     <assemblies>
-        <assembly assemblyPath="..\..\StochFit\StochFit\..\..\bin\Release\StochFit.exe" xmlCommentsPath="..\..\StochFit\StochFit\..\..\Documentation\Code Documentation\StochFit.XML" commentsOnly="False" />
+        <assembly assemblyPath="..\..\bin\Release\StochFit.exe" xmlCommentsPath=".\StochFit.XML" commentsOnly="False" />
     </assemblies>
     <dependencies>
         <dependencyItem depPath="..\..\StochFit\ZedGraph.dll" />
@@ -12,8 +12,8 @@
     <VisibleItems>InheritedMembers, InheritedFrameworkMembers, Protected, SealedProtected</VisibleItems>
     <HtmlHelp1xCompilerPath path="" />
     <HtmlHelp2xCompilerPath path="" />
-    <OutputPath>C:\Users\Steve\Desktop\StochFit - Testbed\Documentation\Code documentation\</OutputPath>
-    <SandcastlePath path="..\..\..\..\..\..\Program Files\Sandcastle\" />
+    <OutputPath>C:\Users\Steve\Desktop\xrtemp\StochFitMain\documentation\Code documentation\</OutputPath>
+    <SandcastlePath path="..\..\..\..\..\..\..\Program Files\Sandcastle\" />
     <WorkingPath path="" />
     <CleanIntermediates>True</CleanIntermediates>
     <KeepLogFile>True</KeepLogFile>

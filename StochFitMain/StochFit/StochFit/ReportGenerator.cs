@@ -48,6 +48,7 @@ namespace StochasticModeling
         private Phrase m_pBlankline = new Phrase("\n");
         private Phrase m_pLine;
         private string m_sFilePDF;
+        private bool m_bUseSLD = false;
 
         // make the default constructor private, so that no can directly create it.
         private ReportGenerator()
@@ -191,7 +192,12 @@ namespace StochasticModeling
             datatable.DefaultCell.VerticalAlignment = Element.ALIGN_CENTER;
             datatable.AddCell("Layer #");
             datatable.AddCell("Length");
-            datatable.AddCell("Rho/Rho(infinity)");
+
+            if(m_bUseSLD == false)
+                datatable.AddCell("Rho/Rho(infinity)");
+            else
+                datatable.AddCell("SLD");
+
             datatable.AddCell("Sigma");
             datatable.HeaderRows = 1;
 
@@ -227,7 +233,12 @@ namespace StochasticModeling
             datatable.DefaultCell.HorizontalAlignment = Element.ALIGN_CENTER;
             datatable.AddCell("Layer #");
             datatable.AddCell("Length");
-            datatable.AddCell("Rho/Rho(infinity)");
+            
+            if(m_bUseSLD == false)
+                datatable.AddCell("Rho/Rho(infinity)");
+            else
+                datatable.AddCell("SLD");
+
             datatable.AddCell("Sigma");
             datatable.HeaderRows = 1;
 
@@ -307,7 +318,11 @@ namespace StochasticModeling
                     if (m_alRhoModelingInformation.Count > 0)
                     {
                         //Add a header for the fitted data
-                        Header = new Phrase(new Chunk("Electron Density Non-Linear Regression Fit\n\n", FontFactory.GetFont(FontFactory.HELVETICA, 14, 1)));
+                        if(m_bUseSLD == false)
+                            Header = new Phrase(new Chunk("Electron Density Non-Linear Regression Fit\n\n", FontFactory.GetFont(FontFactory.HELVETICA, 14, 1)));
+                        else
+                            Header = new Phrase(new Chunk("SLD Non-Linear Regression Fit\n\n", FontFactory.GetFont(FontFactory.HELVETICA, 14, 1)));
+
                         document.Add(Header);
                         //Add the fitted electron density
                         if (GraphCollection.Instance.RhoGraph.IsDeepCopyFull == true)
@@ -345,5 +360,12 @@ namespace StochasticModeling
                 MessageBox.Show(ex.Message);
             }
         }
+
+        public bool UseSLD
+        {
+            set
+            { m_bUseSLD = value; }
+        }
+    
     }
 }

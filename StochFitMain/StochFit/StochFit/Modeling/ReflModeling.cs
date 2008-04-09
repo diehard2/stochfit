@@ -48,6 +48,7 @@ namespace StochasticModeling
 
         double m_roughness = 3;
         bool m_bvalidfit = false;
+        bool m_bUseSLD = false;
         Graphing ReflGraphing;
         Graphing RhoGraphing;
         //Arrays
@@ -89,10 +90,11 @@ namespace StochasticModeling
         /// <param name="holdsigma">True if the film is to be treated as an elastic sheet, false otherwise</param>
         /// <param name="subphase">Substrate SLD</param>
         /// <param name="superphase">Superphase SLD</param>
-        public Reflmodeling(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase)
+        /// <param name="UseSLD">True if using SLD instead of ED</param>
+        public Reflmodeling(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase, bool UseSLD)
         {
             InitializeComponent();
-
+            m_bUseSLD = UseSLD;
             //Setup variables
             m_roughness = roughness;
             SubRough.Text = roughness.ToString();
@@ -102,15 +104,25 @@ namespace StochasticModeling
             RhoArray = new double[6];
             LengthArray = new double[6];
             SigmaArray = new double[6];
-            RhoArray = inRho;
-            LengthArray = inLength;
-            SigmaArray = inSigma;
+            RhoArray = (double[])inRho.Clone();
+            LengthArray = (double[])inLength.Clone();
+            SigmaArray = (double[])inSigma.Clone();
             info = new double[9];
             //Copy over the values
             BoxCount.Text = boxnumber.ToString();
             SubRough.Text = roughness.ToString();
             SubphaseSLD.Text = subphase;
             SupSLDTB.Text = superphase;
+
+            if (m_bUseSLD)
+                tabControl1.TabPages[1].Text = "SLD";
+            else
+                tabControl1.TabPages[1].Text = "Electron Density";
+
+            if (m_bUseSLD == false)
+                RhoLabel.Text = "Normalized Rho";
+            else
+                RhoLabel.Text = "SLD";
 
             for (int i = 0; i < 6; i++)
             {
@@ -138,10 +150,16 @@ namespace StochasticModeling
             ReflGraphing.SetAllFonts("Garamond", 22, 18);
 
             RhoGraphing = new Graphing(string.Empty);
-            RhoGraphing.CreateGraph(EDzedGraphControl1, "Electron Density Profile", "Z", "Normalized Electron Density",
-              AxisType.Linear);
-            RhoGraphing.SetAllFonts("Garamond", 20, 18);
+            RhoGraphing.SubSLD = double.Parse(subphase);
+            RhoGraphing.IsNeutron = m_bUseSLD;
 
+            if(m_bUseSLD == false)
+                RhoGraphing.CreateGraph(EDzedGraphControl1, "Electron Density Profile", "Z", "Normalized Electron Density",
+                  AxisType.Linear);
+            else
+                 RhoGraphing.CreateGraph(EDzedGraphControl1, "SLD Profile", "Z", "SLD", AxisType.Linear);
+
+            RhoGraphing.SetAllFonts("Garamond", 20, 18);
             //Get our Q data into a useable form
             Qincrement = ReflData.Instance.GetQData;
             RealRefl = ReflData.Instance.GetReflData;
@@ -187,6 +205,9 @@ namespace StochasticModeling
             loadingCircle2.OuterCircleRadius = 120;
             loadingCircle2.RotationSpeed = 150;
             loadingCircle2.SpokeThickness = 3;
+
+            //Setup the callback if the graph updates the bounds
+            ReflGraphing.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
         }
 
         void MakeArrays()
@@ -229,18 +250,31 @@ namespace StochasticModeling
         void UpdateProfile()
         {
             m_bvalidfit = false;
-     
+            BackupArrays();
+
             if (initialized == false)
                 return;
 
             //Blank our Rho data from the previous iteration
 
-            RhoArray[0] = Double.Parse(Rho1.Text);
-            RhoArray[1] = Double.Parse(Rho2.Text);
-            RhoArray[2] = Double.Parse(Rho3.Text);
-            RhoArray[3] = Double.Parse(Rho4.Text);
-            RhoArray[4] = Double.Parse(Rho5.Text);
-            RhoArray[5] = Double.Parse(Rho6.Text);
+            if (m_bUseSLD == false)
+            {
+                RhoArray[0] = Double.Parse(Rho1.Text);
+                RhoArray[1] = Double.Parse(Rho2.Text);
+                RhoArray[2] = Double.Parse(Rho3.Text);
+                RhoArray[3] = Double.Parse(Rho4.Text);
+                RhoArray[4] = Double.Parse(Rho5.Text);
+                RhoArray[5] = Double.Parse(Rho6.Text);
+            }
+            else
+            {
+                RhoArray[0] = Double.Parse(Rho1.Text)/double.Parse(SubphaseSLD.Text);
+                RhoArray[1] = Double.Parse(Rho2.Text) / double.Parse(SubphaseSLD.Text);
+                RhoArray[2] = Double.Parse(Rho3.Text) / double.Parse(SubphaseSLD.Text);
+                RhoArray[3] = Double.Parse(Rho4.Text) / double.Parse(SubphaseSLD.Text);
+                RhoArray[4] = Double.Parse(Rho5.Text) / double.Parse(SubphaseSLD.Text);
+                RhoArray[5] = Double.Parse(Rho6.Text) / double.Parse(SubphaseSLD.Text);
+            }
 
             //Fill Length array
             LengthArray[0] = Double.Parse(LLength1.Text);
@@ -419,7 +453,12 @@ namespace StochasticModeling
                 for (int i = 0; i < int.Parse(BoxCount.Text); i++)
                 {
                     BoxLengthArray[i].Text = parameters[2 * i + 1].ToString();
-                    BoxRhoArray[i].Text = parameters[2 * i + 2].ToString();
+
+                    if(m_bUseSLD == false)
+                        BoxRhoArray[i].Text = parameters[2 * i + 2].ToString();
+                    else
+                        BoxRhoArray[i].Text = (string)(parameters[2 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
+
                     BoxSigmaArray[i].Text = parameters[0].ToString();
                 }
                 NormCorrectTB.Text = parameters[1 + 2 * int.Parse(BoxCount.Text)].ToString();
@@ -431,7 +470,12 @@ namespace StochasticModeling
                 for (int i = 0; i < int.Parse(BoxCount.Text); i++)
                 {
                     BoxLengthArray[i].Text = parameters[3 * i + 1].ToString();
-                    BoxRhoArray[i].Text = parameters[3 * i + 2].ToString();
+
+                    if(m_bUseSLD == false)
+                        BoxRhoArray[i].Text = parameters[3 * i + 2].ToString();
+                    else
+                        BoxRhoArray[i].Text = (string)(parameters[3 * i + 2] * double.Parse(SupSLDTB.Text)).ToString();
+
                     BoxSigmaArray[i].Text = parameters[3 * i + 3].ToString();
                 }
                 NormCorrectTB.Text = parameters[1 + 3 * int.Parse(BoxCount.Text)].ToString();
@@ -552,7 +596,7 @@ namespace StochasticModeling
                       Double.Parse(QSpreadTB.Text), NormCorrectCB.Checked);
 
                 outwin = new StochOutputWindow(ParamArray, size, parameters.Length, ChiSquareArray, CovarArray, Holdsigma.Checked, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text),
-                       Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), NormCorrectCB.Checked);
+                       Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), NormCorrectCB.Checked, m_bUseSLD);
 
                 if (outwin.ShowDialog() != DialogResult.Cancel)
                 {
@@ -574,16 +618,23 @@ namespace StochasticModeling
             //Update paramters
             if (bfitting == true)
             {
+                 //Update paramters
+                //Update paramters
                 if (Holdsigma.Checked == true)
                 {
                     SubRough.Text = parameters[0].ToString();
                     for (int i = 0; i < int.Parse(BoxCount.Text); i++)
                     {
                         BoxLengthArray[i].Text = parameters[2 * i + 1].ToString();
-                        BoxRhoArray[i].Text = parameters[2 * i + 2].ToString();
+
+                        if (m_bUseSLD == false)
+                            BoxRhoArray[i].Text = parameters[2 * i + 2].ToString();
+                        else
+                            BoxRhoArray[i].Text = (string)(parameters[2 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
+
                         BoxSigmaArray[i].Text = parameters[0].ToString();
                     }
-                    NormCorrectTB.Text = parameters[2 * boxes + 1].ToString();
+                    NormCorrectTB.Text = parameters[1 + 2 * int.Parse(BoxCount.Text)].ToString();
                 }
                 else
                 {
@@ -592,13 +643,17 @@ namespace StochasticModeling
                     for (int i = 0; i < int.Parse(BoxCount.Text); i++)
                     {
                         BoxLengthArray[i].Text = parameters[3 * i + 1].ToString();
-                        BoxRhoArray[i].Text = parameters[3 * i + 2].ToString();
+
+                        if (m_bUseSLD == false)
+                            BoxRhoArray[i].Text = parameters[3 * i + 2].ToString();
+                        else
+                            BoxRhoArray[i].Text = (string)(parameters[3 * i + 2] * double.Parse(SupSLDTB.Text)).ToString();
+
                         BoxSigmaArray[i].Text = parameters[3 * i + 3].ToString();
                     }
-                    NormCorrectTB.Text = parameters[3 * boxes + 1].ToString();
+                    NormCorrectTB.Text = parameters[1 + 3 * int.Parse(BoxCount.Text)].ToString();
                 }
 
-                //Get errors, etc.
                 UpdateProfile();
                 LevenbergFit_Click(null, null);
             }
@@ -638,7 +693,11 @@ namespace StochasticModeling
         {
             for (int i = 0; i < 6; i++)
             {
-                PreviousRhoArray[i] = RhoArray[i];
+                if(m_bUseSLD == true)
+                    PreviousRhoArray[i] = RhoArray[i]*double.Parse(SubphaseSLD.Text);
+                else
+                    PreviousRhoArray[i] = RhoArray[i];
+
                 PreviousSigmaArray[i] = SigmaArray[i];
                 PreviousLengthArray[i] = LengthArray[i];
             }
@@ -692,7 +751,12 @@ namespace StochasticModeling
                 {
                     ginfo.Add((i + 1).ToString());
                     ginfo.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[2 * i + 1].ToString("#.### E-0"));
-                    ginfo.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[2 * i + 2].ToString("#.### E-0"));
+
+                    if(m_bUseSLD == false)
+                        ginfo.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[2 * i + 2].ToString("#.### E-0"));
+                    else
+                        ginfo.Add((RhoArray[i]*GetSubSLD).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (covar[2 * i + 2]*GetSubSLD).ToString("#.### E-0"));
+
                     ginfo.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[0].ToString("#.### E-0"));
                 }
             }
@@ -702,7 +766,12 @@ namespace StochasticModeling
                 {
                     ginfo.Add((i + 1).ToString());
                     ginfo.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[3 * i + 1].ToString("#.### E-0"));
-                    ginfo.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[3 * i + 2].ToString("#.### E-0"));
+
+                    if(m_bUseSLD == false)
+                        ginfo.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[3 * i + 2].ToString("#.### E-0"));
+                    else
+                        ginfo.Add((RhoArray[i]*GetSubSLD).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (covar[3 * i + 2]*GetSubSLD).ToString("#.### E-0"));
+
                     ginfo.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[3 * i + 3].ToString("#.### E-0"));
                 }
             }
@@ -724,16 +793,28 @@ namespace StochasticModeling
                     if (Holdsigma.Checked == true)
                     {
                         output.Append("Layer " + (i + 1).ToString() + Environment.NewLine);
-                        output.Append("\t" + " \u03C1 = " + RhoArray[i].ToString("#.### E-0") + " " +
-                        (char)0x00B1 + " " + covar[2 * i + 2].ToString("#.### E-0") + Environment.NewLine);
+
+                        if(m_bUseSLD == false)
+                            output.Append("\t" + " \u03C1 = " + RhoArray[i].ToString("#.### E-0") + " " +
+                                (char)0x00B1 + " " + covar[2 * i + 2].ToString("#.### E-0") + Environment.NewLine);
+                        else
+                            output.Append("\t" + " SLD = " + (RhoArray[i] * GetSubSLD ).ToString("#.### E-0") + " " +
+                                (char)0x00B1 + " " + (covar[2 * i + 2] * GetSubSLD).ToString("#.### E-0") + Environment.NewLine);
+
                         output.Append("\t" + " Length = " + LengthArray[i].ToString("#.### E-0") + " " +
                         (char)0x00B1 + " " + covar[2 * i + 1].ToString("#.### E-0") + Environment.NewLine);
                     }
                     else
                     {
                         output.Append("Layer " + (i + 1).ToString() + Environment.NewLine);
-                        output.Append("\t" + " \u03C1 = " + RhoArray[i].ToString("#.### E-0") + " " +
-                            (char)0x00B1 + " " + covar[3 * i + 2].ToString("#.### E-0") + Environment.NewLine);
+
+                        if(m_bUseSLD == false)
+                            output.Append("\t" + " \u03C1 = " + RhoArray[i].ToString("#.### E-0") + " " +
+                                (char)0x00B1 + " " + covar[3 * i + 2].ToString("#.### E-0") + Environment.NewLine);
+                        else
+                            output.Append("\t" + " SLD = " + (RhoArray[i] * GetSubSLD).ToString("#.### E-0") + " " +
+                               (char)0x00B1 + " " + (covar[3 * i + 2] * GetSubSLD).ToString("#.### E-0") + Environment.NewLine);
+
                         output.Append("\t" + " Length = " + LengthArray[i].ToString("#.### E-0") + " " +
                             (char)0x00B1 + " " + covar[3 * i + 1].ToString("#.### E-0") + Environment.NewLine);
                         output.Append("\t" + " \u03C3 = " + SigmaArray[i].ToString("#.### E-0") + " " +
@@ -838,11 +919,54 @@ namespace StochasticModeling
         {
             base.ValidateIntegerInput(sender, e);
 
-            if (int.Parse(BoxCount.Text) > 6)
+            if(((TextBox)sender).Name == "BoxCount")
             {
-                MessageBox.Show("Six is the maximum number of boxes");
-                e.Cancel = true;
+                if (int.Parse(BoxCount.Text) > 6)
+                {
+                    MessageBox.Show("Six is the maximum number of boxes");
+                    e.Cancel = true;
+                }
             }
         }
+
+
+
+        #region Offset functions
+
+        private void PointChanged(object sender, EventArgs e)
+        {
+            CritOffset.Text = ReflGraphing.GetLowQOffset.ToString();
+            Rightoffset.Text = (ReflData.Instance.GetNumberDataPoints - ReflGraphing.GetHighQOffset).ToString();
+        }
+
+        private void HQoffsetTB_Validated(object sender, EventArgs e)
+        {
+            ReflGraphing.GetHighQOffset = int.Parse(Rightoffset.Text);
+            ReflGraphing.SetBounds();
+        }
+
+
+        private void LowQ_TextChanged(object sender, EventArgs e)
+        {
+            ReflGraphing.GetLowQOffset = int.Parse(CritOffset.Text);
+            ReflGraphing.SetBounds();
+        }
+
+        private void HQ_TextChanged(object sender, EventArgs e)
+        {
+            ReflGraphing.GetHighQOffset = ReflData.Instance.GetNumberDataPoints - int.Parse(Rightoffset.Text);
+            ReflGraphing.SetBounds();
+        }
+
+        #endregion
+
+        private double GetSubSLD
+        {
+            get
+            {
+                return double.Parse(SubphaseSLD.Text);
+            }
+        }
+
     }
 }

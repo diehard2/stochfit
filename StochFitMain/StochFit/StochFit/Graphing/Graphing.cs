@@ -43,16 +43,15 @@ namespace StochasticModeling
         private double m_dSupSLD = 0;
         private double m_dlambda = 1.0;
         private bool m_bDBF = false;
-
-       
-
-
+        private string m_sfilename;
+        private bool m_bRunning = false;
         private bool m_bdatafile = false;
         private int lowqindex = 0;
         private int highqindex = 0;
         private bool m_bnegativeerrorval = false;
         private bool m_biszoomed = false;
         private bool m_bisXR = true;
+        private bool m_bUseSLD = false;
         private PointPairList RealReflData, RealReflErrors;
         CultureInfo CI_US = new CultureInfo("en-US");
 
@@ -139,11 +138,13 @@ namespace StochasticModeling
 
             if (m_bdatafile)
             {
-                AddMenuItem(menuStrip, "LowQCut_tag", "LowQCut_tag", "Select Low Q Cutoff", SelectLowQPoint);
-                AddMenuItem(menuStrip, "HighQCut_tag", "HighQCut_tag", "Select High Q Cutoff", SelectHighQPoint);
-                AddMenuItem(menuStrip, "ClearOffset_tag", "ClearOffset_tag", "Clear Offsets", ClearQOffsets);
+                if (m_bRunning == false)
+                {
+                    AddMenuItem(menuStrip, "LowQCut_tag", "LowQCut_tag", "Select Low Q Cutoff", SelectLowQPoint);
+                    AddMenuItem(menuStrip, "HighQCut_tag", "HighQCut_tag", "Select High Q Cutoff", SelectHighQPoint);
+                    AddMenuItem(menuStrip, "ClearOffset_tag", "ClearOffset_tag", "Clear Offsets", ClearQOffsets);
+                }
             }
-
 
             RemoveMenuItem(menuStrip, "copy");
             RemoveMenuItem(menuStrip, "set_default");
@@ -161,6 +162,7 @@ namespace StochasticModeling
         {
             base.Clear();
             m_biszoomed = false;
+            m_bdatafile = false;
         }
       
         /// <summary>
@@ -274,7 +276,7 @@ namespace StochasticModeling
 
                     SetAxisTitles("Q", "Intensity");
 
-                    AddCurvetoGraph(RealReflData, RealReflErrors, name, color, symbol, symbolsize, string.Empty);
+                    AddCurvetoGraph(RealReflData, RealReflErrors, name, color, symbol, symbolsize, "realdatafile");
                 }
                 else
                 {
@@ -312,6 +314,7 @@ namespace StochasticModeling
                 m_alDatainGraph.Add(name);
                 //To account for the error file
                 m_alDatainGraph.Add(name);
+                m_sfilename = name;
 
                 if (highqindex == 0)
                     highqindex = ReflData.Instance.GetNumberDataPoints;
@@ -367,7 +370,10 @@ namespace StochasticModeling
 
                             if (m_bDBF == false)
                             {
-                                Refl = Double.Parse((string)datastring[1], CI_US);
+                                if(m_bUseSLD == false)
+                                    Refl = Double.Parse((string)datastring[1], CI_US);
+                                else
+                                    Refl = Double.Parse((string)datastring[1], CI_US) * SubSLD;
                             }
                             else
                             {
@@ -382,7 +388,7 @@ namespace StochasticModeling
 
                             list.Add(Q, Refl);
                         }
-                        AddCurvetoGraph(list, plotname, color, symbol, symbolsize, isSmoothed, string.Empty);
+                        AddCurvetoGraph(list, plotname, color, symbol, symbolsize, isSmoothed, filename);
                         m_alDatainGraph.Add(filename);
                     }
                 }
@@ -413,7 +419,11 @@ namespace StochasticModeling
             {
                 for (int i = 0; i < X.Length; i++)
                 {
-                    list.Add(X[i], Y[i]);
+                    if(m_bUseSLD == false)
+                        list.Add(X[i], Y[i]);
+                    else
+                        list.Add(X[i], Y[i] * m_dSubSLD);
+
                 }
             }
             AddCurvetoGraph(list, name, color, symbol,symbolsize, isSmoothed, string.Empty);
@@ -639,6 +649,42 @@ namespace StochasticModeling
         }
 
         /// <summary>
+        /// Gets whether a datafile has been loaded at least once to the graph
+        /// </summary>
+        public bool DataFileLoaded
+        {
+            get
+            {
+                return m_bdatafile;
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the main program is running. This class should not set this value
+        /// </summary>
+        public bool ProgramRunningState
+        {
+            get { return m_bRunning; }
+            set { m_bRunning = value; }
+        }
+
+        public bool IsNeutron
+        {
+            get { return m_bUseSLD; }
+            set { m_bUseSLD = value; }
+        }
+
+        public bool HasCurve
+        {
+            get
+            {
+                if (Pane.CurveList.Count > 0)
+                    return true;
+                else
+                    return false;
+            }
+        }
+        /// <summary>
         /// Communicate with the graphing class. This will let us know if we've changed boundaries
         /// </summary>
         /// <param name="sender"></param>
@@ -647,6 +693,19 @@ namespace StochasticModeling
         {
             if (ChangedBounds != null)
                 ChangedBounds(sender, e);
+        }
+
+        /// <summary>
+        /// Delete all curves that are not data
+        /// </summary>
+        internal void ClearCurves()
+        {
+            for (int i = 0; i < m_alDatainGraph.Count; i++)
+            {
+                if ((string)m_alDatainGraph[i] != m_sfilename)
+                    RemoveGraphfromArray((string)m_alDatainGraph[i]);
+            }
+
         }
     }
 }

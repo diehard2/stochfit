@@ -125,9 +125,9 @@ namespace StochasticModeling.Modeling
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(29, 141);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(98, 13);
+            this.label3.Size = new System.Drawing.Size(143, 13);
             this.label3.TabIndex = 7;
-            this.label3.Text = "Length Percentage";
+            this.label3.Text = "Layer Thickness Percentage";
             // 
             // LengthHighTB
             // 

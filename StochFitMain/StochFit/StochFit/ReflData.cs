@@ -377,80 +377,84 @@ namespace StochasticModeling
 
                         //We have a discontinuity in Q - find the jump back. If we don't have an actual overlap,
                         //ignore and sort
-                        if (refldata[i + 1][0] < refldata[i][0])
+                        if (refldata[i + 1][0] <= refldata[i][0])
                         {
-                            //Find our overlap points
-                            for (int counter1 = 0; counter1 <= i; counter1++)
-                            {
-                                for (int counter2 = i + 1; counter2 < GetNumberDataPoints; counter2++)
+                                //Find our overlap points
+                                for (int counter1 = 0; counter1 <= i; counter1++)
                                 {
-                                    if (refldata[counter1][0] == refldata[counter2][0] && counter1 != counter2)
+                                    for (int counter2 = i + 1; counter2 < GetNumberDataPoints; counter2++)
                                     {
-                                        beginindex.Add(counter1);
-                                        endindex.Add(counter2);
-                                        overlapcount++;
+                                        if (refldata[counter1][0] == refldata[counter2][0] && counter1 != counter2)
+                                        {
+                                            if (beginindex.Contains(counter1) == false)
+                                            {
+                                                beginindex.Add(counter1);
+                                                endindex.Add(counter2);
+                                                overlapcount++;
+                                            }
+                                        }
                                     }
+
                                 }
 
+                                //We have non monotonically increasing q, but no overlap region
+                                if (overlapcount == 0)
+                                    nooverlapregion = true;
+
+                                //We have our overlap region
+                                if (overlapcount > 0)
+                                {
+                                    double shift = 0;
+
+                                    for (int counter1 = 0; counter1 < overlapcount; counter1++)
+                                        shift += refldata[(int)beginindex[counter1]][1] / refldata[(int)endindex[counter1]][1];
+
+                                    shift /= overlapcount;
+
+                                    //Multiply the curve
+                                    refldatatemp = new double[refldata.Length - overlapcount][];
+                                    int indexoffset = 0;
+                                    for (int counter = 0; counter < GetNumberDataPoints; counter++)
+                                    {
+                                        //Copy over all points lower than the first overlap point
+                                        if(counter < (int)beginindex[0])
+                                            refldatatemp[counter] = (double[])refldata[counter].Clone();
+                                        //Test
+                                        else if(counter < i + 1)
+                                        {
+                                            bool isoverlappt = false;
+
+                                          
+
+                                            for (int counter1 = 0; counter1 < overlapcount; counter1++)
+                                            {
+                                                if (counter == (int)beginindex[counter1])
+                                                {
+                                                    isoverlappt = true;
+                                                    indexoffset++;
+                                                }
+                                            }
+
+                                            if (isoverlappt == false)
+                                                refldatatemp[counter - indexoffset] = (double[])refldata[counter].Clone();
+
+                                        }
+                                        else
+                                        {
+                                            refldata[counter][1] *= shift;
+                                            refldata[counter][2] *= shift;
+
+
+                                            refldatatemp[counter - indexoffset] = (double[])refldata[counter].Clone();
+                                        }
+                                    }
+                                    refldata = null;
+                                    refldata = refldatatemp.Clone() as double[][];
+                                    i = 0;
+                                    datapointcount -= overlapcount;
+
+                                }
                             }
-
-                            //We have non monotonically increasing q, but no overlap region
-                            if (overlapcount == 0)
-                                nooverlapregion = true;
-
-                            //We have our overlap region
-                            if (overlapcount > 0)
-                            {
-                                double shift = 0;
-
-                                for(int counter1 = 0; counter1 < overlapcount; counter1++)
-                                     shift += refldata[(int)beginindex[counter1]][1]/refldata[(int)endindex[counter1]][1];
-
-                                shift /= overlapcount;
-
-                               //Multiply the curve
-                               refldatatemp = new double[refldata.Length - overlapcount][];
-                               int indexoffset = 0;
-                               for(int counter = 0; counter < GetNumberDataPoints; counter++)
-                               {
-                                   if (counter < i + 1)
-                                   {
-                                       bool isoverlappt = false;
-
-                                       refldatatemp[counter] = (double[])refldata[counter].Clone();
-
-                                       for (int counter1 = 0; counter1 < overlapcount; counter1++)
-                                       {
-                                           if (counter == (int)beginindex[counter1])
-                                           {
-                                               isoverlappt = true;
-                                               indexoffset++;
-                                           }
-                                       }
-
-                                       if (isoverlappt == false)
-                                           refldatatemp[counter - indexoffset] = (double[])refldata[counter].Clone();
-
-                                   }
-                                   else
-                                   {
-                                       refldata[counter][1] *= shift;
-                                       refldata[counter][2] *= shift;
-
-                                      
-                                       refldatatemp[counter - indexoffset] = (double[])refldata[counter].Clone();
-
-
-                                   }
-                               }
-                                refldata = null;
-                                refldata = refldatatemp.Clone() as double[][];
-                                i = 0;
-                                datapointcount -= overlapcount;
-
-                            }
-                        }
-
                     }
 
                     if (nooverlapregion)

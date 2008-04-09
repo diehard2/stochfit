@@ -66,6 +66,7 @@ namespace StochasticModeling.Modeling
         private double[] selectedmodel;
         private double[] selectedcovar;
         private double selectedchisquare;
+        private bool m_bUseSLD = false;
         Graphing ReflGraphing;
         Graphing RhoGraphing;
 
@@ -85,9 +86,11 @@ namespace StochasticModeling.Modeling
         /// <param name="wavelength">The x-ray wavelength used</param>
         /// <param name="QSpread">The percent error in Q used (if applicable)</param>
         /// <param name="Impnorm">True if the fit was performed assuming an imperfect normalization, false otherwise</param>
-        public StochOutputWindow(double[] FullParameterArray, int ParameterArraysize, int paramsize, double[] FullChisquareArray, double[] FullCovariance, bool OneSigma, int boxes, double SubSLD, double SupSLD, double wavelength, double QSpread, bool Impnorm)
+        /// <param name="UseSLD">True if using SLD instead of neutrons</param>
+        public StochOutputWindow(double[] FullParameterArray, int ParameterArraysize, int paramsize, double[] FullChisquareArray, double[] FullCovariance, bool OneSigma, int boxes, double SubSLD, double SupSLD, double wavelength, double QSpread, bool Impnorm, bool UseSLD)
         {
             InitializeComponent();
+            m_bUseSLD = UseSLD;
             ParameterArray = new double[ParameterArraysize][];
             CovarArray = new double[ParameterArraysize][];
             RhoArray = new double[ParameterArraysize][];
@@ -148,9 +151,16 @@ namespace StochasticModeling.Modeling
             ReflGraphing.LoadDataFiletoGraph("Reflectivity Data", System.Drawing.Color.Black, SymbolType.Circle, 5);
             ReflGraphing.SetAllFonts("Garamond", 22, 18);
 
+
             RhoGraphing = new Graphing(string.Empty);
-            RhoGraphing.CreateGraph(RhoGraph, "Electron Density Profile", "Z", "Normalized Electron Density",
-                                    AxisType.Linear);
+            RhoGraphing.SubSLD = m_dSubSLD;
+            RhoGraphing.IsNeutron = m_bUseSLD;
+
+            if (m_bUseSLD == false)
+                RhoGraphing.CreateGraph(RhoGraph, "Electron Density Profile", "Z", "Normalized Electron Density",
+                  AxisType.Linear);
+            else
+                RhoGraphing.CreateGraph(RhoGraph, "SLD Profile", "Z", "SLD", AxisType.Linear);
 
             RhoGraphing.SetAllFonts("Garamond", 20, 18);
             //Get our Q data into a useable form
@@ -286,8 +296,14 @@ namespace StochasticModeling.Modeling
                     for (int i = 0; i < m_iboxes ; i++)
                     {
                         output.Append("Layer " + (i + 1).ToString() + Environment.NewLine);
-                        output.Append("\t" + " \u03C1 = " + parameters[2*i+2].ToString("#.### E-0") + " " +
-                        (char)0x00B1 + " " + covar[2 * i + 2].ToString("#.### E-0") + Environment.NewLine);
+                        
+                        if(m_bUseSLD == false)
+                            output.Append("\t" + " \u03C1 = " + parameters[2*i+2].ToString("#.### E-0") + " " +
+                                (char)0x00B1 + " " + covar[2 * i + 2].ToString("#.### E-0") + Environment.NewLine);
+                        else
+                            output.Append("\t" + "SLD = " + (parameters[2 * i + 2]*m_dSubSLD).ToString("#.### E-0") + " " +
+                                (char)0x00B1 + " " + (covar[2 * i + 2] * m_dSubSLD).ToString("#.### E-0") + Environment.NewLine);
+
                         output.Append("\t" + " Length = " + parameters[2*i+1].ToString("#.### E-0") + " " +
                         (char)0x00B1 + " " + covar[2 * i + 1].ToString("#.### E-0") + Environment.NewLine);
                     }
@@ -300,8 +316,14 @@ namespace StochasticModeling.Modeling
                     for (int i = 0; i < m_iboxes; i++)
                     {
                         output.Append("Layer " + (i + 1).ToString() + Environment.NewLine);
-                        output.Append("\t" + " \u03C1 = " + parameters[3*i+2].ToString("#.### E-0") + " " +
-                            (char)0x00B1 + " " + covar[3 * i + 2].ToString("#.### E-0") + Environment.NewLine);
+
+                        if(m_bUseSLD == false)
+                            output.Append("\t" + " \u03C1 = " + parameters[3*i+2].ToString("#.### E-0") + " " +
+                                (char)0x00B1 + " " + covar[3 * i + 2].ToString("#.### E-0") + Environment.NewLine);
+                        else
+                            output.Append("\t" + "SLD = " + (parameters[3*i+2]*m_dSubSLD).ToString("#.### E-0") + " " +
+                                (char)0x00B1 + " " + (covar[3 * i + 2]*m_dSubSLD).ToString("#.### E-0") + Environment.NewLine);
+
                         output.Append("\t" + " Length = " + parameters[3*i+1].ToString("#.### E-0") + " " +
                             (char)0x00B1 + " " + covar[3 * i + 1].ToString("#.### E-0") + Environment.NewLine);
                         output.Append("\t" + " \u03C3 = " + parameters[3*i+3].ToString("#.### E-0") + " " +

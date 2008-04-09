@@ -26,240 +26,176 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
 
 #pragma warning disable 1591
 
 namespace StochasticModeling.Settings
 {
-
-    /// <summary>
-    /// Serializable class for holding model independent parameters
-    /// </summary>
-    [Serializable]
-    public class SettingsStruct
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 8)]
+    public class ModelSettings:IDisposable
     {
-        //Surface Settings
+        #region Variables
+        public string Directory;
+        [XmlIgnoreAttribute] public IntPtr Q;
+        [XmlIgnoreAttribute] public IntPtr Refl;
+        [XmlIgnoreAttribute] public IntPtr ReflError;
+        [XmlIgnoreAttribute] public IntPtr QError;
+        [XmlIgnoreAttribute] public int QPoints;
+        /// <summary>
+        /// Subphase SLD
+        /// </summary>
+        public double SubSLD;
         /// <summary>
         /// Film SLD
         /// </summary>
-        public string SurflayerSLD;
+        public double SurflayerSLD;
         /// <summary>
-        /// Film length
+        /// Superphase SLD
         /// </summary>
-        public string Surflayerlength;
+        public double SupSLD;
         /// <summary>
-        /// Film absorption
+        /// Number of Small Boxes
         /// </summary>
-        public string SurflayerAbs;
+        public int Boxes;
+        /// <summary>
+        /// Surface Layer Absorption
+        /// </summary>
+        public double SurflayerAbs;
+        /// <summary>
+        /// Subphase Absorption
+        /// </summary>
+        public double SubAbs;
+        /// <summary>
+        /// Superphase Absorption
+        /// </summary>
+        public double SupAbs;
+        /// <summary>
+        /// XR Wavelenght
+        /// </summary>
+        public double Wavelength;
+        /// <summary>
+        /// True if absorptions are used, false otherwise
+        /// </summary>
+        public bool UseAbs;
+        /// <summary>
+        /// Superphase offset for the electron density profile
+        /// </summary>
+        public double SupOffset;
+        /// <summary>
+        /// Percent Error in Q
+        /// </summary>
+        public double Percerror;
+        /// <summary>
+        /// True if normalization is forced, false otherwise. This set the first point 
+        /// </summary>
+        public bool Forcenorm;
+        /// <summary>
+        /// Forces the sigma parameter to a user specified value. Sigma will not vary in this case. Useful for neutrons
+        /// </summary>
+        public double Forcesig;
+        /// <summary>
+        /// Set to true to output debug files.
+        /// </summary>
+        public bool Debug;
+        /// <summary>
+        /// Heavily penalizes models with negative electron densities
+        /// </summary>
+        public bool ForceXR;
+        public int Resolution;
+        public double Totallength;
+        public double Surflayerlength;
+        public bool ImpNorm;
+        public int FitFunc;
+        public double ParamTemp;
 
-        //Substrate Settings
-        /// <summary>
-        /// Substrate SLD
-        /// </summary>
-        public string SubSLD;
-        /// <summary>
-        /// Substrate absorption
-        /// </summary>
-        public string SubAbs;
+        //Annealing parameters
+        public double SigmaSearchPerc;
+        public int Algorithm;
+        public double AnnealInitTemp;
+        public int AnnealTempPlat;
+        public double AnnealSlope;
+        public double AnnealGamma;
+        public int STUNfunc;
+        public bool STUNAdaptive;
+        public int STUNtempiter;
+        public int STUNdeciter;
+        public double STUNgammadec;
 
-        //Superphase Settings
-        /// <summary>
-        /// Superphas SLD
-        /// </summary>
-        public string SupSLD;
-        /// <summary>
-        /// Superphase absorption
-        /// </summary>
-        public string SupAbs;
-
-        //Misc Settings
-
-        /// <summary>
-        /// X-ray wavenlength
-        /// </summary>
-        public string Wavelength;
-        /// <summary>
-        /// Number of small boxes
-        /// </summary>
-        public string BoxCount;
         /// <summary>
         /// Number of iterations
         /// </summary>
-        public string Iterations;
+        public int Iterations;
         /// <summary>
         /// Number of iterations completed
         /// </summary>
-        public string IterationsCompleted;
+        public int IterationsCompleted;
         /// <summary>
-        /// Error in Q
+        /// ChiSquare value for the current fit
         /// </summary>
-        public string Percerror;
-        /// <summary>
-        /// True if correcting for imperfect normalization, false otherwise
-        /// </summary>
-        public bool ImpNorm;
-
+        public double ChiSquare;
         /// <summary>
         /// System description
         /// </summary>
         public string Title;
         /// <summary>
-        /// Number of point per Angstrom in the electron density profile
-        /// </summary>
-        public string Resolution;
-        /// <summary>
-        /// Estimated length of the film + subphase + superphase(set in SupOffset) + 7
-        /// </summary>
-        public string length;
-        /// <summary>
         /// Low Q offset in datapoints from the beginning of the curve
         /// </summary>
-        public string CritEdgeOffset;
+        public int CritEdgeOffset;
         /// <summary>
         /// High Q offset in datapoints from the end of the curve
         /// </summary>
-        public string HighQOffset;
-        /// <summary>
-        /// The percentage of time spent searching the roughness parameter space
-        /// </summary>
-        public string SigmaSearchPerc;
-        /// <summary>
-        /// ChiSquare value for the current fit
-        /// </summary>
-        public string ChiSquare;
-        /// <summary>
-        /// True if absorption was used, false otherwise
-        /// </summary>
-        public bool UseAbs;
-        /// <summary>
-        /// True if the first point in the reflectivity was forced be equal to 1.0
-        /// </summary>
-        public bool Forcenorm;
-        /// <summary>
-        /// Algorithm for the model independent fit (Greedy search = 0; Simulated Annealing = 1; STUN Annealing = 2)
-        /// </summary>
-        public string Algorithm;
-        /// <summary>
-        /// Fitness function. See documentation for further details
-        /// </summary>
-        public string FitFunc;
-        /// <summary>
-        /// The distance in angstroms from Z = 0 to the first small box (default of 35)
-        /// </summary>
-        public string SupOffset;
-        /// <summary>
-        /// Writes several debug files. This can be useful for determining the progression of a fit
-        /// </summary>
-        public bool Debug;
-        /// <summary>
-        /// Severely penalizes fits with negative electron density
-        /// </summary>
-        public bool ForceXR;
+        public int HighQOffset;
 
-        //Annealing Settings
-        /// <summary>
-        /// Initial annealing temperature
-        /// </summary>
-        public double AnnealInitTemp;
-        /// <summary>
-        /// Number of iterations before <see cref="AnnealInitTemp"/> is decreased
-        /// </summary>
-        public int AnnealTempPlat;
-        /// <summary>
-        /// Percentage by which <see cref="AnnealInitTemp"/> is decreased after <see cref="AnnealTempPlat"/> iterations
-        /// </summary>
-        public double AnnealSlope;
-        /// <summary>
-        /// The Gamma parameter for STUN tunneling
-        /// </summary>
-        public double AnnealGamma;
-        /// <summary>
-        /// The STUN function utilized. See the documentation for more details
-        /// </summary>
-        public int STUNfunc;
-        /// <summary>
-        /// Whether STUN annealing is adaptive or not
-        /// </summary>
-        public bool STUNAdaptive;
-        /// <summary>
-        /// The number of iterations before the adaptive STUN method increases or decreases the temperature
-        /// </summary>
-        public int STUNtempiter;
-        /// <summary>
-        /// The number of iterations before the adaptive STUN algorithm reduces the average STUN value
-        /// </summary>
-        public int STUNdeciter;
-        /// <summary>
-        /// The percentage to change Gamma by depending on the circumstances in adaptive STUN annealing
-        /// </summary>
-        public double STUNgammadec;
-    }
+        public bool IsNeutron;
+        [XmlIgnoreAttribute] private bool disposed = false;
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 8)]
-    public struct ModelSettings
-    {
-        public string Directory;
-        public IntPtr Q;
-        public IntPtr Refl;
-        public IntPtr ReflError;
-        public IntPtr QError;
-        public int QPoints;
-        public double SubSLD;
-        public double FilmSLD;
-        public double SupSLD;
-        public int Boxes;
-        public double FilmAbs;
-        public double SubAbs;
-        public double SupAbs;
-        public double Wavelength;
-        public bool UseSurfAbs;
-        public double Leftoffset;
-        public double QErr;
-        public bool Forcenorm;
-        public double Forcesig;
-        public bool Debug;
-        public bool XRonly;
-        public int Resolution;
-        public double Totallength;
-        public double FilmLength;
-        public bool Impnorm;
-        public int Objectivefunction;
+    #endregion
 
-    }
-   
+        #region Constructor/Destructor
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public ModelSettings()
+        { }
 
-    
-    public class ReflSettings:IDisposable
-    {
-        public ModelSettings SetStruct = new ModelSettings();
-        private bool disposed = false;
-
-        ~ReflSettings()
+        ~ModelSettings()
         {
             Dispose(false);
         }
+        #endregion
 
+        #region Public Methods
         public void SetArrays(double[] iQ, double[] iR, double[] iRerr, double[] iQerr, int iQSize)
         {
             int size = Marshal.SizeOf(iQ[0])*iQ.Length;
 
-            SetStruct.Q = Marshal.AllocHGlobal(size);
-            SetStruct.Refl = Marshal.AllocHGlobal(size);
-            SetStruct.ReflError = Marshal.AllocHGlobal(size);
+            try
+            {
+                Q = Marshal.AllocHGlobal(size);
+                Refl = Marshal.AllocHGlobal(size);
+                ReflError = Marshal.AllocHGlobal(size);
 
-            if (iQerr != null)
-                SetStruct.QError = Marshal.AllocHGlobal(size);
-            else
-                SetStruct.QError = IntPtr.Zero;
+                if (iQerr != null)
+                    QError = Marshal.AllocHGlobal(size);
+                else
+                    QError = IntPtr.Zero;
 
-            Marshal.Copy(iQ, 0, SetStruct.Q, iQ.Length);
-            Marshal.Copy(iR, 0, SetStruct.Refl, iR.Length);
-            Marshal.Copy(iRerr, 0, SetStruct.ReflError, iRerr.Length);
+                Marshal.Copy(iQ, 0,Q, iQ.Length);
+                Marshal.Copy(iR, 0, Refl, iR.Length);
+                Marshal.Copy(iRerr, 0, ReflError, iRerr.Length);
 
-            if (iQerr != null)
-                Marshal.Copy(iQerr, 0, SetStruct.QError, iQerr.Length);
-           
+                if (iQerr != null)
+                    Marshal.Copy(iQerr, 0, QError, iQerr.Length);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
         }
+        #endregion
 
         #region IDisposable Members
 
@@ -277,14 +213,14 @@ namespace StochasticModeling.Settings
                 // unmanaged resources here.
                 // If disposing is false,
                 // only the following code is executed.
-                if (SetStruct.Q != IntPtr.Zero)
+                if (Q != IntPtr.Zero)
                 {
-                    Marshal.FreeHGlobal(SetStruct.Q);
-                    Marshal.FreeHGlobal(SetStruct.Refl);
-                    Marshal.FreeHGlobal(SetStruct.ReflError);
+                    Marshal.FreeHGlobal(Q);
+                    Marshal.FreeHGlobal(Refl);
+                    Marshal.FreeHGlobal(ReflError);
 
-                    if (SetStruct.QError != IntPtr.Zero)
-                        Marshal.FreeHGlobal(SetStruct.QError);
+                    if (QError != IntPtr.Zero)
+                        Marshal.FreeHGlobal(QError);
                 }
                 // Note disposing has been done.
                 disposed = true;
@@ -293,14 +229,17 @@ namespace StochasticModeling.Settings
 
         #endregion
     }
-
+   
+    /// <summary>
+    /// Serializes/Deserializes a ModelSettings class
+    /// </summary>
     class MySettings
     {
-        public SettingsStruct Settings;
+        public ModelSettings Settings;
 
         public MySettings()
         {
-            Settings = new SettingsStruct();
+            Settings = new ModelSettings();
         }
 
         public bool PopulateSettings(string settingsfile)
@@ -314,8 +253,8 @@ namespace StochasticModeling.Settings
                         throw new Exception("File Path has to many characters, please relocate");
                     }
                     FileStream settings = new FileStream(settingsfile, FileMode.Open);
-                    XmlSerializer xmls = new XmlSerializer(typeof(SettingsStruct));
-                    Settings = (SettingsStruct)xmls.Deserialize(settings);
+                    XmlSerializer xmls = new XmlSerializer(typeof(ModelSettings));
+                    Settings = (ModelSettings)xmls.Deserialize(settings);
                     settings.Close();
                     return true;
                 }
@@ -336,7 +275,7 @@ namespace StochasticModeling.Settings
             try
             {
                 FileStream settings = new FileStream(settingsfile, FileMode.Create);
-                XmlSerializer xmls = new XmlSerializer(typeof(SettingsStruct));
+                XmlSerializer xmls = new XmlSerializer(typeof(ModelSettings));
                 xmls.Serialize(settings, Settings);
                 settings.Close();
             }

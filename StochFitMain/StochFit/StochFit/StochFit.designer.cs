@@ -95,6 +95,8 @@ namespace StochasticModeling
             this.objectiveCB = new System.Windows.Forms.ToolStripComboBox();
             this.searchAlgorithmToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.AlgorithmCB = new System.Windows.Forms.ToolStripComboBox();
+            this.parameterTemperatureToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.ParamTempTB = new System.Windows.Forms.ToolStripTextBox();
             this.holdSigmaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setSigmaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SigTSTB = new System.Windows.Forms.ToolStripTextBox();
@@ -102,6 +104,7 @@ namespace StochasticModeling
             this.miscellaneousOptionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.errorsAreInVarianceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.forceRQ4GraphingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.neutronDataToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewMasterGraphToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.generateReportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -470,9 +473,9 @@ namespace StochasticModeling
             this.label6.AutoSize = true;
             this.label6.Location = new System.Drawing.Point(31, 119);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(59, 13);
+            this.label6.Size = new System.Drawing.Size(77, 13);
             this.label6.TabIndex = 15;
-            this.label6.Text = "Film Height";
+            this.label6.Text = "Film Thickness";
             // 
             // layerlength
             // 
@@ -769,6 +772,7 @@ namespace StochasticModeling
             this.sigmaSearchPercentageToolStripMenuItem,
             this.objectiveFunctionToolStripMenuItem,
             this.searchAlgorithmToolStripMenuItem,
+            this.parameterTemperatureToolStripMenuItem,
             this.holdSigmaToolStripMenuItem,
             this.forceXRToolStripMenuItem1});
             this.setModelOptionsToolStripMenuItem.Name = "setModelOptionsToolStripMenuItem";
@@ -829,6 +833,20 @@ namespace StochasticModeling
             this.AlgorithmCB.Size = new System.Drawing.Size(200, 23);
             this.AlgorithmCB.DropDownClosed += new System.EventHandler(this.AlgorithmCB_DropDownClosed);
             // 
+            // parameterTemperatureToolStripMenuItem
+            // 
+            this.parameterTemperatureToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.ParamTempTB});
+            this.parameterTemperatureToolStripMenuItem.Name = "parameterTemperatureToolStripMenuItem";
+            this.parameterTemperatureToolStripMenuItem.Size = new System.Drawing.Size(207, 22);
+            this.parameterTemperatureToolStripMenuItem.Text = "Parameter Temperature";
+            // 
+            // ParamTempTB
+            // 
+            this.ParamTempTB.Name = "ParamTempTB";
+            this.ParamTempTB.Size = new System.Drawing.Size(100, 23);
+            this.ParamTempTB.Text = "0.03";
+            // 
             // holdSigmaToolStripMenuItem
             // 
             this.holdSigmaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -842,7 +860,7 @@ namespace StochasticModeling
             this.setSigmaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.SigTSTB});
             this.setSigmaToolStripMenuItem.Name = "setSigmaToolStripMenuItem";
-            this.setSigmaToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.setSigmaToolStripMenuItem.Size = new System.Drawing.Size(126, 22);
             this.setSigmaToolStripMenuItem.Text = "Set Sigma";
             // 
             // SigTSTB
@@ -863,6 +881,7 @@ namespace StochasticModeling
             this.miscellaneousOptionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.errorsAreInVarianceToolStripMenuItem,
             this.forceRQ4GraphingToolStripMenuItem,
+            this.neutronDataToolStripMenuItem,
             this.debugToolStripMenuItem});
             this.miscellaneousOptionsToolStripMenuItem.Name = "miscellaneousOptionsToolStripMenuItem";
             this.miscellaneousOptionsToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
@@ -881,6 +900,13 @@ namespace StochasticModeling
             this.forceRQ4GraphingToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
             this.forceRQ4GraphingToolStripMenuItem.Text = "Force RQ^4 graphing";
             this.forceRQ4GraphingToolStripMenuItem.Click += new System.EventHandler(this.forceRQ4GraphingToolStripMenuItem_Click);
+            // 
+            // neutronDataToolStripMenuItem
+            // 
+            this.neutronDataToolStripMenuItem.Name = "neutronDataToolStripMenuItem";
+            this.neutronDataToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.neutronDataToolStripMenuItem.Text = "Use SLD";
+            this.neutronDataToolStripMenuItem.Click += new System.EventHandler(this.neutronDataToolStripMenuItem_Click);
             // 
             // debugToolStripMenuItem
             // 
@@ -1203,6 +1229,9 @@ namespace StochasticModeling
         private System.Windows.Forms.ToolStripMenuItem errorsAreInVarianceToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem forceRQ4GraphingToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem debugToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem parameterTemperatureToolStripMenuItem;
+        private System.Windows.Forms.ToolStripTextBox ParamTempTB;
+        private System.Windows.Forms.ToolStripMenuItem neutronDataToolStripMenuItem;
 	}
 }
 

@@ -30,7 +30,7 @@ namespace StochasticModeling.Modeling
         {
             this.label11 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
-            this.label10 = new System.Windows.Forms.Label();
+            this.Rholabel = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
@@ -110,19 +110,19 @@ namespace StochasticModeling.Modeling
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label9.Location = new System.Drawing.Point(264, 9);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(79, 13);
+            this.label9.Size = new System.Drawing.Size(100, 13);
             this.label9.TabIndex = 19;
-            this.label9.Text = "Layer Height";
+            this.label9.Text = "Layer Thickness";
             // 
-            // label10
+            // Rholabel
             // 
-            this.label10.AutoSize = true;
-            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.Location = new System.Drawing.Point(94, 9);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(96, 13);
-            this.label10.TabIndex = 18;
-            this.label10.Text = "Normalized Rho";
+            this.Rholabel.AutoSize = true;
+            this.Rholabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Rholabel.Location = new System.Drawing.Point(94, 9);
+            this.Rholabel.Name = "Rholabel";
+            this.Rholabel.Size = new System.Drawing.Size(96, 13);
+            this.Rholabel.TabIndex = 18;
+            this.Rholabel.Text = "Normalized Rho";
             // 
             // label8
             // 
@@ -712,7 +712,7 @@ namespace StochasticModeling.Modeling
             this.Controls.Add(this.label1);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.label9);
-            this.Controls.Add(this.label10);
+            this.Controls.Add(this.Rholabel);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label6);
@@ -731,7 +731,7 @@ namespace StochasticModeling.Modeling
 
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.Label Rholabel;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label6;

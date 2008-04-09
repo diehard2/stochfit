@@ -66,7 +66,6 @@ namespace StochasticModeling
         double[] Refl;
         Object lockobj;
 
-        bool m_bupdating = false;
         int colorswitch = 0;
         double m_dAnnealtemp = 10;
         int m_iAnnealplat = 4000;
@@ -79,6 +78,7 @@ namespace StochasticModeling
         double m_dSTUNgammadec = 0.85;
         bool m_bmodelreset = false;
         bool m_bIsXR = true;
+        bool m_bUseSLD = false;
         int previnstanceiter = 0;
 
         #endregion
@@ -96,9 +96,7 @@ namespace StochasticModeling
             rhographobject = new Graphing(string.Empty);
             modelreflname = "Model Independent Reflectivity";
             rhomodelname = "rhomodel";
-
-            //Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-            //Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
+          
             InitializeComponent();
 
             //Set default values here for internationalization reasons
@@ -196,8 +194,21 @@ namespace StochasticModeling
                             if (File.Exists(tempfile))
                             {
                                 LoadZ(tempfile);
-                                rhographobject.LoadFiletoGraph(tempfile.ToString(), rhomodelname, "Model Independent Electron Density Fit", Color.Tomato, SymbolType.None, 0, true);
-                                rhographobject.SetAxisTitles("Z", string.Empty);
+                                rhographobject.SubSLD = double.Parse(rhowater.Text);
+                                rhographobject.IsNeutron = m_bUseSLD;
+
+                                if (m_bUseSLD == true)
+                                {
+                                    rhographobject.SetAxisTitles("Z", "SLD");
+                                    rhographobject.Title = "Model Independent SLD Fit";
+                                }
+                                else
+                                {
+                                    rhographobject.SetAxisTitles("Z", "Normalized Electron Density");
+                                    rhographobject.Title = "Model Independent Electron Density Fit";
+                                }
+                                    rhographobject.LoadFiletoGraph(tempfile.ToString(), rhomodelname, "Model Independent Electron Density Fit", Color.Tomato, SymbolType.None, 0, true);
+                               
                             }
 
                             tempfile = ReflData.Instance.GetWorkingDirectory + "\\rf.dat";
@@ -331,7 +342,7 @@ namespace StochasticModeling
 
         #region Save and Load Settings
 
-        private void GetReflSettings(ref ReflSettings settings)
+        private void GetReflSettings(ref ModelSettings settings)
         {
             FileInfo info = new FileInfo(origreflfilename);
             int newdatapoints = ReflData.Instance.GetNumberDataPoints - int.Parse(critedgeoffTB.Text) - int.Parse(HQoffsetTB.Text);
@@ -355,67 +366,78 @@ namespace StochasticModeling
                     qe[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetQErrorPt(i);
             }
 
-            settings.SetStruct.Directory = info.DirectoryName;
+            settings.Directory = info.DirectoryName;
 
             settings.SetArrays(q, r, re, qe, newdatapoints);
 
-            settings.SetStruct.QPoints = newdatapoints;
-            settings.SetStruct.FilmSLD = Double.Parse(Rholipid.Text);
-            settings.SetStruct.SubSLD = Double.Parse(rhowater.Text);
-            settings.SetStruct.SupSLD = Double.Parse(SupSLDTB.Text);
-            settings.SetStruct.Boxes = Int32.Parse(Boxlayers.Text);
-            settings.SetStruct.FilmLength = Double.Parse(layerlength.Text);
-            settings.SetStruct.FilmAbs = Double.Parse(SurfAbs.Text);
-            settings.SetStruct.Wavelength = Double.Parse(wavelength.Text);
-            settings.SetStruct.SubAbs = Double.Parse(SubAbs.Text);
-            settings.SetStruct.SupAbs = Double.Parse(SupAbsTB.Text);
-            settings.SetStruct.UseSurfAbs = UseAbsCB.Checked;
-            settings.SetStruct.Leftoffset = Double.Parse(SupoffsetTB.Text);
-            settings.SetStruct.QErr = Double.Parse(QErrTB.Text);
-            settings.SetStruct.Forcenorm = ForceNormCB.Checked;
-            settings.SetStruct.Forcesig = Double.Parse(SigTSTB.Text);
-            settings.SetStruct.Debug = debugToolStripMenuItem.Checked;
-            settings.SetStruct.XRonly = forceXRToolStripMenuItem1.Checked;
-            settings.SetStruct.Resolution = int.Parse(ResolutionTB.Text);
-            settings.SetStruct.Totallength = double.Parse(TotlengthTB.Text);
-            settings.SetStruct.Impnorm = ImpNormCB.Checked;
-            settings.SetStruct.Objectivefunction = objectiveCB.SelectedIndex;
-
+            settings.QPoints = newdatapoints;
+            settings.SurflayerSLD = Double.Parse(Rholipid.Text);
+            settings.SubSLD = Double.Parse(rhowater.Text);
+            settings.SupSLD = Double.Parse(SupSLDTB.Text);
+            settings.Boxes = Int32.Parse(Boxlayers.Text);
+            settings.Surflayerlength = Double.Parse(layerlength.Text);
+            settings.SurflayerAbs = Double.Parse(SurfAbs.Text);
+            settings.Wavelength = Double.Parse(wavelength.Text);
+            settings.SubAbs = Double.Parse(SubAbs.Text);
+            settings.SupAbs = Double.Parse(SupAbsTB.Text);
+            settings.UseAbs = UseAbsCB.Checked;
+            settings.SupOffset = Double.Parse(SupoffsetTB.Text);
+            settings.Percerror = Double.Parse(QErrTB.Text);
+            settings.Forcenorm = ForceNormCB.Checked;
+            settings.Forcesig = Double.Parse(SigTSTB.Text);
+            settings.Debug = debugToolStripMenuItem.Checked;
+            settings.ForceXR = forceXRToolStripMenuItem1.Checked;
+            settings.Resolution = int.Parse(ResolutionTB.Text);
+            settings.Totallength = Double.Parse(TotlengthTB.Text);
+            settings.ImpNorm = ImpNormCB.Checked;
+            settings.FitFunc = objectiveCB.SelectedIndex;
+            settings.ParamTemp = Double.Parse(ParamTempTB.Text);
+            settings.SigmaSearchPerc = int.Parse(SigmaSearchTB.Text);
+            settings.Algorithm = AlgorithmCB.SelectedIndex;
+            settings.AnnealInitTemp = m_dAnnealtemp;
+            settings.AnnealTempPlat = m_iAnnealplat;
+            settings.AnnealSlope = m_dAnnealslope;
+            settings.AnnealGamma = m_dSTUNGamma;
+            settings.STUNfunc = m_iSTUNfunc;
+            settings.STUNAdaptive = m_bSTUNAdaptive;
+            settings.STUNtempiter = m_iSTUNtempiter;
+            settings.STUNdeciter = m_iSTUNdeciter;
+            settings.STUNgammadec = m_dSTUNgammadec;
         }
 
         private void WriteSettings()
         {
             MySettings PrevSettings = new MySettings();
 
-            PrevSettings.Settings.SurflayerSLD = Rholipid.Text;
-            PrevSettings.Settings.Surflayerlength = layerlength.Text;
-            PrevSettings.Settings.SurflayerAbs = SurfAbs.Text;
-            PrevSettings.Settings.Algorithm = AlgorithmCB.Text;
-            PrevSettings.Settings.FitFunc = objectiveCB.Text;
-            PrevSettings.Settings.SubSLD = rhowater.Text;
-            PrevSettings.Settings.SubAbs = SubAbs.Text;
-            PrevSettings.Settings.Wavelength = wavelength.Text;
-            PrevSettings.Settings.BoxCount = Boxlayers.Text;
-            PrevSettings.Settings.Iterations = Iterations.Text;
-            PrevSettings.Settings.IterationsCompleted = progressBar1.Value.ToString();
-            PrevSettings.Settings.ChiSquare = ChiSquareTB.Text;
+            PrevSettings.Settings.SurflayerSLD = double.Parse(Rholipid.Text);
+            PrevSettings.Settings.Surflayerlength = double.Parse(layerlength.Text);
+            PrevSettings.Settings.SurflayerAbs = double.Parse(SurfAbs.Text);
+            PrevSettings.Settings.Algorithm = AlgorithmCB.SelectedIndex;
+            PrevSettings.Settings.FitFunc = objectiveCB.SelectedIndex;
+            PrevSettings.Settings.SubSLD = Double.Parse(rhowater.Text);
+            PrevSettings.Settings.SubAbs = Double.Parse(SubAbs.Text);
+            PrevSettings.Settings.Wavelength = Double.Parse(wavelength.Text);
+            PrevSettings.Settings.Boxes = int.Parse(Boxlayers.Text);
+            PrevSettings.Settings.Iterations = int.Parse(Iterations.Text);
+            PrevSettings.Settings.IterationsCompleted = progressBar1.Value;
+            PrevSettings.Settings.ChiSquare = double.Parse(ChiSquareTB.Text, m_CI);
             PrevSettings.Settings.Title = TitleTB.Text;
-            PrevSettings.Settings.Resolution = ResolutionTB.Text;
-            PrevSettings.Settings.length = TotlengthTB.Text;
-            PrevSettings.Settings.CritEdgeOffset = critedgeoffTB.Text;
-            PrevSettings.Settings.SigmaSearchPerc = SigmaSearchTB.Text;
+            PrevSettings.Settings.Resolution = int.Parse(ResolutionTB.Text);
+            PrevSettings.Settings.Totallength = double.Parse(TotlengthTB.Text);
+            PrevSettings.Settings.CritEdgeOffset = int.Parse(critedgeoffTB.Text);
+            PrevSettings.Settings.SigmaSearchPerc = double.Parse(SigmaSearchTB.Text, m_CI);
             PrevSettings.Settings.UseAbs = UseAbsCB.Checked;
-            PrevSettings.Settings.HighQOffset = HQoffsetTB.Text;
-            PrevSettings.Settings.SupOffset = SupoffsetTB.Text;
-            PrevSettings.Settings.SupSLD = SupSLDTB.Text;
-            PrevSettings.Settings.SupAbs = SupAbsTB.Text;
+            PrevSettings.Settings.HighQOffset = int.Parse(HQoffsetTB.Text);
+            PrevSettings.Settings.SupOffset = double.Parse(SupoffsetTB.Text);
+            PrevSettings.Settings.SupSLD = double.Parse(SupSLDTB.Text, m_CI);
+            PrevSettings.Settings.SupAbs = double.Parse(SupAbsTB.Text, m_CI);
             PrevSettings.Settings.Forcenorm = ForceNormCB.Checked;
             PrevSettings.Settings.AnnealInitTemp = m_dAnnealtemp;
             PrevSettings.Settings.AnnealSlope = m_dAnnealslope;
             PrevSettings.Settings.AnnealTempPlat = m_iAnnealplat;
             PrevSettings.Settings.AnnealGamma = m_dSTUNGamma;
             PrevSettings.Settings.ImpNorm = ImpNormCB.Checked;
-            PrevSettings.Settings.Percerror = QErrTB.Text;
+            PrevSettings.Settings.Percerror = double.Parse(QErrTB.Text, m_CI);
             PrevSettings.Settings.Debug = debugToolStripMenuItem.Checked;
             PrevSettings.Settings.ForceXR = forceXRToolStripMenuItem1.Checked;
             PrevSettings.Settings.STUNAdaptive = m_bSTUNAdaptive;
@@ -423,6 +445,8 @@ namespace StochasticModeling
             PrevSettings.Settings.STUNfunc = m_iSTUNfunc;
             PrevSettings.Settings.STUNgammadec = m_dSTUNgammadec;
             PrevSettings.Settings.STUNtempiter = m_iSTUNtempiter;
+            PrevSettings.Settings.ParamTemp = double.Parse(ParamTempTB.Text, m_CI);
+            PrevSettings.Settings.IsNeutron = neutronDataToolStripMenuItem.Checked;
             PrevSettings.WriteSettings(settingsfile);
         }
 
@@ -432,36 +456,36 @@ namespace StochasticModeling
 
             if (PrevSettings.PopulateSettings(settingsfile) == true)
             {
-                Rholipid.Text = PrevSettings.Settings.SurflayerSLD;
-                layerlength.Text = PrevSettings.Settings.Surflayerlength;
-                SurfAbs.Text = PrevSettings.Settings.SurflayerAbs;
-                AlgorithmCB.Text = PrevSettings.Settings.Algorithm;
-                objectiveCB.Text = PrevSettings.Settings.FitFunc;
+                Rholipid.Text = PrevSettings.Settings.SurflayerSLD.ToString();
+                layerlength.Text = PrevSettings.Settings.Surflayerlength.ToString();
+                SurfAbs.Text = PrevSettings.Settings.SurflayerAbs.ToString();
+                AlgorithmCB.Text = PrevSettings.Settings.Algorithm.ToString();
+                objectiveCB.Text = PrevSettings.Settings.FitFunc.ToString();
 
                 if (AlgorithmCB.SelectedIndex != 0)
                     ShowSATBs(true);
                 else
                     ShowSATBs(false);
 
-                rhowater.Text = PrevSettings.Settings.SubSLD;
-                SubAbs.Text = PrevSettings.Settings.SubAbs;
-                SupSLDTB.Text = PrevSettings.Settings.SupSLD;
-                SupAbsTB.Text = PrevSettings.Settings.SupAbs;
-                SupoffsetTB.Text = PrevSettings.Settings.SupOffset;
-                wavelength.Text = PrevSettings.Settings.Wavelength;
-                HQoffsetTB.Text = PrevSettings.Settings.HighQOffset;
-                Boxlayers.Text = PrevSettings.Settings.BoxCount;
-                Iterations.Text = PrevSettings.Settings.Iterations;
-                if (int.Parse(PrevSettings.Settings.IterationsCompleted) > 0)
-                    SetProgressBar(int.Parse(PrevSettings.Settings.Iterations), 0, int.Parse(PrevSettings.Settings.IterationsCompleted));
+                rhowater.Text = PrevSettings.Settings.SubSLD.ToString();
+                SubAbs.Text = PrevSettings.Settings.SubAbs.ToString();
+                SupSLDTB.Text = PrevSettings.Settings.SupSLD.ToString();
+                SupAbsTB.Text = PrevSettings.Settings.SupAbs.ToString();
+                SupoffsetTB.Text = PrevSettings.Settings.SupOffset.ToString();
+                wavelength.Text = PrevSettings.Settings.Wavelength.ToString();
+                HQoffsetTB.Text = PrevSettings.Settings.HighQOffset.ToString();
+                Boxlayers.Text = PrevSettings.Settings.Boxes.ToString();
+                Iterations.Text = PrevSettings.Settings.Iterations.ToString();
+                if (PrevSettings.Settings.IterationsCompleted > 0)
+                    SetProgressBar(PrevSettings.Settings.Iterations, 0, PrevSettings.Settings.IterationsCompleted);
 
-                ChiSquareTB.Text = PrevSettings.Settings.ChiSquare;
+                ChiSquareTB.Text = PrevSettings.Settings.ChiSquare.ToString();
 
                 TitleTB.Text = PrevSettings.Settings.Title;
-                ResolutionTB.Text = PrevSettings.Settings.Resolution;
-                TotlengthTB.Text = PrevSettings.Settings.length;
-                critedgeoffTB.Text = PrevSettings.Settings.CritEdgeOffset;
-                SigmaSearchTB.Text = PrevSettings.Settings.SigmaSearchPerc;
+                ResolutionTB.Text = PrevSettings.Settings.Resolution.ToString();
+                TotlengthTB.Text = PrevSettings.Settings.Totallength.ToString();
+                critedgeoffTB.Text = PrevSettings.Settings.CritEdgeOffset.ToString();
+                SigmaSearchTB.Text = PrevSettings.Settings.SigmaSearchPerc.ToString();
                 UseAbsCB.Checked = PrevSettings.Settings.UseAbs;
                 ForceNormCB.Checked = PrevSettings.Settings.Forcenorm;
                 m_dAnnealtemp = PrevSettings.Settings.AnnealInitTemp;
@@ -469,7 +493,7 @@ namespace StochasticModeling
                 m_dAnnealslope = PrevSettings.Settings.AnnealSlope;
                 m_dSTUNGamma = PrevSettings.Settings.AnnealGamma;
                 ImpNormCB.Checked = PrevSettings.Settings.ImpNorm;
-                QErrTB.Text = PrevSettings.Settings.Percerror;
+                QErrTB.Text = PrevSettings.Settings.Percerror.ToString();
                 debugToolStripMenuItem.Checked = PrevSettings.Settings.Debug;
                 forceXRToolStripMenuItem1.Checked = PrevSettings.Settings.ForceXR;
                 m_bSTUNAdaptive = PrevSettings.Settings.STUNAdaptive;
@@ -477,6 +501,8 @@ namespace StochasticModeling
                 m_iSTUNfunc = PrevSettings.Settings.STUNfunc;
                 m_dSTUNgammadec = PrevSettings.Settings.STUNgammadec;
                 m_iSTUNtempiter = PrevSettings.Settings.STUNtempiter;
+                ParamTempTB.Text = PrevSettings.Settings.ParamTemp.ToString();
+                ReportGenerator.Instance.UseSLD = m_bUseSLD = neutronDataToolStripMenuItem.Checked = PrevSettings.Settings.IsNeutron;
 
                 return true;
             }
@@ -515,12 +541,12 @@ namespace StochasticModeling
             }
 
             
-            ReflSettings settings = new ReflSettings();
+            ModelSettings settings = new ModelSettings();
             GetReflSettings(ref settings);
 
-            Init(settings.SetStruct);
+            Init(settings);
 
-            SetSAParameters(int.Parse(SigmaSearchTB.Text), AlgorithmCB.SelectedIndex, m_dAnnealtemp, m_iAnnealplat, m_dAnnealslope, m_dSTUNGamma, m_iSTUNfunc, m_bSTUNAdaptive, m_iSTUNtempiter, m_iSTUNdeciter, m_dSTUNgammadec);
+
             Start(iterations);
             GenPriority(Priority.SelectedIndex);
 
@@ -540,10 +566,14 @@ namespace StochasticModeling
                 miscellaneousOptionsToolStripMenuItem.DropDown.Enabled = false;
 
             Cancelbutton.Enabled = true;
-       
             LoadFile.Enabled = false;
+            reflgraphobject.ProgramRunningState = true;
 
             previtertime = DateTime.Now;
+
+
+            //WriteSettings to file
+            WriteSettings();
         }
 
         void SetProgressBar(int maximum, int minimum, int currentiteration)
@@ -565,7 +595,6 @@ namespace StochasticModeling
 
         private void Canceled()
         {
-            WriteSettings();
             myTimer.Stop();
             CancelFit();
             Cancelbutton.Enabled = false;
@@ -574,9 +603,12 @@ namespace StochasticModeling
               miscellaneousOptionsToolStripMenuItem.Enabled = true;
 
             setModelOptionsToolStripMenuItem.DropDown.Enabled = setResolutionOptionsToolStripMenuItem.DropDown.Enabled =
-                miscellaneousOptionsToolStripMenuItem.Enabled = true;
+                miscellaneousOptionsToolStripMenuItem.DropDown.Enabled = true;
 
             ParametersBox.Enabled = FittingParamBox.Enabled = LoadFile.Enabled = Startbutton.Enabled = true;
+            reflgraphobject.ProgramRunningState = false;
+
+            WriteSettings();
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -585,7 +617,6 @@ namespace StochasticModeling
             {
                 if (MessageBox.Show("Verify fitting cancellation", "Cancelling", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    WriteSettings();
                     CancelFit();
                     Thread.Sleep(700);
                 }
@@ -598,8 +629,6 @@ namespace StochasticModeling
         #region Data Update Routines
         private void OnUpdateTimer(object source, ElapsedEventArgs e)
         {
-            //Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-            //Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
             //Need to allow time for our dll to initialize itself
             if (Z == null)
             {
@@ -621,17 +650,10 @@ namespace StochasticModeling
                 if (progressBar1.Value != 0)
                     previnstanceiter = progressBar1.Value;
 
-                //WriteSettings to file
-                WriteSettings();
             }
 
-            //We don't allow an update if we're stuck for some reason
-            if (m_bupdating == false)
-            {
-                m_bupdating = true;
-                //If the if statement doesn't work, lets lock the section to prevent double
-                //execution
-                lock (lockobj)
+            //Lock the section so we don't enter twice
+                lock (this)
                 {
                     double lowestenergy;
                     double temp;
@@ -657,8 +679,8 @@ namespace StochasticModeling
 
                     span = DateTime.Now - previtertime;
                     itertimetextbox.Text = ((double)iterations / (double)span.TotalSeconds).ToString("#.#");
-                    ChiSquareTB.Text = m_dChiSquare.ToString("#.#### E-000");
-                    FitScoreTB.Text = m_dGoodnessOfFit.ToString("#.#### E-000");
+                    ChiSquareTB.Text = m_dChiSquare.ToString("#.####E-000");
+                    FitScoreTB.Text = m_dGoodnessOfFit.ToString("#.####E-000");
 
                     if (Double.Parse(rhowater.Text) < 0)
                     {
@@ -670,9 +692,6 @@ namespace StochasticModeling
 
                     UpdateGraphs();
 
-                    //Update the report and internal graphs
-                    GraphCollection.Instance.MainReflGraph = reflgraphobject;
-                    GraphCollection.Instance.MainRhoGraph = rhographobject;
                     UpdateReportParameters();
 
                     //End the calculation if we have reached the maximum number of iterations
@@ -681,8 +700,6 @@ namespace StochasticModeling
                         Canceled();
                     }
                 }
-                m_bupdating = false;
-            }
         }
 
         private void UpdateGraphs()
@@ -694,9 +711,24 @@ namespace StochasticModeling
 
                 if ((divbyfresnel != reflgraphobject.DivbyFresnel || m_bmodelreset == true) && origreflfilename != string.Empty)
                 {
-                    reflgraphobject.Clear();
+                   
                     reflgraphobject.DivbyFresnel = divbyfresnel;
-                    reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
+
+                    if (m_bmodelreset == true || reflgraphobject.DataFileLoaded == false)
+                    {
+                        reflgraphobject.Clear();
+                        reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
+
+                        if (rhographobject.HasCurve)
+                        {
+                            rhographobject.Clear();
+                            rhographobject.LoadFiletoGraph(ReflData.Instance.GetWorkingDirectory + "//rho.dat", rhomodelname, "Model Independent Electron Density Fit", Color.Tomato, SymbolType.None, 0, true);
+                        }
+                    }
+                    else
+                    {
+                        reflgraphobject.ClearCurves();
+                    }
 
                     if (Refl != null)
                         reflgraphobject.LoadfromArray(modelreflname, Q, Refl, Color.Tomato, SymbolType.Square, 2, true, string.Empty);
@@ -725,6 +757,11 @@ namespace StochasticModeling
                         colorswitch++;
                     }
                 }
+
+                //Update the report and internal graphs
+                GraphCollection.Instance.MainReflGraph = reflgraphobject;
+                GraphCollection.Instance.MainRhoGraph = rhographobject;
+
             }
             catch (Exception ex)
             {
@@ -791,7 +828,7 @@ namespace StochasticModeling
         private void Rhomodel_Click(object sender, EventArgs e)
         {
             UpdateReportParameters();
-            Rhomodeling RhoModel = new Rhomodeling(Z, Rho, m_droughness, SupoffsetTB.Text, rhowater.Text, SupSLDTB.Text);
+            Rhomodeling RhoModel = new Rhomodeling(Z, Rho, m_droughness, SupoffsetTB.Text, rhowater.Text, SupSLDTB.Text, m_bUseSLD);
             RhoModel.Show();
         }
 
@@ -940,6 +977,32 @@ namespace StochasticModeling
             UpdateGraphs();
         }
 
+        private void neutronDataToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            base.MenuItem_Check(sender, e);
+
+            m_bUseSLD = neutronDataToolStripMenuItem.Checked;
+            rhographobject.IsNeutron = neutronDataToolStripMenuItem.Checked;
+            rhographobject.SubSLD = double.Parse(rhowater.Text);
+            ReportGenerator.Instance.UseSLD = m_bUseSLD;
+
+            if (m_bUseSLD)
+            {
+                rhographobject.SetAxisTitles("", "SLD");
+                rhographobject.Title = "Model Independent SLD Fit";
+            }
+            else
+            {
+                rhographobject.SetAxisTitles("", "Normalized Electron Density");
+                rhographobject.Title = "Model Independent Electron Density Fit";
+            }
+
+            m_bmodelreset = true;
+            UpdateGraphs();
+
+        }
+
+
         private void debugToolStripMenuItem_Click(object sender, EventArgs e)
         {
             base.MenuItem_Check(sender, e);
@@ -1035,6 +1098,8 @@ namespace StochasticModeling
             reflgraphobject.SetBounds();
         } 
         #endregion
+
+        
     }
 
 }

@@ -90,15 +90,22 @@ namespace StochasticModeling.Modeling
         /// </summary>
         public double[] SigmaLowArray;
 
+        private bool m_bUseSLD = false;
         #endregion
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="boxcount">Number of boxes in the fit</param>
-        public Constraints(int boxcount)
+        /// <param name="UseSLD">True if the SLD is used instead of ED</param>
+        public Constraints(int boxcount, bool UseSLD)
         {
             InitializeComponent();
+
+            m_bUseSLD = UseSLD;
+
+            if (m_bUseSLD == true)
+                Rholabel.Text = "SLD";
 
             m_iboxcount = boxcount;
 

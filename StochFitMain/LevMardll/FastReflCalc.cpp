@@ -21,15 +21,6 @@
 #include "stdafx.h"
 #include "FastReflCalc.h"
 
-
-/* ----------------------------------------------------------------------------
-  Dongxu Li and Stephen Danauskas
-  Copyright (c) 2007 University of Chicago
-
----------------------------------------------------------------------------- */
-
-
-
 // Multilayer reflection and transmission
 // Parrett scheme, L. G. Parrett, Phys. Rev. 95(2), 359(1954)
 // formulea to use
@@ -256,7 +247,7 @@ void FastReflcalc::mytransmultsigrf(double* sintheta, double* sinsquaredtheta, i
 		}
 	}
 	
-	MyComplex<double> lengthmultiplier = -1.0*MyComplex<double>(0.0,1.0)/2.0 ;
+	MyComplex<double> lengthmultiplier = -2.0 * MyComplex<double>(0.0,1.0) ;
 	MyComplex<double> kk[20];
 	double dkk[20];
 	MyComplex<double> ak[20];
@@ -265,7 +256,6 @@ void FastReflcalc::mytransmultsigrf(double* sintheta, double* sinsquaredtheta, i
 	MyComplex<double> Rj[20];
 	double dQj[20];
 	MyComplex<double> Qj[20];
-	MyComplex<double> holder;
 
 	//Boundary conditions
 	Rj[nl-1] = 0.0;
@@ -320,8 +310,7 @@ void FastReflcalc::mytransmultsigrf(double* sintheta, double* sinsquaredtheta, i
 		
 		for(int i = nl-2; i>=0;i--)
 		{
-			holder = ak[i]*ak[i];
-			Rj[i] = holder*holder*(Rj[i+1]+rj[i])/(Rj[i+1]*rj[i]+1.0);
+			Rj[i] = ak[i]*(Rj[i+1]+rj[i])/(Rj[i+1]*rj[i]+1.0);
 		}
 		refl[l] = compabs(Rj[0]);
 		refl[l] *= refl[l];
@@ -367,8 +356,7 @@ void FastReflcalc::mytransmultsigrf(double* sintheta, double* sinsquaredtheta, i
 		
 		for(int i = nl-2; i>=0;i--)
 		{
-			holder = ak[i]*ak[i];
-			Rj[i] = holder*holder*(Rj[i+1]+drj[i])/(Rj[i+1]*drj[i]+1.0);
+			Rj[i] = ak[i]*(Rj[i+1]+drj[i])/(Rj[i+1]*drj[i]+1.0);
 		}
 
 		refl[l] = compabs(Rj[0]);

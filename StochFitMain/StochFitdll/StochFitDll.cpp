@@ -45,9 +45,15 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 //The global stochfit class pointer
 StochFit* stochfit;
 
-extern "C" STOCHFIT_API void Init(ReflSettings initstruct)
+extern "C" STOCHFIT_API void Init(ReflSettings* initstruct)
 {
-	stochfit = new StochFit(initstruct);
+	if(stochfit == NULL)
+		stochfit = new StochFit(*initstruct);
+	else
+	{
+		delete stochfit;
+		stochfit = new StochFit(*initstruct);
+	}
 }
 
 extern "C" STOCHFIT_API void GenPriority(int priority)
@@ -76,20 +82,11 @@ extern "C" STOCHFIT_API void Cancel()
 
 extern "C" STOCHFIT_API int GetData(double ZRange[],double Rho[],double QRange[], double Refl[] ,double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)
 {
-	int iter = 0;
+	int iter = -1;
 	if(stochfit != NULL)
-	{
 		iter = stochfit->GetData(ZRange,Rho,QRange,Refl,roughness, chisquare, goodnessoffit, isfinished);
-	}
+	
 	return iter;
-}
-
-extern "C" STOCHFIT_API  void SetSAParameters(int sigmasearch, int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, BOOL adaptive, int tempiter, int STUNdeciter, double gammadec)
-{
-		if(stochfit != NULL)
-		{
-			stochfit->InitializeSA(sigmasearch, algorithm, inittemp, platiter, slope, gamma, STUNfunc, adaptive, tempiter, STUNdeciter, gammadec);
-		}
 }
 
 extern "C" STOCHFIT_API void ArraySizes(int* RhoSize, int* Reflsize)

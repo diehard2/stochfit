@@ -29,6 +29,28 @@ struct ReflSettings
         double FilmLength;
         BOOL Impnorm;
         int Objectivefunction;
+		double Paramtemp;
+
+		//Annealing parameters
+		double Sigmasearch;
+		int Algorithm;
+		double Inittemp;
+		int Platiter;
+		double Slope;
+		double Gamma;
+		int STUNfunc;
+		BOOL Adaptive;
+		int Tempiter;
+		double STUNdeciter;
+		double Gammadec;
+
+		//Not used
+		int Iterations;
+		int IterationsCompleted;
+		double ChiSquare;
+		LPCWSTR Title;
+		int CritEdgeOffset;
+		int HighQOffset;
 };
 #pragma pack(pop)
 

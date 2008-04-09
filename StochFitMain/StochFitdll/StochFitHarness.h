@@ -87,6 +87,7 @@ class StochFit
 		double m_dsupSLD;
 		double m_dQerr;
 		double m_dforcesig;
+		double m_dparamtemp;
 
 		int m_itotaliterations;
 		int m_icurrentiteration;

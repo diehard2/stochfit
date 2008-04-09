@@ -21,7 +21,7 @@
 #include "stdafx.h"
 #include "SimulatedAnnealing.h"
 
-SimAnneal::SimAnneal(bool debug, wstring directory): m_bisiterminimum(false), 
+SimAnneal::SimAnneal(bool debug, wstring directory): m_bisiterminimum(false), m_dTemp(-1.0),
 	m_ipoorsolutionacc(0),m_inumberpoorsol(0),m_daverageSTUNval(0), m_sdirectory(directory), m_bdebugging(debug)
 {}
 
@@ -30,10 +30,13 @@ void SimAnneal::Initialize(double inittemp, double plattime, double gamma, doubl
 	m_iPlattime = plattime;
 	m_daveragefstun = inittemp;
 
-	if(adaptive == false)
-		m_dTemp = 1.0/inittemp;
-	else
-		m_dTemp = 10;
+	if(m_dTemp == -1)
+	{
+		if(adaptive == false)
+			m_dTemp = 1.0/inittemp;
+		else
+			m_dTemp = 10;
+	}
 
 	m_iIteration = 0;
 	m_iTime = 0;

@@ -63,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmmd.lib libguide40.lib atls.lib ../bin/dlls/ASAlibD.lib"
+				AdditionalDependencies="libmmdd.lib libguide40.lib atls.lib ../bin/dlls/ASAlibD.lib"
 				OutputFile="..\bin\Debug\StochFitDll.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"

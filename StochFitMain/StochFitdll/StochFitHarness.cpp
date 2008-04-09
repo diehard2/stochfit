@@ -57,9 +57,12 @@ StochFit::StochFit(ReflSettings initstruct)
 	m_dtotallength = initstruct.Totallength;
 	m_bimpnorm = initstruct.Impnorm;
 	objectivefunction = initstruct.Objectivefunction;
-	mutex = CreateMutex(NULL,FALSE,L"SyncObj");
+	m_dparamtemp = initstruct.Paramtemp;
 
-	
+	InitializeSA(initstruct.Sigmasearch, initstruct.Algorithm, initstruct.Inittemp, initstruct.Platiter, 
+		initstruct.Slope, initstruct.Gamma, initstruct.STUNfunc, initstruct.Adaptive, initstruct.Tempiter,
+		initstruct.STUNdeciter, initstruct.Gammadec);
+
 	Initialize(initstruct.Q, initstruct.Refl, initstruct.ReflError, initstruct.QError, initstruct.QPoints);
 }
 
@@ -193,13 +196,8 @@ int StochFit::Processing()
 	bool accepted = false;
 	//Set the thread priority
 	Priority(m_ipriority);
-
 	
-	
-	//.03 works well
-	double mc_step=0.03;
-
-	SA->InitializeParameters(mc_step, params, &m_cRefl, m_sigmasearch, m_isearchalgorithm);
+	SA->InitializeParameters(m_dparamtemp, params, &m_cRefl, m_sigmasearch, m_isearchalgorithm);
 	
 	if(SA->CheckForFailure() == true)
 	{
@@ -224,13 +222,14 @@ int StochFit::Processing()
 			//Write the population file every 5000 iterations
 			if((isteps+1)%5000 == 0 || m_bthreadstop == true || isteps == m_itotaliterations-1)
 			{
+				//Write out the population file for the best minimum found so far
+				if(m_isearchalgorithm != 0 && SA->Get_IsIterMinimum())
+					WritetoFile(&m_cRefl, params, wstring(m_Directory + L"\\BestSASolution.txt").c_str());
+
 				WritetoFile(&m_cRefl, params, m_cRefl.fnpop.c_str());
 			}
 
-			//Write out the population file for the best minimum found so far
-			if(m_isearchalgorithm != 0 && SA->Get_IsIterMinimum())
-				WritetoFile(&m_cRefl, params, wstring(m_Directory + L"\\BestSASolution.txt").c_str());
-
+		
 	 }
 
 	//Update the arrays one last time
@@ -241,11 +240,12 @@ int StochFit::Processing()
 
 void StochFit::UpdateFits(CReflCalc* ml, ParamVector* params, int currentiteration)
 {
-		//Check to see if we're updating
-		WaitForSingleObject(mutex,INFINITE);
+		
 		
 		if(m_bupdated == TRUE)
 		{
+			//Check to see if we're updating
+
 			ml->paramsrf(params);
 			m_dRoughness = params->getroughness();
 			
@@ -280,7 +280,7 @@ void StochFit::UpdateFits(CReflCalc* ml, ParamVector* params, int currentiterati
 		m_icurrentiteration = currentiteration;
 	
 
-		ReleaseMutex(mutex);
+		
 }
 
 DWORD WINAPI StochFit::InterThread(LPVOID lParam)
@@ -335,13 +335,12 @@ int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, dou
 
 		while(m_bupdated == TRUE)
 		{
-			Sleep(20);
+			Sleep(100);
 		}
 	}
 
 	//Stop the other thread while we are updating so the
 	//data doesn't update as we're reading it
-	WaitForSingleObject(mutex,INFINITE);
 
 	for(int i = 0; i < m_irhocount; i++)
 	{
@@ -363,8 +362,6 @@ int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, dou
 		*isfinished = TRUE;
 	else
 		*isfinished = FALSE;
-
-	ReleaseMutex(mutex);
 
 	return m_icurrentiteration;
 }

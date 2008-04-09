@@ -21,7 +21,7 @@
 #include "stdafx.h"
 #include "SA_Dispatcher.h"
 
-SA_Dispatcher::SA_Dispatcher()
+SA_Dispatcher::SA_Dispatcher():m_bUseASA(false)
 {
 }
 

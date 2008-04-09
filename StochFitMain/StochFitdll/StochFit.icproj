@@ -5,7 +5,7 @@
 	Name="StochFitdll"
 	ProjectGUID="{0500C168-FD63-4DFE-8D66-C449E4D9E19B}"
 	VCNestedProjectGUID="{8FEF7E88-7B8D-44E8-BBE6-9ECB9DE5B5B1}"
-	VCNestedProjectCRC32="2916465838"
+	VCNestedProjectCRC32="309552250"
 	VCNestedProjectFileName="StochFit.vcproj"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -40,7 +40,7 @@
 				Name="LinkerTool"
 				OutputFile="..\bin\Debug\StochFitDll.dll"
 				LinkIncremental="2"
-				AdditionalDependencies="libmmd.lib libguide40.lib atls.lib ../bin/dlls/ASAlibD.lib"
+				AdditionalDependencies="libmmdd.lib libguide40.lib atls.lib ../bin/dlls/ASAlibD.lib"
 				GenerateDebugInformation="1"
 				ProgramDatabaseFile="../bin/Debug/stochfitdll.pdb"
 				GenerateMapFile="1"

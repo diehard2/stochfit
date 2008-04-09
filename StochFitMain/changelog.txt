@@ -1,3 +1,13 @@
+Version 1.6
+    Change Log
+	
+	* Slight speed increase in MD routines
+	* Fixed occasional hang (hopefully)
+	* Internal Changes to improve stability
+	* Initial parameter step value (parameter temperature) can now be selected
+	* SLD can now be used instead of normalized electron density
+	* Added data patching
+
 Version 1.5
 
     Change Log

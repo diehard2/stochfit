@@ -50,7 +50,7 @@ namespace StochasticModeling
         private int highqindex = 0;
         private bool m_bnegativeerrorval = false;
         private bool m_biszoomed = false;
-        private bool m_bisXR = true;
+        private bool m_bisQfour = true;
         private bool m_bUseSLD = false;
         private PointPairList RealReflData, RealReflErrors;
         CultureInfo CI_US = new CultureInfo("en-US");
@@ -104,6 +104,14 @@ namespace StochasticModeling
                         return;
                     }
                 }
+                else if (m_bisQfour == true)
+                {
+                    if (sender.GraphPane.YAxis.Scale.Min == 1e-12)
+                    {
+                        m_biszoomed = false;
+                        return;
+                    }
+                }
                 else
                 {
                     if (sender.GraphPane.YAxis.Scale.Min == 1e-11)
@@ -116,19 +124,29 @@ namespace StochasticModeling
             }
         }
 
-        public bool IsXR
+        public void SetGraphType(bool IsQFour, bool IsDBF)
         {
-            get
+            if (IsQFour == false && IsDBF == true)
             {
-                return m_bisXR;
+                m_bisQfour = false;
+                m_bDBF = true;
             }
-            set
+            else if (IsQFour = true && IsDBF == true)
             {
-                if (value == false)
-                    m_bDBF = false;
-
-                m_bisXR = value;
+                m_bisQfour = true;
+                m_bDBF = false;
             }
+            else if (IsQFour == true && IsDBF == false)
+            {
+                m_bisQfour = true;
+                m_bDBF = false;
+            }
+            else
+            {
+                m_bDBF = false;
+                m_bisQfour = false;
+            }
+           
         }
 
         private void MyContextMenuBuilder(ZedGraphControl control, ContextMenuStrip menuStrip, Point mousePt, ZedGraphControl.ContextMenuObjectState objState)
@@ -208,12 +226,13 @@ namespace StochasticModeling
                 AxisChange();
                 if (m_biszoomed == false)
                 {
-                    if (m_bDBF == true)
+                    if (m_bDBF)
                     {
-                        if (m_bisXR && CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda) > 0.005)
-                            Pane.YAxis.Scale.Min = 3e-4;
-                        else
-                            Pane.YAxis.Scale.Min = 1e-12;
+                        Pane.YAxis.Scale.Min = 3e-4;
+                    }
+                    else if(m_bisQfour)
+                    {
+                        Pane.YAxis.Scale.Min = 1e-12;
                     }
                     else
                         Pane.YAxis.Scale.Min = 1e-11;
@@ -238,6 +257,13 @@ namespace StochasticModeling
                 m_bnegativeerrorval = false;
 
                 double Qc = CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda);
+
+                if (Qc < .005 && m_bDBF)
+                {
+                        m_bDBF = false;
+                        m_bisQfour = true;
+                }
+
                 PointPairList locRefl = new PointPairList();
                 PointPairList locReflerror = new PointPairList();
                 double poserrorval, negerrorval;
@@ -266,7 +292,7 @@ namespace StochasticModeling
                         }
                     }
 
-                if (m_bDBF == false)
+                if (m_bDBF == false && m_bisQfour == false)
                 {
                     //Set the Q scale
                     if (RealReflData[RealReflData.Count - 1].X > 1.0)
@@ -282,7 +308,7 @@ namespace StochasticModeling
                 {
                     for (int i = 0; i < ReflData.Instance.GetNumberDataPoints; i++)
                     {
-                        if (Qc > .005 && m_bisXR)
+                        if (m_bDBF)
                         {
                             double fresnelpt = CalcFresnelPoint(RealReflData[i].X, Qc);
 
@@ -303,7 +329,7 @@ namespace StochasticModeling
                     else
                         Pane.XAxis.Scale.Max = locRefl[locRefl.Count - 1].X + .05;
 
-                    if (Qc > 0.005 && m_bisXR)
+                    if (!m_bisQfour)
                         SetAxisTitles("Q/Qc", "Intensity / Fresnel");
                     else
                         SetAxisTitles("Q", "Intensity (RQ^4)");
@@ -368,22 +394,21 @@ namespace StochasticModeling
 
                             Q = Double.Parse((string)datastring[0], CI_US);
 
-                            if (m_bDBF == false)
+                            if (m_bDBF == true)
                             {
-                                if(m_bUseSLD == false)
-                                    Refl = Double.Parse((string)datastring[1], CI_US);
-                                else
-                                    Refl = Double.Parse((string)datastring[1], CI_US) * SubSLD;
+                                Refl = Double.Parse((string)datastring[1], CI_US) / CalcFresnelPoint(Q, Qc);
+                                Q = Q / Qc;
+                            }
+                            else if (m_bisQfour == true)
+                            {
+                                Refl = Double.Parse((string)datastring[1], CI_US) * Math.Pow(Q, 4.0);
                             }
                             else
                             {
-                                if (Qc > .005 && m_bisXR)
-                                {
-                                    Refl = Double.Parse((string)datastring[1], CI_US) / CalcFresnelPoint(Q, Qc);
-                                    Q = Q / Qc;
-                                }
+                                if (m_bUseSLD == false)
+                                    Refl = Double.Parse((string)datastring[1], CI_US);
                                 else
-                                    Refl = Double.Parse((string)datastring[1], CI_US) * Math.Pow(Q, 4.0);
+                                    Refl = Double.Parse((string)datastring[1], CI_US) * SubSLD;
                             }
 
                             list.Add(Q, Refl);
@@ -403,23 +428,36 @@ namespace StochasticModeling
         {
             RemoveGraphfromArray(name);
 
+            double Qc = CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda);
+            
+            if (Qc < .005 && m_bDBF)
+            {
+                m_bDBF = false;
+                m_bisQfour = true;
+            }
+
             PointPairList list = new PointPairList();
             if (m_bDBF)
             {
-                double Qc = CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda);
+                
                 for (int i = 0; i < X.Length; i++)
                 {
-                    if (Qc > 0.005 && m_bisXR)
-                        list.Add(X[i] / Qc, Y[i] / CalcFresnelPoint(X[i], Qc));
-                    else
-                        list.Add(X[i], Y[i] * Math.Pow(X[i], 4.0));
+                   list.Add(X[i] / Qc, Y[i] / CalcFresnelPoint(X[i], Qc));
+                    
+                }
+            }
+            else if (m_bisQfour)
+            {
+                for (int i = 0; i < X.Length; i++)
+                {
+                    list.Add(X[i], Y[i] * Math.Pow(X[i], 4.0));
                 }
             }
             else
             {
                 for (int i = 0; i < X.Length; i++)
                 {
-                    if(m_bUseSLD == false)
+                    if (m_bUseSLD == false)
                         list.Add(X[i], Y[i]);
                     else
                         list.Add(X[i], Y[i] * m_dSubSLD);
@@ -581,10 +619,11 @@ namespace StochasticModeling
                         Pane.CurveList[i][k].Z = 1.0;
                 }
 
-
-                for (int k = 0; k <= lowqindex; k++)
-                    Pane.CurveList[i][k].Z = 1.0;
-
+                if (lowqindex > 0)
+                {
+                    for (int k = 0; k <= lowqindex; k++)
+                        Pane.CurveList[i][k].Z = 1.0;
+                }
 
                 Invalidate();
             }
@@ -635,8 +674,13 @@ namespace StochasticModeling
         /// </summary>
         public bool DivbyFresnel
         {
-            get { return m_bDBF; }
-            set { m_bDBF = value; }
+            get
+            {
+                if (m_bisQfour || m_bDBF)
+                    return true;
+                else
+                    return false;
+            }
         }
 
         /// <summary>

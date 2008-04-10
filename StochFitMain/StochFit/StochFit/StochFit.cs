@@ -47,16 +47,13 @@ namespace StochasticModeling
     {
         #region Variables
 
-        string origreflfilename;
+        string origreflfilename = string.Empty;
         double m_droughness = 0;
-        double m_dChiSquare = 0;
-        double m_dGoodnessOfFit = 0;
         string modelreflname;
         string rhomodelname;
         string settingsfile;
         Graphing reflgraphobject;
         Graphing rhographobject;
-        bool divbyfresnel = false;
         DateTime previtertime;
         TimeSpan span;
         System.Timers.Timer myTimer;
@@ -73,14 +70,14 @@ namespace StochasticModeling
         double m_dSTUNGamma = 0.05;
         int m_iSTUNfunc = 0;
         bool m_bSTUNAdaptive = false;
-        bool m_bUpdating = false;
         int m_iSTUNtempiter = 100;
         int m_iSTUNdeciter = 200000;
         double m_dSTUNgammadec = 0.85;
         bool m_bmodelreset = false;
-        bool m_bIsXR = true;
-        bool m_bUseSLD = false;
         int previnstanceiter = 0;
+
+        public delegate void UpdateGUI(string SALowest, string SATemp, string SAMode, int Iterations, string Itertime,
+            string ChiSquare,string FitScore);
 
         #endregion
 
@@ -90,6 +87,13 @@ namespace StochasticModeling
         /// </summary>
         public Stochfit()
         {
+
+            InitializeComponent();
+
+            //Set properties that persist
+            UseSLDToolStripMenuItem.Checked = Properties.Settings.Default.UseSLD;
+            forceRQ4GraphingToolStripMenuItem.Checked = Properties.Settings.Default.ForceRQ4;
+
             //Object for thread synchronization
             lockobj = new Object();
             //Class instances that make controlling the graph easier
@@ -97,22 +101,19 @@ namespace StochasticModeling
             rhographobject = new Graphing(string.Empty);
             modelreflname = "Model Independent Reflectivity";
             rhomodelname = "rhomodel";
-          
-            InitializeComponent();
+         
 
             //Set default values here for internationalization reasons
-            Rholipid.Text = ((double)9.38).ToString();
-            rhowater.Text = ((double)9.38).ToString();
+            Rholipid.Text = (9.38).ToString();
+            SubSLDTB.Text = (9.38).ToString();
             SurfAbs.Text = ((double)1.0e-14).ToString();
             SubAbs.Text = ((double)2.0e-8).ToString();
             layerlength.Text = ((double)25.0).ToString();
             SupSLDTB.Text = ((double)0).ToString();
-            wavelength.Text = ((double)1.24).ToString();
+            wavelength.Text = (1.24).ToString();
             SupAbsTB.Text = ((double)0).ToString();
             QErrTB.Text = ((double)0).ToString();
-
-            //Needed for GUI stuff, not really important
-            CheckForIllegalCrossThreadCalls = false;
+            ParamTempTB.Text = (0.03).ToString();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -123,12 +124,13 @@ namespace StochasticModeling
                 "Normalized Electron Density", AxisType.Linear);
 
             reflgraphobject.SetAllFonts("Garamond", 20, 18);
+            rhographobject.SetGraphType(false, false);
             rhographobject.SetAllFonts("Garamond", 20, 18);
             rhographobject.LegendState = false;
             progressBar1.Style = ProgressBarStyle.Continuous;
             progressBar1.ForeColor = Color.AliceBlue;
 
-            FileName.ReadOnly = true;
+            FileNameTB.ReadOnly = true;
             ParametersBox.Enabled = false;
             Priority.Enabled = false;
             Startbutton.Enabled = false;
@@ -172,33 +174,36 @@ namespace StochasticModeling
 
                 if (origreflfilename != string.Empty)
                 {
-                    ReflData.Instance.SetReflData(origreflfilename, !errorsAreInVarianceToolStripMenuItem.Checked);
+                    if (!ReflData.Instance.SetReflData(origreflfilename, !errorsAreInVarianceToolStripMenuItem.Checked))
+                    {
+                        throw new Exception("Could not load file");
+                    }
 
                     settingsfile = origreflfilename + "settings.xml";
-                    reflgraphobject.DivbyFresnel = fresnelcb.Checked;
-                    divbyfresnel = fresnelcb.Checked;
                     reflgraphobject.SetAllFonts("Garamond", 20, 18);
-                    reflgraphobject.SubSLD = Double.Parse(rhowater.Text);
+                    reflgraphobject.SubSLD = Double.Parse(SubSLDTB.Text);
                     reflgraphobject.SupSLD = Double.Parse(SupSLDTB.Text);
                     reflgraphobject.Wavelength = Double.Parse(wavelength.Text);
                     reflgraphobject.GetHighQOffset = ReflData.Instance.GetNumberDataPoints;
                     reflgraphobject.GetLowQOffset = 0;
+                    reflgraphobject.SetGraphType(forceRQ4GraphingToolStripMenuItem.Checked, fresnelcb.Checked);
                     //Load the modeled files if they are available
                     if (File.Exists(settingsfile))
                     {
                         if (MessageBox.Show("Do you want to load the previous run?", "Resume?", MessageBoxButtons.YesNo) == DialogResult.Yes)
                         {
                             LoadSettings();
-
+                            rhographobject.Clear();
+                            reflgraphobject.Clear();
                             string tempfile = ReflData.Instance.GetWorkingDirectory + "\\rho.dat";
 
                             if (File.Exists(tempfile))
                             {
                                 LoadZ(tempfile);
-                                rhographobject.SubSLD = double.Parse(rhowater.Text);
-                                rhographobject.IsNeutron = m_bUseSLD;
+                                rhographobject.SubSLD = double.Parse(SubSLDTB.Text);
+                                rhographobject.IsNeutron = UseSLDToolStripMenuItem.Checked;
 
-                                if (m_bUseSLD == true)
+                                if (UseSLDToolStripMenuItem.Checked == true)
                                 {
                                     rhographobject.SetAxisTitles("Z", "SLD");
                                     rhographobject.Title = "Model Independent SLD Fit";
@@ -216,11 +221,10 @@ namespace StochasticModeling
 
                             if (File.Exists(tempfile))
                             {
-                                reflgraphobject.DivbyFresnel = divbyfresnel;
-                                reflgraphobject.SubSLD = double.Parse(rhowater.Text);
+                                reflgraphobject.SubSLD = double.Parse(SubSLDTB.Text);
                                 reflgraphobject.SupSLD = double.Parse(SupSLDTB.Text);
                                 reflgraphobject.Wavelength = double.Parse(wavelength.Text);
-
+                                reflgraphobject.SetGraphType(forceRQ4GraphingToolStripMenuItem.Checked, fresnelcb.Checked);
                                 //Load the data file to the graph
                                 reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
                                 reflgraphobject.LoadFiletoGraph(tempfile.ToString(), modelreflname, "Model Independent Reflectivity", Color.Tomato, SymbolType.Square, 2, true);
@@ -283,7 +287,7 @@ namespace StochasticModeling
                         reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
                     }
 
-                    FileName.Text = origreflfilename;
+                    FileNameTB.Text = origreflfilename;
                     ParametersBox.Enabled = true;
                     Priority.Enabled = true;
                     Startbutton.Enabled = true;
@@ -298,11 +302,14 @@ namespace StochasticModeling
                     }
                 }
             }
-            catch
+            catch(Exception ex)
             {
-                MessageBox.Show("Error loading the previous run");
+                origreflfilename = string.Empty;
+                FileNameTB.Clear();
+                MessageBox.Show(ex.Message);
             }
         }
+
         private void LoadZ(string filename)
         {
             using (StreamReader sr = new StreamReader(filename))
@@ -373,7 +380,7 @@ namespace StochasticModeling
 
             settings.QPoints = newdatapoints;
             settings.SurflayerSLD = Double.Parse(Rholipid.Text);
-            settings.SubSLD = Double.Parse(rhowater.Text);
+            settings.SubSLD = Double.Parse(SubSLDTB.Text);
             settings.SupSLD = Double.Parse(SupSLDTB.Text);
             settings.Boxes = Int32.Parse(Boxlayers.Text);
             settings.Surflayerlength = Double.Parse(layerlength.Text);
@@ -415,11 +422,11 @@ namespace StochasticModeling
             PrevSettings.Settings.SurflayerAbs = double.Parse(SurfAbs.Text);
             PrevSettings.Settings.Algorithm = AlgorithmCB.SelectedIndex;
             PrevSettings.Settings.FitFunc = objectiveCB.SelectedIndex;
-            PrevSettings.Settings.SubSLD = Double.Parse(rhowater.Text);
+            PrevSettings.Settings.SubSLD = Double.Parse(SubSLDTB.Text);
             PrevSettings.Settings.SubAbs = Double.Parse(SubAbs.Text);
             PrevSettings.Settings.Wavelength = Double.Parse(wavelength.Text);
             PrevSettings.Settings.Boxes = int.Parse(Boxlayers.Text);
-            PrevSettings.Settings.Iterations = int.Parse(Iterations.Text);
+            PrevSettings.Settings.Iterations = int.Parse(IterationsTB.Text);
             PrevSettings.Settings.IterationsCompleted = progressBar1.Value;
             PrevSettings.Settings.ChiSquare = double.Parse(ChiSquareTB.Text, m_CI);
             PrevSettings.Settings.Title = TitleTB.Text;
@@ -447,7 +454,7 @@ namespace StochasticModeling
             PrevSettings.Settings.STUNgammadec = m_dSTUNgammadec;
             PrevSettings.Settings.STUNtempiter = m_iSTUNtempiter;
             PrevSettings.Settings.ParamTemp = double.Parse(ParamTempTB.Text, m_CI);
-            PrevSettings.Settings.IsNeutron = neutronDataToolStripMenuItem.Checked;
+            PrevSettings.Settings.IsNeutron = UseSLDToolStripMenuItem.Checked;
             PrevSettings.WriteSettings(settingsfile);
         }
 
@@ -460,15 +467,15 @@ namespace StochasticModeling
                 Rholipid.Text = PrevSettings.Settings.SurflayerSLD.ToString();
                 layerlength.Text = PrevSettings.Settings.Surflayerlength.ToString();
                 SurfAbs.Text = PrevSettings.Settings.SurflayerAbs.ToString();
-                AlgorithmCB.Text = PrevSettings.Settings.Algorithm.ToString();
-                objectiveCB.Text = PrevSettings.Settings.FitFunc.ToString();
+                AlgorithmCB.SelectedIndex = PrevSettings.Settings.Algorithm;
+                objectiveCB.SelectedIndex = PrevSettings.Settings.FitFunc;
 
                 if (AlgorithmCB.SelectedIndex != 0)
                     ShowSATBs(true);
                 else
                     ShowSATBs(false);
 
-                rhowater.Text = PrevSettings.Settings.SubSLD.ToString();
+                SubSLDTB.Text = PrevSettings.Settings.SubSLD.ToString();
                 SubAbs.Text = PrevSettings.Settings.SubAbs.ToString();
                 SupSLDTB.Text = PrevSettings.Settings.SupSLD.ToString();
                 SupAbsTB.Text = PrevSettings.Settings.SupAbs.ToString();
@@ -476,12 +483,12 @@ namespace StochasticModeling
                 wavelength.Text = PrevSettings.Settings.Wavelength.ToString();
                 HQoffsetTB.Text = PrevSettings.Settings.HighQOffset.ToString();
                 Boxlayers.Text = PrevSettings.Settings.Boxes.ToString();
-                Iterations.Text = PrevSettings.Settings.Iterations.ToString();
+                IterationsTB.Text = PrevSettings.Settings.Iterations.ToString();
                 if (PrevSettings.Settings.IterationsCompleted > 0)
                     SetProgressBar(PrevSettings.Settings.Iterations, 0, PrevSettings.Settings.IterationsCompleted);
 
                 ChiSquareTB.Text = PrevSettings.Settings.ChiSquare.ToString();
-
+                SigTSTB.Text = PrevSettings.Settings.Forcesig.ToString();
                 TitleTB.Text = PrevSettings.Settings.Title;
                 ResolutionTB.Text = PrevSettings.Settings.Resolution.ToString();
                 TotlengthTB.Text = PrevSettings.Settings.Totallength.ToString();
@@ -503,7 +510,7 @@ namespace StochasticModeling
                 m_dSTUNgammadec = PrevSettings.Settings.STUNgammadec;
                 m_iSTUNtempiter = PrevSettings.Settings.STUNtempiter;
                 ParamTempTB.Text = PrevSettings.Settings.ParamTemp.ToString();
-                ReportGenerator.Instance.UseSLD = m_bUseSLD = neutronDataToolStripMenuItem.Checked = PrevSettings.Settings.IsNeutron;
+                ReportGenerator.Instance.UseSLD = UseSLDToolStripMenuItem.Checked = UseSLDToolStripMenuItem.Checked = PrevSettings.Settings.IsNeutron;
 
                 return true;
             }
@@ -520,7 +527,7 @@ namespace StochasticModeling
         private void Startbutton_Click(object sender, EventArgs e)
         {
             //Initialize Stochfit
-            if (FileName.Text == string.Empty)
+            if (FileNameTB.Text == string.Empty)
                 return;
 
             //If we already have a rho loaded, invalidate it
@@ -533,14 +540,18 @@ namespace StochasticModeling
                 rhographobject.RemoveGraphfromArray(rhomodelname);
             }
 
-            SetProgressBar(Int32.Parse(Iterations.Text), 0, -1);
+            //If RhoLipid was entered as zero, make it a bit larger
+            if (double.Parse(Rholipid.Text) == 0)
+                Rholipid.Text = "0.1";
 
-            int iterations = Int32.Parse(Iterations.Text);
+            SetProgressBar(Int32.Parse(IterationsTB.Text), 0, -1);
+
+            int iterations = Int32.Parse(IterationsTB.Text);
             if (progressBar1.Value > 0 && progressBar1.Value < iterations)
             {
-                iterations = int.Parse(Iterations.Text) - progressBar1.Value;
+                iterations = int.Parse(IterationsTB.Text) - progressBar1.Value;
             }
-
+            reflgraphobject.SubSLD = Double.Parse(SubSLDTB.Text);
             
             ModelSettings settings = new ModelSettings();
             GetReflSettings(ref settings);
@@ -633,13 +644,13 @@ namespace StochasticModeling
             //Need to allow time for our dll to initialize itself
             if (Z == null)
             {
-                int Zlength;
-                int Qlength;
+                int Zlength, Qlength;
 
                 while (WarmedUp() == false)
                 {
                     Thread.Sleep(100);
                 }
+
                 ArraySizes(out Zlength, out Qlength);
 
                 Z = new double[Zlength];
@@ -650,64 +661,48 @@ namespace StochasticModeling
                 //Set the iterations correctly if we resumed
                 if (progressBar1.Value != 0)
                     previnstanceiter = progressBar1.Value;
-
             }
 
-            while (m_bUpdating == true)
-                Thread.Sleep(100);
-
-            if (m_bUpdating == false)
+            //Lock the section so we don't enter twice
+            lock (lockobj)
             {
-                m_bUpdating = true;
-                //Lock the section so we don't enter twice
-                lock (lockobj)
-                {
-                    double lowestenergy;
-                    double temp;
-                    int mode;
-                    bool isfinished;
-                    // Get the progress of the iterations
-                    int iterations = GetData(Z, Rho, Q, Refl, out m_droughness, out m_dChiSquare, out m_dGoodnessOfFit, out isfinished);
-                    SAparams(out lowestenergy, out temp, out mode);
+                double lowestenergy, temp, chisquare, fitscore;
+                int mode;
+                bool isfinished;
 
-                    SAlowenergyTB.Text = lowestenergy.ToString("#.#### E-000");
-                    SATempTB.Text = temp.ToString("#.#### E-000");
-                    //if (mode > 0)
-                    SAModeTB.Text = "Annealing";
-                    //else
-                    //{
-                    //    if (double.Parse(ChiSquareTB.Text) > 2)
-                    //        SAModeTB.Text = "Tunneling";
-                    //    else
-                    //        SAModeTB.Text = "In minimum";
-                    //}
-                    if (iterations <= progressBar1.Maximum)
-                        progressBar1.Value = iterations + previnstanceiter;
+                // Get the progress of the iterations
+                int iterations = GetData(Z, Rho, Q, Refl, out m_droughness, out chisquare, out fitscore, out isfinished);
+                SAparams(out lowestenergy, out temp, out mode);
 
-                    span = DateTime.Now - previtertime;
-                    itertimetextbox.Text = ((double)iterations / (double)span.TotalSeconds).ToString("#.#");
-                    ChiSquareTB.Text = m_dChiSquare.ToString("#.####E-000");
-                    FitScoreTB.Text = m_dGoodnessOfFit.ToString("#.####E-000");
+                span = DateTime.Now - previtertime;
 
-                    if (Double.Parse(rhowater.Text) < 0)
-                    {
-                        for (int i = 0; i < Rho.Length; i++)
-                        {
-                            Rho[i] *= Double.Parse(rhowater.Text);
-                        }
-                    }
+                this.Invoke(new UpdateGUI(this.UpdateAll), new object[]{ lowestenergy.ToString("#.#### E-000"),temp.ToString("#.#### E-000"),
+                        "Annealing",iterations + previnstanceiter, ((double)iterations / (double)span.TotalSeconds).ToString("#.#"),
+                        chisquare.ToString("#.####E-000"),fitscore.ToString("#.####E-000")});
+            }
+        }
 
-                    UpdateGraphs();
+        private void UpdateAll(string SALowest, string SATemp, string SAMode, int Iterations, string Itertime, string ChiSquare,
+            string FitScore)
+        {
+            //Update the front end
+            SAlowenergyTB.Text = SALowest;
+            SATempTB.Text = SATemp;
+            SAModeTB.Text = SAMode;
+            itertimetextbox.Text = Itertime;
+            ChiSquareTB.Text = ChiSquare;
+            FitScoreTB.Text = FitScore;
 
-                    UpdateReportParameters();
+            UpdateGraphs();
+            UpdateReportParameters();
 
-                    //End the calculation if we have reached the maximum number of iterations
-                    if (progressBar1.Maximum == progressBar1.Value || isfinished == true)
-                    {
-                        Canceled();
-                    }
-                    m_bUpdating = false;
-                }
+            //End the calculation if we have reached the maximum number of iterations
+            if (Iterations < progressBar1.Maximum)
+                progressBar1.Value = Iterations;
+            else
+            {
+                progressBar1.Value = Iterations;
+                Canceled();
             }
         }
 
@@ -715,13 +710,15 @@ namespace StochasticModeling
         {
             try
             {
-                Color color;
-                reflgraphobject.IsXR = m_bIsXR;
 
-                if ((divbyfresnel != reflgraphobject.DivbyFresnel || m_bmodelreset == true) && origreflfilename != string.Empty)
+                if (origreflfilename == string.Empty)
+                    return;
+
+                Color color;
+
+                if (m_bmodelreset == true)
                 {
-                   
-                    reflgraphobject.DivbyFresnel = divbyfresnel;
+                    reflgraphobject.SetGraphType(forceRQ4GraphingToolStripMenuItem.Checked, fresnelcb.Checked);
 
                     if (m_bmodelreset == true || reflgraphobject.DataFileLoaded == false)
                     {
@@ -751,7 +748,7 @@ namespace StochasticModeling
 
                     m_bmodelreset = false;
                 }
-                else
+                else 
                 {
                     if (colorswitch % 2 == 0)
                         color = Color.DeepSkyBlue;
@@ -805,7 +802,7 @@ namespace StochasticModeling
             else
                 g.SetMainInformation = "The superphase layer was treated as transparent\n";
 
-            g.SetMainInformation = (String.Format("Subphase SLD: {0}\n", rhowater.Text));
+            g.SetMainInformation = (String.Format("Subphase SLD: {0}\n", SubSLDTB.Text));
 
             if (UseAbsCB.Checked == true)
                 g.SetMainInformation = String.Format("Subphase absoption: {0}\n", SubAbs.Text);
@@ -837,7 +834,7 @@ namespace StochasticModeling
         private void Rhomodel_Click(object sender, EventArgs e)
         {
             UpdateReportParameters();
-            Rhomodeling RhoModel = new Rhomodeling(Z, Rho, m_droughness, SupoffsetTB.Text, rhowater.Text, SupSLDTB.Text, m_bUseSLD);
+            Rhomodeling RhoModel = new Rhomodeling(Z, Rho, m_droughness, SupoffsetTB.Text, SubSLDTB.Text, SupSLDTB.Text);
             RhoModel.Show();
         }
 
@@ -934,10 +931,8 @@ namespace StochasticModeling
 
         private void fresnelcb_CheckedChanged(object sender, EventArgs e)
         {
-            divbyfresnel = fresnelcb.Checked;
-
-            if (m_bIsXR)
-                UpdateGraphs();
+            m_bmodelreset = true;
+            UpdateGraphs();
         }
 
         private void progressBar1_MouseHover(object sender, EventArgs e)
@@ -959,7 +954,7 @@ namespace StochasticModeling
 
         private void rhowater_TextChanged(object sender, EventArgs e)
         {
-            reflgraphobject.SubSLD = Double.Parse(rhowater.Text);
+            reflgraphobject.SubSLD = Double.Parse(SubSLDTB.Text);
             m_bmodelreset = true;
             UpdateGraphs();
         }
@@ -980,9 +975,9 @@ namespace StochasticModeling
         private void forceRQ4GraphingToolStripMenuItem_Click(object sender, EventArgs e)
         {
             base.MenuItem_Check(sender, e);
-
-            m_bIsXR = !forceRQ4GraphingToolStripMenuItem.Checked;
             m_bmodelreset = true;
+            Properties.Settings.Default.ForceRQ4 = forceRQ4GraphingToolStripMenuItem.Checked;
+            Properties.Settings.Default.Save();
             UpdateGraphs();
         }
 
@@ -990,12 +985,14 @@ namespace StochasticModeling
         {
             base.MenuItem_Check(sender, e);
 
-            m_bUseSLD = neutronDataToolStripMenuItem.Checked;
-            rhographobject.IsNeutron = neutronDataToolStripMenuItem.Checked;
-            rhographobject.SubSLD = double.Parse(rhowater.Text);
-            ReportGenerator.Instance.UseSLD = m_bUseSLD;
+            rhographobject.IsNeutron = UseSLDToolStripMenuItem.Checked;
+            rhographobject.SubSLD = double.Parse(SubSLDTB.Text);
+            ReportGenerator.Instance.UseSLD = UseSLDToolStripMenuItem.Checked;
 
-            if (m_bUseSLD)
+            Properties.Settings.Default.UseSLD = UseSLDToolStripMenuItem.Checked;
+            Properties.Settings.Default.Save();
+
+            if (UseSLDToolStripMenuItem.Checked)
             {
                 rhographobject.SetAxisTitles("", "SLD");
                 rhographobject.Title = "Model Independent SLD Fit";
@@ -1008,7 +1005,6 @@ namespace StochasticModeling
 
             m_bmodelreset = true;
             UpdateGraphs();
-
         }
 
 

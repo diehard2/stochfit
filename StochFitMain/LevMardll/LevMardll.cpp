@@ -263,7 +263,7 @@ extern "C" LEVMARDLL_API double ConstrainedFastReflfit(LPCWSTR directory, int bo
 		calcholder = (Reflectivity[i]-Refl.reflpt[i])/Refl.CalcFresnelPoint(QRange[i], Qc);
 		ChiSquare += calcholder*calcholder/(Errors[i]/Refl.CalcFresnelPoint(QRange[i], Qc));
 	}
-	//ChiSquare /= QSize-paramsize;
+	ChiSquare /= QSize-paramsize;
 
 	if(writefiles == TRUE)
 	{

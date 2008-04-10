@@ -84,10 +84,10 @@ namespace StochasticModeling
         /// <param name="subsld">The subphase SLD</param>
         /// <param name="supsld">The superphase SLD</param>
         /// <param name="UseSLD">True if using SLD instead of ED</param>
-        public Rhomodeling(double[] Z, double[] ERho, double roughness, string leftoffset, string subsld, string supsld, bool UseSLD)
+        public Rhomodeling(double[] Z, double[] ERho, double roughness, string leftoffset, string subsld, string supsld)
         {
             InitializeComponent();
-            m_bUseSLD = UseSLD;
+            m_bUseSLD = Properties.Settings.Default.UseSLD;
 
             this.Text = "Profile Modeling";
 
@@ -100,7 +100,7 @@ namespace StochasticModeling
             SupSLDTB.Text = supsld;
 
             //Set default array values
-            if (UseSLD == false)
+            if (m_bUseSLD == false)
                 Rho2.Text = Rho1.Text = ((double)1.1).ToString();
             else
                 Rho2.Text = Rho1.Text = ((double)1.3*double.Parse(subsld)).ToString();
@@ -141,13 +141,15 @@ namespace StochasticModeling
              //Setup the Graph
              m_gRhoGraphing = new Graphing(string.Empty);
              m_gRhoGraphing.SubSLD = double.Parse(subsld);
-             m_gRhoGraphing.IsNeutron = UseSLD;
+             m_gRhoGraphing.IsNeutron = m_bUseSLD;
 
-            if(UseSLD == false)
+             if (m_bUseSLD == false)
                m_gRhoGraphing.CreateGraph(RhoGraph, "Electron Density Profile", "Z", "Normalized Electron Density",
                   AxisType.Linear);
             else
                 m_gRhoGraphing.CreateGraph(RhoGraph, "SLD Profile", "Z", "SLD", AxisType.Linear);
+
+             m_gRhoGraphing.SetGraphType(false, false);
 
              if (Z != null)
                  m_gRhoGraphing.LoadfromArray("Model Independent Fit", m_dZincrement, m_dRealRho, System.Drawing.Color.Black, SymbolType.None, 0, true, string.Empty);
@@ -156,7 +158,7 @@ namespace StochasticModeling
 
              ChangeRoughnessArray(roughness);
 
-             if (UseSLD == false)
+             if (m_bUseSLD == false)
                  RhoLabel.Text = "Normalized Rho";
              else
                  RhoLabel.Text = "SLD";
@@ -556,13 +558,13 @@ namespace StochasticModeling
         {
             if(MessageBox.Show("Do you wish to fit with constraints?", "Constrain", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                ConstrainedReflmodeling Refl = new ConstrainedReflmodeling(double.Parse(SubRough.Text), m_dLengthArray, m_dRhoArray, m_dSigmaArray, int.Parse(BoxCount.Text), Holdsigma.Checked, SubphaseSLD.Text, SupSLDTB.Text, m_bUseSLD);
+                ConstrainedReflmodeling Refl = new ConstrainedReflmodeling(double.Parse(SubRough.Text), m_dLengthArray, m_dRhoArray, m_dSigmaArray, int.Parse(BoxCount.Text), Holdsigma.Checked, SubphaseSLD.Text, SupSLDTB.Text);
                 Refl.ShowDialog(this);
                 Refl.Dispose();
             }
             else
             {
-                Reflmodeling Refl = new Reflmodeling(double.Parse(SubRough.Text), m_dLengthArray, m_dRhoArray, m_dSigmaArray, int.Parse(BoxCount.Text), Holdsigma.Checked, SubphaseSLD.Text, SupSLDTB.Text, m_bUseSLD);
+                Reflmodeling Refl = new Reflmodeling(double.Parse(SubRough.Text), m_dLengthArray, m_dRhoArray, m_dSigmaArray, int.Parse(BoxCount.Text), Holdsigma.Checked, SubphaseSLD.Text, SupSLDTB.Text);
                 Refl.ShowDialog(this);
                 Refl.Dispose();
             }

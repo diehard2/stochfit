@@ -192,10 +192,11 @@ void StochFit::Initialize(double* Q, double* Reflect, double* ReflError, double*
 
 int StochFit::Processing()
 {
-
-	bool accepted = false;
 	//Set the thread priority
 	Priority(m_ipriority);
+
+	bool accepted = false;
+
 	
 	SA->InitializeParameters(m_dparamtemp, params, &m_cRefl, m_sigmasearch, m_isearchalgorithm);
 	
@@ -205,19 +206,17 @@ int StochFit::Processing()
 		return -1;
 	}
 	 
-	//Main loop
+	 //Main loop
 	 for(int isteps=0;(isteps < m_itotaliterations) && (m_bthreadstop == false);isteps++)
 	 {
 			accepted = SA->Iteration(params);
-		   
 		
-			if(accepted)
+			if(accepted || isteps == 0)
 			{
 				m_dChiSquare = m_cRefl.m_dChiSquare;
 				m_dGoodnessOfFit = m_cRefl.m_dgoodnessoffit;
 			}
-		
-			UpdateFits(&m_cRefl, params, isteps);
+		    UpdateFits(&m_cRefl, params, isteps);
 
 			//Write the population file every 5000 iterations
 			if((isteps+1)%5000 == 0 || m_bthreadstop == true || isteps == m_itotaliterations-1)
@@ -228,8 +227,6 @@ int StochFit::Processing()
 
 				WritetoFile(&m_cRefl, params, m_cRefl.fnpop.c_str());
 			}
-
-		
 	 }
 
 	//Update the arrays one last time
@@ -240,8 +237,6 @@ int StochFit::Processing()
 
 void StochFit::UpdateFits(CReflCalc* ml, ParamVector* params, int currentiteration)
 {
-		
-		
 		if(m_bupdated == TRUE)
 		{
 			//Check to see if we're updating
@@ -278,9 +273,6 @@ void StochFit::UpdateFits(CReflCalc* ml, ParamVector* params, int currentiterati
 			m_bupdated = FALSE;
 		}
 		m_icurrentiteration = currentiteration;
-	
-
-		
 }
 
 DWORD WINAPI StochFit::InterThread(LPVOID lParam)

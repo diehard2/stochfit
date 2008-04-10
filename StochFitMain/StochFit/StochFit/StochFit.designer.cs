@@ -32,15 +32,15 @@ namespace StochasticModeling
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Stochfit));
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.LoadFile = new System.Windows.Forms.Button();
-            this.FileName = new System.Windows.Forms.TextBox();
+            this.FileNameTB = new System.Windows.Forms.TextBox();
             this.Priority = new System.Windows.Forms.ComboBox();
             this.Boxlayers = new System.Windows.Forms.TextBox();
-            this.rhowater = new System.Windows.Forms.TextBox();
+            this.SubSLDTB = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
-            this.Iterations = new System.Windows.Forms.TextBox();
+            this.IterationsTB = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.ParametersBox = new System.Windows.Forms.GroupBox();
             this.Rholipid = new System.Windows.Forms.TextBox();
@@ -104,7 +104,7 @@ namespace StochasticModeling
             this.miscellaneousOptionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.errorsAreInVarianceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.forceRQ4GraphingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.neutronDataToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.UseSLDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewMasterGraphToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.generateReportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -144,13 +144,13 @@ namespace StochasticModeling
             this.LoadFile.UseVisualStyleBackColor = true;
             this.LoadFile.Click += new System.EventHandler(this.LoadFile_Click);
             // 
-            // FileName
+            // FileNameTB
             // 
-            this.FileName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.FileName.Location = new System.Drawing.Point(545, 48);
-            this.FileName.Name = "FileName";
-            this.FileName.Size = new System.Drawing.Size(335, 20);
-            this.FileName.TabIndex = 1;
+            this.FileNameTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.FileNameTB.Location = new System.Drawing.Point(545, 48);
+            this.FileNameTB.Name = "FileNameTB";
+            this.FileNameTB.Size = new System.Drawing.Size(335, 20);
+            this.FileNameTB.TabIndex = 1;
             // 
             // Priority
             // 
@@ -184,18 +184,18 @@ namespace StochasticModeling
                     "the film height is a good starting point.");
             this.Boxlayers.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
             // 
-            // rhowater
+            // SubSLDTB
             // 
-            this.rhowater.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            this.SubSLDTB.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.rhowater.Location = new System.Drawing.Point(252, 40);
-            this.rhowater.Name = "rhowater";
-            this.rhowater.Size = new System.Drawing.Size(122, 20);
-            this.rhowater.TabIndex = 5;
-            this.rhowater.Text = "9.38";
-            this.rhowater.Validated += new System.EventHandler(this.rhowater_TextChanged);
-            this.rhowater.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
+            this.SubSLDTB.Location = new System.Drawing.Point(252, 40);
+            this.SubSLDTB.Name = "SubSLDTB";
+            this.SubSLDTB.Size = new System.Drawing.Size(122, 20);
+            this.SubSLDTB.TabIndex = 5;
+            this.SubSLDTB.Text = "9.38";
+            this.SubSLDTB.Validated += new System.EventHandler(this.rhowater_TextChanged);
+            this.SubSLDTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
             // label1
             // 
@@ -242,17 +242,17 @@ namespace StochasticModeling
             this.label4.TabIndex = 11;
             this.label4.Text = "Windows Priority";
             // 
-            // Iterations
+            // IterationsTB
             // 
-            this.Iterations.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            this.IterationsTB.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.Iterations.Location = new System.Drawing.Point(13, 133);
-            this.Iterations.Name = "Iterations";
-            this.Iterations.Size = new System.Drawing.Size(116, 20);
-            this.Iterations.TabIndex = 3;
-            this.Iterations.Text = "100000000";
-            this.Iterations.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
+            this.IterationsTB.Location = new System.Drawing.Point(13, 133);
+            this.IterationsTB.Name = "IterationsTB";
+            this.IterationsTB.Size = new System.Drawing.Size(116, 20);
+            this.IterationsTB.TabIndex = 3;
+            this.IterationsTB.Text = "100000000";
+            this.IterationsTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
             // 
             // label5
             // 
@@ -288,7 +288,7 @@ namespace StochasticModeling
             this.ParametersBox.Controls.Add(this.layerlength);
             this.ParametersBox.Controls.Add(this.label3);
             this.ParametersBox.Controls.Add(this.label2);
-            this.ParametersBox.Controls.Add(this.rhowater);
+            this.ParametersBox.Controls.Add(this.SubSLDTB);
             this.ParametersBox.Location = new System.Drawing.Point(447, 91);
             this.ParametersBox.Name = "ParametersBox";
             this.ParametersBox.Size = new System.Drawing.Size(440, 273);
@@ -633,7 +633,7 @@ namespace StochasticModeling
             this.FittingParamBox.Controls.Add(this.ForceNormCB);
             this.FittingParamBox.Controls.Add(this.UseAbsCB);
             this.FittingParamBox.Controls.Add(this.label5);
-            this.FittingParamBox.Controls.Add(this.Iterations);
+            this.FittingParamBox.Controls.Add(this.IterationsTB);
             this.FittingParamBox.Controls.Add(this.label1);
             this.FittingParamBox.Controls.Add(this.Boxlayers);
             this.FittingParamBox.Location = new System.Drawing.Point(689, 370);
@@ -881,7 +881,7 @@ namespace StochasticModeling
             this.miscellaneousOptionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.errorsAreInVarianceToolStripMenuItem,
             this.forceRQ4GraphingToolStripMenuItem,
-            this.neutronDataToolStripMenuItem,
+            this.UseSLDToolStripMenuItem,
             this.debugToolStripMenuItem});
             this.miscellaneousOptionsToolStripMenuItem.Name = "miscellaneousOptionsToolStripMenuItem";
             this.miscellaneousOptionsToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
@@ -901,12 +901,12 @@ namespace StochasticModeling
             this.forceRQ4GraphingToolStripMenuItem.Text = "Force RQ^4 graphing";
             this.forceRQ4GraphingToolStripMenuItem.Click += new System.EventHandler(this.forceRQ4GraphingToolStripMenuItem_Click);
             // 
-            // neutronDataToolStripMenuItem
+            // UseSLDToolStripMenuItem
             // 
-            this.neutronDataToolStripMenuItem.Name = "neutronDataToolStripMenuItem";
-            this.neutronDataToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
-            this.neutronDataToolStripMenuItem.Text = "Use SLD";
-            this.neutronDataToolStripMenuItem.Click += new System.EventHandler(this.neutronDataToolStripMenuItem_Click);
+            this.UseSLDToolStripMenuItem.Name = "UseSLDToolStripMenuItem";
+            this.UseSLDToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.UseSLDToolStripMenuItem.Text = "Use SLD";
+            this.UseSLDToolStripMenuItem.Click += new System.EventHandler(this.neutronDataToolStripMenuItem_Click);
             // 
             // debugToolStripMenuItem
             // 
@@ -1111,7 +1111,7 @@ namespace StochasticModeling
             this.Controls.Add(this.Cancelbutton);
             this.Controls.Add(this.Startbutton);
             this.Controls.Add(this.ParametersBox);
-            this.Controls.Add(this.FileName);
+            this.Controls.Add(this.FileNameTB);
             this.Controls.Add(this.LoadFile);
             this.Controls.Add(this.RhoGraph);
             this.Controls.Add(this.ReflGraph);
@@ -1143,15 +1143,15 @@ namespace StochasticModeling
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private ZedGraph.ZedGraphControl RhoGraph;
         private System.Windows.Forms.Button LoadFile;
-        private System.Windows.Forms.TextBox FileName;
+        private System.Windows.Forms.TextBox FileNameTB;
         private System.Windows.Forms.ComboBox Priority;
         private System.Windows.Forms.TextBox Boxlayers;
-        private System.Windows.Forms.TextBox rhowater;
+        private System.Windows.Forms.TextBox SubSLDTB;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.TextBox Iterations;
+        private System.Windows.Forms.TextBox IterationsTB;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.GroupBox ParametersBox;
         private System.Windows.Forms.Button Startbutton;
@@ -1231,7 +1231,7 @@ namespace StochasticModeling
         private System.Windows.Forms.ToolStripMenuItem debugToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem parameterTemperatureToolStripMenuItem;
         private System.Windows.Forms.ToolStripTextBox ParamTempTB;
-        private System.Windows.Forms.ToolStripMenuItem neutronDataToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem UseSLDToolStripMenuItem;
 	}
 }
 

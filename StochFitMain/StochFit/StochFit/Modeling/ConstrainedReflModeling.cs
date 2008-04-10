@@ -95,16 +95,19 @@ namespace StochasticModeling
         /// <param name="subphase">Substrate SLD</param>
         /// <param name="superphase">Superphase SLD</param>
         /// <param name="UseSLD">True if using SLD instead of ED</param>
-        public ConstrainedReflmodeling(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase, bool UseSLD)
+        public ConstrainedReflmodeling(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase)
         {
             InitializeComponent();
 
             //Setup variables
             m_roughness = roughness;
-            m_bUseSLD = UseSLD;
+            m_bUseSLD = Properties.Settings.Default.UseSLD;
 
             if (m_bUseSLD)
+            {
                 tabControl1.TabPages[1].Text = "SLD";
+                RhoLabel.Text = "SLD";
+            }
             else
                 tabControl1.TabPages[1].Text = "Electron Density";
 
@@ -141,7 +144,7 @@ namespace StochasticModeling
             Holdsigma.Checked = holdsigma;
             //Setup the Graph
             ReflGraphing = new Graphing(string.Empty);
-            ReflGraphing.DivbyFresnel = true;
+            ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
             ReflGraphing.SubSLD = Double.Parse(SubphaseSLD.Text);
             ReflGraphing.SupSLD = Double.Parse(SupSLDTB.Text);
             ReflGraphing.Wavelength = Double.Parse(WavelengthTB.Text);
@@ -153,7 +156,7 @@ namespace StochasticModeling
             RhoGraphing = new Graphing(string.Empty);
             RhoGraphing.SubSLD = double.Parse(subphase);
             RhoGraphing.IsNeutron = m_bUseSLD;
-
+            RhoGraphing.SetGraphType(false, false);
             if (m_bUseSLD == false)
                 RhoGraphing.CreateGraph(EDzedGraphControl1, "Electron Density Profile", "Z", "Normalized Electron Density",
                   AxisType.Linear);
@@ -366,8 +369,9 @@ namespace StochasticModeling
         {
             ReflGraphing.SupSLD = double.Parse(SupSLDTB.Text);
             ReflGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
-            ReflGraphing.DivbyFresnel = DBFCB.Checked;
+            ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
             ReflGraphing.Wavelength = double.Parse(WavelengthTB.Text);
+            ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
 
             UpdateProfile();
         }
@@ -496,8 +500,16 @@ namespace StochasticModeling
                         }
                         else
                         {
-                            UL[2 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
-                            LL[2 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
+                            if (GetSubSLD > 0)
+                            {
+                                UL[2 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
+                                LL[2 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
+                            }
+                            else
+                            {
+                                LL[2 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
+                                UL[2 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
+                            }
                         }
                     }
                     else
@@ -589,8 +601,16 @@ namespace StochasticModeling
                         }
                         else
                         {
-                            UL[3 * i + 2] = constr.RhoHighArray[i]/GetSubSLD;
-                            LL[3 * i + 2] = constr.RhoLowArray[i]/GetSubSLD;
+                            if (GetSubSLD > 0)
+                            {
+                                UL[3 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
+                                LL[3 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
+                            }
+                            else
+                            {
+                                LL[3 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
+                                UL[3 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
+                            }
                         }
 
                         UL[3 * i + 3] = constr.SigmaHighArray[i];
@@ -979,8 +999,25 @@ namespace StochasticModeling
                     {
                         UL[2 * i + 1] = constr.ThickHighArray[i];
                         LL[2 * i + 1] = constr.ThickLowArray[i];
-                        UL[2 * i + 2] = constr.RhoHighArray[i];
-                        LL[2 * i + 2] = constr.RhoLowArray[i];
+                        
+                        if (m_bUseSLD == false)
+                        {
+                            UL[2 * i + 2] = constr.RhoHighArray[i];
+                            LL[2 * i + 2] = constr.RhoLowArray[i];
+                        }
+                        else
+                        {
+                            if (GetSubSLD > 0)
+                            {
+                                UL[2 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
+                                LL[2 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
+                            }
+                            else
+                            {
+                                LL[2 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
+                                UL[2 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
+                            }
+                        }
                     }
                     else
                     {
@@ -1065,8 +1102,26 @@ namespace StochasticModeling
                     {
                         UL[3 * i + 1] = constr.ThickHighArray[i];
                         LL[3 * i + 1] = constr.ThickLowArray[i];
-                        UL[3 * i + 2] = constr.RhoHighArray[i];
-                        LL[3 * i + 2] = constr.RhoLowArray[i];
+                      
+                        if (m_bUseSLD == false)
+                        {
+                            UL[3 * i + 2] = constr.RhoHighArray[i];
+                            LL[3 * i + 2] = constr.RhoLowArray[i];
+                        }
+                        else
+                        {
+                            if (GetSubSLD > 0)
+                            {
+                                UL[3 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
+                                LL[3 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
+                            }
+                            else
+                            {
+                                LL[3 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
+                                UL[3 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
+                            }
+                        }
+                        
                         UL[3 * i + 3] = constr.SigmaHighArray[i];
                         LL[3 * i + 3] = constr.SigmaLowArray[i];
                     }
@@ -1114,7 +1169,7 @@ namespace StochasticModeling
                         reflectivity.Length, reflectivityerrors, covar, covar.Length, info, info.Length, Holdsigma.Checked, false, UI.IterationCount, ParamArray, out size, parampercs, ChiSquareArray, CovarArray, UL, LL, Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
 
                 StochOutputWindow outwin = new StochOutputWindow(ParamArray, size, parameters.Length, ChiSquareArray, CovarArray, true, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text),
-                    Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), ImpNormCB.Checked, m_bUseSLD);
+                    Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
 
                 if (outwin.ShowDialog() != DialogResult.Cancel)
                 {

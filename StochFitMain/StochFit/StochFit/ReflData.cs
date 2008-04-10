@@ -352,7 +352,6 @@ namespace StochasticModeling
         }
         catch
         {
-            MessageBox.Show("Could not add file");
             return false;
         }
        }

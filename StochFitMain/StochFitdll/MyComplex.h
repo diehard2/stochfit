@@ -118,9 +118,7 @@ namespace MyComplexNumber{
 	{
 		//Use the half angle relation to calculate the square root. Prevents buffer
 		//over/under flows. Don't change this code. This problem actually occurs
-		T mag;
-		T theta;
-		T sqrtholder;
+		T mag, theta, sqrtholder;
 
 		if(comp.im != 0)
 		{

@@ -91,10 +91,10 @@ namespace StochasticModeling
         /// <param name="subphase">Substrate SLD</param>
         /// <param name="superphase">Superphase SLD</param>
         /// <param name="UseSLD">True if using SLD instead of ED</param>
-        public Reflmodeling(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase, bool UseSLD)
+        public Reflmodeling(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase)
         {
             InitializeComponent();
-            m_bUseSLD = UseSLD;
+            m_bUseSLD = Properties.Settings.Default.UseSLD;
             //Setup variables
             m_roughness = roughness;
             SubRough.Text = roughness.ToString();
@@ -141,7 +141,7 @@ namespace StochasticModeling
             Holdsigma.Checked = holdsigma;
             //Setup the Graph
             ReflGraphing = new Graphing(string.Empty);
-            ReflGraphing.DivbyFresnel = true;
+            ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
             ReflGraphing.SubSLD = Double.Parse(SubphaseSLD.Text);
             ReflGraphing.SupSLD = Double.Parse(SupSLDTB.Text);
             ReflGraphing.Wavelength = Double.Parse(WavelengthTB.Text);
@@ -152,6 +152,7 @@ namespace StochasticModeling
             RhoGraphing = new Graphing(string.Empty);
             RhoGraphing.SubSLD = double.Parse(subphase);
             RhoGraphing.IsNeutron = m_bUseSLD;
+            RhoGraphing.SetGraphType(false, false);
 
             if(m_bUseSLD == false)
                 RhoGraphing.CreateGraph(EDzedGraphControl1, "Electron Density Profile", "Z", "Normalized Electron Density",
@@ -596,7 +597,7 @@ namespace StochasticModeling
                       Double.Parse(QSpreadTB.Text), NormCorrectCB.Checked);
 
                 outwin = new StochOutputWindow(ParamArray, size, parameters.Length, ChiSquareArray, CovarArray, Holdsigma.Checked, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text),
-                       Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), NormCorrectCB.Checked, m_bUseSLD);
+                       Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), NormCorrectCB.Checked);
 
                 if (outwin.ShowDialog() != DialogResult.Cancel)
                 {
@@ -887,8 +888,7 @@ namespace StochasticModeling
             ReflGraphing.SupSLD = double.Parse(SupSLDTB.Text);
             ReflGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
             ReflGraphing.Wavelength = double.Parse(WavelengthTB.Text);
-            ReflGraphing.DivbyFresnel = DBFCB.Checked;
-            m_bmodelreset = true;
+            ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
             UpdateProfile();
         }
 

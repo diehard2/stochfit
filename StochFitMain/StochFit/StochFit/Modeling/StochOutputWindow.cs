@@ -86,11 +86,10 @@ namespace StochasticModeling.Modeling
         /// <param name="wavelength">The x-ray wavelength used</param>
         /// <param name="QSpread">The percent error in Q used (if applicable)</param>
         /// <param name="Impnorm">True if the fit was performed assuming an imperfect normalization, false otherwise</param>
-        /// <param name="UseSLD">True if using SLD instead of neutrons</param>
-        public StochOutputWindow(double[] FullParameterArray, int ParameterArraysize, int paramsize, double[] FullChisquareArray, double[] FullCovariance, bool OneSigma, int boxes, double SubSLD, double SupSLD, double wavelength, double QSpread, bool Impnorm, bool UseSLD)
+        public StochOutputWindow(double[] FullParameterArray, int ParameterArraysize, int paramsize, double[] FullChisquareArray, double[] FullCovariance, bool OneSigma, int boxes, double SubSLD, double SupSLD, double wavelength, double QSpread, bool Impnorm)
         {
             InitializeComponent();
-            m_bUseSLD = UseSLD;
+            m_bUseSLD = Properties.Settings.Default.UseSLD;
             ParameterArray = new double[ParameterArraysize][];
             CovarArray = new double[ParameterArraysize][];
             RhoArray = new double[ParameterArraysize][];
@@ -135,15 +134,13 @@ namespace StochasticModeling.Modeling
             //Get information for each model
             for (int i = 0; i < ParameterArraysize; i++)
             {
-
                 ModelInfoStringArray[i] = ModelParameterString(ParameterArray[i], CovarArray[i]);
-
             }
      
             //Setup the graphs
 
             ReflGraphing = new Graphing(string.Empty);
-            ReflGraphing.DivbyFresnel = true;
+            ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, true);
             ReflGraphing.SubSLD = SubSLD;
             ReflGraphing.SupSLD = SupSLD;
             ReflGraphing.Wavelength = wavelength;
@@ -155,6 +152,7 @@ namespace StochasticModeling.Modeling
             RhoGraphing = new Graphing(string.Empty);
             RhoGraphing.SubSLD = m_dSubSLD;
             RhoGraphing.IsNeutron = m_bUseSLD;
+            RhoGraphing.SetGraphType(false, false);
 
             if (m_bUseSLD == false)
                 RhoGraphing.CreateGraph(RhoGraph, "Electron Density Profile", "Z", "Normalized Electron Density",

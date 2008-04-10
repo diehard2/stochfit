@@ -552,6 +552,7 @@ namespace StochasticModeling
                 }
             }
             ZGControl.ZoomOutAll(m_cMyPane);
+            Invalidate();
         }
 
         protected void AxisChange()

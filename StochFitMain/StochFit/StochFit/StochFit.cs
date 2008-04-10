@@ -73,6 +73,7 @@ namespace StochasticModeling
         double m_dSTUNGamma = 0.05;
         int m_iSTUNfunc = 0;
         bool m_bSTUNAdaptive = false;
+        bool m_bUpdating = false;
         int m_iSTUNtempiter = 100;
         int m_iSTUNdeciter = 200000;
         double m_dSTUNgammadec = 0.85;
@@ -652,8 +653,14 @@ namespace StochasticModeling
 
             }
 
-            //Lock the section so we don't enter twice
-                lock (this)
+            while (m_bUpdating == true)
+                Thread.Sleep(100);
+
+            if (m_bUpdating == false)
+            {
+                m_bUpdating = true;
+                //Lock the section so we don't enter twice
+                lock (lockobj)
                 {
                     double lowestenergy;
                     double temp;
@@ -699,7 +706,9 @@ namespace StochasticModeling
                     {
                         Canceled();
                     }
+                    m_bUpdating = false;
                 }
+            }
         }
 
         private void UpdateGraphs()

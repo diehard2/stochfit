@@ -83,8 +83,7 @@
 			<Tool 
 				Name="CppCmplrTool"
 				WholeProgramOptimization="0"
-				Optimization="1000"
-				GlobalOptimizations="1"
+				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="0"
 				FavorSizeOrSpeed="1"

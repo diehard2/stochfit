@@ -33,10 +33,16 @@ using System.Security.Permissions;
 
 namespace StochasticModeling.Settings
 {
+    /// <summary>
+    /// This class passes all of the settings to the C++ dll. If a value is added that is not going to be passed
+    /// to the dll, it should be added to the end of the parameter list. If a value is added towards the top, 
+    /// SettingsStruct.h in the C++ dll section will need to be appropriately updated
+    /// </summary>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 8)]
     public class ModelSettings:IDisposable
     {
         #region Variables
+
         public string Directory;
         [XmlIgnoreAttribute] public IntPtr Q;
         [XmlIgnoreAttribute] public IntPtr Refl;
@@ -149,6 +155,7 @@ namespace StochasticModeling.Settings
         public int HighQOffset;
 
         public bool IsNeutron;
+        public string Version = "0.0.0";
         [XmlIgnoreAttribute] private bool disposed = false;
 
     #endregion
@@ -256,6 +263,18 @@ namespace StochasticModeling.Settings
                     XmlSerializer xmls = new XmlSerializer(typeof(ModelSettings));
                     Settings = (ModelSettings)xmls.Deserialize(settings);
                     settings.Close();
+
+                    Version v1 = new Version(Settings.Version), v2 = new Version(Properties.Settings.Default.ResumeBreakingVersion);
+                    if (v1 < v2) 
+                    {
+                        if(v1.Major != 0)
+                            MessageBox.Show(String.Format("The resume file was built with StochFit {0}, and cannot be reliably loaded in this version. Please see the help file.",Settings.Version));  
+                        else
+                            MessageBox.Show(String.Format("The resume file was built with an older version, and cannot be reliably loaded in this version. Please see the help file.", Settings.Version));  
+
+                        return false;
+                    }
+
                     return true;
                 }
                 catch (Exception ex)

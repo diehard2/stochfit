@@ -43,7 +43,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 }
 
 //The global stochfit class pointer
-StochFit* stochfit;
+StochFit* stochfit = NULL;
 
 extern "C" STOCHFIT_API void Init(ReflSettings* initstruct)
 {

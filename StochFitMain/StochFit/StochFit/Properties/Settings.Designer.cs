@@ -46,5 +46,14 @@ namespace StochasticModeling.Properties {
                 this["ForceRQ4"] = value;
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1.6.1")]
+        public string ResumeBreakingVersion {
+            get {
+                return ((string)(this["ResumeBreakingVersion"]));
+            }
+        }
     }
 }

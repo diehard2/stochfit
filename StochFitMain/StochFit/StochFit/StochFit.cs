@@ -192,9 +192,13 @@ namespace StochasticModeling
                     {
                         if (MessageBox.Show("Do you want to load the previous run?", "Resume?", MessageBoxButtons.YesNo) == DialogResult.Yes)
                         {
-                            LoadSettings();
                             rhographobject.Clear();
                             reflgraphobject.Clear();
+
+                            if (LoadSettings() == false)
+                                return;
+
+                           
                             string tempfile = ReflData.Instance.GetWorkingDirectory + "\\rho.dat";
 
                             if (File.Exists(tempfile))
@@ -417,6 +421,7 @@ namespace StochasticModeling
         {
             MySettings PrevSettings = new MySettings();
 
+            PrevSettings.Settings.Version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             PrevSettings.Settings.SurflayerSLD = double.Parse(Rholipid.Text);
             PrevSettings.Settings.Surflayerlength = double.Parse(layerlength.Text);
             PrevSettings.Settings.SurflayerAbs = double.Parse(SurfAbs.Text);
@@ -511,7 +516,7 @@ namespace StochasticModeling
                 m_iSTUNtempiter = PrevSettings.Settings.STUNtempiter;
                 ParamTempTB.Text = PrevSettings.Settings.ParamTemp.ToString();
                 ReportGenerator.Instance.UseSLD = UseSLDToolStripMenuItem.Checked = UseSLDToolStripMenuItem.Checked = PrevSettings.Settings.IsNeutron;
-
+                
                 return true;
             }
             else

@@ -922,7 +922,7 @@ namespace StochasticModeling
 
         private void manualToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("The manual is not included in this distribution");
+            Process.Start("http://stochfit.sourceforge.net/forum/");
         }
         #endregion
 
@@ -1108,6 +1108,11 @@ namespace StochasticModeling
             reflgraphobject.SetBounds();
         } 
         #endregion
+
+        private void toolStripMenuItem1_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+
+        }
 
         
     }

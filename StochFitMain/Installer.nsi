@@ -2,6 +2,7 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "StochFit"
+!define LOWER_PRODUCT_NAME "stochfit"
 !define PRODUCT_VERSION "1.6.1"
 !define PRODUCT_PUBLISHER "The University of Chicago"
 !define PRODUCT_WEB_SITE "https://sourceforge.net/projects/stochfit"
@@ -17,7 +18,7 @@
 
 ; Set the compression to lzma (current best)
 SetCompressor /SOLID lzma
-
+RequestExecutionLevel admin
 ; MUI 1.67 compatible ------
 !include "MUI2.nsh"
 !include nsProcess.nsh
@@ -67,7 +68,7 @@ SetCompressor /SOLID lzma
 
 ; Set Details
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
-OutFile ".\bin\Installer\${PRODUCT_NAME} ${PRODUCT_VERSION}.exe"
+OutFile ".\bin\Installer\${LOWER_PRODUCT_NAME}${PRODUCT_VERSION}.exe"
 ;InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 InstallDir "$PROGRAMFILES\StochFit\${PRODUCT_VERSION}"
 ShowInstDetails show
@@ -144,24 +145,6 @@ Section "MainSection" SEC01
      SetDetailsView show
   ${EndIf}
 
-; Install the VCRedist SP1 - checking for this is difficult. Easier to just install each time
-  SetDetailsView hide
-     inetc::get /caption "Downloading Necessary Component VCRedist SP1" /canceltext "Cancel" "http://www.microsoft.com/downloads/info.aspx?na=90&p=&SrcDisplayLang=en&SrcCategoryId=&SrcFamilyId=200b2fd9-ae1a-4a14-984d-389c36f85647&u=http%3a%2f%2fdownload.microsoft.com%2fdownload%2fe%2f1%2fc%2fe1c773de-73ba-494a-a5ba-f24906ecf088%2fvcredist_x86.exe" "$INSTDIR\VCredist.exe" /end
-     Pop $1
-
-     ${If} $1 != "OK"
-           Delete "$INSTDIR\VCredist.exe"
-     ${EndIf}
-     Push $0
-
-     Push $R0
-
-     StrCpy $R0 '/q:a /c:"VCREDI~3.EXE /q:a /c:""msiexec /i vcredist.msi /qn"" "'
-     ExecWait '"$INSTDIR\VCredist.exe" $R0'
-     Delete "$INSTDIR\VCredist.exe"
-  SetDetailsView show
-; End Install VCRedist SP1
-
   File "Bin\Release\genf.ico"
   File "Bin\Release\itextsharp.dll"
   File "Bin\Release\LevmarDLL.dll"
@@ -170,9 +153,15 @@ Section "MainSection" SEC01
   File "Bin\Release\libmmd.dll"
   File "Bin\Release\MRG.Controls.UI.dll"
   File "Bin\Release\StochFit.exe"
+  File "Bin\dlls\vcredist_x86.exe"
+  
+   StrCpy $R0 '/q:a /c:"VCREDI~3.EXE /q:a /c:""msiexec /i vcredist.msi /qn"" "'
+   ExecWait '"$INSTDIR\vcredist_x86.exe" $R0 '
+   Delete "$INSTDIR\VCredist.exe"
+
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME} ${PRODUCT_VERSION}"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME} ${PRODUCT_VERSION}\StochFit.lnk" "$INSTDIR\StochFit.exe"
-  CreateShortCut "$DESKTOP\StochFit.lnk" "$INSTDIR\StochFit.exe"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME} ${PRODUCT_VERSION}\StochFit ${PRODUCT_VERSION}.lnk" "$INSTDIR\StochFit.exe"
+  CreateShortCut "$DESKTOP\StochFit ${PRODUCT_VERSION}.lnk" "$INSTDIR\StochFit.exe"
   File "Bin\Release\StochFitDll.dll"
   File "Bin\Release\ZedGraph.dll"
   
@@ -228,11 +217,10 @@ Section Uninstall
   Delete "$INSTDIR\LevmarDLL.dll"
   Delete "$INSTDIR\itextsharp.dll"
   Delete "$INSTDIR\genf.ico"
-
   Delete "$SMPROGRAMS\${PRODUCT_NAME} ${PRODUCT_VERSION}\Uninstall.lnk"
-  Delete "$DESKTOP\StochFit.lnk"
-  Delete "$SMPROGRAMS\${PRODUCT_NAME} ${PRODUCT_VERSION}\StochFit.lnk"
-
+  Delete "$DESKTOP\StochFit ${PRODUCT_VERSION}.lnk"
+  Delete "$SMPROGRAMS\${PRODUCT_NAME} ${PRODUCT_VERSION}\StochFit ${PRODUCT_VERSION}.lnk"
+  Delete "$SMPROGRAMS\${PRODUCT_NAME} ${PRODUCT_VERSION}\Manual.lnk"
   RMDir "$SMPROGRAMS\${PRODUCT_NAME} ${PRODUCT_VERSION}"
   RMDir "$INSTDIR"
 

@@ -101,7 +101,7 @@ namespace StochasticModeling
 
             //Setup variables
             m_roughness = roughness;
-            m_bUseSLD = Properties.Settings.Default.UseSLD;
+            m_bUseSLD = Properties.Settings.Default.UseSLD | Properties.Settings.Default.UseSLDSingleSession;
 
             if (m_bUseSLD)
             {
@@ -378,6 +378,10 @@ namespace StochasticModeling
 
         private void MajorVariable_Changed(object sender, EventArgs e)
         {
+            ReflGraphing.SupSLD = double.Parse(SupSLDTB.Text);
+            ReflGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
+            ReflGraphing.Wavelength = double.Parse(WavelengthTB.Text);
+            ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
             m_bmodelreset = true;
             Variable_Changed(sender, e);
         }

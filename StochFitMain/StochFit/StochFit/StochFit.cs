@@ -198,7 +198,7 @@ namespace StochasticModeling
                             if (LoadSettings() == false)
                                 return;
 
-                           
+                                           
                             string tempfile = ReflData.Instance.GetWorkingDirectory + "\\rho.dat";
 
                             if (File.Exists(tempfile))
@@ -229,6 +229,8 @@ namespace StochasticModeling
                                 reflgraphobject.SupSLD = double.Parse(SupSLDTB.Text);
                                 reflgraphobject.Wavelength = double.Parse(wavelength.Text);
                                 reflgraphobject.SetGraphType(forceRQ4GraphingToolStripMenuItem.Checked, fresnelcb.Checked);
+                                reflgraphobject.GetLowQOffset = int.Parse(critedgeoffTB.Text);
+                                reflgraphobject.GetHighQOffset = ReflData.Instance.GetNumberDataPoints - int.Parse(HQoffsetTB.Text);
                                 //Load the data file to the graph
                                 reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
                                 reflgraphobject.LoadFiletoGraph(tempfile.ToString(), modelreflname, "Model Independent Reflectivity", Color.Tomato, SymbolType.Square, 2, true);
@@ -515,7 +517,7 @@ namespace StochasticModeling
                 m_dSTUNgammadec = PrevSettings.Settings.STUNgammadec;
                 m_iSTUNtempiter = PrevSettings.Settings.STUNtempiter;
                 ParamTempTB.Text = PrevSettings.Settings.ParamTemp.ToString();
-                ReportGenerator.Instance.UseSLD = UseSLDToolStripMenuItem.Checked = UseSLDToolStripMenuItem.Checked = PrevSettings.Settings.IsNeutron;
+                Properties.Settings.Default.UseSLDSingleSession = ReportGenerator.Instance.UseSLD = UseSLDToolStripMenuItem.Checked = UseSLDToolStripMenuItem.Checked = PrevSettings.Settings.IsNeutron;
                 
                 return true;
             }

@@ -89,7 +89,7 @@ namespace StochasticModeling.Modeling
         public StochOutputWindow(double[] FullParameterArray, int ParameterArraysize, int paramsize, double[] FullChisquareArray, double[] FullCovariance, bool OneSigma, int boxes, double SubSLD, double SupSLD, double wavelength, double QSpread, bool Impnorm)
         {
             InitializeComponent();
-            m_bUseSLD = Properties.Settings.Default.UseSLD;
+            m_bUseSLD = Properties.Settings.Default.UseSLD | Properties.Settings.Default.UseSLDSingleSession; 
             ParameterArray = new double[ParameterArraysize][];
             CovarArray = new double[ParameterArraysize][];
             RhoArray = new double[ParameterArraysize][];

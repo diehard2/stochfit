@@ -143,7 +143,7 @@ void StochFit::Initialize(double* Q, double* Reflect, double* ReflError, double*
 		params->SetMutatableParameter(i,1.0);
 
 	for(int i = actuallipidlength+1; i < m_iparratlayers; i++)
-		params->SetMutatableParameter(i,m_dsubSLD/m_dfilmSLD);	
+		params->SetMutatableParameter(i,1.0);	
 		
 	params->SetSubphase(m_dsubSLD/m_dfilmSLD);
 

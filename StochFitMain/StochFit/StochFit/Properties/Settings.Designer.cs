@@ -55,5 +55,17 @@ namespace StochasticModeling.Properties {
                 return ((string)(this["ResumeBreakingVersion"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool UseSLDSingleSession {
+            get {
+                return ((bool)(this["UseSLDSingleSession"]));
+            }
+            set {
+                this["UseSLDSingleSession"] = value;
+            }
+        }
     }
 }

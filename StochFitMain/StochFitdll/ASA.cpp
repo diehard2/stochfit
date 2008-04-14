@@ -54,7 +54,7 @@ bool ASA::Iteration(ParamVector* params)
 	if(m_bfailed == false)
 	{
 		asa_iteration();
-		bool success = params->CopyArraytoGene(current_generated_state.parameter);
+		bool success = params->CopyArraytoGene(best_generated_state.parameter);
 		if(success == false)
 			MessageBox(NULL,L"4",NULL,NULL);
 	
@@ -140,7 +140,7 @@ int ASA::initialize_parameters(double *cost_parameters, double *parameter_lower_
 		Options.Include_Integer_Parameters = FALSE;
 		Options.User_Initial_Parameters = FALSE;
 		Options.Sequential_Parameters = -1;
-		Options.Initial_Parameter_Temperature = .05;
+		Options.Initial_Parameter_Temperature = .02;
 
 		Options.Acceptance_Frequency_Modulus = 100;
 		Options.Generated_Frequency_Modulus = 10000;
@@ -157,7 +157,7 @@ int ASA::initialize_parameters(double *cost_parameters, double *parameter_lower_
 		//asatest.Options.Fit_Local = 1;
 		//asatest.Options.Iter_Max = 500;
 		 
-		user_generating_function = false;
+		user_generating_function = true;
 		user_initial_parameters_temps = true;
 		user_initial_cost_temp = false;
 

@@ -94,7 +94,7 @@ namespace StochasticModeling
         public Reflmodeling(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase)
         {
             InitializeComponent();
-            m_bUseSLD = Properties.Settings.Default.UseSLD;
+            m_bUseSLD = Properties.Settings.Default.UseSLD | Properties.Settings.Default.UseSLDSingleSession; 
             //Setup variables
             m_roughness = roughness;
             SubRough.Text = roughness.ToString();
@@ -894,6 +894,10 @@ namespace StochasticModeling
 
         private void MajorVariable_Changed(object sender, EventArgs e)
         {
+            ReflGraphing.SupSLD = double.Parse(SupSLDTB.Text);
+            ReflGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
+            ReflGraphing.Wavelength = double.Parse(WavelengthTB.Text);
+            ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
             m_bmodelreset = true;
             Variable_Changed(sender, e);
         }

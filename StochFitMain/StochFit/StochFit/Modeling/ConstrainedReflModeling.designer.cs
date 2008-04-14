@@ -988,7 +988,7 @@ namespace StochasticModeling
             this.DBFCB.TabIndex = 5;
             this.DBFCB.Text = "Divide Reflectivity by Fresnel";
             this.DBFCB.UseVisualStyleBackColor = true;
-            this.DBFCB.CheckedChanged += new System.EventHandler(this.Variable_Changed);
+            this.DBFCB.CheckedChanged += new System.EventHandler(this.MajorVariable_Changed);
             // 
             // label23
             // 

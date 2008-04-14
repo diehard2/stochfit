@@ -531,6 +531,7 @@ bool CReflCalc::CheckDensity()
 {
 	int reflpoints = nl;
 	
+
 	for(int i = 0; i < reflpoints; i++)
 	{
 		if(nk[i].re < 0)
@@ -553,7 +554,15 @@ double CReflCalc::objective(ParamVector * g)
 	if(m_bXRonly)
 	{
 		if(CheckDensity() == false)
+		{
+			if(m_bUseSurfAbs == false)
+				mytransparentrf(sinthetai, sinsquaredthetai, m_idatapoints, reflpt);
+			else
+				myrf(sinthetai, sinsquaredthetai, m_idatapoints, reflpt);
+
 			return -1;
+		}
+		
 	}
 
 	if(m_dQSpread < 0.005)

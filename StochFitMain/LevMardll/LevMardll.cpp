@@ -26,6 +26,7 @@
 #include "FastReflCalc.h"
 #include "RhoCalc.h"
 #include "ParameterContainer.h"
+#include "randomc.h"
 
 
 BOOL APIENTRY DllMain( HANDLE hModule, 
@@ -287,7 +288,7 @@ extern "C" LEVMARDLL_API double ConstrainedFastReflfit(LPCWSTR directory, int bo
 		//Calculate the standard deviations in the parameters
 		for(int i = 0; i< paramsize;i++)
 		{
-			covariance[i] = sqrt(covar[i*(paramsize+1)]);
+			covariance[i] = sqrt(fabs(covar[i*(paramsize+1)]));
 		}
 		
 		//Make output files
@@ -352,7 +353,7 @@ extern "C" LEVMARDLL_API void StochFit(int boxes, double SLD, double SupSLD, dou
 	double bestchisquare = 0;
 	for(int i = 0; i < reflectivitysize; i++)
 	{
-		bestchisquare += log10(Refl.reflpt[i]/Reflectivity[i])*log10(Refl.reflpt[i]/Reflectivity[i])/fabs(log10(Errors[i]));
+		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]));
 	}
 
 	double* tempcovararray = new double[paramsize*paramsize];
@@ -373,7 +374,8 @@ extern "C" LEVMARDLL_API void StochFit(int boxes, double SLD, double SupSLD, dou
 	locRefl.MakeTheta(QRange, QError, QSize);
 
 	//Initialize random number generator
-	srand(time_seed());
+	int seed = time_seed();
+	CRandomMersenne randgen(time_seed()+omp_get_thread_num());
 
 	ParameterContainer localanswer;
 	double locparameters[20];
@@ -391,29 +393,29 @@ extern "C" LEVMARDLL_API void StochFit(int boxes, double SLD, double SupSLD, dou
 	work=(double*)malloc((LM_DIF_WORKSZ(paramsize, QSize)+paramsize*QSize)*sizeof(double));
 	covar=work+LM_DIF_WORKSZ(paramsize, QSize);
 
+
 	#pragma omp for schedule(runtime)
 	for(int i = 0; i<iterations;i++) 
 	{
-		
-		//Permute the answer
-
-		locparameters[0] = random(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
+		locparameters[0] = randgen.IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
 		for(int k = 0; k<boxes; k++)
 		{
 			if(onesigma == TRUE)
 			{
-				locparameters[2*k+1] = random(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
-				locparameters[2*k+2] = random(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
+				locparameters[2*k+1] = randgen.IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
+				locparameters[2*k+2] = randgen.IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
 			}
 			else
 			{
-				locparameters[3*k+1] = random(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
-				locparameters[3*k+2] = random(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
-				locparameters[3*k+3] = random(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
+				locparameters[3*k+1] = randgen.IRandom(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
+				locparameters[3*k+2] = randgen.IRandom(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
+				locparameters[3*k+3] = randgen.IRandom(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
 			}
 		}
 
 		locparameters[paramsize-1] = origguess[paramsize-1];
+		
+		
 		
 		dlevmar_dif(locRefl.objective, locparameters, xvec,  paramsize,QSize, 500, opts, locinfo, work,covar,(void*)(&locRefl)); 
 		
@@ -533,7 +535,7 @@ extern "C" LEVMARDLL_API void ConstrainedStochFit(int boxes, double SLD, double 
 	memcpy(origguess, parameters, sizeof(double)*paramsize);
 
 	//Starting solution
-	dlevmar_bc_dif(Refl.objective, parameters, xvec,  paramsize,QSize, LL, UL,100,  opts, info, NULL,NULL,(void*)(&Refl)); 
+	//dlevmar_bc_dif(Refl.objective, parameters, xvec,  paramsize,QSize, LL, UL,100,  opts, info, NULL,NULL,(void*)(&Refl)); 
 	
 	if(onesigma == true)
 		Refl.mkdensityonesigma(parameters,paramsize);
@@ -545,7 +547,7 @@ extern "C" LEVMARDLL_API void ConstrainedStochFit(int boxes, double SLD, double 
 	double bestchisquare = 0;
 	for(int i = 0; i < reflectivitysize; i++)
 	{
-		bestchisquare += log(Refl.reflpt[i]/Reflectivity[i])*log(Refl.reflpt[i]/Reflectivity[i])/fabs(log(Errors[i]));
+		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]));
 	}
 
 	double* tempcovararray = new double[paramsize*paramsize];
@@ -568,7 +570,8 @@ extern "C" LEVMARDLL_API void ConstrainedStochFit(int boxes, double SLD, double 
 	
 
 	//Initialize random number generator
-	srand(time_seed());
+	int seed = time_seed();
+	CRandomMersenne randgen(time_seed()+omp_get_thread_num());
 
 	ParameterContainer localanswer;
 	double locparameters[20];
@@ -592,19 +595,19 @@ extern "C" LEVMARDLL_API void ConstrainedStochFit(int boxes, double SLD, double 
 	{
 		
 		//Permute the answer
-		locparameters[0] = random(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
+		locparameters[0] = randgen.IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
 		for(int k = 0; k<boxes; k++)
 		{
 			if(onesigma == TRUE)
 			{
-				locparameters[2*k+1] = random(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
-				locparameters[2*k+2] = random(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
+				locparameters[2*k+1] = randgen.IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
+				locparameters[2*k+2] = randgen.IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
 			}
 			else
 			{
-				locparameters[3*k+1] = random(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
-				locparameters[3*k+2] = random(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
-				locparameters[3*k+3] = random(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
+				locparameters[3*k+1] = randgen.IRandom(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
+				locparameters[3*k+2] = randgen.IRandom(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
+				locparameters[3*k+3] = randgen.IRandom(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
 			}
 		}
 		locparameters[paramsize-1] = origguess[paramsize-1];

@@ -344,6 +344,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\mersenne.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\LevMar\misc.c"
 				>
 				<FileConfiguration
@@ -422,6 +426,10 @@
 			</File>
 			<File
 				RelativePath=".\ParameterContainer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\randomc.h"
 				>
 			</File>
 			<File

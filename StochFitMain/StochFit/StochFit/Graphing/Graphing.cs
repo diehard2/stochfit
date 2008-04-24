@@ -274,7 +274,7 @@ namespace StochasticModeling
                 RealReflData = new PointPairList(ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
 
                 for (int i = 0; i < ReflData.Instance.GetNumberDataPoints; i++)
-                    RealReflData[i].Z = 1.0;
+                    RealReflData[i].Z = 0.0;
 
                 RealReflErrors = new PointPairList();
 

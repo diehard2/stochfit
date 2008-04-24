@@ -165,7 +165,14 @@ void FastReflcalc::MakeTheta(double* QRange, double* QError, int QRangesize)
   
   for(int i=0; i<n; ++i)
   {
-	 x[i] = (log(reflinst->reflpt[i])-log(reflinst->Realrefl[i]))/fabs(log(reflinst->Realreflerrors[i]));
+	 x[i] = (log(reflinst->reflpt[i])-log(reflinst->Realrefl[i]));
+
+	 //Sometimes we get NAN. We make that solution unpalatable until I can find a workaround
+	 if(x[i] != x[i])
+	 {
+		 x[i] = 1e6;
+	 }
+	
   }
 
 }
@@ -196,13 +203,19 @@ void FastReflcalc::mkdensity(double* p, int plength)
 	//Move our parameters into individual arrays so they're easier to deal with
     double rhofactor = 1e-6*lambda*lambda/(2.*M_PI);
 	
+	double sigfake[20];
 	RhoArray[0] = m_dsupsld*rhofactor;
 	LengthArray[0] = 0.0;
 	for(int i = 1; i< boxnumber+1;i++)
 	{
 		LengthArray[i] = p[3*(i-1)+1];
 		RhoArray[i] = p[3*(i-1)+2]*subphaseSLD*rhofactor;
-		SigmaArray[i-1] = p[3*(i-1)+3];
+
+		if(fabs(p[3*(i-1)+3]) < 1e-8)
+			SigmaArray[i-1] = 1e-8;
+		else
+			SigmaArray[i-1] = p[3*(i-1)+3];
+		
 	}
 	
 	RhoArray[boxnumber+1] = subphaseSLD*rhofactor;
@@ -217,7 +230,7 @@ void FastReflcalc::mytransmultsigrf(double* sintheta, double* sinsquaredtheta, i
 	//Generate the Parratt reflectivity layers
 	int nl = boxnumber+2;
 	double k0 = 2.0*M_PI/lambda;
-	MyComplex<double> imaginary(0.0,1.0);
+	MyComplex imaginary(0.0,1.0);
 	int offset = 0;
 
 	double suprefindex = 1-RhoArray[0];
@@ -247,29 +260,29 @@ void FastReflcalc::mytransmultsigrf(double* sintheta, double* sinsquaredtheta, i
 		}
 	}
 	
-	MyComplex<double> lengthmultiplier = -2.0 * MyComplex<double>(0.0,1.0) ;
-	MyComplex<double> kk[20];
+	MyComplex  lengthmultiplier = -2.0 * MyComplex (0.0,1.0) ;
+	MyComplex  kk[20];
 	double dkk[20];
-	MyComplex<double> ak[20];
+	MyComplex  ak[20];
 	double drj[20];
-	MyComplex<double> rj[20];
-	MyComplex<double> Rj[20];
+	MyComplex  rj[20];
+	MyComplex  Rj[20];
 	double dQj[20];
-	MyComplex<double> Qj[20];
+	MyComplex  Qj[20];
 
 	//Boundary conditions
 	Rj[nl-1] = 0.0;
 	ak[0] = 1.0;
 	ak[nl-1] = 1.0;
 
-	MyComplex<double> doublenk[20];
-	MyComplex<double> lengthcalc[20];
+	MyComplex  doublenk[20];
+	MyComplex  lengthcalc[20];
 	
 
 	//Move some calcs out of the loop
 	for(int i = 0; i<nl;i++)
 	{
-		doublenk[i]=-2.0*MyComplex<double>(RhoArray[i],0);
+		doublenk[i]=-2.0*MyComplex (RhoArray[i],0);
 		lengthcalc[i] = lengthmultiplier*LengthArray[i];
 		sigmacalc[i] = -2.0*SigmaArray[i]*SigmaArray[i];
 	}
@@ -327,6 +340,7 @@ void FastReflcalc::mytransmultsigrf(double* sintheta, double* sinsquaredtheta, i
 		for(int i = 1; i<nl;i++)
 		{
 			dkk[i] = k0 *sqrt(suprefindexsquared * sinsquaredtheta[l]+ doublenk[i].re - doublenk[0].re);
+			
 		}	
 
 		//Make the aj
@@ -361,6 +375,7 @@ void FastReflcalc::mytransmultsigrf(double* sintheta, double* sinsquaredtheta, i
 
 		refl[l] = compabs(Rj[0]);
 		refl[l] *= refl[l];
+
 	}
 }   
 

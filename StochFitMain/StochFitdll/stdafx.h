@@ -59,4 +59,4 @@ using namespace std;
  
 //Use the error function from libmmd.lib (Intel math library), can't use mathimf.h due to
 //compiler bug - hopefully this will be fixed...
-extern "C" double __declspec(dllimport) __cdecl erf(double __x);
+extern "C" float __declspec(dllimport) __cdecl erff(float __x);

@@ -81,6 +81,8 @@ namespace StochasticModeling
         double[] BoxElectronDensityArray;
         Thread Stochthread;
 
+        public delegate void UpdateGUI(bool onoff);
+        public delegate void UpdateProfilefromThread();
         #endregion
 
         /// <summary>
@@ -101,7 +103,7 @@ namespace StochasticModeling
 
             //Setup variables
             m_roughness = roughness;
-            m_bUseSLD = Properties.Settings.Default.UseSLD | Properties.Settings.Default.UseSLDSingleSession;
+            m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
 
             if (m_bUseSLD)
             {
@@ -219,6 +221,7 @@ namespace StochasticModeling
 
             //Setup the callback if the graph updates the bounds
             ReflGraphing.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
+            BackupArrays();
         }
 
         void MakeArrays()
@@ -284,7 +287,7 @@ namespace StochasticModeling
         {
             //Fill Rho array
             m_bvalidfit = false;
-            BackupArrays();
+            
 
             if (initialized == false)
                 return;
@@ -367,23 +370,27 @@ namespace StochasticModeling
         //Update our variables after validation
         private void Variable_Changed(object sender, EventArgs e)
         {
-            ReflGraphing.SupSLD = double.Parse(SupSLDTB.Text);
-            ReflGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
-            ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
-            ReflGraphing.Wavelength = double.Parse(WavelengthTB.Text);
-            ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
+            try
+            {
+                ReflGraphing.SupSLD = double.Parse(SupSLDTB.Text);
+                ReflGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
+                ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
+                ReflGraphing.Wavelength = double.Parse(WavelengthTB.Text);
+                ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
 
-            UpdateProfile();
+                UpdateProfile();
+            }
+            catch { }
         }
 
         private void MajorVariable_Changed(object sender, EventArgs e)
         {
-            ReflGraphing.SupSLD = double.Parse(SupSLDTB.Text);
-            ReflGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
-            ReflGraphing.Wavelength = double.Parse(WavelengthTB.Text);
-            ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
-            m_bmodelreset = true;
-            Variable_Changed(sender, e);
+            try
+            {
+                m_bmodelreset = true;
+                Variable_Changed(sender, e);
+            }
+            catch { }
         }
 
         private void CheckZLength()
@@ -646,7 +653,7 @@ namespace StochasticModeling
                         LL[3 * i + 3] = SigmaArray[i];
                     }
                 }
-                parameters[1 + boxes * 2] = Double.Parse(NormCorrectTB.Text);
+                parameters[1 + boxes *3] = Double.Parse(NormCorrectTB.Text);
 
             }
 
@@ -698,7 +705,7 @@ namespace StochasticModeling
                     if (m_bUseSLD == false)
                         BoxRhoArray[i].Text = parameters[3 * i + 2].ToString();
                     else
-                        BoxRhoArray[i].Text = (string)(parameters[3 * i + 2] * double.Parse(SupSLDTB.Text)).ToString();
+                        BoxRhoArray[i].Text = (string)(parameters[3 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
 
                     BoxSigmaArray[i].Text = parameters[3 * i + 3].ToString();
                 }
@@ -1172,7 +1179,7 @@ namespace StochasticModeling
                 ConstrainedStochFit(boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text), parameters, parameters.Length, qrange, qerrors, qrange.Length, reflectivity,
                         reflectivity.Length, reflectivityerrors, covar, covar.Length, info, info.Length, Holdsigma.Checked, false, UI.IterationCount, ParamArray, out size, parampercs, ChiSquareArray, CovarArray, UL, LL, Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
 
-                StochOutputWindow outwin = new StochOutputWindow(ParamArray, size, parameters.Length, ChiSquareArray, CovarArray, true, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text),
+                StochOutputWindow outwin = new StochOutputWindow(ParamArray, size, parameters.Length, ChiSquareArray, CovarArray, Holdsigma.Checked, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text),
                     Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
 
                 if (outwin.ShowDialog() != DialogResult.Cancel)
@@ -1224,7 +1231,7 @@ namespace StochasticModeling
                             if(m_bUseSLD == false)
                                 BoxRhoArray[i].Text = parameters[3 * i + 2].ToString();
                             else
-                                BoxRhoArray[i].Text = (string)(parameters[3 * i + 2] * double.Parse(SupSLDTB.Text)).ToString();
+                                BoxRhoArray[i].Text = (string)(parameters[3 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
 
                             BoxSigmaArray[i].Text = parameters[3 * i + 3].ToString();
                         }
@@ -1232,11 +1239,11 @@ namespace StochasticModeling
                     }
 
                
-                UpdateProfile();
+                this.Invoke(new UpdateProfilefromThread(this.UpdateProfile));
                 LevenbergFit_Click(null, null);
             }
             //Restore window
-            DisablePanel(false);
+            this.Invoke(new UpdateGUI(this.DisablePanel), new object[] { false });
         }
 
 

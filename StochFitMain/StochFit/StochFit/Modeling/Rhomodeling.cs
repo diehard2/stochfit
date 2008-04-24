@@ -87,8 +87,8 @@ namespace StochasticModeling
         public Rhomodeling(double[] Z, double[] ERho, double roughness, string leftoffset, string subsld, string supsld)
         {
             InitializeComponent();
-            m_bUseSLD = Properties.Settings.Default.UseSLD | Properties.Settings.Default.UseSLDSingleSession;
-
+            m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
+          
             this.Text = "Profile Modeling";
 
             //Setup variables

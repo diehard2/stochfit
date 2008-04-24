@@ -107,16 +107,16 @@ void CReflCalc::init(int numberofdatapoints, double xraylambda,double d0, BOOL u
 	omp_set_num_threads(m_iuseableprocessors);
 
 	//Arrays for the electron density and twice the electron density
-    nk = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl,64);
-    doublenk = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl,64);
+    nk = (MyComplex*)_mm_malloc(sizeof(MyComplex)*nl,16);
+    doublenk = (MyComplex*)_mm_malloc(sizeof(MyComplex)*nl,16);
 
 	//Create the scratch arrays for the reflectivity calculation
-	m_ckk = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl*m_iuseableprocessors,64);
-	m_dkk = (double*)_mm_malloc(sizeof(double)*nl*m_iuseableprocessors,64);
-	m_cak = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl*m_iuseableprocessors,64);
-	m_crj = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl*m_iuseableprocessors,64);
-	m_drj = (double*)_mm_malloc(sizeof(double)*nl*m_iuseableprocessors,64);
-	m_cRj = (MyComplex<double>*)_mm_malloc(sizeof(MyComplex<double>)*nl*m_iuseableprocessors,64);
+	m_ckk = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
+	m_dkk = (float*)_mm_malloc(sizeof(float)*nl*m_iuseableprocessors,16);
+	m_cak = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
+	m_crj = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
+	m_drj = (float*)_mm_malloc(sizeof(float)*nl*m_iuseableprocessors,16);
+	m_cRj = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
 
 	//Create scratch arrays for the electron density calculation
 	distarray = (float*)_mm_malloc((parratlayers+2)*sizeof(float),64);
@@ -139,20 +139,20 @@ void CReflCalc::SetupRef(double* Q, double* Refl, double* ReflError, double* QEr
 {
 	//Now create our xi,yi,dyi, and thetai
 	m_idatapoints = PointCount;
-	xi = (double*)_mm_malloc(PointCount*sizeof(double),64);
-	yi = (double*)_mm_malloc(PointCount*sizeof(double),64);
+	xi = (float*)_mm_malloc(PointCount*sizeof(float),64);
+	yi = (float*)_mm_malloc(PointCount*sizeof(float),64);
 	
 	if(QError != NULL)
-		exi = (double*)_mm_malloc(PointCount*sizeof(double),64);
+		exi = (float*)_mm_malloc(PointCount*sizeof(float),64);
 	
-	eyi = (double*)_mm_malloc(PointCount*sizeof(double),64);
+	eyi = (float*)_mm_malloc(PointCount*sizeof(float),64);
 
-	sinthetai = (double*)_mm_malloc(PointCount*sizeof(double),64);
-	sinsquaredthetai = (double*)_mm_malloc(PointCount*sizeof(double),64);
-	qspreadsinthetai = (double*)_mm_malloc(PointCount*13*sizeof(double),64);
-	qspreadsinsquaredthetai = (double*)_mm_malloc(PointCount*13*sizeof(double),64);
-	reflpt = (double*)_mm_malloc(PointCount*sizeof(double),64);
-	qspreadreflpt = (double*)_mm_malloc(PointCount*13*sizeof(double),64);
+	sinthetai = (float*)_mm_malloc(PointCount*sizeof(float),64);
+	sinsquaredthetai = (float*)_mm_malloc(PointCount*sizeof(float),64);
+	qspreadsinthetai = (float*)_mm_malloc(PointCount*13*sizeof(float),64);
+	qspreadsinsquaredthetai = (float*)_mm_malloc(PointCount*13*sizeof(float),64);
+	reflpt = (float*)_mm_malloc(PointCount*sizeof(float),64);
+	qspreadreflpt = (float*)_mm_malloc(PointCount*13*sizeof(float),64);
 
 	//and fill them up
 	for(int i = 0; i< m_idatapoints; i++)
@@ -222,9 +222,9 @@ void CReflCalc::SetupRef(double* Q, double* Refl, double* ReflError, double* QEr
     double dx=(x1-x0)/150.0;
     x1=1.1*x1-0.1*x0;
 	
-	tsinthetai = (double*)_mm_malloc(3000*sizeof(double),64);
-	dataout = (double*)_mm_malloc(3000*sizeof(double),64);
-	qarray = (double*)_mm_malloc(3000*sizeof(double),64);
+	tsinthetai = (float*)_mm_malloc(3000*sizeof(float),64);
+	dataout = (float*)_mm_malloc(3000*sizeof(float),64);
+	qarray = (float*)_mm_malloc(3000*sizeof(float),64);
 	tarraysize = 0;
 
 	int j=0;
@@ -270,7 +270,7 @@ void CReflCalc::SetupRef(double* Q, double* Refl, double* ReflError, double* QEr
 	}
 
 	//Calculate the theta's we'll use to make our plotting reflectivity
-	tsinsquaredthetai = (double*)_mm_malloc(tarraysize*sizeof(double),64);
+	tsinsquaredthetai = (float*)_mm_malloc(tarraysize*sizeof(float),64);
 
 	for(int l=0; l<tarraysize; l++)
 	{
@@ -283,10 +283,10 @@ void CReflCalc::SetupRef(double* Q, double* Refl, double* ReflError, double* QEr
 	}
 	
 	//Setup the objective array
-	objarray = (double*)_mm_malloc(m_idatapoints*sizeof(double), 64);
+	objarray = (float*)_mm_malloc(m_idatapoints*sizeof(float), 64);
 
 	//Setup the fresnel curve - we store the electron density portion of the refractive index in the params
-	fresnelcurve = (double*)_mm_malloc(m_idatapoints*sizeof(double), 64);
+	fresnelcurve = (float*)_mm_malloc(m_idatapoints*sizeof(float), 64);
 
 	double Qc = CalcQc(*params);
 
@@ -390,7 +390,7 @@ void CReflCalc::mkdensitytrans(ParamVector* g)
 		#pragma ivdep
 		for(int k = 0; k < refllayers; k++)	
 		{
-			rhoarray[k] = rho_a*(g->GetRealparams(k+1)-g->GetRealparams(k))*0.5;
+			rhoarray[k] = rho_a*(g->GetRealparams(k+1)-g->GetRealparams(k))*0.5f;
 		}
 		
 
@@ -406,11 +406,11 @@ void CReflCalc::mkdensitytrans(ParamVector* g)
 
 				if(dist > 6.0f)
 				{
-					nk[i].re += (rhoarray[k])*(2.0);
+					nk[i].re += (rhoarray[k])*(2.0f);
 				}
 				else if(dist > -6.0f)
 				{
-					nk[i].re += (rhoarray[k])*(1.0+erf(dist));
+					nk[i].re += (rhoarray[k])*(1.0f+erff(dist));
 				}
 			}
 		}
@@ -421,7 +421,7 @@ void CReflCalc::mkdensitytrans(ParamVector* g)
 		for(int i = 0; i<reflpoints;i++)
 		{
 			
-			doublenk[i].re = 2.0*nk[i].re;
+			doublenk[i].re = 2.0f*nk[i].re;
 			doublenk[i].im = 0.0;
 		}
 	}
@@ -492,8 +492,8 @@ void CReflCalc::mkdensity(ParamVector* g)
 				}
 				else if (dist > -6)
 				{
-					nk[i].re += (rhoarray[k])*(1.0+erf(dist));
-					nk[i].im += (imagrhoarray[k])*(1.0+erf(dist));
+					nk[i].re += (rhoarray[k])*(1.0+erff(dist));
+					nk[i].im += (imagrhoarray[k])*(1.0+erff(dist));
 				}
 			}
 		}
@@ -690,14 +690,14 @@ double CReflCalc::objective(ParamVector * g)
 //Perform a rudimentary normalization on the modeled reflectivity (for absorbing films)
 //This is for the output reflectivity. If the normalization is imperfect for neutrons,
 //this should use isimprefl = true
-void CReflCalc::impnorm(double* refl, int datapoints, bool isimprefl)
+void CReflCalc::impnorm(float* refl, int datapoints, bool isimprefl)
 {
-	double normfactor;
+	float normfactor;
 
 	if(isimprefl == true)
 		normfactor = m_dnormfactor;
 	else
-		normfactor = 1.0/refl[0];
+		normfactor = 1.0f/refl[0];
 
 	for(int i = 0; i< datapoints; i++)
 	{
@@ -705,13 +705,13 @@ void CReflCalc::impnorm(double* refl, int datapoints, bool isimprefl)
 	}
 }
 
-void CReflCalc::myrf(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl)
+void CReflCalc::myrf(float* sintheta, float* sinsquaredtheta, int datapoints, float* refl)
 {
 	//Calculate some complex constants to keep them out of the loop
-	MyComplex<double> lengthmultiplier = -2.0*MyComplex<double>(0.0,1.0)*dz0 ;
-	MyComplex<double> indexsup = 1.0 - nk[0];
-	MyComplex<double> indexsupsquared = indexsup * indexsup;
-	MyComplex<double> zero;
+	MyComplex  lengthmultiplier = -2.0f*MyComplex (0.0,1.0)*dz0 ;
+	MyComplex  indexsup = 1.0 - nk[0];
+	MyComplex  indexsupsquared = indexsup * indexsup;
+	MyComplex  zero;
 	
 	#pragma omp parallel
 	{
@@ -719,21 +719,21 @@ void CReflCalc::myrf(double* sintheta, double* sinsquaredtheta, int datapoints, 
 		int threadnum = omp_get_thread_num();
 		int arrayoffset = threadnum*nl;
 
-		double* dkk = m_dkk+arrayoffset;
-		MyComplex<double>* kk = m_ckk+arrayoffset;
-		MyComplex<double>* ak = m_cak+arrayoffset;
-		double* drj = m_drj+arrayoffset;
-		MyComplex<double>* rj= m_crj+arrayoffset;
-		MyComplex<double>* Rj= m_cRj+arrayoffset;
-		MyComplex<double> cholder, tempk1, tempk2;
-		double holder;
+		float* dkk = m_dkk+arrayoffset;
+		MyComplex * kk = m_ckk+arrayoffset;
+		MyComplex * ak = m_cak+arrayoffset;
+		float* drj = m_drj+arrayoffset;
+		MyComplex * rj= m_crj+arrayoffset;
+		MyComplex * Rj= m_cRj+arrayoffset;
+		MyComplex  cholder, tempk1, tempk2;
+		float holder;
 		
 		/********Boundary conditions********/
 		//No reflection in the last layer
-		Rj[nl-1] = 0.0;
+		Rj[nl-1] = 0.0f;
 		//The first layer and the last layer are assumed to be infinite e^-(0+i*(layerlength)) = 1+e^(-inf*i*beta) = 1 + 0*i*beta
-		ak[nl-1] = 1.0;
-		ak[0] = 1.0;
+		ak[nl-1] = 1.0f;
+		ak[0] = 1.0f;
 		
 		//In order to vectorize loops, you cannot use global variables
 		int nlminone = nl-1;
@@ -837,12 +837,12 @@ void CReflCalc::myrf(double* sintheta, double* sinsquaredtheta, int datapoints, 
 	m_ihighEDduplicatepts = 0;
 }
 
-void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl)
+void CReflCalc::mytransparentrf(float* sintheta, float* sinsquaredtheta, int datapoints, float* refl)
 {
 	////Calculate some complex constants to keep them out of the loop
-	MyComplex<double> lengthmultiplier = -2.0*MyComplex<double>(0.0,1.0)*dz0;
-	MyComplex<double> indexsup = 1.0 - nk[0];
-	MyComplex<double> indexsupsquared = indexsup * indexsup;
+	MyComplex  lengthmultiplier = -2.0f*MyComplex (0.0f,1.0f)*dz0;
+	MyComplex  indexsup = 1.0 - nk[0];
+	MyComplex  indexsupsquared = indexsup * indexsup;
 	
 	int offset = 0;
 	int neg = 0;
@@ -851,7 +851,7 @@ void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int d
 		
 		for(int k = 0; k<nl;k++)
 		{
-			if((indexsupsquared.re*sinsquaredtheta[i]-doublenk[k].re+doublenk[0].re)<0)
+			if((indexsupsquared.re*sinsquaredtheta[i]-doublenk[k].re+doublenk[0].re)< 0.0f)
 			{
 				neg -= 1;
 				break;
@@ -859,7 +859,7 @@ void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int d
 		}
 		if(neg == 0)
 		{
-			if(m_dQSpread < 0.005)
+			if(m_dQSpread < 0.005f)
 					break;
 		}
 		else
@@ -872,21 +872,21 @@ void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int d
 		int threadnum = omp_get_thread_num();
 		int arrayoffset = threadnum*nl;
 
-		double* dkk = m_dkk+arrayoffset;
-		MyComplex<double>* kk = m_ckk+arrayoffset;
-		MyComplex<double>* ak = m_cak+arrayoffset;
-		double* drj = m_drj+arrayoffset;
-		MyComplex<double>* rj= m_crj+arrayoffset;
-		MyComplex<double>* Rj= m_cRj+arrayoffset;
-		MyComplex<double> cholder, tempk1, tempk2, zero;
-		double holder, dtempk1, dtempk2;
+		float* dkk = m_dkk+arrayoffset;
+		MyComplex * kk = m_ckk+arrayoffset;
+		MyComplex * ak = m_cak+arrayoffset;
+		float* drj = m_drj+arrayoffset;
+		MyComplex * rj= m_crj+arrayoffset;
+		MyComplex * Rj= m_cRj+arrayoffset;
+		MyComplex  cholder, tempk1, tempk2, zero;
+		float holder, dtempk1, dtempk2;
 		
 		/********Boundary conditions********/
 		//No reflection in the last layer
-		Rj[nl-1] = 0.0;
+		Rj[nl-1] = 0.0f;
 		//The first layer and the last layer are assumed to be infinite
-		ak[nl-1] = 1.0;
-		ak[0] = 1.0;
+		ak[nl-1] = 1.0f;
+		ak[0] = 1.0f;
 
 		//In order to vectorize loops, you cannot use global variables
 		int nlminone = nl-1;
@@ -994,8 +994,8 @@ void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int d
 				//The refractive index for air is 1, so there is no refractive index term for kk[0]
 			dkk[0] = k0 * indexsup.re * sintheta[l];
 
-			dtempk1 = k0 * sqrt(indexsupsquared.re*sinsquaredtheta[l]-doublenk[1].re+doublenk[0].re);
-			dtempk2 = k0 * sqrt(indexsupsquared.re*sinsquaredtheta[l]-doublenk[numlay-1].re+doublenk[0].re);
+			dtempk1 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-doublenk[1].re+doublenk[0].re);
+			dtempk2 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-doublenk[numlay-1].re+doublenk[0].re);
 			//Workout the wavevector k -> kk[i] = k0 *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
 			#pragma ivdep
 			for(int i = 1; i <= m_ilowEDduplicatepts;i++)
@@ -1006,7 +1006,7 @@ void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int d
 			#pragma ivdep
 			for(int i = m_ilowEDduplicatepts+1; i < m_ihighEDduplicatepts;i++)
 			{
-				dkk[i] = k0 * sqrt(indexsupsquared.re*sinsquaredtheta[l]-doublenk[i].re+doublenk[0].re);
+				dkk[i] = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-doublenk[i].re+doublenk[0].re);
 			}
 
 			#pragma ivdep
@@ -1043,7 +1043,7 @@ void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int d
 			#pragma ivdep
 			for(int i = 0; i <= m_ilowEDduplicatepts;i++)
 			{
-				drj[i] = 0.0;
+				drj[i] = 0.0f;
 			}
 
 			#pragma ivdep
@@ -1055,7 +1055,7 @@ void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int d
 			#pragma ivdep
 			for(int i = m_ihighEDduplicatepts; i < numlay-1; i++)
 			{
-				drj[i] = 0.0;
+				drj[i] = 0.0f;
 			}
 			
 			
@@ -1080,37 +1080,39 @@ void CReflCalc::mytransparentrf(double* sintheta, double* sinsquaredtheta, int d
 			//The magnitude of the reflection at layer 0 is the measured reflectivity of the film
 			holder = compabs(Rj[0]);
 			refl[l] = holder*holder;
+			/*if(refl[l] != refl[l])
+				MessageBox(NULL,L"Underflow",NULL,NULL);*/
 		}
 	}
 	m_ilowEDduplicatepts = 0;
 	m_ihighEDduplicatepts = 0;
 }
 
-void CReflCalc::QsmearRf(double* qspreadreflpt, double* refl, int datapoints)
+void CReflCalc::QsmearRf(float* qspreadreflpt, float* refl, int datapoints)
 {
-	double calcholder;
+	float calcholder;
 	#pragma ivdep
 	for(int i = 0; i < datapoints; i++)
 	{
-		calcholder = 0;
+		calcholder = 0.0f;
 		calcholder = qspreadreflpt[13*i];
-		calcholder += 0.056*qspreadreflpt[13*i+1];
-		calcholder += 0.056*qspreadreflpt[13*i+2];
-		calcholder += 0.135*qspreadreflpt[13*i+3];
-		calcholder += 0.135*qspreadreflpt[13*i+4];
-		calcholder += 0.278*qspreadreflpt[13*i+5];
-		calcholder += 0.278*qspreadreflpt[13*i+6];
-		calcholder += 0.487*qspreadreflpt[13*i+7];
-		calcholder += 0.487*qspreadreflpt[13*i+8];
-		calcholder += 0.726*qspreadreflpt[13*i+9];
-		calcholder += 0.726*qspreadreflpt[13*i+10];
-		calcholder += 0.923*qspreadreflpt[13*i+11];
-		calcholder += 0.923*qspreadreflpt[13*i+12];
+		calcholder += 0.056f*qspreadreflpt[13*i+1];
+		calcholder += 0.056f*qspreadreflpt[13*i+2];
+		calcholder += 0.135f*qspreadreflpt[13*i+3];
+		calcholder += 0.135f*qspreadreflpt[13*i+4];
+		calcholder += 0.278f*qspreadreflpt[13*i+5];
+		calcholder += 0.278f*qspreadreflpt[13*i+6];
+		calcholder += 0.487f*qspreadreflpt[13*i+7];
+		calcholder += 0.487f*qspreadreflpt[13*i+8];
+		calcholder += 0.726f*qspreadreflpt[13*i+9];
+		calcholder += 0.726f*qspreadreflpt[13*i+10];
+		calcholder += 0.923f*qspreadreflpt[13*i+11];
+		calcholder += 0.923f*qspreadreflpt[13*i+12];
 
-		refl[i] = calcholder/6.211;
+		refl[i] = calcholder/6.211f;
 	}
 }
-double CReflCalc::CalcQc(ParamVector g)
+float CReflCalc::CalcQc(ParamVector g)
 {
 	//Critical Q for an interface.		
 	double prefactor = 4 * M_PI/lambda;
@@ -1119,13 +1121,13 @@ double CReflCalc::CalcQc(ParamVector g)
 		(1-(lambda*lambda/(2.0*M_PI))*g.GetRealparams(0)*rho_a));
 }
 
-double CReflCalc::CalcFresnelPoint(double Q, double Qc)
+float CReflCalc::CalcFresnelPoint(float Q, float Qc)
 {
     if (Q <= Qc)
-        return 1;
+        return 1.0f;
     else
     {
-        double term1 = sqrt(1 - (Qc / Q)*(Qc/Q));
-        return ((1.0 - term1) / (1.0 + term1))*((1.0 - term1) / (1.0 + term1));
+        double term1 = sqrt(1.0f - (Qc / Q)*(Qc/Q));
+        return ((1.0f - term1) / (1.0f + term1))*((1.0f - term1) / (1.0f + term1));
     }
 }

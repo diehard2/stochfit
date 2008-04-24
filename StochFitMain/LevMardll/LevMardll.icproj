@@ -5,7 +5,7 @@
 	Name="LevMardll"
 	ProjectGUID="{1942BC8C-3706-48D2-8D70-3BF4237A41CE}"
 	VCNestedProjectGUID="{A2D16FE7-CD5C-4D6A-81FE-3789D54D5D13}"
-	VCNestedProjectCRC32="558157422"
+	VCNestedProjectCRC32="1103180125"
 	VCNestedProjectFileName="LevMardll.vcproj"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -195,6 +195,8 @@
 		<File 
 			RelativePath=".\ParameterContainer.h"/>
 		<File 
+			RelativePath=".\randomc.h"/>
+		<File 
 			RelativePath=".\RhoCalc.h"/>
 		<File 
 			RelativePath=".\stdafx.h"/>
@@ -214,6 +216,8 @@
 			RelativePath=".\LevMar\lmlec.c"/>
 		<File 
 			RelativePath=".\LMRoutines.cpp"/>
+		<File 
+			RelativePath=".\mersenne.cpp"/>
 		<File 
 			RelativePath=".\LevMar\misc.c"/>
 		<File 

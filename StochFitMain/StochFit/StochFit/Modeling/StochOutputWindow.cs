@@ -89,7 +89,7 @@ namespace StochasticModeling.Modeling
         public StochOutputWindow(double[] FullParameterArray, int ParameterArraysize, int paramsize, double[] FullChisquareArray, double[] FullCovariance, bool OneSigma, int boxes, double SubSLD, double SupSLD, double wavelength, double QSpread, bool Impnorm)
         {
             InitializeComponent();
-            m_bUseSLD = Properties.Settings.Default.UseSLD | Properties.Settings.Default.UseSLDSingleSession; 
+            m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession; 
             ParameterArray = new double[ParameterArraysize][];
             CovarArray = new double[ParameterArraysize][];
             RhoArray = new double[ParameterArraysize][];
@@ -241,7 +241,7 @@ namespace StochasticModeling.Modeling
                 for (int j = 0; j < ParameterArray.Length; j++)
                 {
 
-                    NewRParameter[j] = new double[m_iboxes * 3 + 1];
+                    NewRParameter[j] = new double[m_iboxes * 3 + 2];
                     NewEParameter[j] = new double[m_iboxes * 3 + 2];
                     LengthArray[j] = new double[m_iboxes];
                     NewRParameter[j][0] = Math.Abs(ParameterArray[j][0]);
@@ -258,6 +258,7 @@ namespace StochasticModeling.Modeling
                         NewEParameter[j][3 * i + 3] = ParameterArray[j][3 * i + 2];
                         NewEParameter[j][3 * i + 4] = Math.Abs(ParameterArray[j][3 * i + 3]);
                     }
+                    NewRParameter[j][3 * m_iboxes + 1] = ParameterArray[j][3 * m_iboxes + 1];
                 }
                }
 

@@ -91,7 +91,7 @@ namespace StochasticModeling
             InitializeComponent();
 
             //Set properties that persist
-            UseSLDToolStripMenuItem.Checked = Properties.Settings.Default.UseSLD;
+            Properties.Settings.Default.UseSLDSingleSession = UseSLDToolStripMenuItem.Checked = Properties.Settings.Default.UseSLD;
             forceRQ4GraphingToolStripMenuItem.Checked = Properties.Settings.Default.ForceRQ4;
 
             //Object for thread synchronization
@@ -996,7 +996,7 @@ namespace StochasticModeling
             rhographobject.SubSLD = double.Parse(SubSLDTB.Text);
             ReportGenerator.Instance.UseSLD = UseSLDToolStripMenuItem.Checked;
 
-            Properties.Settings.Default.UseSLD = UseSLDToolStripMenuItem.Checked;
+            Properties.Settings.Default.UseSLDSingleSession = Properties.Settings.Default.UseSLD = UseSLDToolStripMenuItem.Checked;
             Properties.Settings.Default.Save();
 
             if (UseSLDToolStripMenuItem.Checked)

@@ -92,7 +92,7 @@ class ParameterContainer
 				//Calculate the standard deviations in the parameters
 				for(int i = 0; i< paramlength;i++)
 				{
-					m_dcovararray[i] = sqrt(covararray[i*(paramlength+1)]);
+					m_dcovararray[i] = sqrt(fabs(covararray[i*(paramlength+1)]));
 				}
 			}
 		

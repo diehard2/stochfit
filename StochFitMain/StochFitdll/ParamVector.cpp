@@ -87,8 +87,9 @@ void ParamVector::SetBounds(float lowrough, float highrough, float highimp, floa
 		//For annealing, we need to provide more reasonable restriction on boundary heights
 		for(int i = 0; i < length ; i++)
 		{
-			data_params_high_val[i] = 2.0;
-			data_params_low_val[i] = 0;
+			data_params_high_val[i] = 5.0f;
+			data_params_low_val[i] = -5.0f;
+
 		/*	if(i != 0 && i != length -1)
 			{
 				data_params_high_val.at(i) = max(data_params.at(i-1), data_params.at(i+1)) + 0.1;
@@ -206,7 +207,7 @@ int ParamVector::SetMutatableParameter(int i,float val)
 {
 	if(m_binitialized)
 	{
-		if(i < ParamCount())
+		if(i < ParamCount() && val < GetUpperBounds(i) && val > GetLowerBounds(i))
 		{
 			data_params.at(i) = val;
 			
@@ -214,6 +215,26 @@ int ParamVector::SetMutatableParameter(int i,float val)
 				gnome.at(i+1) = val;
 			
 			return 0;
+		}
+		else if( i < ParamCount() && val > GetUpperBounds(i))
+		{
+			data_params.at(i) = GetUpperBounds(i);
+			
+			if(i < length)
+				gnome.at(i+1) = GetUpperBounds(i);
+			
+			return 0;
+			
+		}
+		else if( i < ParamCount() && val < GetLowerBounds(i))
+		{
+			data_params.at(i) = GetLowerBounds(i);
+			
+			if(i < length)
+				gnome.at(i+1) = GetLowerBounds(i);
+			
+			return 0;
+			
 		}
 		else 
 			return -1;

@@ -29,8 +29,6 @@
 
 CReflCalc::~CReflCalc()
 {
-	try
-	{
 		_mm_free(nk);
 		_mm_free(xi);
 		_mm_free(yi);
@@ -61,8 +59,7 @@ CReflCalc::~CReflCalc()
 
 		if(exi != NULL)
 			_mm_free(exi);
-	}
-	catch(wchar_t* str){}
+
 }
 
 CReflCalc::CReflCalc():exi(NULL),eyi(NULL),xi(NULL),yi(NULL)
@@ -373,32 +370,31 @@ void CReflCalc::mkdensitytrans(ParamVector* g)
 	int refllayers = g->RealparamsSize()-1;
 	int reflpoints = nl;
 	float roughness = g->getroughness();
-	
+	float dist;
+
 	if(g->getroughness() < 0.000000001)
-		roughness = 1/1e-6;
+		roughness = 1e-6;
 
 	roughness = 1.0f/( roughness * sqrt(2.0f));
 	float supersld = g->GetRealparams(0)*rho_a;
 	
 	//Don't delete this, otherwise the reflectivity calculation won't work sometimes
-	nk[0].im = 0.0;
+	nk[0].im = 0.0f;
 
-	#pragma omp parallel
-	{	
+			
 		
-		#pragma omp for schedule(guided)
-		#pragma ivdep
+	
 		for(int k = 0; k < refllayers; k++)	
 		{
 			rhoarray[k] = rho_a*(g->GetRealparams(k+1)-g->GetRealparams(k))*0.5f;
 		}
 		
 
-		#pragma omp for schedule(guided)
+		#pragma omp parallel for private(dist)
 		for(int i = 0; i < reflpoints; i++)
  		{
 			nk[i].re = supersld;
-			float dist;
+		
 			
 			for(int k = 0; k < refllayers; k++)
 			{
@@ -413,18 +409,12 @@ void CReflCalc::mkdensitytrans(ParamVector* g)
 					nk[i].re += (rhoarray[k])*(1.0f+erff(dist));
 				}
 			}
-		}
 
-		//Make double array for the reflectivity calculation
-		#pragma omp for schedule(guided)
-		#pragma ivdep
-		for(int i = 0; i<reflpoints;i++)
-		{
-			
+			//Make double array for the reflectivity calculation
 			doublenk[i].re = 2.0f*nk[i].re;
-			doublenk[i].im = 0.0;
+			doublenk[i].im = 0.0f;
 		}
-	}
+	
 
 	//Find duplicate pts so we don't do the same calculation over and over again
 		for(int i = 0; i < reflpoints; i++)
@@ -447,13 +437,16 @@ void CReflCalc::mkdensitytrans(ParamVector* g)
 void CReflCalc::mkdensity(ParamVector* g)
 {
 	int refllayers = g->RealparamsSize()-1;
+	
 	int reflpoints = nl;
-	float roughness = g->getroughness() * sqrt(2.0);
+	float roughness = 1.0f/(g->getroughness() * sqrt(2.0));
 	float supersld = g->GetRealparams(0)*rho_a;
 	
-	#pragma omp parallel
-	{	
-		#pragma omp for schedule(guided)
+#pragma omp parallel
+	{
+		float dist;
+
+		#pragma omp for
 		for(int k = 0; k < refllayers; k++)
 		{
 			rhoarray[k] = rho_a*(g->GetRealparams(k+1)-g->GetRealparams(k))/2.0;
@@ -474,40 +467,33 @@ void CReflCalc::mkdensity(ParamVector* g)
 			}
 		}
 
-		#pragma omp for schedule(guided)
+		#pragma omp for private(dist)
 		for(int i = 0; i < reflpoints; i++)
  		{
 			nk[i].im = beta_sup;
 			nk[i].re = supersld;
 			
-			float dist;
+			
 			for(int k = 0; k < refllayers; k++)
 			{
-				dist = (edspacingarray[i]-distarray[k] )/roughness;
+				dist = (edspacingarray[i]-distarray[k] )*roughness;
 
 				if(dist > 6)
 				{
-					nk[i].re += (rhoarray[k])*(2.0);
-					nk[i].im += (imagrhoarray[k])*(2.0);
+					nk[i].re += (rhoarray[k])*(2.0f);
+					nk[i].im += (imagrhoarray[k])*(2.0f);
 				}
 				else if (dist > -6)
 				{
-					nk[i].re += (rhoarray[k])*(1.0+erff(dist));
-					nk[i].im += (imagrhoarray[k])*(1.0+erff(dist));
+					nk[i].re += (rhoarray[k])*(1.0f+erff(dist));
+					nk[i].im += (imagrhoarray[k])*(1.0f+erff(dist));
 				}
 			}
-		}
 
-		//Make double array for the reflectivity calculation
-		#pragma omp for schedule(guided)
-		#pragma ivdep
-		for(int i = 0; i<reflpoints;i++)
-		{
-			doublenk[i].re = 2.0*nk[i].re;
-			doublenk[i].im = 2.0*nk[i].im;
+			doublenk[i].re = 2.0f*nk[i].re;
+			doublenk[i].im = 2.0f*nk[i].im;
 		}
 	}
-
 		//Find duplicate pts so we don't do the same calculation over and over again
 		for(int i = 0; i < reflpoints; i++)
 		{

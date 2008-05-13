@@ -150,8 +150,7 @@ namespace MyComplexNumber{
 	{
 		//While inefficient, this prevents buffer under/overflows - from Numerical Recipes in C++
 		double placeholder=0.0f;
-		if(comp.re != comp.re || comp.im != comp.im)
-				MessageBox(NULL,L"Tester1",NULL,NULL);
+		
 		if(comp.re >= comp.im)
 		{
 			
@@ -160,8 +159,7 @@ namespace MyComplexNumber{
 
 			placeholder = comp.im/comp.re;
 			double temp = fabs(comp.re)*sqrt(1.0f+placeholder*placeholder);
-			if(temp != temp)
-				MessageBox(NULL,L"tester2",NULL,NULL);
+		
 			return(temp);
 		}
 		else
@@ -169,7 +167,6 @@ namespace MyComplexNumber{
 			
 			if(comp.im == 0.0)
 			{
-				MessageBox(NULL,L"Shouldn't",NULL,NULL);
 				return fabs(comp.re);
 			}
 
@@ -177,9 +174,7 @@ namespace MyComplexNumber{
 
 			double temp = fabs(comp.im)*sqrt(1.0+placeholder*placeholder);
 			
-			if(temp != temp)
-				MessageBox(NULL,L"tester2",NULL,NULL);
-
+			
 			return (temp);
 		}
 		

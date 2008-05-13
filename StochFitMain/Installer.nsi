@@ -3,7 +3,7 @@
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "StochFit"
 !define LOWER_PRODUCT_NAME "stochfit"
-!define PRODUCT_VERSION "1.6.3"
+!define PRODUCT_VERSION "1.6.4"
 !define PRODUCT_PUBLISHER "The University of Chicago"
 !define PRODUCT_WEB_SITE "https://sourceforge.net/projects/stochfit"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\StochFit.exe"

@@ -164,12 +164,13 @@ extern "C" LEVMARDLL_API double FastReflfit(LPCWSTR directory, int boxes, double
 	//Calculate ChiSquare
 	double Qc = Refl.CalcQc(SLD);
 	double calcholder = 0;
+	
 	for(int i = 0; i< QSize;i++)
 	{
 		calcholder = (Reflectivity[i]-Refl.reflpt[i]);
 		ChiSquare += calcholder*calcholder/Errors[i];
 	}
-	//ChiSquare /= QSize-paramsize;
+	ChiSquare /= QSize-paramsize;
 
 	if(writefiles == TRUE)
 	{
@@ -259,10 +260,12 @@ extern "C" LEVMARDLL_API double ConstrainedFastReflfit(LPCWSTR directory, int bo
 	//Calculate ChiSquare
 	double Qc = Refl.CalcQc(SLD);
 	double calcholder = 0;
+
+	
 	for(int i = 0; i< QSize;i++)
 	{
-		calcholder = (Reflectivity[i]-Refl.reflpt[i])/Refl.CalcFresnelPoint(QRange[i], Qc);
-		ChiSquare += calcholder*calcholder/(Errors[i]/Refl.CalcFresnelPoint(QRange[i], Qc));
+		calcholder = (Reflectivity[i]-Refl.reflpt[i]);
+		ChiSquare += calcholder*calcholder/Errors[i];
 	}
 	ChiSquare /= QSize-paramsize;
 
@@ -353,7 +356,7 @@ extern "C" LEVMARDLL_API void StochFit(int boxes, double SLD, double SupSLD, dou
 	double bestchisquare = 0;
 	for(int i = 0; i < reflectivitysize; i++)
 	{
-		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]));
+		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]))*(log(Refl.reflpt[i])-log(Reflectivity[i]));
 	}
 
 	double* tempcovararray = new double[paramsize*paramsize];
@@ -547,7 +550,7 @@ extern "C" LEVMARDLL_API void ConstrainedStochFit(int boxes, double SLD, double 
 	double bestchisquare = 0;
 	for(int i = 0; i < reflectivitysize; i++)
 	{
-		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]));
+		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]))*(log(Refl.reflpt[i])-log(Reflectivity[i]));
 	}
 
 	double* tempcovararray = new double[paramsize*paramsize];

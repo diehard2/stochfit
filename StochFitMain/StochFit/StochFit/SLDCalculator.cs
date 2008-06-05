@@ -76,12 +76,22 @@ namespace StochasticModeling
             }
         }
 
+        /// <summary>
+        /// Calculates the Neutron Scattering Length Density - all values are from http://www.ncnr.nist.gov/resources/n-lengths/
+        /// </summary>
+        /// <param name="MWVol">The molecular volume of the compound</param>
+        /// <returns>Scattering Length Density</returns>
         double NeutronCalc(double MWVol)
         {
             try
             {
-                return MWVol * (int.Parse(HsTB.Text) * -3.7390 + int.Parse(DsTB.Text) * 6.671 + int.Parse(OsTB.Text) * 5.803 +
-                   int.Parse(CsTB.Text) * 6.646 + int.Parse(PsTB.Text) * 5.13 + int.Parse(NsTB.Text) * 9.36 + int.Parse(SiTB.Text) * 4.1491) * 10;
+                double AtomSumm = (int.Parse(HsTB.Text) * -3.7390 + int.Parse(DsTB.Text) * 6.671 + int.Parse(OsTB.Text) * 5.803 +
+                   int.Parse(CsTB.Text) * 6.646 + int.Parse(PsTB.Text) * 5.13 + int.Parse(NsTB.Text) * 9.36 + int.Parse(SiTB.Text) * 4.1491 +
+                   int.Parse(STB.Text) * 2.847);
+
+                SumTB.Text = AtomSumm.ToString("0.000");
+
+                return MWVol * AtomSumm * 10;
             }
             catch
             {
@@ -94,8 +104,12 @@ namespace StochasticModeling
         {
             try
             {
-              return  MWVol * 0.000028179 * (int.Parse(HsTB.Text) * 1 + int.Parse(DsTB.Text) * 1 + int.Parse(OsTB.Text) * 8 +
-                int.Parse(CsTB.Text) * 6 + int.Parse(PsTB.Text) * 15 + int.Parse(NsTB.Text) * 7 + int.Parse(SiTB.Text)* 14) * 1000000;
+                double AtomSumm = (int.Parse(HsTB.Text) * 1 + int.Parse(DsTB.Text) * 1 + int.Parse(OsTB.Text) * 8 +
+                    int.Parse(CsTB.Text) * 6 + int.Parse(PsTB.Text) * 15 + int.Parse(NsTB.Text) * 7 + int.Parse(SiTB.Text)* 14 + 
+                    int.Parse(STB.Text)* 16) ;
+
+                SumTB.Text = AtomSumm.ToString("0.000");
+                return MWVol * AtomSumm * 1000000 * 0.000028179;
             }
             catch
             {
@@ -108,7 +122,10 @@ namespace StochasticModeling
         {
             try
             {
-                return MWVol * 0.000028179 * int.Parse(ElecTB.Text) * 1000000;
+                double AtomSumm = int.Parse(ElecTB.Text);
+                SumTB.Text = AtomSumm.ToString("0.000");
+
+                return MWVol * AtomSumm * 0.000028179 * 1000000;
             }
             catch
             {
@@ -181,7 +198,7 @@ namespace StochasticModeling
 
          private void UseElemCB_CheckedChanged(object sender, EventArgs e)
          {
-             SiTB.Enabled = HsTB.Enabled = OsTB.Enabled = PsTB.Enabled = CsTB.Enabled = DsTB.Enabled = NsTB.Enabled = UseElemCB.Checked;
+             STB.Enabled = SiTB.Enabled = HsTB.Enabled = OsTB.Enabled = PsTB.Enabled = CsTB.Enabled = DsTB.Enabled = NsTB.Enabled = UseElemCB.Checked;
              ElecTB.Enabled = !UseElemCB.Checked;
          }
 

@@ -58,10 +58,14 @@ namespace StochasticModeling
             this.CalcSLDBB = new System.Windows.Forms.Button();
             this.NeutronCB = new System.Windows.Forms.CheckBox();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.panel2 = new System.Windows.Forms.Panel();
-            this.label15 = new System.Windows.Forms.Label();
+            this.label17 = new System.Windows.Forms.Label();
+            this.STB = new System.Windows.Forms.TextBox();
             this.label16 = new System.Windows.Forms.Label();
             this.SiTB = new System.Windows.Forms.TextBox();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.label15 = new System.Windows.Forms.Label();
+            this.SumTB = new System.Windows.Forms.TextBox();
+            this.label18 = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
@@ -98,7 +102,7 @@ namespace StochasticModeling
             this.PsTB.Location = new System.Drawing.Point(28, 276);
             this.PsTB.Name = "PsTB";
             this.PsTB.Size = new System.Drawing.Size(89, 20);
-            this.PsTB.TabIndex = 6;
+            this.PsTB.TabIndex = 5;
             this.PsTB.Text = "0";
             this.PsTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
             // 
@@ -116,7 +120,7 @@ namespace StochasticModeling
             this.OsTB.Location = new System.Drawing.Point(28, 225);
             this.OsTB.Name = "OsTB";
             this.OsTB.Size = new System.Drawing.Size(89, 20);
-            this.OsTB.TabIndex = 8;
+            this.OsTB.TabIndex = 4;
             this.OsTB.Text = "1";
             this.OsTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
             // 
@@ -134,7 +138,7 @@ namespace StochasticModeling
             this.NsTB.Location = new System.Drawing.Point(28, 174);
             this.NsTB.Name = "NsTB";
             this.NsTB.Size = new System.Drawing.Size(89, 20);
-            this.NsTB.TabIndex = 10;
+            this.NsTB.TabIndex = 3;
             this.NsTB.Text = "0";
             this.NsTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
             // 
@@ -152,7 +156,7 @@ namespace StochasticModeling
             this.CsTB.Location = new System.Drawing.Point(28, 123);
             this.CsTB.Name = "CsTB";
             this.CsTB.Size = new System.Drawing.Size(89, 20);
-            this.CsTB.TabIndex = 12;
+            this.CsTB.TabIndex = 2;
             this.CsTB.Text = "0";
             this.CsTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
             // 
@@ -170,17 +174,17 @@ namespace StochasticModeling
             this.DsTB.Location = new System.Drawing.Point(28, 72);
             this.DsTB.Name = "DsTB";
             this.DsTB.Size = new System.Drawing.Size(89, 20);
-            this.DsTB.TabIndex = 14;
+            this.DsTB.TabIndex = 1;
             this.DsTB.Text = "0";
             this.DsTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
             // 
             // UseElemCB
             // 
             this.UseElemCB.AutoSize = true;
-            this.UseElemCB.Location = new System.Drawing.Point(28, 367);
+            this.UseElemCB.Location = new System.Drawing.Point(29, 425);
             this.UseElemCB.Name = "UseElemCB";
             this.UseElemCB.Size = new System.Drawing.Size(115, 17);
-            this.UseElemCB.TabIndex = 16;
+            this.UseElemCB.TabIndex = 8;
             this.UseElemCB.Text = "Use element count";
             this.UseElemCB.UseVisualStyleBackColor = true;
             this.UseElemCB.CheckedChanged += new System.EventHandler(this.UseElemCB_CheckedChanged);
@@ -208,7 +212,7 @@ namespace StochasticModeling
             this.ElecTB.Location = new System.Drawing.Point(203, 132);
             this.ElecTB.Name = "ElecTB";
             this.ElecTB.Size = new System.Drawing.Size(89, 20);
-            this.ElecTB.TabIndex = 18;
+            this.ElecTB.TabIndex = 9;
             this.ElecTB.Text = "10";
             this.ElecTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
             // 
@@ -226,7 +230,7 @@ namespace StochasticModeling
             this.ApmTB.Location = new System.Drawing.Point(22, 213);
             this.ApmTB.Name = "ApmTB";
             this.ApmTB.Size = new System.Drawing.Size(89, 20);
-            this.ApmTB.TabIndex = 24;
+            this.ApmTB.TabIndex = 1;
             this.ApmTB.Text = "0";
             this.ApmTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
@@ -244,7 +248,7 @@ namespace StochasticModeling
             this.ThickTB.Location = new System.Drawing.Point(22, 262);
             this.ThickTB.Name = "ThickTB";
             this.ThickTB.Size = new System.Drawing.Size(89, 20);
-            this.ThickTB.TabIndex = 22;
+            this.ThickTB.TabIndex = 2;
             this.ThickTB.Text = "0";
             this.ThickTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
@@ -262,7 +266,7 @@ namespace StochasticModeling
             this.DensTB.Location = new System.Drawing.Point(22, 60);
             this.DensTB.Name = "DensTB";
             this.DensTB.Size = new System.Drawing.Size(89, 20);
-            this.DensTB.TabIndex = 20;
+            this.DensTB.TabIndex = 0;
             this.DensTB.Text = "0.9957";
             this.DensTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
@@ -313,7 +317,7 @@ namespace StochasticModeling
             this.UseDensCB.Location = new System.Drawing.Point(22, 343);
             this.UseDensCB.Name = "UseDensCB";
             this.UseDensCB.Size = new System.Drawing.Size(107, 17);
-            this.UseDensCB.TabIndex = 30;
+            this.UseDensCB.TabIndex = 3;
             this.UseDensCB.Text = "Use Bulk Density";
             this.UseDensCB.UseVisualStyleBackColor = true;
             this.UseDensCB.CheckedChanged += new System.EventHandler(this.UseDensCB_CheckedChanged);
@@ -334,7 +338,7 @@ namespace StochasticModeling
             this.NeutronCB.Location = new System.Drawing.Point(518, 353);
             this.NeutronCB.Name = "NeutronCB";
             this.NeutronCB.Size = new System.Drawing.Size(131, 17);
-            this.NeutronCB.TabIndex = 32;
+            this.NeutronCB.TabIndex = 0;
             this.NeutronCB.Text = "Calculate for Neutrons";
             this.NeutronCB.UseVisualStyleBackColor = true;
             this.NeutronCB.CheckedChanged += new System.EventHandler(this.NeutronCB_CheckedChanged);
@@ -342,6 +346,8 @@ namespace StochasticModeling
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Controls.Add(this.label17);
+            this.panel1.Controls.Add(this.STB);
             this.panel1.Controls.Add(this.label16);
             this.panel1.Controls.Add(this.SiTB);
             this.panel1.Controls.Add(this.label3);
@@ -362,34 +368,25 @@ namespace StochasticModeling
             this.panel1.Controls.Add(this.HsTB);
             this.panel1.Location = new System.Drawing.Point(8, 9);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(321, 413);
+            this.panel1.Size = new System.Drawing.Size(321, 456);
             this.panel1.TabIndex = 33;
             // 
-            // panel2
+            // label17
             // 
-            this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel2.Controls.Add(this.label15);
-            this.panel2.Controls.Add(this.UseDensCB);
-            this.panel2.Controls.Add(this.label12);
-            this.panel2.Controls.Add(this.label9);
-            this.panel2.Controls.Add(this.ApmTB);
-            this.panel2.Controls.Add(this.label10);
-            this.panel2.Controls.Add(this.ThickTB);
-            this.panel2.Controls.Add(this.label11);
-            this.panel2.Controls.Add(this.DensTB);
-            this.panel2.Location = new System.Drawing.Point(338, 9);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(149, 413);
-            this.panel2.TabIndex = 34;
+            this.label17.AutoSize = true;
+            this.label17.Location = new System.Drawing.Point(25, 357);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(34, 13);
+            this.label17.TabIndex = 23;
+            this.label17.Text = "Sulfur";
             // 
-            // label15
+            // STB
             // 
-            this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(50, 135);
-            this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(18, 13);
-            this.label15.TabIndex = 27;
-            this.label15.Text = "Or";
+            this.STB.Location = new System.Drawing.Point(28, 373);
+            this.STB.Name = "STB";
+            this.STB.Size = new System.Drawing.Size(89, 20);
+            this.STB.TabIndex = 7;
+            this.STB.Text = "0";
             // 
             // label16
             // 
@@ -405,15 +402,63 @@ namespace StochasticModeling
             this.SiTB.Location = new System.Drawing.Point(29, 326);
             this.SiTB.Name = "SiTB";
             this.SiTB.Size = new System.Drawing.Size(89, 20);
-            this.SiTB.TabIndex = 20;
+            this.SiTB.TabIndex = 6;
             this.SiTB.Text = "0";
             this.SiTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
+            // 
+            // panel2
+            // 
+            this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel2.Controls.Add(this.label15);
+            this.panel2.Controls.Add(this.UseDensCB);
+            this.panel2.Controls.Add(this.label12);
+            this.panel2.Controls.Add(this.label9);
+            this.panel2.Controls.Add(this.ApmTB);
+            this.panel2.Controls.Add(this.label10);
+            this.panel2.Controls.Add(this.ThickTB);
+            this.panel2.Controls.Add(this.label11);
+            this.panel2.Controls.Add(this.DensTB);
+            this.panel2.Location = new System.Drawing.Point(338, 9);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(149, 456);
+            this.panel2.TabIndex = 34;
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Location = new System.Drawing.Point(50, 135);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(18, 13);
+            this.label15.TabIndex = 27;
+            this.label15.Text = "Or";
+            // 
+            // SumTB
+            // 
+            this.SumTB.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.SumTB.ForeColor = System.Drawing.SystemColors.WindowText;
+            this.SumTB.Location = new System.Drawing.Point(543, 253);
+            this.SumTB.Name = "SumTB";
+            this.SumTB.ReadOnly = true;
+            this.SumTB.Size = new System.Drawing.Size(89, 20);
+            this.SumTB.TabIndex = 35;
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label18.Location = new System.Drawing.Point(540, 237);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(100, 13);
+            this.label18.TabIndex = 36;
+            this.label18.Text = "Atom Summation";
             // 
             // SLDCalculator
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(675, 435);
+            this.ClientSize = new System.Drawing.Size(675, 477);
+            this.Controls.Add(this.label18);
+            this.Controls.Add(this.SumTB);
             this.Controls.Add(this.NeutronCB);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
@@ -468,5 +513,9 @@ namespace StochasticModeling
         private System.Windows.Forms.Label label15;
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.TextBox SiTB;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.TextBox STB;
+        private System.Windows.Forms.TextBox SumTB;
+        private System.Windows.Forms.Label label18;
     }
 }

@@ -25,27 +25,27 @@ class FastReflcalc
 private:
 
    double *sinthetai,*sinsquaredthetai, *qspreadsinthetai, *qspreadsinsquaredthetai, *qspreadreflpt;
-   void mytransmultsigrf(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl);
+   
    void ImpNorm(double* refl, int datapoints);
 
    BOOL m_bImpNorm;
-   double m_dnormfactor;
+
    double m_dQSpread;
+
+protected:
+	virtual void CalcRefl(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl);
+     double m_dnormfactor;
 public:
 	
-
-	double* Realrefl, *Realreflerrors; int realrefllength;
 	//Variables
 
-	int boxnumber;
-	int SubSLD;
-	//File names
+	double* Realrefl, *Realreflerrors; int realrefllength;
+	int boxnumber, SubSLD;
 	
-
     double dz0;
 	double sdyi;
 	double m_dsupsld;
-	//read from file
+
     double *reflpt;
     int m_idatapoints;
  
@@ -56,10 +56,6 @@ public:
 	
 	//Member functions
 	
-	FastReflcalc()
-	{
-    }
-
 	~FastReflcalc();
 	void QsmearRf(double* qspreadrefl, double* refl, int datapoints);
     void init(double xraylambda,int boxnumber, double subSLD, double SupSLD, double* p, int pcount, double* RealRefl, double* RealReflErrors, int RealRefllength, bool onesigma, double QSpread, double normfactor, BOOL impnorm);
@@ -71,8 +67,8 @@ public:
 	void MakeZ();
 	double* param; 
 	int pcount;
-	void mkdensityonesigma(double* p, int plength);
-    void mkdensity(double* p, int plength);
+	virtual void mkdensityonesigma(double* p, int plength);
+    virtual void mkdensity(double* p, int plength);
 	void myrfdispatch();
 	
 	double CalcQc(double dSLD);
@@ -85,7 +81,7 @@ public:
 	double* SigmaArray;
 	double* ImagArray;
 
-	void Rhocalculate(double Zoffset,double* ZIncrement, double* LengthArray, double* RhoArray, double* SigmaArray, double* nk, double* nkb, int counter);
+	virtual void Rhocalculate(double Zoffset,double* ZIncrement, double* LengthArray, double* RhoArray, double* SigmaArray, double* nk, double* nkb, int counter);
 
 	
 	static void objective(double *p, double *x, int m, int n, void *data);

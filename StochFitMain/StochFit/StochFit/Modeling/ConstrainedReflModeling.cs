@@ -374,6 +374,8 @@ namespace StochasticModeling
             {
                 ReflGraphing.SupSLD = double.Parse(SupSLDTB.Text);
                 ReflGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
+                RhoGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
+                RhoGraphing.SupSLD = double.Parse(SupSLDTB.Text);
                 ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
                 ReflGraphing.Wavelength = double.Parse(WavelengthTB.Text);
                 ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);

@@ -31,10 +31,6 @@
 //      a = exp( i k_{k+1} d_{k+1})
 //      k_{k+1} = sqrt( n^2 - \cos^2(\theta_0)) k_0
 
-//
-// Due to restriction with OpenMP, and vectorization all of the arrays must be dynamically
-// declared. 
-
 FastReflcalc::~FastReflcalc()
 {
 	_aligned_free(sinsquaredthetai);
@@ -172,9 +168,7 @@ void FastReflcalc::MakeTheta(double* QRange, double* QError, int QRangesize)
 	 {
 		 x[i] = 1e6;
 	 }
-	
   }
-
 }
 
 void FastReflcalc::mkdensityonesigma(double* p, int plength)
@@ -225,7 +219,7 @@ void FastReflcalc::mkdensity(double* p, int plength)
 	m_dnormfactor = p[plength-1];
 }
 
-void FastReflcalc::mytransmultsigrf(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl)
+void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl)
 {
 	//Generate the Parratt reflectivity layers
 	int nl = boxnumber+2;
@@ -476,7 +470,7 @@ void FastReflcalc::Rhocalculate(double Zoffset,double* ZIncrement, double* Lengt
 
 double FastReflcalc::CalcQc(double dSLD)
 {
-    return 4 * sqrt(M_PI * (subphaseSLD- m_dsupsld) * 1e-6);
+    return 4 * sqrt(M_PI * (subphaseSLD - m_dsupsld) * 1e-6);
 }
 
 double FastReflcalc::CalcFresnelPoint(double Q, double Qc)
@@ -521,11 +515,11 @@ void FastReflcalc::myrfdispatch()
 {
 	if(m_dQSpread < 0.005)
 	{
-		mytransmultsigrf(sinthetai,sinsquaredthetai,m_idatapoints,reflpt);
+		CalcRefl(sinthetai,sinsquaredthetai,m_idatapoints,reflpt);
 	}
 	else
 	{
-		mytransmultsigrf(qspreadsinthetai, qspreadsinsquaredthetai, m_idatapoints*13, qspreadreflpt);
+		CalcRefl(qspreadsinthetai, qspreadsinsquaredthetai, m_idatapoints*13, qspreadreflpt);
 		QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
 	}
 

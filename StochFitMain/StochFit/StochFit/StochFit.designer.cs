@@ -108,6 +108,7 @@ namespace StochasticModeling
             this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewMasterGraphToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.generateReportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.calculatorsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sLDCalculatorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tutorialToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -123,6 +124,7 @@ namespace StochasticModeling
             this.SAModeTB = new System.Windows.Forms.TextBox();
             this.label17 = new System.Windows.Forms.Label();
             this.FitScoreTB = new System.Windows.Forms.TextBox();
+            this.sLDConverterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ParametersBox.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.FittingParamBox.SuspendLayout();
@@ -647,7 +649,7 @@ namespace StochasticModeling
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripMenuItem1,
-            this.sLDCalculatorToolStripMenuItem,
+            this.calculatorsToolStripMenuItem,
             this.helpToolStripMenuItem,
             this.aboutToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
@@ -666,9 +668,8 @@ namespace StochasticModeling
             this.viewMasterGraphToolStripMenuItem,
             this.generateReportToolStripMenuItem});
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(61, 20);
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(56, 20);
             this.toolStripMenuItem1.Text = "Options";
-            this.toolStripMenuItem1.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.toolStripMenuItem1_DropDownItemClicked);
             // 
             // setEmailAddressToolStripMenuItem
             // 
@@ -681,7 +682,7 @@ namespace StochasticModeling
             // TitleTB
             // 
             this.TitleTB.Name = "TitleTB";
-            this.TitleTB.Size = new System.Drawing.Size(500, 23);
+            this.TitleTB.Size = new System.Drawing.Size(500, 21);
             // 
             // setResolutionOptionsToolStripMenuItem
             // 
@@ -700,13 +701,13 @@ namespace StochasticModeling
             this.resolutionpointsAngstromToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ResolutionTB});
             this.resolutionpointsAngstromToolStripMenuItem.Name = "resolutionpointsAngstromToolStripMenuItem";
-            this.resolutionpointsAngstromToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
+            this.resolutionpointsAngstromToolStripMenuItem.Size = new System.Drawing.Size(234, 22);
             this.resolutionpointsAngstromToolStripMenuItem.Text = "Resolution (3 points/Angstrom)";
             // 
             // ResolutionTB
             // 
             this.ResolutionTB.Name = "ResolutionTB";
-            this.ResolutionTB.Size = new System.Drawing.Size(100, 23);
+            this.ResolutionTB.Size = new System.Drawing.Size(100, 21);
             this.ResolutionTB.Text = "0";
             // 
             // superphaseLengthToolStripMenuItem
@@ -714,13 +715,13 @@ namespace StochasticModeling
             this.superphaseLengthToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.SupoffsetTB});
             this.superphaseLengthToolStripMenuItem.Name = "superphaseLengthToolStripMenuItem";
-            this.superphaseLengthToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
+            this.superphaseLengthToolStripMenuItem.Size = new System.Drawing.Size(234, 22);
             this.superphaseLengthToolStripMenuItem.Text = "Superphase length";
             // 
             // SupoffsetTB
             // 
             this.SupoffsetTB.Name = "SupoffsetTB";
-            this.SupoffsetTB.Size = new System.Drawing.Size(100, 23);
+            this.SupoffsetTB.Size = new System.Drawing.Size(100, 21);
             this.SupoffsetTB.Text = "40";
             // 
             // totalLengthToolStripMenuItem
@@ -728,13 +729,13 @@ namespace StochasticModeling
             this.totalLengthToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.TotlengthTB});
             this.totalLengthToolStripMenuItem.Name = "totalLengthToolStripMenuItem";
-            this.totalLengthToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
+            this.totalLengthToolStripMenuItem.Size = new System.Drawing.Size(234, 22);
             this.totalLengthToolStripMenuItem.Text = "Total length";
             // 
             // TotlengthTB
             // 
             this.TotlengthTB.Name = "TotlengthTB";
-            this.TotlengthTB.Size = new System.Drawing.Size(100, 23);
+            this.TotlengthTB.Size = new System.Drawing.Size(100, 21);
             this.TotlengthTB.Text = "0";
             // 
             // criticalEdgeOffsetToolStripMenuItem
@@ -742,13 +743,13 @@ namespace StochasticModeling
             this.criticalEdgeOffsetToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.critedgeoffTB});
             this.criticalEdgeOffsetToolStripMenuItem.Name = "criticalEdgeOffsetToolStripMenuItem";
-            this.criticalEdgeOffsetToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
+            this.criticalEdgeOffsetToolStripMenuItem.Size = new System.Drawing.Size(234, 22);
             this.criticalEdgeOffsetToolStripMenuItem.Text = "Critical Edge Offset";
             // 
             // critedgeoffTB
             // 
             this.critedgeoffTB.Name = "critedgeoffTB";
-            this.critedgeoffTB.Size = new System.Drawing.Size(100, 23);
+            this.critedgeoffTB.Size = new System.Drawing.Size(100, 21);
             this.critedgeoffTB.Text = "0";
             this.critedgeoffTB.TextChanged += new System.EventHandler(this.critedgeoffTB_TextChanged);
             // 
@@ -757,13 +758,13 @@ namespace StochasticModeling
             this.highQOffsetToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.HQoffsetTB});
             this.highQOffsetToolStripMenuItem.Name = "highQOffsetToolStripMenuItem";
-            this.highQOffsetToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
+            this.highQOffsetToolStripMenuItem.Size = new System.Drawing.Size(234, 22);
             this.highQOffsetToolStripMenuItem.Text = "High Q offset";
             // 
             // HQoffsetTB
             // 
             this.HQoffsetTB.Name = "HQoffsetTB";
-            this.HQoffsetTB.Size = new System.Drawing.Size(100, 23);
+            this.HQoffsetTB.Size = new System.Drawing.Size(100, 21);
             this.HQoffsetTB.Text = "0";
             this.HQoffsetTB.TextChanged += new System.EventHandler(this.HQoffsetTB_TextChanged);
             // 
@@ -791,7 +792,7 @@ namespace StochasticModeling
             // SigmaSearchTB
             // 
             this.SigmaSearchTB.Name = "SigmaSearchTB";
-            this.SigmaSearchTB.Size = new System.Drawing.Size(100, 23);
+            this.SigmaSearchTB.Size = new System.Drawing.Size(100, 21);
             this.SigmaSearchTB.Text = "10";
             // 
             // objectiveFunctionToolStripMenuItem
@@ -813,7 +814,7 @@ namespace StochasticModeling
             "Inverse Cost Function with errors",
             "R/Rf Chi Square"});
             this.objectiveCB.Name = "objectiveCB";
-            this.objectiveCB.Size = new System.Drawing.Size(200, 23);
+            this.objectiveCB.Size = new System.Drawing.Size(200, 21);
             // 
             // searchAlgorithmToolStripMenuItem
             // 
@@ -831,7 +832,7 @@ namespace StochasticModeling
             "Stochastic Tunneling",
             "ASA Annealing"});
             this.AlgorithmCB.Name = "AlgorithmCB";
-            this.AlgorithmCB.Size = new System.Drawing.Size(200, 23);
+            this.AlgorithmCB.Size = new System.Drawing.Size(200, 21);
             this.AlgorithmCB.DropDownClosed += new System.EventHandler(this.AlgorithmCB_DropDownClosed);
             // 
             // parameterTemperatureToolStripMenuItem
@@ -845,7 +846,7 @@ namespace StochasticModeling
             // ParamTempTB
             // 
             this.ParamTempTB.Name = "ParamTempTB";
-            this.ParamTempTB.Size = new System.Drawing.Size(100, 23);
+            this.ParamTempTB.Size = new System.Drawing.Size(100, 21);
             this.ParamTempTB.Text = "0.03";
             // 
             // holdSigmaToolStripMenuItem
@@ -861,13 +862,13 @@ namespace StochasticModeling
             this.setSigmaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.SigTSTB});
             this.setSigmaToolStripMenuItem.Name = "setSigmaToolStripMenuItem";
-            this.setSigmaToolStripMenuItem.Size = new System.Drawing.Size(126, 22);
+            this.setSigmaToolStripMenuItem.Size = new System.Drawing.Size(132, 22);
             this.setSigmaToolStripMenuItem.Text = "Set Sigma";
             // 
             // SigTSTB
             // 
             this.SigTSTB.Name = "SigTSTB";
-            this.SigTSTB.Size = new System.Drawing.Size(100, 23);
+            this.SigTSTB.Size = new System.Drawing.Size(100, 21);
             this.SigTSTB.Text = "0";
             // 
             // forceXRToolStripMenuItem1
@@ -891,28 +892,28 @@ namespace StochasticModeling
             // errorsAreInVarianceToolStripMenuItem
             // 
             this.errorsAreInVarianceToolStripMenuItem.Name = "errorsAreInVarianceToolStripMenuItem";
-            this.errorsAreInVarianceToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.errorsAreInVarianceToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
             this.errorsAreInVarianceToolStripMenuItem.Text = "Errors are in Variance";
             this.errorsAreInVarianceToolStripMenuItem.Click += new System.EventHandler(this.errorsAreInVarianceToolStripMenuItem_Click);
             // 
             // forceRQ4GraphingToolStripMenuItem
             // 
             this.forceRQ4GraphingToolStripMenuItem.Name = "forceRQ4GraphingToolStripMenuItem";
-            this.forceRQ4GraphingToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.forceRQ4GraphingToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
             this.forceRQ4GraphingToolStripMenuItem.Text = "Force RQ^4 graphing";
             this.forceRQ4GraphingToolStripMenuItem.Click += new System.EventHandler(this.forceRQ4GraphingToolStripMenuItem_Click);
             // 
             // UseSLDToolStripMenuItem
             // 
             this.UseSLDToolStripMenuItem.Name = "UseSLDToolStripMenuItem";
-            this.UseSLDToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.UseSLDToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
             this.UseSLDToolStripMenuItem.Text = "Use SLD";
             this.UseSLDToolStripMenuItem.Click += new System.EventHandler(this.neutronDataToolStripMenuItem_Click);
             // 
             // debugToolStripMenuItem
             // 
             this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
-            this.debugToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.debugToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
             this.debugToolStripMenuItem.Text = "Debug";
             this.debugToolStripMenuItem.Click += new System.EventHandler(this.debugToolStripMenuItem_Click);
             // 
@@ -930,10 +931,19 @@ namespace StochasticModeling
             this.generateReportToolStripMenuItem.Text = "Generate Report";
             this.generateReportToolStripMenuItem.Click += new System.EventHandler(this.OnGenerateReport);
             // 
+            // calculatorsToolStripMenuItem
+            // 
+            this.calculatorsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.sLDCalculatorToolStripMenuItem,
+            this.sLDConverterToolStripMenuItem});
+            this.calculatorsToolStripMenuItem.Name = "calculatorsToolStripMenuItem";
+            this.calculatorsToolStripMenuItem.Size = new System.Drawing.Size(72, 20);
+            this.calculatorsToolStripMenuItem.Text = "Calculators";
+            // 
             // sLDCalculatorToolStripMenuItem
             // 
             this.sLDCalculatorToolStripMenuItem.Name = "sLDCalculatorToolStripMenuItem";
-            this.sLDCalculatorToolStripMenuItem.Size = new System.Drawing.Size(96, 20);
+            this.sLDCalculatorToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
             this.sLDCalculatorToolStripMenuItem.Text = "SLD Calculator";
             this.sLDCalculatorToolStripMenuItem.Click += new System.EventHandler(this.sLDCalculatorToolStripMenuItem_Click);
             // 
@@ -943,13 +953,13 @@ namespace StochasticModeling
             this.tutorialToolStripMenuItem,
             this.manualToolStripMenuItem});
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(40, 20);
             this.helpToolStripMenuItem.Text = "Help";
             // 
             // tutorialToolStripMenuItem
             // 
             this.tutorialToolStripMenuItem.Name = "tutorialToolStripMenuItem";
-            this.tutorialToolStripMenuItem.Size = new System.Drawing.Size(115, 22);
+            this.tutorialToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.tutorialToolStripMenuItem.Text = "Tutorial";
             this.tutorialToolStripMenuItem.Click += new System.EventHandler(this.tutorialToolStripMenuItem_Click);
             // 
@@ -963,7 +973,7 @@ namespace StochasticModeling
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(52, 20);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
             this.aboutToolStripMenuItem.Text = "About";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
@@ -1086,6 +1096,13 @@ namespace StochasticModeling
             this.FitScoreTB.TabIndex = 35;
             this.FitScoreTB.TabStop = false;
             this.FitScoreTB.Text = "0";
+            // 
+            // sLDConverterToolStripMenuItem
+            // 
+            this.sLDConverterToolStripMenuItem.Name = "sLDConverterToolStripMenuItem";
+            this.sLDConverterToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.sLDConverterToolStripMenuItem.Text = "SLD Converter";
+            this.sLDConverterToolStripMenuItem.Click += new System.EventHandler(this.sLDConverterToolStripMenuItem_Click);
             // 
             // Stochfit
             // 
@@ -1218,7 +1235,6 @@ namespace StochasticModeling
         private System.Windows.Forms.TextBox SupSLDTB;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.TextBox QErrTB;
-        private System.Windows.Forms.ToolStripMenuItem sLDCalculatorToolStripMenuItem;
         private System.Windows.Forms.CheckBox ForceNormCB;
         private System.Windows.Forms.CheckBox ImpNormCB;
         private System.Windows.Forms.ToolStripMenuItem holdSigmaToolStripMenuItem;
@@ -1233,6 +1249,9 @@ namespace StochasticModeling
         private System.Windows.Forms.ToolStripMenuItem parameterTemperatureToolStripMenuItem;
         private System.Windows.Forms.ToolStripTextBox ParamTempTB;
         private System.Windows.Forms.ToolStripMenuItem UseSLDToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem calculatorsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem sLDCalculatorToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem sLDConverterToolStripMenuItem;
 	}
 }
 

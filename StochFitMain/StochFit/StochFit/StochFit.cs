@@ -1111,9 +1111,10 @@ namespace StochasticModeling
         } 
         #endregion
 
-        private void toolStripMenuItem1_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        private void sLDConverterToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            SLDConverter conv = new SLDConverter();
+            conv.ShowDialog(this);
         }
 
         

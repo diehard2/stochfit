@@ -117,28 +117,4 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <metadata name="openFileDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>17, 17</value>
-  </metadata>
-  <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>138, 24</value>
-  </metadata>
-  <data name="ForceNormCB.ToolTip" xml:space="preserve">
-    <value>This parameter forces the first point to be set to 1.0, and
-the rest of the curve is then scaled by this factor. This 
-is useful when the absorption is large. In this case, the 
-curve is normalized, but there is no critical edge.</value>
-  </data>
-  <data name="UseAbsCB.ToolTip" xml:space="preserve">
-    <value>For samples with large absorptions, a certain percentage of
-the time is spent searching the absorption. In this case, we
-assume the absorption varies with the electron density. The
-absorption search splits time with the sigma search</value>
-  </data>
-  <metadata name="menuStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>230, 24</value>
-  </metadata>
-  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>50</value>
-  </metadata>
 </root>

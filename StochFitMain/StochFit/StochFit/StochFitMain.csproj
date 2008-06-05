@@ -142,11 +142,17 @@
       <DependentUpon>StunAnnealingParams.cs</DependentUpon>
     </Compile>
     <Compile Include="ReflData.cs" />
-    <Compile Include="SLDCalculator.cs">
+    <Compile Include="Calculators\SLDCalculator.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="SLDCalculator.Designer.cs">
+    <Compile Include="Calculators\SLDCalculator.Designer.cs">
       <DependentUpon>SLDCalculator.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Calculators\SLDConverter.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Calculators\SLDConverter.Designer.cs">
+      <DependentUpon>SLDConverter.cs</DependentUpon>
     </Compile>
     <Compile Include="StochFit.cs">
       <SubType>Form</SubType>
@@ -228,6 +234,10 @@
       <DependentUpon>AboutBox1.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Calculators\SLDConverter.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>SLDConverter.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Modeling\AnnealingParams.resx">
       <SubType>Designer</SubType>
       <DependentUpon>AnnealingParams.cs</DependentUpon>
@@ -236,7 +246,7 @@
       <SubType>Designer</SubType>
       <DependentUpon>StunAnnealingParams.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="SLDCalculator.resx">
+    <EmbeddedResource Include="Calculators\SLDCalculator.resx">
       <SubType>Designer</SubType>
       <DependentUpon>SLDCalculator.cs</DependentUpon>
     </EmbeddedResource>

@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmmd.lib levmarmkl.lib libguide40.lib"
+				AdditionalDependencies="libmmdd.lib levmarmkl.lib libguide40.lib"
 				OutputFile="..\bin\Debug\LevMardll.dll"
 				LinkIncremental="0"
 				AdditionalLibraryDirectories="..\bin\dlls\"

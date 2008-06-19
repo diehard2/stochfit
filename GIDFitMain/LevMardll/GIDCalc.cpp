@@ -83,74 +83,97 @@ GIDCalc::~GIDCalc()
 	double gammasquared = 0.25*gamma*gamma;
 	double normfactor = 0.5*gamma/2.0;*/
 
-	double gammasquared = gamma*gamma;
-	double normfactor = 0.5*gamma/2.0;
-	double posshift;
+	//double gammasquared = gamma*gamma;
+	//double normfactor = 0.5*gamma/2.0;
+	//double posshift;
+	//
+	//#pragma ivdep
+	//for(int i = 0; i < length; i++)
+	//{
+	//	posshift = m_dQ[i]-position;
+	//	posshift *= posshift;
+	//	outarray[i] = intensity*gammasquared/(posshift+gammasquared);
+	//}
+
+	
+	
+	double squareterm;
 	
 	#pragma ivdep
 	for(int i = 0; i < length; i++)
 	{
-		posshift = m_dQ[i]-position;
-		posshift *= posshift;
-		outarray[i] = intensity*gammasquared/(posshift+gammasquared);
+		squareterm = 2*(m_dQ[i]-position)/gamma;
+		outarray[i] = intensity/(1+squareterm*squareterm);
 	}
  }
 
  void GIDCalc::MakeVoigt(double position, double sigma, double gamma, double intensity, double* outarray)
  {
-	 
-	 //Use the real portion of the Fadeeva function (complex error function) to calculate the Voigt profile
-	 if(gamma == 0)
-		 gamma = 1e-16;
-
-	 if(sigma == 0)
-		 sigma = 1e-16;
-
-	 
-	 MyComplex c;
+	 //Pearson VII Temp sigma - M gamma - FWHM
+	double term, const1;
+	int length = m_iQSize;
 	
-	 double denom = 1.0/(sigma*sqrt(2.0));
-	 double pos;
-	 MyComplex norm(0.0,gamma*denom);
-	 double normfactinv = cerf(norm).re;
-	 double normfact = 1.0/cerf(norm).re;
+	const1 = 2.0*sqrt(pow(2.0,1.0/sigma)-1)/(gamma/2);
+	#pragma ivdep
+	for(int i = 0; i < length; i++)
+	{
+		term = 1 + ((m_dQ[i]-position)*const1)*((m_dQ[i]-position)*const1);
+		outarray[i] = intensity* pow(term, -1.0*sigma);
+	}
+
 	 
-	 for(int j = 0; j < m_iQSize; j++)
-	 {
-		 //Take advantage of the fact that the profile is symmetric
-		 pos = fabs(m_dQ[j]-position);
-		 c.re = pos*denom;
-		 c.im = gamma*denom;
+	 ////Use the real portion of the Fadeeva function (complex error function) to calculate the Voigt profile
+	 //if(gamma == 0)
+		// gamma = 1e-16;
+
+	 //if(sigma == 0)
+		// sigma = 1e-16;
+
+	 //
+	 //MyComplex c;
 	
-		 //Make negative gamma's very unpopular. This is necessary, as our Fadeeva function is only
-		 //valid for the first and fourth quadrants and the origin.
-		 if(sigma < 0 || gamma < 0) 
-		 {
-			outarray[j] = -1e6;
-		 }
-		 else if (normfactinv > 0 && gamma > 0)
-		 {
-			 outarray[j] = normfact*intensity*cerf(c).re;
-			 m_bwarnedonce = false;
-		 }
-		 else if (normfactinv  == 0)
-		 {
-			 if(m_bfitting == false && m_bwarnedonce == false)
-			 {
-				MessageBox(NULL, L"The sigma value has dropped below resolvable levels (~8e-4) - Lorentzian will be used", NULL,NULL);
-				m_bwarnedonce = true;
-			 }
+	 //double denom = 1.0/(sigma*sqrt(2.0));
+	 //double pos;
+	 //MyComplex norm(0.0,gamma*denom);
+	 //double normfactinv = cerf(norm).re;
+	 //double normfact = 1.0/cerf(norm).re;
+	 //
+	 //for(int j = 0; j < m_iQSize; j++)
+	 //{
+		// //Take advantage of the fact that the profile is symmetric
+		// pos = fabs(m_dQ[j]-position);
+		// c.re = pos*denom;
+		// c.im = gamma*denom;
+	
+		// //Make negative gamma's very unpopular. This is necessary, as our Fadeeva function is only
+		// //valid for the first and fourth quadrants and the origin.
+		// if(sigma < 0 || gamma < 0) 
+		// {
+		//	outarray[j] = -1e6;
+		// }
+		// else if (normfactinv > 0 && gamma > 0)
+		// {
+		//	 outarray[j] = normfact*intensity*cerf(c).re;
+		//	 m_bwarnedonce = false;
+		// }
+		// else if (normfactinv  == 0)
+		// {
+		//	 if(m_bfitting == false && m_bwarnedonce == false)
+		//	 {
+		//		MessageBox(NULL, L"The sigma value has dropped below resolvable levels (~8e-4) - Lorentzian will be used", NULL,NULL);
+		//		m_bwarnedonce = true;
+		//	 }
 
-			 MakeLorentzian(position, gamma, intensity, outarray);
-			 break;
-		 }
-		 else
-		 {
-			 MessageBox(NULL,L"Error",NULL,NULL);
-			 break;
-		 }
+		//	 MakeLorentzian(position, gamma, intensity, outarray);
+		//	 break;
+		// }
+		// else
+		// {
+		//	 MessageBox(NULL,L"Error",NULL,NULL);
+		//	 break;
+		// }
 
-	 }
+	 //}
  }
 
  //Parse the parameter list from the main program

@@ -5,7 +5,7 @@
 	Name="LevMardll"
 	ProjectGUID="{1942BC8C-3706-48D2-8D70-3BF4237A41CE}"
 	VCNestedProjectGUID="{A2D16FE7-CD5C-4D6A-81FE-3789D54D5D13}"
-	VCNestedProjectCRC32="3831853073"
+	VCNestedProjectCRC32="4220197655"
 	VCNestedProjectFileName="LevMardll.vcproj"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -38,7 +38,7 @@
 				Name="LinkerTool"
 				OutputFile="..\bin\Debug\LevMardll.dll"
 				AdditionalLibraryDirectories="..\bin\dlls\"
-				AdditionalDependencies="libmmd.lib levmarmkl.lib libguide40.lib"
+				AdditionalDependencies="libmmdd.lib levmarmkl.lib libguide40.lib"
 				IgnoreDefaultLibraryNames=""
 				GenerateManifest="1"
 				GenerateDebugInformation="1"

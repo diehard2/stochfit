@@ -283,11 +283,11 @@ namespace GIDFit
                         //Add stuff here to show each individual scan
                         for (int i = 0; i < numberoffuncs; i++)
                         {
-                            GIDGraphobject.LoadfromArray(modname + i.ToString(), QRange, IndividGraphs[i], colarray[i], SymbolType.None, 4, System.Drawing.Drawing2D.DashStyle.Dot, false);
+                            GIDGraphobject.LoadfromArray(modname + i.ToString(), QRange, IndividGraphs[i], colarray[i], SymbolType.None, 4, System.Drawing.Drawing2D.DashStyle.Dot, false, string.Empty);
                         }
                     }
                     SetFWHM();
-                    GIDGraphobject.LoadfromArray("superimposedmodel", QRange, ModelGIDPoints, Color.Blue, SymbolType.None, 1, false);
+                    GIDGraphobject.LoadfromArray("superimposedmodel", QRange, ModelGIDPoints, Color.Blue, SymbolType.None, 1, false, string.Empty);
                 }
             }
             catch
@@ -304,14 +304,15 @@ namespace GIDFit
                 }
                 else if (FuncCBHolder[i].SelectedIndex == 1)
                 {
-                    FWHMHolder[i].Text = string.Format("{0:#.###}",2*double.Parse(GammaCBHolder[i].Text));
+                    FWHMHolder[i].Text = string.Format("{0:#.###}",double.Parse(GammaCBHolder[i].Text));
                 }
                 else if (FuncCBHolder[i].SelectedIndex == 2)
                 {
                     //From J.J.Olivero and R.L. Longbothum in Empirical fits to the Voigt line width: A brief review, JQSRT 17, P233
                     double gamma = double.Parse(GammaCBHolder[i].Text);
                     double sigma = double.Parse(SigmaCBHolder[i].Text);
-                    FWHMHolder[i].Text = string.Format("{0:#.###}", (0.5346 * gamma + Math.Sqrt(0.2166 * sigma * sigma + gamma * gamma)));
+                  //  FWHMHolder[i].Text = string.Format("{0:#.###}", (0.5346 * gamma + Math.Sqrt(0.2166 * sigma * sigma + gamma * gamma)));
+                    FWHMHolder[i].Text = string.Format("{0:#.###}", gamma);
                 }
             }
         }

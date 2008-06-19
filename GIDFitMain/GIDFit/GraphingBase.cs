@@ -17,6 +17,7 @@
  *  http://www.gnu.org/copyleft/gpl.html
  *
  */
+#pragma warning disable 1591
 
 using System;
 using System.Text;
@@ -29,8 +30,9 @@ using System.Windows.Forms;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Drawing.Drawing2D;
+using StochasticModeling.GraphingZoom;
 
-namespace GIDFit
+namespace StochasticModeling
 {
 
     //This class is necessary until Zedgraph cleans up bugs in current versions. Last working version is 4.1.1
@@ -136,7 +138,10 @@ namespace GIDFit
     }
 
 
-
+/// <summary>
+/// Base class for using the ZedGraph graphing control for a scatter plot. While this class can be extended, it also
+/// functions
+/// </summary>
     public class GraphingBase
     {
         private ZedGraphControl m_cZG;
@@ -170,6 +175,11 @@ namespace GIDFit
             Color.LightGoldenrodYellow, 45.0F);
         }
 
+        protected virtual void SetAxisScale()
+        {
+
+        }
+
        
         //either pass in a zedgraphcontrol from a control, or we'll create our own
         public void CreateGraph(ZedGraphControl zgc)
@@ -177,19 +187,28 @@ namespace GIDFit
             if (zgc != null)
                 m_cZG = zgc;
             else
+            {
                 m_cZG = new ZedGraphControl();
+                
+            }
 
             m_cMyPane = m_cZG.GraphPane;
+            m_cZG.BackColor = Color.Transparent;
+            m_cZG.ForeColor = Color.Transparent;
+            
+
+           
+            m_cMyPane.YAxis.MinorTic.Color = Color.Transparent;
         }
 
         
-        public void SetSize(Rectangle rect)
-        {
-            //Resizing of these controls can be difficult. It is better to handle it from the GUI side
-            // zg.Location = new Point( 10, 10 );
-            //// Leave a small margin around the outside of the control
-            // zg.Size = new Size(rect.Width - 300, rect.Height - 300);
-        }
+        //public void SetSize(Rectangle rect)
+        //{
+        //    //Resizing of these controls can be difficult. It is better to handle it from the GUI side
+        //    // zg.Location = new Point( 10, 10 );
+        //    //// Leave a small margin around the outside of the control
+        //    // zg.Size = new Size(rect.Width - 300, rect.Height - 300);
+        //}
 
         public void AddMenuItem(ContextMenuStrip menustrip, string name, string tag, string text, EventHandler handler)
         {
@@ -201,6 +220,7 @@ namespace GIDFit
             item.Click += new EventHandler(handler);
             menustrip.Items.Add(item);
         }
+
 
         public void RemoveMenuItem(ContextMenuStrip menuStrip, string name)
         {
@@ -355,6 +375,10 @@ namespace GIDFit
             {
                 m_cMousePos = value;
             }
+            get
+            {
+                return m_cMousePos;
+            }
         }
 
         public CurveList GraphCurveList
@@ -453,6 +477,8 @@ namespace GIDFit
             BorderState = false;
             Pane.Title.IsVisible = false;
             Pane.Chart.Fill = new Fill(Color.Transparent);
+            Pane.Fill = new Fill(Color.Transparent);
+            m_cZG.BackColor = Color.Transparent;
             Pane.IsPenWidthScaled = true;
             Pane.Fill = new Fill(Color.Transparent);
             Pane.XAxis.Title.FontSpec.IsAntiAlias = true;
@@ -477,6 +503,7 @@ namespace GIDFit
                         ((LineItem)GraphCurveList[i]).Line.Width += 1;
                 }
             }
+            Invalidate();
         }
 
         public void Copy(GraphingBase graph)
@@ -485,7 +512,7 @@ namespace GIDFit
             m_bThisisadeepcopy = false;
         }
 
-        public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, bool isSmoothed)
+        public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, bool isSmoothed, string tag)
         {
             PointPairList list = new PointPairList();
             for (int i = 0; i < X.Length; i++)
@@ -493,11 +520,11 @@ namespace GIDFit
                     list.Add(X[i] , Y[i]);
             }
             
-            AddCurvetoGraph(list, name, color, symbol, symbolsize, isSmoothed);
+            AddCurvetoGraph(list, name, color, symbol, symbolsize, isSmoothed, tag);
             m_alDatainGraph.Add(name);
         }
 
-        public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, DashStyle style, bool isSmoothed)
+        public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, DashStyle style, bool isSmoothed, string tag)
         {
             PointPairList list = new PointPairList();
             for (int i = 0; i < X.Length; i++)
@@ -505,7 +532,7 @@ namespace GIDFit
                 list.Add(X[i], Y[i]);
             }
 
-            AddCurvetoGraph(list, name, color, symbol, symbolsize, style, isSmoothed);
+            AddCurvetoGraph(list, name, color, symbol, symbolsize, style, isSmoothed,tag);
             m_alDatainGraph.Add(name);
 
         }
@@ -543,11 +570,13 @@ namespace GIDFit
                 }
             }
             ZGControl.ZoomOutAll(m_cMyPane);
+            Invalidate();
         }
 
         protected void AxisChange()
         {
             m_cZG.AxisChange();
+            Invalidate();
         }
 
         protected void Invalidate()
@@ -584,12 +613,16 @@ namespace GIDFit
             }
         }
 
-        protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, bool isSmoothed)
+        protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, bool isSmoothed,string tag)
         {
             LineItem myCurve = m_cMyPane.AddCurve(DataName, list, linecolor, type);
-            myCurve.Symbol.Fill = new Fill(Color.Red);
+            myCurve.Symbol.Fill = new Fill(Color.DeepSkyBlue,Color.Red );
+            myCurve.Symbol.Fill.Type = FillType.GradientByZ;
+            myCurve.Symbol.Fill.RangeMin = 0;
+            myCurve.Symbol.Fill.RangeMax = 1;
             myCurve.Symbol.Size = symbolsize;
             myCurve.Line.IsAntiAlias = true;
+            myCurve.Tag = tag;
 
             if (isSmoothed == true)
                 myCurve.Line.IsSmooth = true;
@@ -598,13 +631,17 @@ namespace GIDFit
             Invalidate();
         }
 
-        protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, DashStyle style, bool isSmoothed)
+        protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, DashStyle style, bool isSmoothed, string tag)
         {
             LineItem myCurve = m_cMyPane.AddCurve(DataName, list, linecolor, type);
-            myCurve.Symbol.Fill = new Fill(Color.Red);
+            myCurve.Symbol.Fill = new Fill(Color.DeepSkyBlue,Color.Red);
+            myCurve.Symbol.Fill.Type = FillType.GradientByZ;
+            myCurve.Symbol.Fill.RangeMin = 0;
+            myCurve.Symbol.Fill.RangeMax = 1;
             myCurve.Symbol.Size = symbolsize;
             myCurve.Line.Style = style;
             myCurve.Line.IsAntiAlias = true;
+            myCurve.Tag = tag;
 
             if (isSmoothed == true)
                 myCurve.Line.IsSmooth = true;
@@ -613,13 +650,17 @@ namespace GIDFit
             Invalidate();
         }
 
-        protected virtual void AddCurvetoGraph(PointPairList list, PointPairList elist, string DataName, Color linecolor, SymbolType type, int symbolsize)
+        protected virtual void AddCurvetoGraph(PointPairList list, PointPairList elist, string DataName, Color linecolor, SymbolType type, int symbolsize, string tag)
         {
             LineItem myCurve = m_cMyPane.AddCurve(DataName, list, linecolor, type);
-            myCurve.Symbol.Fill = new Fill(Color.Red);
+            myCurve.Symbol.Fill = new Fill(Color.DeepSkyBlue,Color.Red);
+            myCurve.Symbol.Fill.Type = FillType.GradientByZ;
+            myCurve.Symbol.Fill.RangeMin = 0;
+            myCurve.Symbol.Fill.RangeMax = 1;
             myCurve.Symbol.Size = symbolsize;
             myCurve.Line.IsAntiAlias = true;
             myCurve.Line.IsSmooth = true;
+            myCurve.Tag = tag;
 
             if (elist != null)
             {
@@ -665,6 +706,28 @@ namespace GIDFit
                 m_cMyPane.CurveList.Remove(curve);
                 m_cMyPane.CurveList.TrimExcess();
             }
+        }
+
+        public void AdvancedZoom(object sender, System.EventArgs e)
+        {
+            AdvancedZoom zoom = new AdvancedZoom();
+            zoom.ShowDialog();
+
+            if (zoom.xupperlimit != -1e6)
+                Pane.XAxis.Scale.Max = zoom.xupperlimit;
+            if (zoom.xlowerlimit != -1e6)
+                Pane.XAxis.Scale.Min = zoom.xlowerlimit;
+            if (zoom.yupperlimit != -1e6)
+                Pane.YAxis.Scale.Max = zoom.yupperlimit;
+            if (zoom.ylowerlimit != -1e6)
+                Pane.YAxis.Scale.Min = zoom.ylowerlimit;
+
+            Invalidate();
+        }
+
+        public void UndoAdvancedZoom(object sender, System.EventArgs e)
+        {
+            SetAxisScale();
         }
 
         public void CopyMetatoClip(object sender, System.EventArgs e)

@@ -21,6 +21,7 @@ namespace GIDFit
             PublicationGraph.CreateGraph(GIDGraph);
             PublicationGraph.SetAllFonts("Garamond", 20, 18);
             PublicationGraph.AlterGraph(ingraph);
+            PublicationGraph.SetUpGraphMenu();
         }
     }
 }

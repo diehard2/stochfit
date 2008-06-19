@@ -490,12 +490,11 @@ namespace GIDFit
             this.Func2CoB.Items.AddRange(new object[] {
             "Gaussian",
             "Lorentzian",
-            "Voight"});
+            "Pearson VII"});
             this.Func2CoB.Location = new System.Drawing.Point(579, 88);
             this.Func2CoB.Name = "Func2CoB";
             this.Func2CoB.Size = new System.Drawing.Size(121, 21);
             this.Func2CoB.TabIndex = 9;
-            this.Func2CoB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             this.Func2CoB.SelectedIndexChanged += new System.EventHandler(this.Func2CoB_SelectedIndexChanged);
             // 
             // Func3CoB
@@ -505,12 +504,11 @@ namespace GIDFit
             this.Func3CoB.Items.AddRange(new object[] {
             "Gaussian",
             "Lorentzian",
-            "Voight"});
+            "Pearson VII"});
             this.Func3CoB.Location = new System.Drawing.Point(579, 128);
             this.Func3CoB.Name = "Func3CoB";
             this.Func3CoB.Size = new System.Drawing.Size(121, 21);
             this.Func3CoB.TabIndex = 14;
-            this.Func3CoB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             this.Func3CoB.SelectedIndexChanged += new System.EventHandler(this.Func3CoB_SelectedIndexChanged);
             // 
             // Func4CoB
@@ -520,12 +518,11 @@ namespace GIDFit
             this.Func4CoB.Items.AddRange(new object[] {
             "Gaussian",
             "Lorentzian",
-            "Voight"});
+            "Pearson VII"});
             this.Func4CoB.Location = new System.Drawing.Point(579, 168);
             this.Func4CoB.Name = "Func4CoB";
             this.Func4CoB.Size = new System.Drawing.Size(121, 21);
             this.Func4CoB.TabIndex = 19;
-            this.Func4CoB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             this.Func4CoB.SelectionChangeCommitted += new System.EventHandler(this.Func4CoB_SelectionChangeCommitted);
             // 
             // Func5CoB
@@ -535,12 +532,11 @@ namespace GIDFit
             this.Func5CoB.Items.AddRange(new object[] {
             "Gaussian",
             "Lorentzian",
-            "Voight"});
+            "Pearson VII"});
             this.Func5CoB.Location = new System.Drawing.Point(579, 208);
             this.Func5CoB.Name = "Func5CoB";
             this.Func5CoB.Size = new System.Drawing.Size(121, 21);
             this.Func5CoB.TabIndex = 24;
-            this.Func5CoB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             this.Func5CoB.SelectedIndexChanged += new System.EventHandler(this.Func5CoB_SelectedIndexChanged);
             // 
             // Func6CoB
@@ -550,12 +546,11 @@ namespace GIDFit
             this.Func6CoB.Items.AddRange(new object[] {
             "Gaussian",
             "Lorentzian",
-            "Voight"});
+            "Pearson VII"});
             this.Func6CoB.Location = new System.Drawing.Point(579, 248);
             this.Func6CoB.Name = "Func6CoB";
             this.Func6CoB.Size = new System.Drawing.Size(121, 21);
             this.Func6CoB.TabIndex = 29;
-            this.Func6CoB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             this.Func6CoB.SelectedIndexChanged += new System.EventHandler(this.Func6CoB_SelectedIndexChanged);
             // 
             // Func1CoB
@@ -565,12 +560,11 @@ namespace GIDFit
             this.Func1CoB.Items.AddRange(new object[] {
             "Gaussian",
             "Lorentzian",
-            "Voight"});
+            "Pearson VII"});
             this.Func1CoB.Location = new System.Drawing.Point(579, 48);
             this.Func1CoB.Name = "Func1CoB";
             this.Func1CoB.Size = new System.Drawing.Size(121, 21);
             this.Func1CoB.TabIndex = 4;
-            this.Func1CoB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             this.Func1CoB.SelectedIndexChanged += new System.EventHandler(this.Func1CoB_SelectedIndexChanged);
             // 
             // label3

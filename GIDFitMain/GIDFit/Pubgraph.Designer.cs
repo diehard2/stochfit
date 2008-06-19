@@ -35,7 +35,9 @@ namespace GIDFit
             // GIDGraph
             // 
             this.GIDGraph.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.GIDGraph.BackColor = System.Drawing.Color.Transparent;
             this.GIDGraph.EditButtons = System.Windows.Forms.MouseButtons.Left;
+            this.GIDGraph.ForeColor = System.Drawing.Color.Transparent;
             this.GIDGraph.Location = new System.Drawing.Point(-5, -2);
             this.GIDGraph.Name = "GIDGraph";
             this.GIDGraph.PanModifierKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Shift | System.Windows.Forms.Keys.None)));

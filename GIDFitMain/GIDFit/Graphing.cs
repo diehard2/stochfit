@@ -29,6 +29,7 @@ using System.Windows.Forms;
 using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
 using System.Globalization;
+using StochasticModeling;
 
 namespace GIDFit
 {
@@ -44,6 +45,7 @@ namespace GIDFit
 
         public Graphing(string name):base(name)
         {
+            
         }
 
         public override void CreateGraph(ZedGraphControl zgc, string Title, string XAxis, string YAxis, AxisType blog)
@@ -52,11 +54,22 @@ namespace GIDFit
             GraphContextMenuBuilder(MyContextMenuBuilder);
         }
 
+        protected override void SetAxisScale()
+        {
+            AxisChange();
+        }
+
+        public void SetUpGraphMenu()
+        {
+            GraphContextMenuBuilder(MyContextMenuBuilder);
+        }
+
         private void MyContextMenuBuilder(ZedGraphControl control, ContextMenuStrip menuStrip, Point mousePt, ZedGraphControl.ContextMenuObjectState objState)
         {
-            AddMenuItem(menuStrip, "ClipCopy_tag", "ClipCopy_tag", "High Quality Copy", CopyMetatoClip);
+            AddMenuItem(menuStrip, "ClipCopy_tag", "ClipCopy_tag", "High Quality Copy", CopyLocalGraph);
             AddMenuItem(menuStrip, "SaveEMF_tag", "SaveEMF_tag", "Save High Quality Image", SaveEMFFile);
-
+            AddMenuItem(menuStrip, "AdvancedZoom", "AdvancedZoom", "Advanced Zoom", AdvancedZoom);
+            AddMenuItem(menuStrip, "UndoAdvancedZoom", "UndoAdvancedZoom", "Undo Advanced Zoom", UndoAdvancedZoom);
             RemoveMenuItem(menuStrip, "copy");
             RemoveMenuItem(menuStrip, "set_default");
             RemoveMenuItem(menuStrip, "page_setup");
@@ -108,7 +121,7 @@ namespace GIDFit
                         }
                     }
                
-                AddCurvetoGraph(RealReflData, RealReflErrors, name, color, symbol, symbolsize);
+                AddCurvetoGraph(RealReflData, RealReflErrors, name, color, symbol, symbolsize, "realdatafile");
                 
                 m_alDatainGraph.Add(name);
                 //To account for the error file

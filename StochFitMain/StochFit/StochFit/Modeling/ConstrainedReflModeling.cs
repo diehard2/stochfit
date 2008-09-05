@@ -782,7 +782,7 @@ namespace StochasticModeling
             ReportGenerator g = ReportGenerator.Instance;
             g.ClearReflModelInfo();
 
-            ArrayList ginfo = new ArrayList();
+            List<string> ginfo = new List<string>();
 
             if (Holdsigma.Checked)
             {

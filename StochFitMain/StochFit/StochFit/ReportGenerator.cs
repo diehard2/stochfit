@@ -41,9 +41,9 @@ namespace StochasticModeling
         /// </summary>
         public static readonly ReportGenerator Instance = new ReportGenerator();
 
-        private ArrayList m_alMainInformation;
-        private ArrayList m_alRhoModelingInformation;
-        private ArrayList m_alReflModelingInformation;
+        private List<Phrase> m_alMainInformation;
+        private List<Phrase> m_alRhoModelingInformation;
+        private List<Phrase> m_alReflModelingInformation;
 
         private Phrase m_pBlankline = new Phrase("\n");
         private Phrase m_pLine;
@@ -53,9 +53,9 @@ namespace StochasticModeling
         // make the default constructor private, so that no can directly create it.
         private ReportGenerator()
         {
-            m_alMainInformation = new ArrayList();
-            m_alRhoModelingInformation = new ArrayList();
-            m_alReflModelingInformation = new ArrayList();
+            m_alMainInformation = new List<Phrase>();
+            m_alRhoModelingInformation = new List<Phrase>();
+            m_alReflModelingInformation = new List<Phrase>();
             m_pLine = new Phrase();
         }
 
@@ -125,13 +125,13 @@ namespace StochasticModeling
         /// <summary>
         /// Add an ArrayList of formatted text to the electron density fitting portion of the report
         /// </summary>
-        public ArrayList SetRhoModelInfo
+        public List<String> SetRhoModelInfo
         {
             set
             {
-                for (int i = 0; i < ((ArrayList)value).Count; i++)
+                for (int i = 0; i < value.Count; i++)
                 {
-                    m_pLine = new Phrase(new Chunk((string)(((ArrayList)value)[i]), FontFactory.GetFont(FontFactory.HELVETICA, 8, 0)));
+                    m_pLine = new Phrase(new Chunk(value[i], FontFactory.GetFont(FontFactory.HELVETICA, 8, 0)));
                     m_alRhoModelingInformation.Add(m_pLine);
                 }
             }
@@ -149,13 +149,13 @@ namespace StochasticModeling
         /// <summary>
         /// Set the information for the model dependent reflectivity fit
         /// </summary>
-        public ArrayList SetReflModelInfo
+        public List<string> SetReflModelInfo
         {
             set
             {
-                for (int i = 0; i < ((ArrayList)value).Count; i++)
+                for (int i = 0; i < value.Count; i++)
                 {
-                    m_pLine = new Phrase(new Chunk((string)(((ArrayList)value)[i]),FontFactory.GetFont(FontFactory.HELVETICA, 8, 0)));
+                    m_pLine = new Phrase(new Chunk(value[i],FontFactory.GetFont(FontFactory.HELVETICA, 8, 0)));
                     m_alReflModelingInformation.Add(m_pLine);
                 }
             }
@@ -179,7 +179,7 @@ namespace StochasticModeling
             document.Add(image);
         }
 
-        private void GenerateReflChart(ArrayList info, Document document)
+        private void GenerateReflChart(List<Phrase> info, Document document)
         {
             PdfPTable datatable = new PdfPTable(4);
             datatable.WidthPercentage = 100;
@@ -221,7 +221,7 @@ namespace StochasticModeling
             document.Add(datatable);
         }
 
-        private void GenerateRhoChart(ArrayList info, Document document)
+        private void GenerateRhoChart(List<Phrase> info, Document document)
         {
             PdfPTable datatable = new PdfPTable(4);
             datatable.WidthPercentage = 100;

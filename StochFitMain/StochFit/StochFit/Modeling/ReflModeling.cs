@@ -732,22 +732,22 @@ namespace StochasticModeling
             ReportGenerator g = ReportGenerator.Instance;
             g.ClearReflModelInfo();
 
-            ArrayList ginfo = new ArrayList();
+            List<string> ginfo = new List<string>();
 
             if (Holdsigma.Checked)
                 ginfo.Add("The reflectivity curve was fit with a single roughness parameter\n");
             else
                 ginfo.Add(String.Format("The reflectivity curve was fit with {0} roughness parameters\n", (int.Parse(BoxCount.Text) + 1)));
 
-            ginfo.Add(String.Format("Percent Error in Q: " + QSpreadTB.Text + "\n"));
-            ginfo.Add(String.Format("Normalization Constant: " + NormCorrectTB.Text + "\n"));
-            ginfo.Add(String.Format("Critical Edge Offset: " + CritOffset.Text + "\n"));
-            ginfo.Add(String.Format("High Q Offset: " + Rightoffset.Text + "\n"));
-            ginfo.Add(String.Format("Superphase SLD: " + SupSLDTB.Text + "\n"));
-            ginfo.Add(String.Format("Subphase SLD: " + SubphaseSLD.Text + "\n"));
-            ginfo.Add(String.Format("Wavelength: " + WavelengthTB.Text + "\n"));
-            ginfo.Add(String.Format("Chi Square for reflectivity fit: " + chisquaretb.Text + "\n"));
-            ginfo.Add(String.Format("The subphase roughness was: {0:#.### E-0} " +(char)0x00B1 + " {1:#.### E-0}\n", double.Parse(SubRough.Text), covar[0]));
+            ginfo.Add(string.Format("Percent Error in Q: " + QSpreadTB.Text + "\n"));
+            ginfo.Add(string.Format("Normalization Constant: " + NormCorrectTB.Text + "\n"));
+            ginfo.Add(string.Format("Critical Edge Offset: " + CritOffset.Text + "\n"));
+            ginfo.Add(string.Format("High Q Offset: " + Rightoffset.Text + "\n"));
+            ginfo.Add(string.Format("Superphase SLD: " + SupSLDTB.Text + "\n"));
+            ginfo.Add(string.Format("Subphase SLD: " + SubphaseSLD.Text + "\n"));
+            ginfo.Add(string.Format("Wavelength: " + WavelengthTB.Text + "\n"));
+            ginfo.Add(string.Format("Chi Square for reflectivity fit: " + chisquaretb.Text + "\n"));
+            ginfo.Add(string.Format("The subphase roughness was: {0:#.### E-0} " + (char)0x00B1 + " {1:#.### E-0}\n", double.Parse(SubRough.Text), covar[0]));
       
             if (Holdsigma.Checked == true)
             {

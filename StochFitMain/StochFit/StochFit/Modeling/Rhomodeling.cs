@@ -419,7 +419,7 @@ namespace StochasticModeling
             ReportGenerator g = ReportGenerator.Instance;
             g.ClearRhoModelInfo();
 
-            ArrayList info = new ArrayList();
+            List<string> info = new List<string>();
 
             if (Holdsigma.Checked)
             {
@@ -436,8 +436,8 @@ namespace StochasticModeling
                     info.Add(String.Format("The SLD profile was fit with {0} roughness parameters\n", (int.Parse(BoxCount.Text) + 1)));
             }
 
-            info.Add(String.Format("Chi Square: " + chisquaretb.Text + "\n"));
-            info.Add(String.Format("The subphase roughness was: {0:#.### E-0} " + (char)0x00B1 + " {1:#.### E-0}\n", double.Parse(SubRough.Text), m_dCovarArray[0]));
+            info.Add(string.Format("Chi Square: " + chisquaretb.Text + "\n"));
+            info.Add(string.Format("The subphase roughness was: {0:#.### E-0} " + (char)0x00B1 + " {1:#.### E-0}\n", double.Parse(SubRough.Text), m_dCovarArray[0]));
            
             if (Holdsigma.Checked == true)
             {

@@ -218,7 +218,7 @@ void RhoCalc::writefiles(const char* filename)
 	std::ofstream outrhofile(filename);
 	for(int i = 0; i<Zlength;i++)
 	{
-		outrhofile<<ZIncrement[i] << ' ' << ZIncrement[i] << ' ' << nk[i] << ' ' << nkb[i] << std::endl;
+		outrhofile<< ZIncrement[i] << ' ' << nk[i] << ' ' << nkb[i] << std::endl;
 	}
 	outrhofile.close();
 

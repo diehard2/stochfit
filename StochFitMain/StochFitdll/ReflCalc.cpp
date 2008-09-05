@@ -624,7 +624,7 @@ double CReflCalc::objective(ParamVector * g)
 		for(int i = 0; i< counter; i++)
 		{
 			calcholder1 = log(yi[i])-log(reflpt[i]);
-			m_dgoodnessoffit += calcholder1*calcholder1/fabs(log(eyi[i]*eyi[i]));
+			m_dgoodnessoffit += calcholder1*calcholder1/fabs(log(eyi[i]));
 		}
 
 		m_dgoodnessoffit /= counter+1;

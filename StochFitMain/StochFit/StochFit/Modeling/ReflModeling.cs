@@ -677,7 +677,7 @@ namespace StochasticModeling
 
         private void WriteFullfitFiles()
         {
-            using (StreamWriter sw = new StreamWriter("fullreffit.dat"))
+            using (StreamWriter sw = new StreamWriter("fullreflfit.dat"))
             {
                 string outputstring;
                 double Qc = Graphing.CalcQc(double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text));

@@ -28,7 +28,6 @@
 #include "ParameterContainer.h"
 #include "randomc.h"
 
-
 BOOL APIENTRY DllMain( HANDLE hModule, 
                        DWORD  ul_reason_for_call, 
                        LPVOID lpReserved
@@ -214,6 +213,7 @@ extern "C" LEVMARDLL_API double FastReflfit(LPCWSTR directory, int boxes, double
 		}
 		outreflfile.close();
 	}
+
 
 	delete[] xvec;
 	delete[] work;

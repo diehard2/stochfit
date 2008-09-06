@@ -61,7 +61,7 @@ namespace StochasticModeling
         private double m_dPrevioussigma;
         private double m_dPreviouszoffset;
 
-        private ArrayList m_alParameters;
+        private List<double> m_alParameters;
         private TextBox[] m_tbBoxSigmaArray;
         private TextBox[] m_tbBoxRhoArray;
         private TextBox[] m_tbBoxLengthArray;
@@ -69,8 +69,8 @@ namespace StochasticModeling
         private double[] m_dRho;
         private double[] m_dBoxRho;
         private double[] m_dRealRho;
-        private ArrayList m_alHoldList;
-        private ArrayList m_alHeldParameters;
+        private List<double> m_alHoldList;
+        private List<double> m_alHeldParameters;
         private bool m_bUseSLD = false;
         #endregion
 
@@ -95,7 +95,7 @@ namespace StochasticModeling
             m_dRoughness = roughness;
             SubRough.Text = roughness.ToString();
             Zoffset.Text = leftoffset.ToString();
-            m_alParameters = new ArrayList();
+            m_alParameters = new List<double>();
             SubphaseSLD.Text = subsld;
             SupSLDTB.Text = supsld;
 
@@ -135,8 +135,8 @@ namespace StochasticModeling
                  Report_btn.Enabled = false;
              }
 
-             m_alHoldList = new ArrayList();
-             m_alHeldParameters = new ArrayList();
+             m_alHoldList = new List<double>();
+             m_alHeldParameters = new List<double>();
             
              //Setup the Graph
              m_gRhoGraphing = new Graphing(string.Empty);
@@ -163,6 +163,7 @@ namespace StochasticModeling
              else
                  RhoLabel.Text = "SLD";
 
+             GreyFields();
              //Create the electron density graph
              UpdateProfile();
         }
@@ -289,9 +290,32 @@ namespace StochasticModeling
      
         private void Field_Validated (object sender, EventArgs e)
         {
+            GreyFields();
             UpdateProfile();
         }
-   
+
+        private void GreyFields()
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                if (i < int.Parse(BoxCount.Text))
+                {
+                    m_tbBoxLengthArray[i].Enabled = true;
+                    m_tbBoxRhoArray[i].Enabled = true;
+
+                    if (Holdsigma.Checked)
+                        m_tbBoxSigmaArray[i].Enabled = false;
+                    else
+                        m_tbBoxSigmaArray[i].Enabled = true;
+                }
+                else
+                {
+                    m_tbBoxLengthArray[i].Enabled = false;
+                    m_tbBoxRhoArray[i].Enabled = false;
+                    m_tbBoxSigmaArray[i].Enabled = false;
+                }
+            }
+        }
 
         private void LevenbergFit_Click(object sender, EventArgs e)
         {

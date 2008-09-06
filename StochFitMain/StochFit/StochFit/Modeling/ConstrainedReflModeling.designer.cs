@@ -727,7 +727,7 @@ namespace StochasticModeling
             this.Holdsigma.TabIndex = 7;
             this.Holdsigma.Text = "Link Roughness";
             this.Holdsigma.UseVisualStyleBackColor = true;
-            this.Holdsigma.Validated += new System.EventHandler(this.Variable_Changed);
+            this.Holdsigma.CheckedChanged += new System.EventHandler(this.Variable_Changed);
             // 
             // label12
             // 

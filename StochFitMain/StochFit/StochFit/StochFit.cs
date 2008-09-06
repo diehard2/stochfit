@@ -218,7 +218,6 @@ namespace StochasticModeling
                                     rhographobject.Title = "Model Independent Electron Density Fit";
                                 }
                                     rhographobject.LoadFiletoGraph(tempfile.ToString(), rhomodelname, "Model Independent Electron Density Fit", Color.Tomato, SymbolType.None, 0, true);
-                               
                             }
 
                             tempfile = ReflData.Instance.GetWorkingDirectory + "\\rf.dat";
@@ -232,7 +231,7 @@ namespace StochasticModeling
                                 reflgraphobject.GetLowQOffset = int.Parse(critedgeoffTB.Text);
                                 reflgraphobject.GetHighQOffset = ReflData.Instance.GetNumberDataPoints - int.Parse(HQoffsetTB.Text);
                                 //Load the data file to the graph
-                                reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
+                                reflgraphobject.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
                                 reflgraphobject.LoadFiletoGraph(tempfile.ToString(), modelreflname, "Model Independent Reflectivity", Color.Tomato, SymbolType.Square, 2, true);
                             }
 
@@ -244,7 +243,7 @@ namespace StochasticModeling
                         else
                         {
                             //Load the data file to the graph
-                            reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
+                            reflgraphobject.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
 
                             FileInfo info = new FileInfo(settingsfile);
 
@@ -283,14 +282,11 @@ namespace StochasticModeling
                                     File.Move(info.DirectoryName + "\\reflrhofit.dat", fileloc + "\\reflrhofit.dat");
                             }
                         }
-
-
-
                     }
                     else
                     {
                         //Load the data file to the graph
-                        reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
+                        reflgraphobject.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
                     }
 
                     FileNameTB.Text = origreflfilename;
@@ -318,37 +314,23 @@ namespace StochasticModeling
 
         private void LoadZ(string filename)
         {
+            string dataline;
+
             using (StreamReader sr = new StreamReader(filename))
             {
-                string dataline;
-                int linecount = 0;
-
-                while ((dataline = sr.ReadLine()) != null)
-                    linecount++;
-
-                Z = new double[linecount];
-                Rho = new double[linecount];
-            }
-            using (StreamReader sr = new StreamReader(filename))
-            {
-                string dataline;
-                int linecount = 0;
+               
+                List<double> tempZ = new List<double>(500);
+                List<double> tempRho = new List<double>(500);
 
                 while ((dataline = sr.ReadLine()) != null)
                 {
-                    Regex r = new Regex(@"\s");
-                    string[] temp = r.Split(dataline);
-                    ArrayList datastring = new ArrayList();
-                    for (int i = 0; i < temp.Length; i++)
-                    {
-                        if (temp[i] != "")
-                            datastring.Add(temp[i]);
-                    }
-
-                    Z[linecount] = Double.Parse((string)datastring[0]);
-                    Rho[linecount] = Double.Parse((string)datastring[1]);
-                    linecount++;
+                    string[] temp = new Regex(@"\s").Split(dataline);
+                    tempZ.Add(double.Parse(temp[0]));
+                    tempRho.Add(double.Parse(temp[1]));
                 }
+
+                Z = tempZ.ToArray();
+                Rho = tempRho.ToArray();
             }
         }
 
@@ -730,7 +712,7 @@ namespace StochasticModeling
                     if (m_bmodelreset == true || reflgraphobject.DataFileLoaded == false)
                     {
                         reflgraphobject.Clear();
-                        reflgraphobject.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
+                        reflgraphobject.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
 
                         if (rhographobject.HasCurve)
                         {

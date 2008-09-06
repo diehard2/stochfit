@@ -84,7 +84,7 @@ namespace StochasticModeling
             this.label18 = new System.Windows.Forms.Label();
             this.QSpreadTB = new System.Windows.Forms.TextBox();
             this.DBFCB = new System.Windows.Forms.CheckBox();
-            this.NormCorrectCB = new System.Windows.Forms.CheckBox();
+            this.ImpNormCB = new System.Windows.Forms.CheckBox();
             this.label19 = new System.Windows.Forms.Label();
             this.NormCorrectTB = new System.Windows.Forms.TextBox();
             this.label20 = new System.Windows.Forms.Label();
@@ -717,17 +717,18 @@ namespace StochasticModeling
             this.DBFCB.UseVisualStyleBackColor = true;
             this.DBFCB.CheckedChanged += new System.EventHandler(this.MajorVariable_Changed);
             // 
-            // NormCorrectCB
+            // ImpNormCB
             // 
-            this.NormCorrectCB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.NormCorrectCB.AutoSize = true;
-            this.NormCorrectCB.Location = new System.Drawing.Point(179, 24);
-            this.NormCorrectCB.Name = "NormCorrectCB";
-            this.NormCorrectCB.Size = new System.Drawing.Size(185, 17);
-            this.NormCorrectCB.TabIndex = 5;
-            this.NormCorrectCB.Text = "Correct for imperfect normalization";
-            this.NormCorrectCB.UseVisualStyleBackColor = true;
-            this.NormCorrectCB.CheckedChanged += new System.EventHandler(this.Variable_Changed);
+            this.ImpNormCB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.ImpNormCB.AutoSize = true;
+            this.ImpNormCB.Location = new System.Drawing.Point(179, 24);
+            this.ImpNormCB.Name = "ImpNormCB";
+            this.ImpNormCB.Size = new System.Drawing.Size(185, 17);
+            this.ImpNormCB.TabIndex = 5;
+            this.ImpNormCB.Text = "Correct for imperfect normalization";
+            this.ImpNormCB.UseVisualStyleBackColor = true;
+            this.ImpNormCB.Validated += new System.EventHandler(this.Variable_Changed);
+            this.ImpNormCB.CheckedChanged += new System.EventHandler(this.MajorVariable_Changed);
             // 
             // label19
             // 
@@ -851,7 +852,7 @@ namespace StochasticModeling
             this.controlbox.Controls.Add(this.WavelengthTB);
             this.controlbox.Controls.Add(this.label19);
             this.controlbox.Controls.Add(this.NormCorrectTB);
-            this.controlbox.Controls.Add(this.NormCorrectCB);
+            this.controlbox.Controls.Add(this.ImpNormCB);
             this.controlbox.Controls.Add(this.DBFCB);
             this.controlbox.Controls.Add(this.label18);
             this.controlbox.Controls.Add(this.QSpreadTB);
@@ -966,7 +967,7 @@ namespace StochasticModeling
         private System.Windows.Forms.Label label18;
         private System.Windows.Forms.TextBox QSpreadTB;
         private System.Windows.Forms.CheckBox DBFCB;
-        private System.Windows.Forms.CheckBox NormCorrectCB;
+        private System.Windows.Forms.CheckBox ImpNormCB;
         private System.Windows.Forms.Label label19;
         private System.Windows.Forms.TextBox NormCorrectTB;
         private System.Windows.Forms.Label label20;

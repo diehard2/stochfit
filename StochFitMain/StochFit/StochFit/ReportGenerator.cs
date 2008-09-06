@@ -45,8 +45,7 @@ namespace StochasticModeling
         private List<Phrase> m_alRhoModelingInformation;
         private List<Phrase> m_alReflModelingInformation;
 
-        private Phrase m_pBlankline = new Phrase("\n");
-        private Phrase m_pLine;
+        private const string m_pBlankline = "\n";
         private string m_sFilePDF;
         private bool m_bUseSLD = false;
 
@@ -56,7 +55,6 @@ namespace StochasticModeling
             m_alMainInformation = new List<Phrase>();
             m_alRhoModelingInformation = new List<Phrase>();
             m_alReflModelingInformation = new List<Phrase>();
-            m_pLine = new Phrase();
         }
 
         /// <summary>
@@ -108,8 +106,7 @@ namespace StochasticModeling
         {
             set
             {
-                m_pLine = new Phrase(new Chunk((string)value,FontFactory.GetFont(FontFactory.HELVETICA, 8, 0)));
-                m_alMainInformation.Add(m_pLine);
+                m_alMainInformation.Add(new Phrase(new Chunk((string)value,FontFactory.GetFont(FontFactory.HELVETICA, 8, 0))));
             }
         }
 
@@ -123,7 +120,7 @@ namespace StochasticModeling
         }
 
         /// <summary>
-        /// Add an ArrayList of formatted text to the electron density fitting portion of the report
+        /// Add a List of formatted text to the electron density fitting portion of the report
         /// </summary>
         public List<String> SetRhoModelInfo
         {
@@ -131,8 +128,7 @@ namespace StochasticModeling
             {
                 for (int i = 0; i < value.Count; i++)
                 {
-                    m_pLine = new Phrase(new Chunk(value[i], FontFactory.GetFont(FontFactory.HELVETICA, 8, 0)));
-                    m_alRhoModelingInformation.Add(m_pLine);
+                    m_alRhoModelingInformation.Add(new Phrase(new Chunk(value[i], FontFactory.GetFont(FontFactory.HELVETICA, 8, 0))));
                 }
             }
         }
@@ -155,8 +151,7 @@ namespace StochasticModeling
             {
                 for (int i = 0; i < value.Count; i++)
                 {
-                    m_pLine = new Phrase(new Chunk(value[i],FontFactory.GetFont(FontFactory.HELVETICA, 8, 0)));
-                    m_alReflModelingInformation.Add(m_pLine);
+                    m_alReflModelingInformation.Add( new Phrase(new Chunk(value[i],FontFactory.GetFont(FontFactory.HELVETICA, 8, 0))));
                 }
             }
         }
@@ -210,12 +205,9 @@ namespace StochasticModeling
 
             for (int i = 10; i < (info.Count-3); i++)
             {
-                datatable.AddCell((Phrase)info[i]);
-                i++;
-                datatable.AddCell((Phrase)info[i]);
-                i++;
-                datatable.AddCell((Phrase)info[i]);
-                i++;
+                datatable.AddCell((Phrase)info[i++]);
+                datatable.AddCell((Phrase)info[i++]);
+                datatable.AddCell((Phrase)info[i++]);
                 datatable.AddCell((Phrase)info[i]);
             }
             document.Add(datatable);
@@ -233,8 +225,8 @@ namespace StochasticModeling
             datatable.DefaultCell.HorizontalAlignment = Element.ALIGN_CENTER;
             datatable.AddCell("Layer #");
             datatable.AddCell("Length");
-            
-            if(m_bUseSLD == false)
+
+            if (m_bUseSLD == false)
                 datatable.AddCell("Rho/Rho(infinity)");
             else
                 datatable.AddCell("SLD");
@@ -251,12 +243,9 @@ namespace StochasticModeling
 
             for (int i = 3; i < (info.Count - 3); i++)
             {
-                datatable.AddCell((Phrase)info[i]);
-                i++;
-                datatable.AddCell((Phrase)info[i]);
-                i++;
-                datatable.AddCell((Phrase)info[i]);
-                i++;
+                datatable.AddCell((Phrase)info[i++]);
+                datatable.AddCell((Phrase)info[i++]);
+                datatable.AddCell((Phrase)info[i++]);
                 datatable.AddCell((Phrase)info[i]);
             }
             document.Add(datatable);
@@ -297,7 +286,7 @@ namespace StochasticModeling
                     {
                         document.Add((Phrase)m_alMainInformation[i]);
                     }
-                    document.Add(m_pBlankline);
+                    document.Add(new Phrase(m_pBlankline));
 
                     //Add the modeled reflectivity graph
                     if (GraphCollection.Instance.MainReflGraph.IsDeepCopyFull == true)

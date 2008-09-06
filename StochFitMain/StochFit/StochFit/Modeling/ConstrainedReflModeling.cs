@@ -151,7 +151,7 @@ namespace StochasticModeling
             ReflGraphing.SupSLD = Double.Parse(SupSLDTB.Text);
             ReflGraphing.Wavelength = Double.Parse(WavelengthTB.Text);
             ReflGraphing.CreateGraph(RhoGraph, "Reflectivity", "Q/Qc", "Intensity / Fresnel", AxisType.Log);
-            ReflGraphing.LoadDataFiletoGraph("Reflectivity Data", System.Drawing.Color.Black, SymbolType.Circle, 5);
+            ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", System.Drawing.Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
             ReflGraphing.SetAllFonts("Garamond", 22, 18);
 
             //Set up ED Graph
@@ -218,7 +218,7 @@ namespace StochasticModeling
 
             //Initialize constrain form
             constr = new Constraints(6, m_bUseSLD);
-
+            GreyFields();
             //Setup the callback if the graph updates the bounds
             ReflGraphing.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
             BackupArrays();
@@ -357,7 +357,7 @@ namespace StochasticModeling
             if (m_bmodelreset == true)
             {
                 ReflGraphing.Clear();
-                ReflGraphing.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
+                ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
                 m_bmodelreset = false;
             }
          
@@ -372,6 +372,7 @@ namespace StochasticModeling
         {
             try
             {
+                GreyFields();
                 ReflGraphing.SupSLD = double.Parse(SupSLDTB.Text);
                 ReflGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
                 RhoGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
@@ -383,6 +384,31 @@ namespace StochasticModeling
                 UpdateProfile();
             }
             catch { }
+        }
+
+        private void GreyFields()
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                if (i < int.Parse(BoxCount.Text))
+                {
+                    BoxLengthArray[i].Enabled = true;
+                    BoxRhoArray[i].Enabled = true;
+
+                    if (Holdsigma.Checked)
+                        BoxSigmaArray[i].Enabled = false;
+                    else
+                        BoxSigmaArray[i].Enabled = true;
+                }
+                else
+                {
+                    BoxLengthArray[i].Enabled = false;
+                    BoxRhoArray[i].Enabled = false;
+                    BoxSigmaArray[i].Enabled = false;
+                }
+            }
+
+            NormCorrectTB.Enabled = ImpNormCB.Checked;
         }
 
         private void MajorVariable_Changed(object sender, EventArgs e)
@@ -720,31 +746,31 @@ namespace StochasticModeling
             //Update report parameters
             SaveParamsforReport();
             m_bvalidfit = true;
-            WriteFullfitFiles();
+          //  WriteFullfitFiles();
             //Add the graph to the master graph
             GraphCollection.Instance.ReflGraph = ReflGraphing;
             GraphCollection.Instance.ReflEGraph = RhoGraphing;
 
         }
 
-        private void WriteFullfitFiles()
-        {
-            using (StreamWriter sw = new StreamWriter("fullreffit.dat"))
-            {
-                string outputstring;
-                double Qc = Graphing.CalcQc(double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text));
+        //private void WriteFullfitFiles()
+        //{
+        //    using (StreamWriter sw = new StreamWriter("fullreffit.dat"))
+        //    {
+        //        string outputstring;
+        //        double Qc = Graphing.CalcQc(double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text));
 
-                for (int i = 0; i < RealRefl.Length; i++)
-                {
-                    double QQc = (((double)Qincrement[i]) / Qc);
-                    double DBF = (ReflectivityMap[i] / Graphing.CalcFresnelPoint((double)Qincrement[i], Qc));
-                    outputstring = ((double)Qincrement[i]).ToString() + " " + ((double)RealRefl[i]).ToString() + " " +
-                        ((double)RealReflErrors[i]).ToString() + " " + ReflectivityMap[i].ToString() + " " + QQc.ToString() + " " + DBF.ToString() + "\n";
-                    sw.Write(outputstring);
-                }
-                sw.Close();
-            }
-        }
+        //        for (int i = 0; i < RealRefl.Length; i++)
+        //        {
+        //            double QQc = (((double)Qincrement[i]) / Qc);
+        //            double DBF = (ReflectivityMap[i] / Graphing.CalcFresnelPoint((double)Qincrement[i], Qc));
+        //            outputstring = ((double)Qincrement[i]).ToString() + " " + ((double)RealRefl[i]).ToString() + " " +
+        //                ((double)RealReflErrors[i]).ToString() + " " + ReflectivityMap[i].ToString() + " " + QQc.ToString() + " " + DBF.ToString() + "\n";
+        //            sw.Write(outputstring);
+        //        }
+        //        sw.Close();
+        //    }
+        //}
 
         private void BackupArrays()
         {
@@ -1341,6 +1367,5 @@ namespace StochasticModeling
                 return double.Parse(SubphaseSLD.Text);
             }
         }
-
     }
 }

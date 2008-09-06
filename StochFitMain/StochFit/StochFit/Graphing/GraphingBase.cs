@@ -30,6 +30,7 @@ using System.Windows.Forms;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Drawing.Drawing2D;
+using System.Collections.Generic;
 
 namespace StochasticModeling
 {
@@ -144,7 +145,7 @@ namespace StochasticModeling
     public class GraphingBase
     {
         private ZedGraphControl m_cZG;
-        protected ArrayList m_alDatainGraph;
+        protected List<string> m_alDatainGraph;
         private GraphPane m_cMyPane;
         protected PointF m_cMousePos = PointF.Empty;
         private bool m_bThisisadeepcopy = false;
@@ -152,7 +153,7 @@ namespace StochasticModeling
 
         public GraphingBase(string name)
         {
-            m_alDatainGraph = new ArrayList();
+            m_alDatainGraph = new List<string>();
             m_sGraphname = name;
         }
 
@@ -548,7 +549,6 @@ namespace StochasticModeling
                 if (m_alDatainGraph != null)
                 {
                     m_alDatainGraph.Clear();
-                    m_alDatainGraph.TrimToSize();
                 }
             }
             ZGControl.ZoomOutAll(m_cMyPane);
@@ -569,7 +569,7 @@ namespace StochasticModeling
         {
             for (int i = 0; i < m_alDatainGraph.Count; i++)
             {
-                if (filename == (string)m_alDatainGraph[i])
+                if (filename == m_alDatainGraph[i])
                     return true;
 
             }
@@ -586,11 +586,11 @@ namespace StochasticModeling
             }
         }
 
-        protected virtual void GetPointList(ArrayList X, ArrayList Y, ref PointPairList List) 
+        protected virtual void GetPointList(List<double> X, List<double> Y, ref PointPairList List) 
         {
             for (int i = 0; i < X.Count; i++)
             {
-                List.Add((double)X[i], (double)Y[i]);
+                List.Add(X[i], Y[i]);
             }
         }
 
@@ -663,10 +663,10 @@ namespace StochasticModeling
         public void RemoveGraphfromArray(string name)
         {
             int index = -1;
-
+            
             for (int i = 0; i < m_alDatainGraph.Count; i++)
             {
-                if (name == (string)m_alDatainGraph[i])
+                if (name == m_alDatainGraph[i])
                 {
                     index = i;
                     break;
@@ -683,7 +683,6 @@ namespace StochasticModeling
                     return;
 
                 m_alDatainGraph.RemoveAt(index);
-                m_alDatainGraph.TrimToSize();
                 m_cMyPane.CurveList.Remove(curve);
                 m_cMyPane.CurveList.TrimExcess();
             }

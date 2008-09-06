@@ -149,7 +149,7 @@ namespace StochasticModeling
             ReflGraphing.SupSLD = Double.Parse(SupSLDTB.Text);
             ReflGraphing.Wavelength = Double.Parse(WavelengthTB.Text);
             ReflGraphing.CreateGraph(RhoGraph, "Reflectivity", "Q/Qc", "Intensity / Fresnel", AxisType.Log);
-            ReflGraphing.LoadDataFiletoGraph("Reflectivity Data", System.Drawing.Color.Black, SymbolType.Circle, 5);
+            ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", System.Drawing.Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
             ReflGraphing.SetAllFonts("Garamond", 22, 18);
 
             RhoGraphing = new Graphing(string.Empty);
@@ -210,6 +210,7 @@ namespace StochasticModeling
             loadingCircle2.RotationSpeed = 150;
             loadingCircle2.SpokeThickness = 3;
 
+            GreyFields();
             //Setup the callback if the graph updates the bounds
             ReflGraphing.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
             BackupArrays();
@@ -319,7 +320,7 @@ namespace StochasticModeling
             parameters[3 * int.Parse(BoxCount.Text) + 1] = Double.Parse(NormCorrectTB.Text);
 
             FastReflGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), double.Parse(WavelengthTB.Text), parameters, parameters.Length,
-                  Qincrement, QErrors, Qincrement.Length, ReflectivityMap, ReflectivityMap.Length, Double.Parse(QSpreadTB.Text),NormCorrectCB.Checked);
+                  Qincrement, QErrors, Qincrement.Length, ReflectivityMap, ReflectivityMap.Length, Double.Parse(QSpreadTB.Text),ImpNormCB.Checked);
             RhoGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), eparameters,
                     eparameters.Length, Z, Z.Length, ElectronDensityArray, BoxElectronDensityArray, ElectronDensityArray.Length);
           
@@ -327,7 +328,7 @@ namespace StochasticModeling
             if (m_bmodelreset == true)
             {
                 ReflGraphing.Clear();
-                ReflGraphing.LoadDataFiletoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5);
+                ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
                 m_bmodelreset = false;
             }
 
@@ -436,7 +437,7 @@ namespace StochasticModeling
             //Do the fit
             chisquare = FastReflfit(ReflData.Instance.GetWorkingDirectory, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text), 
                 parameters, parameters.Length, qrange, qerrors, qrange.Length,  reflectivity, reflectivity.Length, reflectivityerrors, covar, covar.Length, info, info.Length, 
-                Holdsigma.Checked, true, Double.Parse(QSpreadTB.Text),NormCorrectCB.Checked);
+                Holdsigma.Checked, true, Double.Parse(QSpreadTB.Text),ImpNormCB.Checked);
 
             //Update the ChiSquare
             chisquaretb.Text = chisquare.ToString("#.### E-000");
@@ -492,7 +493,7 @@ namespace StochasticModeling
             //Update report parameters
             SaveParamsforReport();
             m_bvalidfit = true;
-            WriteFullfitFiles();
+           // WriteFullfitFiles();
 
             //Add the graph to the master graph
             GraphCollection.Instance.ReflGraph = ReflGraphing;
@@ -598,9 +599,9 @@ namespace StochasticModeling
 
                 StochFit(boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text), parameters, parameters.Length, qrange, qerrors, qrange.Length, reflectivity,
                       reflectivity.Length, reflectivityerrors, covar, covar.Length, info, info.Length, Holdsigma.Checked, false, UI.IterationCount, ParamArray, out size, parampercs, ChiSquareArray, CovarArray,
-                      Double.Parse(QSpreadTB.Text), NormCorrectCB.Checked);
+                      Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
                 outwin = new StochOutputWindow(ParamArray, size, parameters.Length, ChiSquareArray, CovarArray, Holdsigma.Checked, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text),
-                       Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), NormCorrectCB.Checked);
+                       Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
 
                 if (outwin.ShowDialog() != DialogResult.Cancel)
                 {
@@ -675,23 +676,23 @@ namespace StochasticModeling
 
         #endregion
 
-        private void WriteFullfitFiles()
-        {
-            using (StreamWriter sw = new StreamWriter("fullreflfit.dat"))
-            {
-                string outputstring;
-                double Qc = Graphing.CalcQc(double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text));
+        //private void WriteFullfitFiles()
+        //{
+        //    using (StreamWriter sw = new StreamWriter("fullreflfit.dat"))
+        //    {
+        //        string outputstring;
+        //        double Qc = Graphing.CalcQc(double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text));
 
-                for (int i = 0; i < RealRefl.Length; i++)
-                {
-                    double QQc = Qincrement[i] / Qc;
-                    double DBF = ReflectivityMap[i] / Graphing.CalcFresnelPoint((double)Qincrement[i], Qc);
-                    outputstring = (Qincrement[i]).ToString() + " " + (RealRefl[i]).ToString() + " " +
-                        (RealReflErrors[i]).ToString() + " " + ReflectivityMap[i].ToString() + " " + QQc.ToString() + " " + DBF.ToString() + "\n";
-                    sw.Write(outputstring);
-                }
-            }
-        }
+        //        for (int i = 0; i < RealRefl.Length; i++)
+        //        {
+        //            double QQc = Qincrement[i] / Qc;
+        //            double DBF = ReflectivityMap[i] / Graphing.CalcFresnelPoint((double)Qincrement[i], Qc);
+        //            outputstring = (Qincrement[i]).ToString() + " " + (RealRefl[i]).ToString() + " " +
+        //                (RealReflErrors[i]).ToString() + " " + ReflectivityMap[i].ToString() + " " + QQc.ToString() + " " + DBF.ToString() + "\n";
+        //            sw.Write(outputstring);
+        //        }
+        //    }
+        //}
 
         private void BackupArrays()
         {
@@ -826,7 +827,7 @@ namespace StochasticModeling
                     }
                 }
 
-                if (NormCorrectCB.Checked)
+                if (ImpNormCB.Checked)
                     output.Append(Environment.NewLine + "Normalization factor = " + Double.Parse(NormCorrectTB.Text).ToString("#.###") + " " +
                        (char)0x00B1 + " " + covar[covar.Length - 1].ToString("#.### E-0") + Environment.NewLine);
 
@@ -890,6 +891,7 @@ namespace StochasticModeling
         {
             try
             {
+                GreyFields();
                 ReflGraphing.SupSLD = double.Parse(SupSLDTB.Text);
                 ReflGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
                 RhoGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
@@ -899,6 +901,32 @@ namespace StochasticModeling
                 UpdateProfile();
             }
             catch { }
+        }
+
+
+        private void GreyFields()
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                if (i < int.Parse(BoxCount.Text))
+                {
+                    BoxLengthArray[i].Enabled = true;
+                    BoxRhoArray[i].Enabled = true;
+
+                    if (Holdsigma.Checked)
+                        BoxSigmaArray[i].Enabled = false;
+                    else
+                        BoxSigmaArray[i].Enabled = true;
+                }
+                else
+                {
+                    BoxLengthArray[i].Enabled = false;
+                    BoxRhoArray[i].Enabled = false;
+                    BoxSigmaArray[i].Enabled = false;
+                }
+            }
+
+            NormCorrectTB.Enabled = ImpNormCB.Checked;
         }
 
         private void MajorVariable_Changed(object sender, EventArgs e)

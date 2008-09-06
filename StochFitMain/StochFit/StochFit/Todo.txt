@@ -1,2 +1,8 @@
-1. add 4 column data to model dependent gui
-2. find better way to handle 4 column data
+full data on graphing
+fields and full control for splitting
+make sure debugging works
+x gray out unused boxes dynamically
+check threading in C++ modules for speed
+full refldata
+make sure all files are printed
+itextsharp update

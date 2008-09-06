@@ -30,6 +30,7 @@ using System.Windows.Forms;
 using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
 using System.Globalization;
+using System.Collections.Generic;
 
 namespace StochasticModeling
 {
@@ -248,7 +249,7 @@ namespace StochasticModeling
       /// <param name="color">The color of the data line</param>
       /// <param name="symbol">Symbol Shape</param>
       /// <param name="symbolsize">Size of the symbol</param>
-        public void LoadDataFiletoGraph(string name, Color color, SymbolType symbol,int symbolsize)
+        public void LoadDatawithErrorstoGraph(string name, Color color, SymbolType symbol,int symbolsize, double[] XData, double[] YData)
         {
             try
             {
@@ -271,7 +272,7 @@ namespace StochasticModeling
                 //Initialize our pointpairlists and add our data
                 //Add the real data
 
-                RealReflData = new PointPairList(ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
+                RealReflData = new PointPairList(XData, YData);
 
                 for (int i = 0; i < ReflData.Instance.GetNumberDataPoints; i++)
                     RealReflData[i].Z = 0.0;
@@ -384,7 +385,7 @@ namespace StochasticModeling
                             //Parse text file
                             Regex r = new Regex(@"\s");
                             string[] temp = r.Split(dataline);
-                            ArrayList datastring = new ArrayList();
+                            List<string> datastring = new List<string>();
 
                             for (int i = 0; i < temp.Length; i++)
                             {
@@ -392,23 +393,23 @@ namespace StochasticModeling
                                     datastring.Add(temp[i]);
                             }
 
-                            Q = Double.Parse((string)datastring[0], CI_US);
+                            Q = Double.Parse(datastring[0], CI_US);
 
                             if (m_bDBF == true)
                             {
-                                Refl = Double.Parse((string)datastring[1], CI_US) / CalcFresnelPoint(Q, Qc);
+                                Refl = Double.Parse(datastring[1], CI_US) / CalcFresnelPoint(Q, Qc);
                                 Q = Q / Qc;
                             }
                             else if (m_bisQfour == true)
                             {
-                                Refl = Double.Parse((string)datastring[1], CI_US) * Math.Pow(Q, 4.0);
+                                Refl = Double.Parse(datastring[1], CI_US) * Math.Pow(Q, 4.0);
                             }
                             else
                             {
                                 if (m_bUseSLD == false)
-                                    Refl = Double.Parse((string)datastring[1], CI_US);
+                                    Refl = Double.Parse(datastring[1], CI_US);
                                 else
-                                    Refl = Double.Parse((string)datastring[1], CI_US) * SubSLD;
+                                    Refl = Double.Parse(datastring[1], CI_US) * SubSLD;
                             }
 
                             list.Add(Q, Refl);

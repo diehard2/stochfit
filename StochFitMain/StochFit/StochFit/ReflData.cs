@@ -109,7 +109,7 @@ namespace StochasticModeling
         }
 
         /// <summary>
-        /// Returns a copy of anarray for the SD in the reflectivity
+        /// Returns a copy of an array for the SD in the reflectivity
         /// </summary>
         public double[] GetRErrors
         {
@@ -196,7 +196,7 @@ namespace StochasticModeling
         }
 
         /// <summary>
-        /// Load the data from the file. The expected columns are Q, R, variance in R, and variance in Q (optional).
+        /// Load the data from the file. The expected columns are Q, R, SD in R, and SD in Q (optional).
         /// Negative values for reflectivities are discarded, as are negative values for the variance in R. The variance
         /// in the parameters is recalculated as standard deviation in this function.
         /// </summary>
@@ -216,7 +216,7 @@ namespace StochasticModeling
             //Get the number of lines in the file
             int lines = 0;
             string dataline;
-            ArrayList datastring = new ArrayList();
+            List<string> datastring = new List<string>();
             Regex r = new Regex(@"\s");
             bool haveQdata = false;
 
@@ -242,7 +242,7 @@ namespace StochasticModeling
                             if (temp.Length == 4)
                                 haveQdata = true;
 
-                            if (Double.Parse((string)datastring[1], m_CI) > 0.0 && Double.Parse((string)datastring[2], m_CI) >= 0.0)
+                            if (Double.Parse(datastring[1], m_CI) > 0.0 && Double.Parse(datastring[2], m_CI) >= 0.0)
                                 lines++;
 
                             datastring.Clear();
@@ -284,31 +284,31 @@ namespace StochasticModeling
                                     datastring.Add(temp[i]);
                             }
 
-                            if (Double.Parse((string)datastring[1], m_CI) > 0.0 && Double.Parse((string)datastring[2], m_CI) > 0.0)
+                            if (Double.Parse(datastring[1], m_CI) > 0.0 && Double.Parse(datastring[2], m_CI) > 0.0)
                             {
                                 if (temp.Length < 3)
                                     return false;
 
-                                refldata[j][0] = Double.Parse((string)datastring[0], m_CI);
-                                refldata[j][1] = Double.Parse((string)datastring[1], m_CI);
+                                refldata[j][0] = Double.Parse(datastring[0], m_CI);
+                                refldata[j][1] = Double.Parse(datastring[1], m_CI);
 
                                 if (IsSD)
                                 {
-                                    refldata[j][2] = Double.Parse((string)datastring[2], m_CI);
+                                    refldata[j][2] = Double.Parse(datastring[2], m_CI);
 
                                     if (temp.Length == 4)
                                     {
-                                        refldata[j][3] = Double.Parse((string)datastring[3], m_CI);
+                                        refldata[j][3] = Double.Parse(datastring[3], m_CI);
                                         haveQerr = true;
                                     }
                                 }
                                 else
                                 {
-                                    refldata[j][2] = Math.Sqrt(Double.Parse((string)datastring[2], m_CI));
+                                    refldata[j][2] = Math.Sqrt(Double.Parse(datastring[2], m_CI));
 
                                     if (temp.Length == 4)
                                     {
-                                        refldata[j][3] = Math.Sqrt(Double.Parse((string)datastring[3], m_CI));
+                                        refldata[j][3] = Math.Sqrt(Double.Parse(datastring[3], m_CI));
                                         haveQerr = true;
                                     }
                                 }
@@ -370,8 +370,8 @@ namespace StochasticModeling
                     for (int i = 0; i < GetNumberDataPoints - 1; i++)
                     {
 
-                        ArrayList beginindex = new ArrayList();
-                        ArrayList endindex = new ArrayList();
+                        List<int> beginindex = new List<int>(30);
+                        List<int> endindex = new List<int>(30);
                         int overlapcount = 0;
 
                         //We have a discontinuity in Q - find the jump back. If we don't have an actual overlap,
@@ -406,7 +406,7 @@ namespace StochasticModeling
                                     double shift = 0;
 
                                     for (int counter1 = 0; counter1 < overlapcount; counter1++)
-                                        shift += refldata[(int)beginindex[counter1]][1] / refldata[(int)endindex[counter1]][1];
+                                        shift += refldata[beginindex[counter1]][1] / refldata[endindex[counter1]][1];
 
                                     shift /= overlapcount;
 
@@ -416,18 +416,16 @@ namespace StochasticModeling
                                     for (int counter = 0; counter < GetNumberDataPoints; counter++)
                                     {
                                         //Copy over all points lower than the first overlap point
-                                        if(counter < (int)beginindex[0])
+                                        if(counter < beginindex[0])
                                             refldatatemp[counter] = (double[])refldata[counter].Clone();
                                         //Test
                                         else if(counter < i + 1)
                                         {
                                             bool isoverlappt = false;
 
-                                          
-
                                             for (int counter1 = 0; counter1 < overlapcount; counter1++)
                                             {
-                                                if (counter == (int)beginindex[counter1])
+                                                if (counter == beginindex[counter1])
                                                 {
                                                     isoverlappt = true;
                                                     indexoffset++;
@@ -443,7 +441,6 @@ namespace StochasticModeling
                                             refldata[counter][1] *= shift;
                                             refldata[counter][2] *= shift;
 
-
                                             refldatatemp[counter - indexoffset] = (double[])refldata[counter].Clone();
                                         }
                                     }
@@ -457,7 +454,7 @@ namespace StochasticModeling
                     }
 
                     if (nooverlapregion)
-                        MessageBox.Show("There were areas of discontinuity in Q, where no overlap was detected");
+                        MessageBox.Show("There were areas of discontinuity in Q where no overlap was detected");
 
 
                     MoveintoArrays(true);

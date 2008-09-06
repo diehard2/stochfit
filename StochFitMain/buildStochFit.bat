@@ -25,7 +25,7 @@ copy levmarmkl.dll "%UtilPath%bin\dlls"
 copy levmarmkl.lib "%UtilPath%bin\dlls"
 
 
-::Copy the system dlls we need to the program directories
+::Copy the dlls we need to the program directories
 
 copy  "%UtilPath%StochFit\StochFit\genf.ico"  "%UtilPath%bin\Release"
 copy  "%UtilPath%bin\dlls\levmarmkl.dll"  "%UtilPath%bin\Release"

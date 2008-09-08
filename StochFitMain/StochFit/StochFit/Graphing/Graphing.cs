@@ -132,12 +132,7 @@ namespace StochasticModeling
                 m_bisQfour = false;
                 m_bDBF = true;
             }
-            else if (IsQFour = true && IsDBF == true)
-            {
-                m_bisQfour = true;
-                m_bDBF = false;
-            }
-            else if (IsQFour == true && IsDBF == false)
+            else if ((IsQFour = true && IsDBF == true) || (IsQFour == true && IsDBF == false))
             {
                 m_bisQfour = true;
                 m_bDBF = false;
@@ -170,8 +165,7 @@ namespace StochasticModeling
             RemoveMenuItem(menuStrip, "page_setup");
             RemoveMenuItem(menuStrip, "print");
 
-            //Pass the mouse position - can't use windows native version for some reason...
-             MousePosition = mousePt;
+            MousePosition = mousePt;
         }
 
         /// <summary>
@@ -180,8 +174,7 @@ namespace StochasticModeling
         public override void Clear()
         {
             base.Clear();
-            m_biszoomed = false;
-            m_bdatafile = false;
+            m_bdatafile = m_biszoomed = false;
         }
       
         /// <summary>
@@ -228,13 +221,9 @@ namespace StochasticModeling
                 if (m_biszoomed == false)
                 {
                     if (m_bDBF)
-                    {
                         Pane.YAxis.Scale.Min = 3e-4;
-                    }
                     else if(m_bisQfour)
-                    {
                         Pane.YAxis.Scale.Min = 1e-12;
-                    }
                     else
                         Pane.YAxis.Scale.Min = 1e-11;
                 }

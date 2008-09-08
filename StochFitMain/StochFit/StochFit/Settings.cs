@@ -117,7 +117,9 @@ namespace StochasticModeling.Settings
         public double ParamTemp;
 
         //Annealing parameters
-        public double SigmaSearchPerc;
+        public int SigmaSearchPerc;
+        public int NormalizationSearchPerc;
+        public int AbsorptionSearchPerc;
         public int Algorithm;
         public double AnnealInitTemp;
         public int AnnealTempPlat;
@@ -128,6 +130,16 @@ namespace StochasticModeling.Settings
         public int STUNtempiter;
         public int STUNdeciter;
         public double STUNgammadec;
+
+        /// <summary>
+        /// Low Q offset in datapoints from the beginning of the curve
+        /// </summary>
+        public int CritEdgeOffset;
+        /// <summary>
+        /// High Q offset in datapoints from the end of the curve
+        /// </summary>
+        public int HighQOffset;
+
 
         /// <summary>
         /// Number of iterations
@@ -145,14 +157,7 @@ namespace StochasticModeling.Settings
         /// System description
         /// </summary>
         public string Title;
-        /// <summary>
-        /// Low Q offset in datapoints from the beginning of the curve
-        /// </summary>
-        public int CritEdgeOffset;
-        /// <summary>
-        /// High Q offset in datapoints from the end of the curve
-        /// </summary>
-        public int HighQOffset;
+        
 
         public bool IsNeutron;
         public string Version = "0.0.0";

@@ -44,7 +44,7 @@ namespace StochasticModeling
             this.label5 = new System.Windows.Forms.Label();
             this.ParametersBox = new System.Windows.Forms.GroupBox();
             this.Rholipid = new System.Windows.Forms.TextBox();
-            this.ImpNormCB = new System.Windows.Forms.CheckBox();
+            this.UseAbsCB = new System.Windows.Forms.CheckBox();
             this.label13 = new System.Windows.Forms.Label();
             this.QErrTB = new System.Windows.Forms.TextBox();
             this.label10 = new System.Windows.Forms.Label();
@@ -59,22 +59,22 @@ namespace StochasticModeling
             this.SubAbs = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.layerlength = new System.Windows.Forms.TextBox();
+            this.ImpNormCB = new System.Windows.Forms.CheckBox();
             this.Startbutton = new System.Windows.Forms.Button();
             this.Cancelbutton = new System.Windows.Forms.Button();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.fresnelcb = new System.Windows.Forms.CheckBox();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.ForceNormCB = new System.Windows.Forms.CheckBox();
-            this.UseAbsCB = new System.Windows.Forms.CheckBox();
             this.itertimetextbox = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.Rhomodel = new System.Windows.Forms.Button();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.MiscParametersBox = new System.Windows.Forms.GroupBox();
             this.label15 = new System.Windows.Forms.Label();
             this.ChiSquareTB = new System.Windows.Forms.TextBox();
             this.FittingParamBox = new System.Windows.Forms.GroupBox();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
-            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.OptionsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setEmailAddressToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.TitleTB = new System.Windows.Forms.ToolStripTextBox();
             this.setResolutionOptionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -89,8 +89,13 @@ namespace StochasticModeling
             this.highQOffsetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.HQoffsetTB = new System.Windows.Forms.ToolStripTextBox();
             this.setModelOptionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.sigmaSearchPercentageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.searchPercentagesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.SigmaSearchLB = new System.Windows.Forms.ToolStripMenuItem();
             this.SigmaSearchTB = new System.Windows.Forms.ToolStripTextBox();
+            this.AbsorptionSearchLI = new System.Windows.Forms.ToolStripMenuItem();
+            this.AbsorptionSearchTB = new System.Windows.Forms.ToolStripTextBox();
+            this.NormSearchLI = new System.Windows.Forms.ToolStripMenuItem();
+            this.NormSearchTB = new System.Windows.Forms.ToolStripTextBox();
             this.objectiveFunctionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.objectiveCB = new System.Windows.Forms.ToolStripComboBox();
             this.searchAlgorithmToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -110,6 +115,7 @@ namespace StochasticModeling
             this.generateReportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.calculatorsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sLDCalculatorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sLDConverterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tutorialToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.manualToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -124,9 +130,8 @@ namespace StochasticModeling
             this.SAModeTB = new System.Windows.Forms.TextBox();
             this.label17 = new System.Windows.Forms.Label();
             this.FitScoreTB = new System.Windows.Forms.TextBox();
-            this.sLDConverterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ParametersBox.SuspendLayout();
-            this.groupBox1.SuspendLayout();
+            this.MiscParametersBox.SuspendLayout();
             this.FittingParamBox.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -137,7 +142,7 @@ namespace StochasticModeling
             // 
             // LoadFile
             // 
-            this.LoadFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.LoadFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.LoadFile.Location = new System.Drawing.Point(464, 46);
             this.LoadFile.Name = "LoadFile";
             this.LoadFile.Size = new System.Drawing.Size(75, 23);
@@ -148,7 +153,7 @@ namespace StochasticModeling
             // 
             // FileNameTB
             // 
-            this.FileNameTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.FileNameTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.FileNameTB.Location = new System.Drawing.Point(545, 48);
             this.FileNameTB.Name = "FileNameTB";
             this.FileNameTB.Size = new System.Drawing.Size(335, 20);
@@ -181,7 +186,7 @@ namespace StochasticModeling
             this.Boxlayers.Name = "Boxlayers";
             this.Boxlayers.Size = new System.Drawing.Size(116, 20);
             this.Boxlayers.TabIndex = 0;
-            this.Boxlayers.Text = "80";
+            this.Boxlayers.Text = "40";
             this.toolTip1.SetToolTip(this.Boxlayers, "The number of small boxes the ED profile is divided into. \r\nA value of 2-3 times " +
                     "the film height is a good starting point.");
             this.Boxlayers.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
@@ -270,10 +275,10 @@ namespace StochasticModeling
             // 
             // ParametersBox
             // 
-            this.ParametersBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.ParametersBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.ParametersBox.AutoSize = true;
             this.ParametersBox.Controls.Add(this.Rholipid);
-            this.ParametersBox.Controls.Add(this.ImpNormCB);
+            this.ParametersBox.Controls.Add(this.UseAbsCB);
             this.ParametersBox.Controls.Add(this.label13);
             this.ParametersBox.Controls.Add(this.QErrTB);
             this.ParametersBox.Controls.Add(this.label10);
@@ -306,18 +311,17 @@ namespace StochasticModeling
             this.Rholipid.TabIndex = 0;
             this.Rholipid.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
             // 
-            // ImpNormCB
+            // UseAbsCB
             // 
-            this.ImpNormCB.AutoSize = true;
-            this.ImpNormCB.Location = new System.Drawing.Point(251, 227);
-            this.ImpNormCB.Name = "ImpNormCB";
-            this.ImpNormCB.Size = new System.Drawing.Size(183, 17);
-            this.ImpNormCB.TabIndex = 9;
-            this.ImpNormCB.Text = "Deal with Imperfect Normalization";
-            this.toolTip1.SetToolTip(this.ImpNormCB, "For samples without a critical Q, normalization may be imperfect.\r\nThis attempts " +
-                    "to adjust the normalization dynamically with the fit.\r\nIt will split search time" +
-                    " with the sigma/absorption search");
-            this.ImpNormCB.UseVisualStyleBackColor = true;
+            this.UseAbsCB.AutoSize = true;
+            this.UseAbsCB.Location = new System.Drawing.Point(255, 231);
+            this.UseAbsCB.Name = "UseAbsCB";
+            this.UseAbsCB.Size = new System.Drawing.Size(132, 17);
+            this.UseAbsCB.TabIndex = 2;
+            this.UseAbsCB.Text = "Use Absorption values";
+            this.toolTip1.SetToolTip(this.UseAbsCB, resources.GetString("UseAbsCB.ToolTip"));
+            this.UseAbsCB.UseVisualStyleBackColor = true;
+            this.UseAbsCB.CheckedChanged += new System.EventHandler(this.UseAbsCB_CheckedChanged);
             // 
             // label13
             // 
@@ -488,12 +492,26 @@ namespace StochasticModeling
             this.layerlength.Name = "layerlength";
             this.layerlength.Size = new System.Drawing.Size(122, 20);
             this.layerlength.TabIndex = 2;
-            this.layerlength.Text = "25";
+            this.layerlength.Text = "22";
             this.layerlength.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateNumericalInput);
+            // 
+            // ImpNormCB
+            // 
+            this.ImpNormCB.AutoSize = true;
+            this.ImpNormCB.Location = new System.Drawing.Point(13, 67);
+            this.ImpNormCB.Name = "ImpNormCB";
+            this.ImpNormCB.Size = new System.Drawing.Size(183, 17);
+            this.ImpNormCB.TabIndex = 9;
+            this.ImpNormCB.Text = "Deal with Imperfect Normalization";
+            this.toolTip1.SetToolTip(this.ImpNormCB, "For samples without a critical Q, normalization may be imperfect.\r\nThis attempts " +
+                    "to adjust the normalization dynamically with the fit.\r\nIt will split search time" +
+                    " with the sigma/absorption search");
+            this.ImpNormCB.UseVisualStyleBackColor = true;
+            this.ImpNormCB.CheckedChanged += new System.EventHandler(this.ImpNormCB_CheckedChanged);
             // 
             // Startbutton
             // 
-            this.Startbutton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.Startbutton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.Startbutton.AutoSize = true;
             this.Startbutton.Location = new System.Drawing.Point(490, 667);
             this.Startbutton.Name = "Startbutton";
@@ -505,7 +523,7 @@ namespace StochasticModeling
             // 
             // Cancelbutton
             // 
-            this.Cancelbutton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.Cancelbutton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.Cancelbutton.AutoSize = true;
             this.Cancelbutton.Location = new System.Drawing.Point(753, 667);
             this.Cancelbutton.Name = "Cancelbutton";
@@ -517,7 +535,7 @@ namespace StochasticModeling
             // 
             // progressBar1
             // 
-            this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.progressBar1.Location = new System.Drawing.Point(463, 551);
             this.progressBar1.Name = "progressBar1";
             this.progressBar1.Size = new System.Drawing.Size(417, 18);
@@ -543,7 +561,7 @@ namespace StochasticModeling
             // ForceNormCB
             // 
             this.ForceNormCB.AutoSize = true;
-            this.ForceNormCB.Location = new System.Drawing.Point(13, 67);
+            this.ForceNormCB.Location = new System.Drawing.Point(13, 97);
             this.ForceNormCB.Name = "ForceNormCB";
             this.ForceNormCB.Size = new System.Drawing.Size(117, 17);
             this.ForceNormCB.TabIndex = 1;
@@ -551,21 +569,9 @@ namespace StochasticModeling
             this.toolTip1.SetToolTip(this.ForceNormCB, resources.GetString("ForceNormCB.ToolTip"));
             this.ForceNormCB.UseVisualStyleBackColor = true;
             // 
-            // UseAbsCB
-            // 
-            this.UseAbsCB.AutoSize = true;
-            this.UseAbsCB.Location = new System.Drawing.Point(13, 92);
-            this.UseAbsCB.Name = "UseAbsCB";
-            this.UseAbsCB.Size = new System.Drawing.Size(132, 17);
-            this.UseAbsCB.TabIndex = 2;
-            this.UseAbsCB.Text = "Use Absorption values";
-            this.toolTip1.SetToolTip(this.UseAbsCB, resources.GetString("UseAbsCB.ToolTip"));
-            this.UseAbsCB.UseVisualStyleBackColor = true;
-            this.UseAbsCB.CheckedChanged += new System.EventHandler(this.UseAbsCB_CheckedChanged);
-            // 
             // itertimetextbox
             // 
-            this.itertimetextbox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.itertimetextbox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.itertimetextbox.Location = new System.Drawing.Point(491, 632);
             this.itertimetextbox.Name = "itertimetextbox";
             this.itertimetextbox.ReadOnly = true;
@@ -575,7 +581,7 @@ namespace StochasticModeling
             // 
             // label7
             // 
-            this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label7.AutoSize = true;
             this.label7.Location = new System.Drawing.Point(488, 616);
             this.label7.Name = "label7";
@@ -585,7 +591,7 @@ namespace StochasticModeling
             // 
             // Rhomodel
             // 
-            this.Rhomodel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.Rhomodel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.Rhomodel.AutoSize = true;
             this.Rhomodel.Location = new System.Drawing.Point(620, 667);
             this.Rhomodel.Name = "Rhomodel";
@@ -595,22 +601,22 @@ namespace StochasticModeling
             this.Rhomodel.UseVisualStyleBackColor = true;
             this.Rhomodel.Click += new System.EventHandler(this.Rhomodel_Click);
             // 
-            // groupBox1
+            // MiscParametersBox
             // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox1.Controls.Add(this.fresnelcb);
-            this.groupBox1.Controls.Add(this.label4);
-            this.groupBox1.Controls.Add(this.Priority);
-            this.groupBox1.Location = new System.Drawing.Point(450, 370);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(204, 160);
-            this.groupBox1.TabIndex = 3;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Miscellaneous Parameters";
+            this.MiscParametersBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.MiscParametersBox.Controls.Add(this.fresnelcb);
+            this.MiscParametersBox.Controls.Add(this.label4);
+            this.MiscParametersBox.Controls.Add(this.Priority);
+            this.MiscParametersBox.Location = new System.Drawing.Point(450, 370);
+            this.MiscParametersBox.Name = "MiscParametersBox";
+            this.MiscParametersBox.Size = new System.Drawing.Size(204, 160);
+            this.MiscParametersBox.TabIndex = 3;
+            this.MiscParametersBox.TabStop = false;
+            this.MiscParametersBox.Text = "Miscellaneous Parameters";
             // 
             // label15
             // 
-            this.label15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label15.AutoSize = true;
             this.label15.Location = new System.Drawing.Point(750, 616);
             this.label15.Name = "label15";
@@ -620,7 +626,7 @@ namespace StochasticModeling
             // 
             // ChiSquareTB
             // 
-            this.ChiSquareTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.ChiSquareTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.ChiSquareTB.Location = new System.Drawing.Point(752, 632);
             this.ChiSquareTB.Name = "ChiSquareTB";
             this.ChiSquareTB.ReadOnly = true;
@@ -631,9 +637,9 @@ namespace StochasticModeling
             // 
             // FittingParamBox
             // 
-            this.FittingParamBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.FittingParamBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.FittingParamBox.Controls.Add(this.ForceNormCB);
-            this.FittingParamBox.Controls.Add(this.UseAbsCB);
+            this.FittingParamBox.Controls.Add(this.ImpNormCB);
             this.FittingParamBox.Controls.Add(this.label5);
             this.FittingParamBox.Controls.Add(this.IterationsTB);
             this.FittingParamBox.Controls.Add(this.label1);
@@ -648,7 +654,7 @@ namespace StochasticModeling
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItem1,
+            this.OptionsMenuItem,
             this.calculatorsToolStripMenuItem,
             this.helpToolStripMenuItem,
             this.aboutToolStripMenuItem});
@@ -658,18 +664,18 @@ namespace StochasticModeling
             this.menuStrip1.TabIndex = 8;
             this.menuStrip1.Text = "menuStrip1";
             // 
-            // toolStripMenuItem1
+            // OptionsMenuItem
             // 
-            this.toolStripMenuItem1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.OptionsMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.setEmailAddressToolStripMenuItem,
             this.setResolutionOptionsToolStripMenuItem,
             this.setModelOptionsToolStripMenuItem,
             this.miscellaneousOptionsToolStripMenuItem,
             this.viewMasterGraphToolStripMenuItem,
             this.generateReportToolStripMenuItem});
-            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(56, 20);
-            this.toolStripMenuItem1.Text = "Options";
+            this.OptionsMenuItem.Name = "OptionsMenuItem";
+            this.OptionsMenuItem.Size = new System.Drawing.Size(61, 20);
+            this.OptionsMenuItem.Text = "Options";
             // 
             // setEmailAddressToolStripMenuItem
             // 
@@ -682,7 +688,7 @@ namespace StochasticModeling
             // TitleTB
             // 
             this.TitleTB.Name = "TitleTB";
-            this.TitleTB.Size = new System.Drawing.Size(500, 21);
+            this.TitleTB.Size = new System.Drawing.Size(500, 23);
             // 
             // setResolutionOptionsToolStripMenuItem
             // 
@@ -701,13 +707,13 @@ namespace StochasticModeling
             this.resolutionpointsAngstromToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ResolutionTB});
             this.resolutionpointsAngstromToolStripMenuItem.Name = "resolutionpointsAngstromToolStripMenuItem";
-            this.resolutionpointsAngstromToolStripMenuItem.Size = new System.Drawing.Size(234, 22);
+            this.resolutionpointsAngstromToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
             this.resolutionpointsAngstromToolStripMenuItem.Text = "Resolution (3 points/Angstrom)";
             // 
             // ResolutionTB
             // 
             this.ResolutionTB.Name = "ResolutionTB";
-            this.ResolutionTB.Size = new System.Drawing.Size(100, 21);
+            this.ResolutionTB.Size = new System.Drawing.Size(100, 23);
             this.ResolutionTB.Text = "0";
             // 
             // superphaseLengthToolStripMenuItem
@@ -715,13 +721,13 @@ namespace StochasticModeling
             this.superphaseLengthToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.SupoffsetTB});
             this.superphaseLengthToolStripMenuItem.Name = "superphaseLengthToolStripMenuItem";
-            this.superphaseLengthToolStripMenuItem.Size = new System.Drawing.Size(234, 22);
+            this.superphaseLengthToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
             this.superphaseLengthToolStripMenuItem.Text = "Superphase length";
             // 
             // SupoffsetTB
             // 
             this.SupoffsetTB.Name = "SupoffsetTB";
-            this.SupoffsetTB.Size = new System.Drawing.Size(100, 21);
+            this.SupoffsetTB.Size = new System.Drawing.Size(100, 23);
             this.SupoffsetTB.Text = "40";
             // 
             // totalLengthToolStripMenuItem
@@ -729,13 +735,13 @@ namespace StochasticModeling
             this.totalLengthToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.TotlengthTB});
             this.totalLengthToolStripMenuItem.Name = "totalLengthToolStripMenuItem";
-            this.totalLengthToolStripMenuItem.Size = new System.Drawing.Size(234, 22);
+            this.totalLengthToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
             this.totalLengthToolStripMenuItem.Text = "Total length";
             // 
             // TotlengthTB
             // 
             this.TotlengthTB.Name = "TotlengthTB";
-            this.TotlengthTB.Size = new System.Drawing.Size(100, 21);
+            this.TotlengthTB.Size = new System.Drawing.Size(100, 23);
             this.TotlengthTB.Text = "0";
             // 
             // criticalEdgeOffsetToolStripMenuItem
@@ -743,13 +749,13 @@ namespace StochasticModeling
             this.criticalEdgeOffsetToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.critedgeoffTB});
             this.criticalEdgeOffsetToolStripMenuItem.Name = "criticalEdgeOffsetToolStripMenuItem";
-            this.criticalEdgeOffsetToolStripMenuItem.Size = new System.Drawing.Size(234, 22);
+            this.criticalEdgeOffsetToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
             this.criticalEdgeOffsetToolStripMenuItem.Text = "Critical Edge Offset";
             // 
             // critedgeoffTB
             // 
             this.critedgeoffTB.Name = "critedgeoffTB";
-            this.critedgeoffTB.Size = new System.Drawing.Size(100, 21);
+            this.critedgeoffTB.Size = new System.Drawing.Size(100, 23);
             this.critedgeoffTB.Text = "0";
             this.critedgeoffTB.TextChanged += new System.EventHandler(this.critedgeoffTB_TextChanged);
             // 
@@ -758,20 +764,20 @@ namespace StochasticModeling
             this.highQOffsetToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.HQoffsetTB});
             this.highQOffsetToolStripMenuItem.Name = "highQOffsetToolStripMenuItem";
-            this.highQOffsetToolStripMenuItem.Size = new System.Drawing.Size(234, 22);
+            this.highQOffsetToolStripMenuItem.Size = new System.Drawing.Size(241, 22);
             this.highQOffsetToolStripMenuItem.Text = "High Q offset";
             // 
             // HQoffsetTB
             // 
             this.HQoffsetTB.Name = "HQoffsetTB";
-            this.HQoffsetTB.Size = new System.Drawing.Size(100, 21);
+            this.HQoffsetTB.Size = new System.Drawing.Size(100, 23);
             this.HQoffsetTB.Text = "0";
             this.HQoffsetTB.TextChanged += new System.EventHandler(this.HQoffsetTB_TextChanged);
             // 
             // setModelOptionsToolStripMenuItem
             // 
             this.setModelOptionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.sigmaSearchPercentageToolStripMenuItem,
+            this.searchPercentagesToolStripMenuItem,
             this.objectiveFunctionToolStripMenuItem,
             this.searchAlgorithmToolStripMenuItem,
             this.parameterTemperatureToolStripMenuItem,
@@ -781,26 +787,64 @@ namespace StochasticModeling
             this.setModelOptionsToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.setModelOptionsToolStripMenuItem.Text = "Set Model Options";
             // 
-            // sigmaSearchPercentageToolStripMenuItem
+            // searchPercentagesToolStripMenuItem
             // 
-            this.sigmaSearchPercentageToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.searchPercentagesToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.SigmaSearchLB,
+            this.AbsorptionSearchLI,
+            this.NormSearchLI});
+            this.searchPercentagesToolStripMenuItem.Name = "searchPercentagesToolStripMenuItem";
+            this.searchPercentagesToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
+            this.searchPercentagesToolStripMenuItem.Text = "Search Percentages";
+            // 
+            // SigmaSearchLB
+            // 
+            this.SigmaSearchLB.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.SigmaSearchTB});
-            this.sigmaSearchPercentageToolStripMenuItem.Name = "sigmaSearchPercentageToolStripMenuItem";
-            this.sigmaSearchPercentageToolStripMenuItem.Size = new System.Drawing.Size(207, 22);
-            this.sigmaSearchPercentageToolStripMenuItem.Text = "Sigma Search Percentage";
+            this.SigmaSearchLB.Name = "SigmaSearchLB";
+            this.SigmaSearchLB.Size = new System.Drawing.Size(249, 22);
+            this.SigmaSearchLB.Text = "Sigma Search Percentage";
             // 
             // SigmaSearchTB
             // 
             this.SigmaSearchTB.Name = "SigmaSearchTB";
-            this.SigmaSearchTB.Size = new System.Drawing.Size(100, 21);
+            this.SigmaSearchTB.Size = new System.Drawing.Size(100, 23);
             this.SigmaSearchTB.Text = "10";
+            // 
+            // AbsorptionSearchLI
+            // 
+            this.AbsorptionSearchLI.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.AbsorptionSearchTB});
+            this.AbsorptionSearchLI.Name = "AbsorptionSearchLI";
+            this.AbsorptionSearchLI.Size = new System.Drawing.Size(249, 22);
+            this.AbsorptionSearchLI.Text = "Absorption Search Percentage";
+            // 
+            // AbsorptionSearchTB
+            // 
+            this.AbsorptionSearchTB.Name = "AbsorptionSearchTB";
+            this.AbsorptionSearchTB.Size = new System.Drawing.Size(100, 23);
+            this.AbsorptionSearchTB.Text = "10";
+            // 
+            // NormSearchLI
+            // 
+            this.NormSearchLI.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.NormSearchTB});
+            this.NormSearchLI.Name = "NormSearchLI";
+            this.NormSearchLI.Size = new System.Drawing.Size(249, 22);
+            this.NormSearchLI.Text = "Normalization Search Percentage";
+            // 
+            // NormSearchTB
+            // 
+            this.NormSearchTB.Name = "NormSearchTB";
+            this.NormSearchTB.Size = new System.Drawing.Size(100, 23);
+            this.NormSearchTB.Text = "10";
             // 
             // objectiveFunctionToolStripMenuItem
             // 
             this.objectiveFunctionToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.objectiveCB});
             this.objectiveFunctionToolStripMenuItem.Name = "objectiveFunctionToolStripMenuItem";
-            this.objectiveFunctionToolStripMenuItem.Size = new System.Drawing.Size(207, 22);
+            this.objectiveFunctionToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
             this.objectiveFunctionToolStripMenuItem.Text = "Objective function";
             // 
             // objectiveCB
@@ -814,14 +858,14 @@ namespace StochasticModeling
             "Inverse Cost Function with errors",
             "R/Rf Chi Square"});
             this.objectiveCB.Name = "objectiveCB";
-            this.objectiveCB.Size = new System.Drawing.Size(200, 21);
+            this.objectiveCB.Size = new System.Drawing.Size(200, 23);
             // 
             // searchAlgorithmToolStripMenuItem
             // 
             this.searchAlgorithmToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.AlgorithmCB});
             this.searchAlgorithmToolStripMenuItem.Name = "searchAlgorithmToolStripMenuItem";
-            this.searchAlgorithmToolStripMenuItem.Size = new System.Drawing.Size(207, 22);
+            this.searchAlgorithmToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
             this.searchAlgorithmToolStripMenuItem.Text = "Search Algorithm";
             // 
             // AlgorithmCB
@@ -832,7 +876,7 @@ namespace StochasticModeling
             "Stochastic Tunneling",
             "ASA Annealing"});
             this.AlgorithmCB.Name = "AlgorithmCB";
-            this.AlgorithmCB.Size = new System.Drawing.Size(200, 21);
+            this.AlgorithmCB.Size = new System.Drawing.Size(200, 23);
             this.AlgorithmCB.DropDownClosed += new System.EventHandler(this.AlgorithmCB_DropDownClosed);
             // 
             // parameterTemperatureToolStripMenuItem
@@ -840,13 +884,13 @@ namespace StochasticModeling
             this.parameterTemperatureToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ParamTempTB});
             this.parameterTemperatureToolStripMenuItem.Name = "parameterTemperatureToolStripMenuItem";
-            this.parameterTemperatureToolStripMenuItem.Size = new System.Drawing.Size(207, 22);
+            this.parameterTemperatureToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
             this.parameterTemperatureToolStripMenuItem.Text = "Parameter Temperature";
             // 
             // ParamTempTB
             // 
             this.ParamTempTB.Name = "ParamTempTB";
-            this.ParamTempTB.Size = new System.Drawing.Size(100, 21);
+            this.ParamTempTB.Size = new System.Drawing.Size(100, 23);
             this.ParamTempTB.Text = "0.03";
             // 
             // holdSigmaToolStripMenuItem
@@ -854,7 +898,7 @@ namespace StochasticModeling
             this.holdSigmaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.setSigmaToolStripMenuItem});
             this.holdSigmaToolStripMenuItem.Name = "holdSigmaToolStripMenuItem";
-            this.holdSigmaToolStripMenuItem.Size = new System.Drawing.Size(207, 22);
+            this.holdSigmaToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
             this.holdSigmaToolStripMenuItem.Text = "Hold Sigma";
             // 
             // setSigmaToolStripMenuItem
@@ -862,19 +906,19 @@ namespace StochasticModeling
             this.setSigmaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.SigTSTB});
             this.setSigmaToolStripMenuItem.Name = "setSigmaToolStripMenuItem";
-            this.setSigmaToolStripMenuItem.Size = new System.Drawing.Size(132, 22);
+            this.setSigmaToolStripMenuItem.Size = new System.Drawing.Size(126, 22);
             this.setSigmaToolStripMenuItem.Text = "Set Sigma";
             // 
             // SigTSTB
             // 
             this.SigTSTB.Name = "SigTSTB";
-            this.SigTSTB.Size = new System.Drawing.Size(100, 21);
+            this.SigTSTB.Size = new System.Drawing.Size(100, 23);
             this.SigTSTB.Text = "0";
             // 
             // forceXRToolStripMenuItem1
             // 
             this.forceXRToolStripMenuItem1.Name = "forceXRToolStripMenuItem1";
-            this.forceXRToolStripMenuItem1.Size = new System.Drawing.Size(207, 22);
+            this.forceXRToolStripMenuItem1.Size = new System.Drawing.Size(199, 22);
             this.forceXRToolStripMenuItem1.Text = "Force XR";
             this.forceXRToolStripMenuItem1.Click += new System.EventHandler(this.MenuItem_Check);
             // 
@@ -892,28 +936,28 @@ namespace StochasticModeling
             // errorsAreInVarianceToolStripMenuItem
             // 
             this.errorsAreInVarianceToolStripMenuItem.Name = "errorsAreInVarianceToolStripMenuItem";
-            this.errorsAreInVarianceToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.errorsAreInVarianceToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
             this.errorsAreInVarianceToolStripMenuItem.Text = "Errors are in Variance";
             this.errorsAreInVarianceToolStripMenuItem.Click += new System.EventHandler(this.errorsAreInVarianceToolStripMenuItem_Click);
             // 
             // forceRQ4GraphingToolStripMenuItem
             // 
             this.forceRQ4GraphingToolStripMenuItem.Name = "forceRQ4GraphingToolStripMenuItem";
-            this.forceRQ4GraphingToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.forceRQ4GraphingToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
             this.forceRQ4GraphingToolStripMenuItem.Text = "Force RQ^4 graphing";
             this.forceRQ4GraphingToolStripMenuItem.Click += new System.EventHandler(this.forceRQ4GraphingToolStripMenuItem_Click);
             // 
             // UseSLDToolStripMenuItem
             // 
             this.UseSLDToolStripMenuItem.Name = "UseSLDToolStripMenuItem";
-            this.UseSLDToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.UseSLDToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
             this.UseSLDToolStripMenuItem.Text = "Use SLD";
             this.UseSLDToolStripMenuItem.Click += new System.EventHandler(this.neutronDataToolStripMenuItem_Click);
             // 
             // debugToolStripMenuItem
             // 
             this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
-            this.debugToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.debugToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
             this.debugToolStripMenuItem.Text = "Debug";
             this.debugToolStripMenuItem.Click += new System.EventHandler(this.debugToolStripMenuItem_Click);
             // 
@@ -937,15 +981,22 @@ namespace StochasticModeling
             this.sLDCalculatorToolStripMenuItem,
             this.sLDConverterToolStripMenuItem});
             this.calculatorsToolStripMenuItem.Name = "calculatorsToolStripMenuItem";
-            this.calculatorsToolStripMenuItem.Size = new System.Drawing.Size(72, 20);
+            this.calculatorsToolStripMenuItem.Size = new System.Drawing.Size(78, 20);
             this.calculatorsToolStripMenuItem.Text = "Calculators";
             // 
             // sLDCalculatorToolStripMenuItem
             // 
             this.sLDCalculatorToolStripMenuItem.Name = "sLDCalculatorToolStripMenuItem";
-            this.sLDCalculatorToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.sLDCalculatorToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
             this.sLDCalculatorToolStripMenuItem.Text = "SLD Calculator";
             this.sLDCalculatorToolStripMenuItem.Click += new System.EventHandler(this.sLDCalculatorToolStripMenuItem_Click);
+            // 
+            // sLDConverterToolStripMenuItem
+            // 
+            this.sLDConverterToolStripMenuItem.Name = "sLDConverterToolStripMenuItem";
+            this.sLDConverterToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.sLDConverterToolStripMenuItem.Text = "SLD Converter";
+            this.sLDConverterToolStripMenuItem.Click += new System.EventHandler(this.sLDConverterToolStripMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -953,35 +1004,33 @@ namespace StochasticModeling
             this.tutorialToolStripMenuItem,
             this.manualToolStripMenuItem});
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(40, 20);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.helpToolStripMenuItem.Text = "Help";
             // 
             // tutorialToolStripMenuItem
             // 
             this.tutorialToolStripMenuItem.Name = "tutorialToolStripMenuItem";
-            this.tutorialToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.tutorialToolStripMenuItem.Size = new System.Drawing.Size(115, 22);
             this.tutorialToolStripMenuItem.Text = "Tutorial";
             this.tutorialToolStripMenuItem.Click += new System.EventHandler(this.tutorialToolStripMenuItem_Click);
             // 
             // manualToolStripMenuItem
             // 
             this.manualToolStripMenuItem.Name = "manualToolStripMenuItem";
-            this.manualToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.manualToolStripMenuItem.Size = new System.Drawing.Size(115, 22);
             this.manualToolStripMenuItem.Text = "Help";
             this.manualToolStripMenuItem.Click += new System.EventHandler(this.manualToolStripMenuItem_Click);
             // 
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(52, 20);
             this.aboutToolStripMenuItem.Text = "About";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
             // RhoGraph
             // 
-            this.RhoGraph.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.RhoGraph.AutoSize = true;
+            this.RhoGraph.Cursor = System.Windows.Forms.Cursors.Default;
             this.RhoGraph.EditButtons = System.Windows.Forms.MouseButtons.Left;
             this.RhoGraph.Location = new System.Drawing.Point(0, 27);
             this.RhoGraph.Name = "RhoGraph";
@@ -998,10 +1047,6 @@ namespace StochasticModeling
             // 
             // ReflGraph
             // 
-            this.ReflGraph.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.ReflGraph.AutoSize = true;
             this.ReflGraph.EditButtons = System.Windows.Forms.MouseButtons.Left;
             this.ReflGraph.Location = new System.Drawing.Point(0, 373);
             this.ReflGraph.Name = "ReflGraph";
@@ -1018,7 +1063,7 @@ namespace StochasticModeling
             // 
             // SALow
             // 
-            this.SALow.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.SALow.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SALow.AutoSize = true;
             this.SALow.Location = new System.Drawing.Point(488, 575);
             this.SALow.Name = "SALow";
@@ -1028,7 +1073,7 @@ namespace StochasticModeling
             // 
             // SAlowenergyTB
             // 
-            this.SAlowenergyTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.SAlowenergyTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SAlowenergyTB.Location = new System.Drawing.Point(491, 591);
             this.SAlowenergyTB.Name = "SAlowenergyTB";
             this.SAlowenergyTB.ReadOnly = true;
@@ -1038,7 +1083,7 @@ namespace StochasticModeling
             // 
             // SATemplabel
             // 
-            this.SATemplabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.SATemplabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SATemplabel.AutoSize = true;
             this.SATemplabel.Location = new System.Drawing.Point(617, 575);
             this.SATemplabel.Name = "SATemplabel";
@@ -1048,7 +1093,7 @@ namespace StochasticModeling
             // 
             // SATempTB
             // 
-            this.SATempTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.SATempTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SATempTB.Location = new System.Drawing.Point(620, 591);
             this.SATempTB.Name = "SATempTB";
             this.SATempTB.ReadOnly = true;
@@ -1058,7 +1103,7 @@ namespace StochasticModeling
             // 
             // SAModelabel
             // 
-            this.SAModelabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.SAModelabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SAModelabel.AutoSize = true;
             this.SAModelabel.Location = new System.Drawing.Point(754, 575);
             this.SAModelabel.Name = "SAModelabel";
@@ -1068,7 +1113,7 @@ namespace StochasticModeling
             // 
             // SAModeTB
             // 
-            this.SAModeTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.SAModeTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SAModeTB.Location = new System.Drawing.Point(753, 591);
             this.SAModeTB.Name = "SAModeTB";
             this.SAModeTB.ReadOnly = true;
@@ -1078,7 +1123,7 @@ namespace StochasticModeling
             // 
             // label17
             // 
-            this.label17.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label17.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label17.AutoSize = true;
             this.label17.Location = new System.Drawing.Point(618, 616);
             this.label17.Name = "label17";
@@ -1088,7 +1133,7 @@ namespace StochasticModeling
             // 
             // FitScoreTB
             // 
-            this.FitScoreTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.FitScoreTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.FitScoreTB.Location = new System.Drawing.Point(620, 632);
             this.FitScoreTB.Name = "FitScoreTB";
             this.FitScoreTB.ReadOnly = true;
@@ -1096,13 +1141,6 @@ namespace StochasticModeling
             this.FitScoreTB.TabIndex = 35;
             this.FitScoreTB.TabStop = false;
             this.FitScoreTB.Text = "0";
-            // 
-            // sLDConverterToolStripMenuItem
-            // 
-            this.sLDConverterToolStripMenuItem.Name = "sLDConverterToolStripMenuItem";
-            this.sLDConverterToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
-            this.sLDConverterToolStripMenuItem.Text = "SLD Converter";
-            this.sLDConverterToolStripMenuItem.Click += new System.EventHandler(this.sLDConverterToolStripMenuItem_Click);
             // 
             // Stochfit
             // 
@@ -1121,7 +1159,7 @@ namespace StochasticModeling
             this.Controls.Add(this.FittingParamBox);
             this.Controls.Add(this.label15);
             this.Controls.Add(this.ChiSquareTB);
-            this.Controls.Add(this.groupBox1);
+            this.Controls.Add(this.MiscParametersBox);
             this.Controls.Add(this.Rhomodel);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.itertimetextbox);
@@ -1137,6 +1175,7 @@ namespace StochasticModeling
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
             this.MainMenuStrip = this.menuStrip1;
+            this.MaximizeBox = false;
             this.Name = "Stochfit";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "StochFit";
@@ -1144,8 +1183,8 @@ namespace StochasticModeling
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.ParametersBox.ResumeLayout(false);
             this.ParametersBox.PerformLayout();
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
+            this.MiscParametersBox.ResumeLayout(false);
+            this.MiscParametersBox.PerformLayout();
             this.FittingParamBox.ResumeLayout(false);
             this.FittingParamBox.PerformLayout();
             this.menuStrip1.ResumeLayout(false);
@@ -1184,7 +1223,7 @@ namespace StochasticModeling
         private System.Windows.Forms.Button Rhomodel;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.TextBox SubAbs;
-        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.GroupBox MiscParametersBox;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.TextBox SurfAbs;
         private System.Windows.Forms.Label label14;
@@ -1193,7 +1232,7 @@ namespace StochasticModeling
         private System.Windows.Forms.TextBox ChiSquareTB;
         private System.Windows.Forms.GroupBox FittingParamBox;
         private System.Windows.Forms.MenuStrip menuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem OptionsMenuItem;
         private System.Windows.Forms.ToolStripMenuItem setEmailAddressToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
@@ -1206,8 +1245,6 @@ namespace StochasticModeling
         private System.Windows.Forms.ToolStripMenuItem criticalEdgeOffsetToolStripMenuItem;
         private System.Windows.Forms.ToolStripTextBox critedgeoffTB;
         private System.Windows.Forms.ToolStripMenuItem setModelOptionsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem sigmaSearchPercentageToolStripMenuItem;
-        private System.Windows.Forms.ToolStripTextBox SigmaSearchTB;
         private System.Windows.Forms.ToolStripMenuItem viewMasterGraphToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem generateReportToolStripMenuItem;
         private System.Windows.Forms.CheckBox UseAbsCB;
@@ -1252,6 +1289,13 @@ namespace StochasticModeling
         private System.Windows.Forms.ToolStripMenuItem calculatorsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem sLDCalculatorToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem sLDConverterToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem searchPercentagesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem SigmaSearchLB;
+        private System.Windows.Forms.ToolStripMenuItem AbsorptionSearchLI;
+        private System.Windows.Forms.ToolStripMenuItem NormSearchLI;
+        private System.Windows.Forms.ToolStripTextBox SigmaSearchTB;
+        private System.Windows.Forms.ToolStripTextBox AbsorptionSearchTB;
+        private System.Windows.Forms.ToolStripTextBox NormSearchTB;
 	}
 }
 

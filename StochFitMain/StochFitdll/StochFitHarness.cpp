@@ -41,7 +41,7 @@ StochFit::StochFit(ReflSettings initstruct)
 	m_icurrentiteration = 0;
 	m_ipriority = 2;
 	m_busesurfabs = initstruct.UseSurfAbs;
-	m_isearchalgorithm = 0;
+	m_isearchalgorithm = initstruct.Algorithm;
 	m_dRoughness = 3;
 	m_bwarmedup = false;
 	m_dleftoffset = initstruct.Leftoffset;
@@ -58,8 +58,11 @@ StochFit::StochFit(ReflSettings initstruct)
 	m_bimpnorm = initstruct.Impnorm;
 	objectivefunction = initstruct.Objectivefunction;
 	m_dparamtemp = initstruct.Paramtemp;
+	m_isigmasearch = initstruct.Sigmasearch;
+	m_iabssearch = initstruct.AbsorptionSearchPerc;
+	m_inormsearch = initstruct.NormalizationSearchPerc;
 
-	InitializeSA(initstruct.Sigmasearch, initstruct.Algorithm, initstruct.Inittemp, initstruct.Platiter, 
+	InitializeSA(initstruct.Algorithm, initstruct.Inittemp, initstruct.Platiter, 
 		initstruct.Slope, initstruct.Gamma, initstruct.STUNfunc, initstruct.Adaptive, initstruct.Tempiter,
 		initstruct.STUNdeciter, initstruct.Gammadec);
 
@@ -198,7 +201,7 @@ int StochFit::Processing()
 	bool accepted = false;
 
 	
-	SA->InitializeParameters(m_dparamtemp, params, &m_cRefl, m_sigmasearch, m_isearchalgorithm);
+	SA->InitializeParameters(m_dparamtemp, params, &m_cRefl, m_isigmasearch, m_iabssearch, m_inormsearch, m_isearchalgorithm);
 	
 	if(SA->CheckForFailure() == true)
 	{
@@ -304,7 +307,7 @@ int StochFit::Cancel()
 	return 0;
 }
 
-void StochFit::InitializeSA(int sigmasearch, int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, BOOL adaptive, int tempiter, int STUNdeciter, double gammadec)
+void StochFit::InitializeSA(int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, BOOL adaptive, int tempiter, int STUNdeciter, double gammadec)
 {
 	if(algorithm == 3)
 		SA->Initialize(m_bdebugging, true, m_Directory);
@@ -312,8 +315,7 @@ void StochFit::InitializeSA(int sigmasearch, int algorithm, double inittemp, int
 		SA->Initialize(m_bdebugging, false, m_Directory);
 
 	SA->Initialize_Subsytem(inittemp,platiter,gamma ,slope, adaptive, tempiter,STUNfunc, STUNdeciter,gammadec);
-	m_sigmasearch = sigmasearch;
-	m_isearchalgorithm = algorithm;
+
 
 
 }
@@ -331,8 +333,7 @@ int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, dou
 		}
 	}
 
-	//Stop the other thread while we are updating so the
-	//data doesn't update as we're reading it
+	//We only have one thread, and we're controlling access to it, so no need for fancy synchronization here
 
 	for(int i = 0; i < m_irhocount; i++)
 	{

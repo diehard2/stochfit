@@ -33,13 +33,15 @@ class StochFit
 		int Cancel();
 		int Priority(int priority);
 		int GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
-		void InitializeSA(int sigmasearch, int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, BOOL adaptive, int tempiter, int STUNdeciter, double gammadec);
+		void InitializeSA(int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, BOOL adaptive, int tempiter, int STUNdeciter, double gammadec);
 	
 
 		int m_isearchalgorithm;
 		int m_irhocount;
 		int m_irefldatacount;
-		int m_sigmasearch;
+		int m_isigmasearch;
+		int m_inormsearch;
+		int m_iabssearch;
 		int objectivefunction;
 		bool m_bwarmedup;
 		double m_dresolution;
@@ -88,6 +90,7 @@ class StochFit
 		double m_dQerr;
 		double m_dforcesig;
 		double m_dparamtemp;
+	
 
 		int m_itotaliterations;
 		int m_icurrentiteration;

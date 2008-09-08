@@ -101,8 +101,8 @@ namespace StochasticModeling
             rhographobject = new Graphing(string.Empty);
             modelreflname = "Model Independent Reflectivity";
             rhomodelname = "rhomodel";
-         
 
+            FileNameTB.ReadOnly = true;
             //Set default values here for internationalization reasons
             Rholipid.Text = (9.38).ToString();
             SubSLDTB.Text = (9.38).ToString();
@@ -114,6 +114,10 @@ namespace StochasticModeling
             SupAbsTB.Text = ((double)0).ToString();
             QErrTB.Text = ((double)0).ToString();
             ParamTempTB.Text = (0.03).ToString();
+
+
+            ImpNormCB_CheckedChanged(null, null);
+            UseAbsCB_CheckedChanged(null, null);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -128,32 +132,24 @@ namespace StochasticModeling
             rhographobject.SetAllFonts("Garamond", 20, 18);
             rhographobject.LegendState = false;
             progressBar1.Style = ProgressBarStyle.Continuous;
-            progressBar1.ForeColor = Color.AliceBlue;
 
-            FileNameTB.ReadOnly = true;
-            ParametersBox.Enabled = false;
-            Priority.Enabled = false;
-            Startbutton.Enabled = false;
-            Cancelbutton.Enabled = false;
-            Rhomodel.Enabled = false;
             Priority.SelectedIndex = 2;
-            m_droughness = 3.25;
-
             objectiveCB.SelectedIndex = 0;
             AlgorithmCB.SelectedIndex = 0;
 
-            if (AlgorithmCB.SelectedIndex == 0)
-            {
-                SAModeTB.Visible = false;
-                SAlowenergyTB.Visible = false;
-                SALow.Visible = false;
-                SATemplabel.Visible = false;
-                SAModelabel.Visible = false;
-                SATempTB.Visible = false;
-            }
+
+            DisableInterface(true);
+            ShowSATBs(false);
 
             //Setup the callback if the graph updates the bounds
             reflgraphobject.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
+        }
+
+        public void DisableInterface(bool onoff)
+        {
+            ParametersBox.Enabled = MiscParametersBox.Enabled = FittingParamBox.Enabled = Startbutton.Enabled =
+                Rhomodel.Enabled = OptionsMenuItem.Enabled = Cancelbutton.Enabled = !onoff;
+            
         }
 
         private void LoadFile_Click(object sender, EventArgs e)
@@ -179,6 +175,7 @@ namespace StochasticModeling
                         throw new Exception("Could not load file");
                     }
 
+                    FileNameTB.Text = origreflfilename;
                     settingsfile = origreflfilename + "settings.xml";
                     reflgraphobject.SetAllFonts("Garamond", 20, 18);
                     reflgraphobject.SubSLD = Double.Parse(SubSLDTB.Text);
@@ -289,11 +286,8 @@ namespace StochasticModeling
                         reflgraphobject.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
                     }
 
-                    FileNameTB.Text = origreflfilename;
-                    ParametersBox.Enabled = true;
-                    Priority.Enabled = true;
-                    Startbutton.Enabled = true;
-                    Rhomodel.Enabled = true;
+                    DisableInterface(false);
+                    Cancelbutton.Enabled = false;
                     reflgraphobject.SetBounds();
 
                     if (UseAbsCB.Checked == false)
@@ -308,6 +302,7 @@ namespace StochasticModeling
             {
                 origreflfilename = string.Empty;
                 FileNameTB.Clear();
+                DisableInterface(true);
                 MessageBox.Show(ex.Message);
             }
         }
@@ -341,7 +336,7 @@ namespace StochasticModeling
         private void GetReflSettings(ref ModelSettings settings)
         {
             FileInfo info = new FileInfo(origreflfilename);
-            int newdatapoints = ReflData.Instance.GetNumberDataPoints - int.Parse(critedgeoffTB.Text) - int.Parse(HQoffsetTB.Text);
+            int newdatapoints = ReflData.Instance.GetNumberDataPoints;
 
             double[] q = new double[newdatapoints];
             double[] r = new double[newdatapoints];
@@ -352,21 +347,28 @@ namespace StochasticModeling
                 qe = new double[newdatapoints];
 
             //Move the data into truncated arrays so we don't have to constantly recalculate in the numerically intensive portions
-            for (int i = int.Parse(critedgeoffTB.Text); i < ReflData.Instance.GetNumberDataPoints - int.Parse(HQoffsetTB.Text); i++)
+            for (int i = 0; i < ReflData.Instance.GetNumberDataPoints ; i++)
             {
-                q[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetQDataPt(i);
-                r[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetReflDataPt(i);
-                re[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetRErrorPt(i);
+                q[i] = ReflData.Instance.GetQDataPt(i);
+                r[i] = ReflData.Instance.GetReflDataPt(i);
+                re[i] = ReflData.Instance.GetRErrorPt(i);
 
                 if (qe != null)
-                    qe[i - int.Parse(critedgeoffTB.Text)] = ReflData.Instance.GetQErrorPt(i);
+                    qe[i] = ReflData.Instance.GetQErrorPt(i);
             }
 
             settings.Directory = info.DirectoryName;
-
             settings.SetArrays(q, r, re, qe, newdatapoints);
-
             settings.QPoints = newdatapoints;
+
+            FillSettingsStruct(ref settings);
+        }
+
+        private void FillSettingsStruct(ref ModelSettings settings)
+        {
+            settings.Title = TitleTB.Text;
+            settings.CritEdgeOffset = int.Parse(critedgeoffTB.Text);
+            settings.HighQOffset = int.Parse(HQoffsetTB.Text);
             settings.SurflayerSLD = Double.Parse(Rholipid.Text);
             settings.SubSLD = Double.Parse(SubSLDTB.Text);
             settings.SupSLD = Double.Parse(SupSLDTB.Text);
@@ -389,6 +391,10 @@ namespace StochasticModeling
             settings.FitFunc = objectiveCB.SelectedIndex;
             settings.ParamTemp = Double.Parse(ParamTempTB.Text);
             settings.SigmaSearchPerc = int.Parse(SigmaSearchTB.Text);
+            settings.NormalizationSearchPerc = int.Parse(NormSearchTB.Text);
+            settings.AbsorptionSearchPerc = int.Parse(AbsorptionSearchTB.Text);
+            settings.AbsorptionSearchPerc = int.Parse(AbsorptionSearchTB.Text);
+            settings.NormalizationSearchPerc = int.Parse(NormSearchTB.Text);
             settings.Algorithm = AlgorithmCB.SelectedIndex;
             settings.AnnealInitTemp = m_dAnnealtemp;
             settings.AnnealTempPlat = m_iAnnealplat;
@@ -405,44 +411,9 @@ namespace StochasticModeling
         {
             MySettings PrevSettings = new MySettings();
 
-            PrevSettings.Settings.Version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-            PrevSettings.Settings.SurflayerSLD = double.Parse(Rholipid.Text);
-            PrevSettings.Settings.Surflayerlength = double.Parse(layerlength.Text);
-            PrevSettings.Settings.SurflayerAbs = double.Parse(SurfAbs.Text);
-            PrevSettings.Settings.Algorithm = AlgorithmCB.SelectedIndex;
-            PrevSettings.Settings.FitFunc = objectiveCB.SelectedIndex;
-            PrevSettings.Settings.SubSLD = Double.Parse(SubSLDTB.Text);
-            PrevSettings.Settings.SubAbs = Double.Parse(SubAbs.Text);
-            PrevSettings.Settings.Wavelength = Double.Parse(wavelength.Text);
-            PrevSettings.Settings.Boxes = int.Parse(Boxlayers.Text);
+            FillSettingsStruct(ref PrevSettings.Settings);
             PrevSettings.Settings.Iterations = int.Parse(IterationsTB.Text);
-            PrevSettings.Settings.IterationsCompleted = progressBar1.Value;
-            PrevSettings.Settings.ChiSquare = double.Parse(ChiSquareTB.Text, m_CI);
-            PrevSettings.Settings.Title = TitleTB.Text;
-            PrevSettings.Settings.Resolution = int.Parse(ResolutionTB.Text);
-            PrevSettings.Settings.Totallength = double.Parse(TotlengthTB.Text);
-            PrevSettings.Settings.CritEdgeOffset = int.Parse(critedgeoffTB.Text);
-            PrevSettings.Settings.SigmaSearchPerc = double.Parse(SigmaSearchTB.Text, m_CI);
-            PrevSettings.Settings.UseAbs = UseAbsCB.Checked;
-            PrevSettings.Settings.HighQOffset = int.Parse(HQoffsetTB.Text);
-            PrevSettings.Settings.SupOffset = double.Parse(SupoffsetTB.Text);
-            PrevSettings.Settings.SupSLD = double.Parse(SupSLDTB.Text, m_CI);
-            PrevSettings.Settings.SupAbs = double.Parse(SupAbsTB.Text, m_CI);
-            PrevSettings.Settings.Forcenorm = ForceNormCB.Checked;
-            PrevSettings.Settings.AnnealInitTemp = m_dAnnealtemp;
-            PrevSettings.Settings.AnnealSlope = m_dAnnealslope;
-            PrevSettings.Settings.AnnealTempPlat = m_iAnnealplat;
-            PrevSettings.Settings.AnnealGamma = m_dSTUNGamma;
-            PrevSettings.Settings.ImpNorm = ImpNormCB.Checked;
-            PrevSettings.Settings.Percerror = double.Parse(QErrTB.Text, m_CI);
-            PrevSettings.Settings.Debug = debugToolStripMenuItem.Checked;
-            PrevSettings.Settings.ForceXR = forceXRToolStripMenuItem1.Checked;
-            PrevSettings.Settings.STUNAdaptive = m_bSTUNAdaptive;
-            PrevSettings.Settings.STUNdeciter = m_iSTUNdeciter;
-            PrevSettings.Settings.STUNfunc = m_iSTUNfunc;
-            PrevSettings.Settings.STUNgammadec = m_dSTUNgammadec;
-            PrevSettings.Settings.STUNtempiter = m_iSTUNtempiter;
-            PrevSettings.Settings.ParamTemp = double.Parse(ParamTempTB.Text, m_CI);
+            PrevSettings.Settings.Version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             PrevSettings.Settings.IsNeutron = UseSLDToolStripMenuItem.Checked;
             PrevSettings.WriteSettings(settingsfile);
         }
@@ -556,22 +527,21 @@ namespace StochasticModeling
             myTimer.Interval = 5000;
             myTimer.Start();
 
-            ParametersBox.Enabled = false;
-            Startbutton.Enabled = false;
-            FittingParamBox.Enabled = false;
+            DisableInterface(true);
+            MiscParametersBox.Enabled = true;
+
+            OptionsMenuItem.Enabled = true;
 
             setModelOptionsToolStripMenuItem.Enabled = setResolutionOptionsToolStripMenuItem.Enabled =
-              miscellaneousOptionsToolStripMenuItem.Enabled = false;
+            miscellaneousOptionsToolStripMenuItem.Enabled =  setModelOptionsToolStripMenuItem.DropDown.Enabled = setResolutionOptionsToolStripMenuItem.DropDown.Enabled =
+            miscellaneousOptionsToolStripMenuItem.DropDown.Enabled = false;
 
-            setModelOptionsToolStripMenuItem.DropDown.Enabled = setResolutionOptionsToolStripMenuItem.DropDown.Enabled =
-                miscellaneousOptionsToolStripMenuItem.DropDown.Enabled = false;
-
+            Rhomodel.Enabled = true;
             Cancelbutton.Enabled = true;
-            LoadFile.Enabled = false;
+            
+            
             reflgraphobject.ProgramRunningState = true;
-
             previtertime = DateTime.Now;
-
 
             //WriteSettings to file
             WriteSettings();
@@ -583,9 +553,7 @@ namespace StochasticModeling
             progressBar1.Minimum = minimum;
 
             if (currentiteration > 0)
-            {
                 progressBar1.Value = currentiteration;
-            }
         }
 
         private void Cancelbutton_Click(object sender, EventArgs e)
@@ -598,6 +566,8 @@ namespace StochasticModeling
         {
             myTimer.Stop();
             CancelFit();
+
+            DisableInterface(false);
             Cancelbutton.Enabled = false;
 
             setModelOptionsToolStripMenuItem.Enabled = setResolutionOptionsToolStripMenuItem.Enabled =
@@ -606,7 +576,6 @@ namespace StochasticModeling
             setModelOptionsToolStripMenuItem.DropDown.Enabled = setResolutionOptionsToolStripMenuItem.DropDown.Enabled =
                 miscellaneousOptionsToolStripMenuItem.DropDown.Enabled = true;
 
-            ParametersBox.Enabled = FittingParamBox.Enabled = LoadFile.Enabled = Startbutton.Enabled = true;
             reflgraphobject.ProgramRunningState = false;
 
             WriteSettings();
@@ -950,7 +919,8 @@ namespace StochasticModeling
 
         private void UseAbsCB_CheckedChanged(object sender, EventArgs e)
         {
-            SubAbs.Enabled = SupAbsTB.Enabled = SurfAbs.Enabled = UseAbsCB.Checked;
+           AbsorptionSearchLI.DropDown.Enabled = SubAbs.Enabled = SupAbsTB.Enabled = 
+               SurfAbs.Enabled = UseAbsCB.Checked;
         }
 
         private void errorsAreInVarianceToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1097,8 +1067,14 @@ namespace StochasticModeling
         {
             SLDConverter conv = new SLDConverter();
             conv.ShowDialog(this);
+            }
+
+        private void ImpNormCB_CheckedChanged(object sender, EventArgs e)
+        {
+            NormSearchLI.DropDown.Enabled = ImpNormCB.Checked;
         }
 
+       
         
     }
 

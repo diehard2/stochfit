@@ -52,10 +52,10 @@ void SA_Dispatcher::Initialize_Subsytem(double inittemp, double tempplateautime,
 	
 }
 
-void SA_Dispatcher::InitializeParameters(double step, ParamVector *params, CReflCalc *m_cRefl, int sigmasearch, int algorithm)
+void SA_Dispatcher::InitializeParameters(double step, ParamVector *params, CReflCalc *m_cRefl, int sigmasearch, int abssearch, int normsearch, int algorithm)
 {
 	if(m_bUseASA == false)
-		m_cSA->InitializeParameters(step, params, m_cRefl, sigmasearch, algorithm);
+		m_cSA->InitializeParameters(step, params, m_cRefl, sigmasearch, abssearch, normsearch, algorithm);
 	else
 		m_cASA->Initialize(params->ParamCount(),params,m_cRefl);
 

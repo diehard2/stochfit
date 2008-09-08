@@ -358,7 +358,7 @@ namespace StochasticModeling
             }
             catch
             {
-                MessageBox.Show("Data file was not in the correct format");
+                throw new Exception("Data file was not in the correct format");
             }
         }
 

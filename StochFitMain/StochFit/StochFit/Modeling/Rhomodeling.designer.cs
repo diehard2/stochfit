@@ -648,6 +648,7 @@ namespace StochasticModeling
             this.Controls.Add(this.RhoGraph);
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
+            this.MaximizeBox = false;
             this.Name = "Rhomodeling";
             this.Text = "Rho Model";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.OnFormClosing);

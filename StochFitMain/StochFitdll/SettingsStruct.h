@@ -32,7 +32,9 @@ struct ReflSettings
 		double Paramtemp;
 
 		//Annealing parameters
-		double Sigmasearch;
+		int Sigmasearch;
+		int NormalizationSearchPerc;
+        int AbsorptionSearchPerc;
 		int Algorithm;
 		double Inittemp;
 		int Platiter;
@@ -41,16 +43,17 @@ struct ReflSettings
 		int STUNfunc;
 		BOOL Adaptive;
 		int Tempiter;
-		double STUNdeciter;
+		int STUNdeciter;
 		double Gammadec;
-
+		
+		int CritEdgeOffset;
+		int HighQOffset;
 		//Not used
 		int Iterations;
 		int IterationsCompleted;
 		double ChiSquare;
 		LPCWSTR Title;
-		int CritEdgeOffset;
-		int HighQOffset;
+		
 };
 #pragma pack(pop)
 

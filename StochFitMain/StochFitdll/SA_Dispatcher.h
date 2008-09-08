@@ -40,7 +40,7 @@ public:
 	void Initialize(bool debug, bool ASAonoff, std::wstring directory);
 	void Initialize_Subsytem(double inittemp, double tempplateautime, double gamma, double slope, bool adaptive, int tempiter, 
 			int STUNfunc, int deciter, double gammadec);
-	void InitializeParameters(double step, ParamVector* params, CReflCalc* m_cRefl, int sigmasearch, int algorithm);
+	void InitializeParameters(double step, ParamVector* params, CReflCalc* m_cRefl, int sigmasearch, int abssearch, int normsearch, int algorithm);
 	bool Iteration(ParamVector* params);
 	double Get_Temp();
 	void Set_Temp(double Temp);

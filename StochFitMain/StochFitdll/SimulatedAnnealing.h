@@ -63,6 +63,8 @@ class SimAnneal
 		void AdjustTemp(double AverageSTUNval);
 
 		int m_isigmasearch;
+		int m_iabssearch;
+		int m_inormsearch;
 		int m_ialgorithm;
 		double m_dState1, m_dState2;
 		double TakeStep(ParamVector* params);
@@ -73,7 +75,7 @@ public:
 		void Initialize(double inittemp, double tempplateautime, double gamma, double slope, bool adaptive, int tempiter, 
 			int STUNfunc, int deciter, double gammadec);
 		bool Iteration(ParamVector* params);
-		void InitializeParameters(double step, ParamVector* params, CReflCalc* m_cRefl, int simgasearch, int algorithm);
+		void InitializeParameters(double step, ParamVector* params, CReflCalc* m_cRefl, int simgasearch, int abssearch, int normsearch, int algorithm);
 		bool EvaluateGreedy(double bestval, double curval);
 		bool EvaluateSA(double bestval, double curval);
 		bool EvaluateSTUN(long double bestval,long double curval);

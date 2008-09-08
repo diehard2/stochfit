@@ -20,6 +20,7 @@
 
 #include "stdafx.h"
 #include "SimulatedAnnealing.h"
+#include <iomanip>
 
 SimAnneal::SimAnneal(bool debug, wstring directory): m_bisiterminimum(false), m_dTemp(-1.0),
 	m_ipoorsolutionacc(0),m_inumberpoorsol(0),m_daverageSTUNval(0), m_sdirectory(directory), m_bdebugging(debug)
@@ -67,12 +68,14 @@ SimAnneal::~SimAnneal()
 	}
 }
 
-void SimAnneal::InitializeParameters(double step, ParamVector* params, CReflCalc* m_cRefl, int sigmasearch, int algorithm)
+void SimAnneal::InitializeParameters(double step, ParamVector* params, CReflCalc* m_cRefl, int sigmasearch, int abssearch, int normsearch, int algorithm)
 {
 	temp_params = *params;
 	mc_stepsize = step;
 	multi = m_cRefl;
 	m_isigmasearch = sigmasearch;
+	m_inormsearch = normsearch;
+	m_iabssearch = abssearch;
 	m_ialgorithm = algorithm;
 
 	m_dbestsolution = m_dState1 = m_cRefl->objective(params);
@@ -311,14 +314,6 @@ bool SimAnneal::Iteration(ParamVector* params)
 	if(m_ialgorithm == 0)
 	{
 		accepted = EvaluateGreedy(m_dState1,m_dState2);
-		if(m_bdebugging)
-		{
-			if(accepted)
-				debugfile << "Accepted 1 " << m_dState2 << endl;
-			else
-				debugfile << "Rejected 0 " << m_dState1 << endl;
-		}
-
 	}
 	else if (m_ialgorithm == 1)
 		accepted = EvaluateSA(m_dState1, m_dState2);
@@ -343,93 +338,38 @@ bool SimAnneal::IsIterMinimum()
 
 double SimAnneal::TakeStep(ParamVector* params)
 {
-		double surfabs = params->getSurfAbs();
-		double impnorm = params->getImpNorm();
-		double rough = params->getroughness();
 		double roughmult = 5.0/3.0;
-		int randvar = 0;
+		
+		if(params->Get_FixedRoughness())
+			m_isigmasearch = 0; 
+		if(params->Get_FixImpNorm() == false)
+			m_inormsearch = 0;
+		if(params->Get_UseSurfAbs() == false)
+			m_iabssearch = 0;
 		
 		//Pick the box we're going to mutate
 		int ii= random(params->GetInitializationLength()-1,0);
-
+		int perc = random(100, 1);
+		
+	
 		//Only mutate for the actual guessed fuzzy layer length 
-		if(random(100,0) > m_isigmasearch)
+		if(perc > m_isigmasearch + m_inormsearch + m_iabssearch)
 		{
-				double mutmax;
-				double mutmin;
-				
-				double mutate = random(params->GetMutatableParameter(ii) + mc_stepsize,
-									params->GetMutatableParameter(ii) - mc_stepsize);
-
-				//if(ii != 0)
-				//{
-				//	mutmax =  max(params->GetMutatableParameter(ii-1), params->GetMutatableParameter(ii+1))+.1;
-				//	mutmin = min(params->GetMutatableParameter(ii-1), params->GetMutatableParameter(ii+1))-.1;
-				//	
-				//	if(mutate > mutmax)
-				//		params->SetMutatableParameter(ii, mutmax);
-				//	else if(mutate < mutmin)
-				//		params->SetMutatableParameter(ii, mutmin);
-				//	else
-				//		params->SetMutatableParameter(ii, mutate);
-				//}
-				//else
-				//{
-				//	if(mutate > params->GetMutatableParameter(ii+1) + .1)
-				//		params->SetMutatableParameter(ii,params->GetMutatableParameter(ii+1)+0.1);
-				//	else if(mutate < params->GetMutatableParameter(ii+1) - .1)
-				//		params->SetMutatableParameter(ii, params->GetMutatableParameter(ii+1) - 0.1);
-				//	else
-				//		params->SetMutatableParameter(ii, mutate);
-				//}
-				params->SetMutatableParameter(ii, mutate);
-				
+			params->SetMutatableParameter(ii, random(params->GetMutatableParameter(ii) + mc_stepsize,
+									params->GetMutatableParameter(ii) - mc_stepsize));
+		}
+		else if(perc <= m_isigmasearch)
+		{
+			params->setroughness(random(params->getroughness()*(1+roughmult*mc_stepsize),params->getroughness()*(1-roughmult*mc_stepsize)));
+		}
+		else if(perc > m_isigmasearch && perc <= m_isigmasearch + m_inormsearch)
+		{
+			params->setSurfAbs(random(params->getSurfAbs()*(1.0+mc_stepsize),params->getSurfAbs()*(1.0-mc_stepsize)));
 		}
 		else
 		{
-			//Split our sigma search into an absorption search and/or imperfect normalization search
-			if(params->Get_FixImpNorm())
-			{
-				if(params->Get_UseSurfAbs())
-				{
-					randvar = random(2,0);
-
-					if(randvar == 0)
-						params->setSurfAbs(random(params->getSurfAbs()*(1.0+mc_stepsize),params->getSurfAbs()*(1.0-mc_stepsize)));
-					else if (randvar == 1 && params->Get_FixedRoughness() == false)
-						params->setroughness(random(params->getroughness()*(1+roughmult*mc_stepsize),params->getroughness()*(1-roughmult*mc_stepsize)));
-					else
-						params->setImpNorm(random(params->getImpNorm()*(1.0+mc_stepsize),params->getImpNorm()*(1.0-mc_stepsize)));
-				}
-				else
-				{
-					int randvar = random(1,0);
-					if(randvar == 0 && params->Get_FixedRoughness() == false)
-						params->setroughness(random(params->getroughness()*(1+roughmult*mc_stepsize),params->getroughness()*(1-roughmult*mc_stepsize)));
-					else
-						params->setImpNorm(random(params->getImpNorm()*(1.0+mc_stepsize),params->getImpNorm()*(1.0-mc_stepsize)));
-						
-					
-				}
-			}
-			else
-			{
-				if(params->Get_UseSurfAbs())
-				{
-					if(random(1,0) == 1)
-						params->setSurfAbs(random(params->getSurfAbs()*(1.0+mc_stepsize),params->getSurfAbs()*(1.0-mc_stepsize)));
-					else if(params->Get_FixedRoughness() == false)
-						params->setroughness(random(params->getroughness()*(1+roughmult*mc_stepsize),params->getroughness()*(1-roughmult*mc_stepsize)));
-				}
-				else
-				{
-					if(params->Get_FixedRoughness() == false)
-					{
-						params->setroughness(random(params->getroughness()*(1+roughmult*mc_stepsize),params->getroughness()*(1-roughmult*mc_stepsize)));
-					}
-				}
-			}
+			params->setImpNorm(random(params->getImpNorm()*(1.0+mc_stepsize),params->getImpNorm()*(1.0-mc_stepsize)));
 		}
-
-	return multi->objective(params);
+		
+		return multi->objective(params);
 }

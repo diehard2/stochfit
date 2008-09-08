@@ -1,8 +1,8 @@
 full data on graphing
-fields and full control for splitting
-make sure debugging works
+x fields and full control for splitting
+x make sure debugging works
 x gray out unused boxes dynamically
-check threading in C++ modules for speed
+x check threading in C++ modules for speed - not a problem
 full refldata
 make sure all files are printed
 itextsharp update

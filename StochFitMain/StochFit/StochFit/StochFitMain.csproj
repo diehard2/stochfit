@@ -104,7 +104,7 @@
   </Target>
   -->
   <ItemGroup>
-    <Reference Include="itextsharp, Version=4.0.8.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca">
+    <Reference Include="itextsharp, Version=4.1.2.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\itextsharp.dll</HintPath>
     </Reference>

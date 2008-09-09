@@ -51,7 +51,8 @@ public:
 	wstring fnpop;
 	wstring fnrf;
 	wstring fnrho;
-
+	ReflSettings* m_InitStruct;
+	double m_dwaveconstant;
     float dz0;
 	float m_dboxsize;
 	float m_dnormfactor;
@@ -85,7 +86,7 @@ public:
 	CReflCalc();
 	~CReflCalc();
 	
-    void init(int layernumber,double xraylambda,double dz, BOOL mbusesurfabs,int parratlayers, double leftoffset, BOOL forcenorm, double qspread, bool XRonly);
+    void init(ReflSettings* InitStruct);
 	void SetupRef(double* Q, double* Refl, double* ReflError, double* QError, int PointCount, ParamVector* params);
     double objective(ParamVector  *g);
     void paramsrf(ParamVector *g);

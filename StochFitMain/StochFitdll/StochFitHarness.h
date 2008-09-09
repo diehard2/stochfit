@@ -63,6 +63,7 @@ class StochFit
 		double* Rho;
 		double* Refl;
 		
+		
 		wstring m_Directory;
 		HANDLE m_hThread;
 		HANDLE mutex;

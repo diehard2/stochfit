@@ -31,6 +31,7 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	m_bupdated = FALSE;
 	m_bwarmedup = false;
 	m_ipriority = 2;
+	m_InitStruct = InitStruct;
 
 	m_Directory = InitStruct->Directory;
 	m_dsubSLD = InitStruct->SubSLD;
@@ -93,6 +94,9 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 	 //////////////////////////////////////////////////////////
 	 /******** Setup Variables and ReflectivityClass ********/
 	 ////////////////////////////////////////////////////////
+
+	m_cRefl.init(InitStruct);
+
 	double resolution;
 	double waveconst =  m_dwavelength*m_dwavelength/(2.0*M_PI);
 

@@ -65,21 +65,25 @@ CReflCalc::~CReflCalc()
 CReflCalc::CReflCalc():exi(NULL),eyi(NULL),xi(NULL),yi(NULL)
 {}
 
-void CReflCalc::init(int numberofdatapoints, double xraylambda,double d0, BOOL usesurfabs, int parratlayers, double leftoffset, BOOL forcenorm, double Qspread, bool XRonly)
+void CReflCalc::init(ReflSettings* InitStruct)
 {
-    nl= numberofdatapoints;
-	m_bUseSurfAbs = usesurfabs;
-    lambda=xraylambda;
+	m_InitStruct = InitStruct;
+	
+	//int numberofdatapoints, double xraylambda,double d0, BOOL usesurfabs, int parratlayers, double leftoffset, BOOL forcenorm, double Qspread, bool XRonly
+    nl= InitStruct->QPoints;
+	m_bUseSurfAbs = InitStruct->UseSurfAbs;
+	lambda = InitStruct->Wavelength
 	k0 = 2.0*M_PI/lambda;
-    dz0=d0;
-	objectivefunction = 0;
-	m_bforcenorm = forcenorm;
+    dz0= 1.0f/InitStruct->Resolution;
+	objectivefunction = InitStruct->Objectivefunction;
+	m_bforcenorm = InitStruct->Forcenorm;
 	m_dnormfactor = 1.0;
-	m_dQSpread = Qspread/100;
+	m_dQSpread = InitStruct->QErr/100;
 	m_ihighEDduplicatepts = 0;
 	m_ilowEDduplicatepts = 0;
-	m_bXRonly = XRonly;
+	m_bXRonly = InitStruct->XRonly;
 
+	m_dwaveconstant = lambda*lambda/(2.0*M_PI);
 	//Setup OpenMP - currently a maximum of 6 processors is allowed. After a certain number
 	//of data points, there will not be much of a benefit to allowing additional processors
 	//to work on the calculation. If more than 2-300 data points are being analyzed, it would

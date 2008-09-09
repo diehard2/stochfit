@@ -48,11 +48,11 @@ StochFit* stochfit = NULL;
 extern "C" STOCHFIT_API void Init(ReflSettings* initstruct)
 {
 	if(stochfit == NULL)
-		stochfit = new StochFit(*initstruct);
+		stochfit = new StochFit(initstruct);
 	else
 	{
 		delete stochfit;
-		stochfit = new StochFit(*initstruct);
+		stochfit = new StochFit(initstruct);
 	}
 }
 
@@ -112,8 +112,8 @@ extern "C" STOCHFIT_API void SAparams(double* lowestenergy, double* temp, int* m
 {
 		if(stochfit != NULL)
 		{
-			*temp = stochfit->SA->Get_Temp();
-			*lowestenergy = stochfit->SA->Get_LowestEnergy();
+			*temp = stochfit->m_SA->Get_Temp();
+			*lowestenergy = stochfit->m_SA->Get_LowestEnergy();
 
 			if(*temp < 1e-20)
 				*mode = -1;

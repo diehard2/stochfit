@@ -810,6 +810,7 @@ namespace StochasticModeling
             this.SigmaSearchTB.Name = "SigmaSearchTB";
             this.SigmaSearchTB.Size = new System.Drawing.Size(100, 23);
             this.SigmaSearchTB.Text = "10";
+            this.SigmaSearchTB.Validating += new System.ComponentModel.CancelEventHandler(this.ValidateIntegerInput);
             // 
             // AbsorptionSearchLI
             // 

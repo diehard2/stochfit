@@ -25,48 +25,51 @@
 #include "SimulatedAnnealing.h"
 #include "StochFitHarness.h"
 
-StochFit::StochFit(ReflSettings initstruct)
+StochFit::StochFit(ReflSettings* InitStruct)
 {
-	m_Directory = initstruct.Directory;
-	m_dsubSLD = initstruct.SubSLD;
-	m_dfilmSLD = initstruct.FilmSLD;
-	m_iparratlayers = initstruct.Boxes;
-	m_dlayerlength = initstruct.FilmLength;
-	m_dsurfabs = initstruct.FilmAbs;
-	m_dwavelength = initstruct.Wavelength;
-	m_dsubabs = initstruct.SubAbs;
 	m_bthreadstop = false;
 	m_bupdated = FALSE;
-	m_bimpnorm = initstruct.Impnorm;
-	m_icurrentiteration = 0;
-	m_ipriority = 2;
-	m_busesurfabs = initstruct.UseSurfAbs;
-	m_isearchalgorithm = initstruct.Algorithm;
-	m_dRoughness = 3;
 	m_bwarmedup = false;
-	m_dleftoffset = initstruct.Leftoffset;
-	m_dQerr = initstruct.QErr;
-	m_dsupSLD = initstruct.SupSLD;
-	m_dsupabs = initstruct.SupAbs;
-	m_dforcesig = initstruct.Forcesig;
-	m_bdebugging = initstruct.Debug;
-	SA = new SA_Dispatcher();
-	m_bforcenorm = initstruct.Forcenorm;
-	m_bXRonly = initstruct.XRonly;
-	m_dresolution = initstruct.Resolution;
-	m_dtotallength = initstruct.Totallength;
-	m_bimpnorm = initstruct.Impnorm;
-	objectivefunction = initstruct.Objectivefunction;
-	m_dparamtemp = initstruct.Paramtemp;
-	m_isigmasearch = initstruct.Sigmasearch;
-	m_iabssearch = initstruct.AbsorptionSearchPerc;
-	m_inormsearch = initstruct.NormalizationSearchPerc;
+	m_ipriority = 2;
 
-	InitializeSA(initstruct.Algorithm, initstruct.Inittemp, initstruct.Platiter, 
-		initstruct.Slope, initstruct.Gamma, initstruct.STUNfunc, initstruct.Adaptive, initstruct.Tempiter,
-		initstruct.STUNdeciter, initstruct.Gammadec);
+	m_Directory = InitStruct->Directory;
+	m_dsubSLD = InitStruct->SubSLD;
+	m_dfilmSLD = InitStruct->FilmSLD;
+	m_iparratlayers = InitStruct->Boxes;
+	m_dlayerlength = InitStruct->FilmLength;
+	m_dsurfabs = InitStruct->FilmAbs;
+	m_dwavelength = InitStruct->Wavelength;
+	m_dsubabs = InitStruct->SubAbs;
 
-	Initialize(initstruct.Q, initstruct.Refl, initstruct.ReflError, initstruct.QError, initstruct.QPoints);
+	m_bimpnorm = InitStruct->Impnorm;
+	m_icurrentiteration = 0;
+	
+	m_busesurfabs = InitStruct->UseSurfAbs;
+	m_isearchalgorithm = InitStruct->Algorithm;
+	m_dRoughness = 3;
+	
+	m_dleftoffset = InitStruct->Leftoffset;
+	m_dQerr = InitStruct->QErr;
+	m_dsupSLD = InitStruct->SupSLD;
+	m_dsupabs = InitStruct->SupAbs;
+	m_dforcesig = InitStruct->Forcesig;
+	m_bdebugging = InitStruct->Debug;
+	
+	m_bforcenorm = InitStruct->Forcenorm;
+	m_bXRonly = InitStruct->XRonly;
+	m_dresolution = InitStruct->Resolution;
+	m_dtotallength = InitStruct->Totallength;
+	m_bimpnorm = InitStruct->Impnorm;
+	objectivefunction = InitStruct->Objectivefunction;
+	m_dparamtemp = InitStruct->Paramtemp;
+	m_isigmasearch = InitStruct->Sigmasearch;
+	m_iabssearch = InitStruct->AbsorptionSearchPerc;
+	m_inormsearch = InitStruct->NormalizationSearchPerc;
+
+	m_SA = new SA_Dispatcher();
+	
+	InitializeSA(InitStruct, m_SA);
+	Initialize(InitStruct);
 }
 
 StochFit::~StochFit()
@@ -75,8 +78,8 @@ StochFit::~StochFit()
 	{
 		delete params;
 		
-		if(SA != NULL)
-			delete SA;
+		if(m_SA != NULL)
+			delete m_SA;
 
 		delete[] Zinc;
 		delete[] Qinc;
@@ -85,7 +88,7 @@ StochFit::~StochFit()
 	}
 }
 	
-void StochFit::Initialize(double* Q, double* Reflect, double* ReflError, double* QError, int PointCount)
+void StochFit::Initialize(ReflSettings* InitStruct)
 {
 	 //////////////////////////////////////////////////////////
 	 /******** Setup Variables and ReflectivityClass ********/
@@ -154,7 +157,7 @@ void StochFit::Initialize(double* Q, double* Reflect, double* ReflError, double*
 
 	//Initialize the multilayer class
 	m_cRefl.init(m_cRefl.totalsize*resolution,m_dwavelength,dz0,m_busesurfabs,m_iparratlayers, m_dleftoffset, m_bforcenorm, m_dQerr, m_bXRonly);
-	m_cRefl.SetupRef(Q, Reflect, ReflError, QError, PointCount, params);
+	m_cRefl.SetupRef(InitStruct->Q, InitStruct->Refl, InitStruct->ReflError, InitStruct->QError, InitStruct->QPoints, params);
 	m_cRefl.objectivefunction = objectivefunction;
 	m_cRefl.m_bImpNorm = m_bimpnorm;
 	
@@ -201,9 +204,9 @@ int StochFit::Processing()
 	bool accepted = false;
 
 	
-	SA->InitializeParameters(m_dparamtemp, params, &m_cRefl, m_isigmasearch, m_iabssearch, m_inormsearch, m_isearchalgorithm);
+	m_SA->InitializeParameters(m_dparamtemp, params, &m_cRefl, m_isigmasearch, m_iabssearch, m_inormsearch, m_isearchalgorithm);
 	
-	if(SA->CheckForFailure() == true)
+	if(m_SA->CheckForFailure() == true)
 	{
 		MessageBox(NULL, L"Catastrophic error in SA - please contact the author", NULL,NULL);
 		return -1;
@@ -212,7 +215,7 @@ int StochFit::Processing()
 	 //Main loop
 	 for(int isteps=0;(isteps < m_itotaliterations) && (m_bthreadstop == false);isteps++)
 	 {
-			accepted = SA->Iteration(params);
+			accepted = m_SA->Iteration(params);
 		
 			if(accepted || isteps == 0)
 			{
@@ -225,7 +228,7 @@ int StochFit::Processing()
 			if((isteps+1)%5000 == 0 || m_bthreadstop == true || isteps == m_itotaliterations-1)
 			{
 				//Write out the population file for the best minimum found so far
-				if(m_isearchalgorithm != 0 && SA->Get_IsIterMinimum())
+				if(m_isearchalgorithm != 0 && m_SA->Get_IsIterMinimum())
 					WritetoFile(&m_cRefl, params, wstring(m_Directory + L"\\BestSASolution.txt").c_str());
 
 				WritetoFile(&m_cRefl, params, m_cRefl.fnpop.c_str());
@@ -307,17 +310,16 @@ int StochFit::Cancel()
 	return 0;
 }
 
-void StochFit::InitializeSA(int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, BOOL adaptive, int tempiter, int STUNdeciter, double gammadec)
+void StochFit::InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA)
 {
-	if(algorithm == 3)
+	
+
+	if(InitStruct->Algorithm == 3)
 		SA->Initialize(m_bdebugging, true, m_Directory);
 	else
 		SA->Initialize(m_bdebugging, false, m_Directory);
 
-	SA->Initialize_Subsytem(inittemp,platiter,gamma ,slope, adaptive, tempiter,STUNfunc, STUNdeciter,gammadec);
-
-
-
+	SA->Initialize_Subsytem(InitStruct);
 }
 
 int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)
@@ -392,12 +394,10 @@ int StochFit::Priority(int priority)
 
 void StochFit::WritetoFile(CReflCalc* ml, ParamVector* params, const wchar_t* filename)
 {
-	
-
 	ofstream outfile;
 	outfile.open(filename);
 	outfile<< params->getroughness() <<' '<< ml->beta_a*params->getSurfAbs()*(2.*M_PI)/m_dwavelength*m_dwavelength <<
-		' '<< SA->Get_Temp() <<' '<< params->getImpNorm() << ' ' << SA->Get_AveragefSTUN() << endl;
+		' '<< m_SA->Get_Temp() <<' '<< params->getImpNorm() << ' ' << m_SA->Get_AveragefSTUN() << endl;
 
 	for(int i = 0; i < params->RealparamsSize(); i++)
 	{
@@ -466,9 +466,9 @@ void StochFit::LoadFromFile(CReflCalc* ml, ParamVector* params,const wchar_t* fi
 	{
 		*params = params1;
 		ml->beta_a = beta*m_dwavelength*m_dwavelength/(2.0*M_PI);
-		SA->Set_Temp(1.0/currenttemp);
+		m_SA->Set_Temp(1.0/currenttemp);
 		params->setImpNorm(normfactor);
-		SA->Set_AveragefSTUN(avgfSTUN);
+		m_SA->Set_AveragefSTUN(avgfSTUN);
     }
 	infile.close();
 

@@ -26,28 +26,33 @@ SimAnneal::SimAnneal(bool debug, wstring directory): m_bisiterminimum(false), m_
 	m_ipoorsolutionacc(0),m_inumberpoorsol(0),m_daverageSTUNval(0), m_sdirectory(directory), m_bdebugging(debug)
 {}
 
-void SimAnneal::Initialize(double inittemp, double plattime, double gamma, double slope, bool adaptive, int tempiter, int STUNfunc, int STUNdeciter, double gammadec)
-{
-	m_iPlattime = plattime;
-	m_daveragefstun = inittemp;
+void SimAnneal::Initialize(ReflSettings* InitStruct)
+{/*
+	initstruct.Algorithm, initstruct.Inittemp, initstruct.Platiter, 
+		initstruct.Slope, initstruct.Gamma, initstruct.STUNfunc, initstruct.Adaptive, initstruct.Tempiter,
+		initstruct.STUNdeciter, initstruct.Gammadec);*/
+
+
+	m_iPlattime = InitStruct->Platiter;
+	m_daveragefstun = InitStruct->Inittemp;
 
 	if(m_dTemp == -1)
 	{
-		if(adaptive == false)
-			m_dTemp = 1.0/inittemp;
+		if(InitStruct->Adaptive == false)
+			m_dTemp = 1.0/InitStruct->Inittemp;
 		else
 			m_dTemp = 10;
 	}
 
 	m_iIteration = 0;
 	m_iTime = 0;
-	m_dgamma = gamma;
-	m_dslope = slope;
-	m_itempiter = tempiter;
-	m_badaptive = adaptive;
-	m_iSTUNfunc = STUNfunc;
-	m_iSTUNdec = STUNdeciter;
-	m_dgammadec = gammadec;
+	m_dgamma = InitStruct->Gamma;
+	m_dslope = InitStruct->Slope;
+	m_itempiter = InitStruct->Tempiter;
+	m_badaptive = InitStruct->Adaptive;
+	m_iSTUNfunc = InitStruct->STUNfunc;
+	m_iSTUNdec = InitStruct->STUNdeciter;
+	m_dgammadec = InitStruct->Gammadec;
 
 	if(m_bdebugging)
 	{
@@ -341,7 +346,7 @@ double SimAnneal::TakeStep(ParamVector* params)
 		double roughmult = 5.0/3.0;
 		
 		if(params->Get_FixedRoughness())
-			m_isigmasearch = 0; 
+			m_isigmasearch = 0;
 		if(params->Get_FixImpNorm() == false)
 			m_inormsearch = 0;
 		if(params->Get_UseSurfAbs() == false)

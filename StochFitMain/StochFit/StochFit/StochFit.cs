@@ -383,6 +383,12 @@ namespace StochasticModeling
             settings.Percerror = Double.Parse(QErrTB.Text);
             settings.Forcenorm = ForceNormCB.Checked;
             settings.Forcesig = Double.Parse(SigTSTB.Text);
+
+            if (int.Parse(SigTSTB.Text) > 0)
+                settings.SigmaSearchPerc = int.Parse(SigmaSearchTB.Text);
+            else
+                settings.SigmaSearchPerc = 0;
+              
             settings.Debug = debugToolStripMenuItem.Checked;
             settings.ForceXR = forceXRToolStripMenuItem1.Checked;
             settings.Resolution = int.Parse(ResolutionTB.Text);
@@ -390,11 +396,19 @@ namespace StochasticModeling
             settings.ImpNorm = ImpNormCB.Checked;
             settings.FitFunc = objectiveCB.SelectedIndex;
             settings.ParamTemp = Double.Parse(ParamTempTB.Text);
-            settings.SigmaSearchPerc = int.Parse(SigmaSearchTB.Text);
-            settings.NormalizationSearchPerc = int.Parse(NormSearchTB.Text);
-            settings.AbsorptionSearchPerc = int.Parse(AbsorptionSearchTB.Text);
-            settings.AbsorptionSearchPerc = int.Parse(AbsorptionSearchTB.Text);
-            settings.NormalizationSearchPerc = int.Parse(NormSearchTB.Text);
+            
+            
+
+            if (UseAbsCB.Checked)
+                settings.AbsorptionSearchPerc = int.Parse(AbsorptionSearchTB.Text);
+            else
+                settings.AbsorptionSearchPerc = 0;
+
+            if (ImpNormCB.Checked)
+                settings.NormalizationSearchPerc = int.Parse(NormSearchTB.Text);
+            else
+                settings.NormalizationSearchPerc = 0;
+
             settings.Algorithm = AlgorithmCB.SelectedIndex;
             settings.AnnealInitTemp = m_dAnnealtemp;
             settings.AnnealTempPlat = m_iAnnealplat;

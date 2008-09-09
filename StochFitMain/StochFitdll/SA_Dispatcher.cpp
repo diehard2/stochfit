@@ -43,12 +43,11 @@ SA_Dispatcher::~SA_Dispatcher()
 		delete m_cASA;
 }
 
-void SA_Dispatcher::Initialize_Subsytem(double inittemp, double tempplateautime, double gamma, 
-					double slope, bool adaptive, int tempiter, int STUNfunc, int deciter, double gammadec)
+void SA_Dispatcher::Initialize_Subsytem(ReflSettings* InitStruct)
 {
 
 	if(m_bUseASA == false)
-		m_cSA->Initialize(inittemp, tempplateautime, gamma, slope, adaptive, tempiter, STUNfunc, deciter, gammadec);
+		m_cSA->Initialize(InitStruct);
 	
 }
 

@@ -27,13 +27,13 @@
 class StochFit
 {
 	public:
-		StochFit(ReflSettings initstruct);
+		StochFit(ReflSettings* InitStruct);
 		~StochFit();
 		int Start(int iterations);
 		int Cancel();
 		int Priority(int priority);
 		int GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
-		void InitializeSA(int algorithm, double inittemp, int platiter, double slope, double gamma, int STUNfunc, BOOL adaptive, int tempiter, int STUNdeciter, double gammadec);
+		void InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA);
 	
 
 		int m_isearchalgorithm;
@@ -47,7 +47,7 @@ class StochFit
 		double m_dresolution;
 		double m_dtotallength;
 		BOOL m_bimpnorm;
-		SA_Dispatcher* SA;
+		SA_Dispatcher* m_SA;
 
 	private:
 		int Processing();
@@ -55,7 +55,7 @@ class StochFit
 		static DWORD WINAPI InterThread(LPVOID lParam);
 		void WritetoFile(CReflCalc* ml, ParamVector* params, const wchar_t* filename);
 		void UpdateFits(CReflCalc* ml, ParamVector* params, int currentiteration);
-	    void Initialize(double* Q, double* Refl, double* ReflError, double* QError, int PointCount);
+	    void Initialize(ReflSettings* InitStruct);
 	
 
 		double* Zinc;

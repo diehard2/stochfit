@@ -72,8 +72,7 @@ class SimAnneal
 public:
 	SimAnneal(bool debug, std::wstring directory);
 		~SimAnneal();
-		void Initialize(double inittemp, double tempplateautime, double gamma, double slope, bool adaptive, int tempiter, 
-			int STUNfunc, int deciter, double gammadec);
+		void Initialize(ReflSettings* InitStruct);
 		bool Iteration(ParamVector* params);
 		void InitializeParameters(double step, ParamVector* params, CReflCalc* m_cRefl, int simgasearch, int abssearch, int normsearch, int algorithm);
 		bool EvaluateGreedy(double bestval, double curval);

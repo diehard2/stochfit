@@ -31,7 +31,7 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	m_bupdated = FALSE;
 	m_bwarmedup = false;
 	m_ipriority = 2;
-	m_InitStruct = InitStruct;
+	
 
 	m_Directory = InitStruct->Directory;
 	m_dsubSLD = InitStruct->SubSLD;
@@ -97,84 +97,22 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 
 	m_cRefl.init(InitStruct);
 
-	double resolution;
-	double waveconst =  m_dwavelength*m_dwavelength/(2.0*M_PI);
-
-	// Set the densities and absorbances
-	m_dfilmSLD *= 1e-6 * waveconst;
-	m_dsubSLD *= 1e-6 * waveconst;
-	m_dsupSLD *= 1e-6 * waveconst;
-	double betafilm = m_dsurfabs * waveconst;
-	double betasubphase = m_dsubabs * waveconst;
-	double betasuperphase = m_dsupabs * waveconst;
-
-	//Default of 3 points per Angstrom - Seems to be a good number
-	//The computational degree of difficulty scales linearly with the number of
-	//data points
-	if(m_dresolution == 0)
-		resolution = 3.0;
-	else
-		resolution = m_dresolution;
-
-    double dz0=1.0/resolution;
-
-	//Set the total length of our surface layer - default 80 Angstroms of superphase,
-	//7 extra Angstroms of file, and 40 Angstroms of subphase
-
-	if(m_dtotallength > 0)
-		m_cRefl.totalsize = m_dtotallength; 
-	else
-        m_cRefl.totalsize = m_dleftoffset + m_dlayerlength + 7 + 40;
-
-	//Set the film property
-    m_cRefl.rho_a = m_dfilmSLD; 
-
-	if(m_busesurfabs == TRUE)
-	{
-		m_cRefl.beta_a = betafilm;
-		m_cRefl.beta_sub = betasubphase;
-		m_cRefl.beta_sup = betasuperphase;
-	}
-	else
-	{
-		m_cRefl.beta_a = 0;
-		m_cRefl.beta_sub = 0;
-		m_cRefl.beta_sup = 0;
-	}
-
 	//Setup the params - We start with a slightly roughened ED curve 
-	params = new ParamVector(m_iparratlayers,m_dforcesig,m_busesurfabs, m_bimpnorm);
-	params->SetSupphase(m_dsupSLD/m_dfilmSLD);
-
-
-	int actuallipidlength = (int)ceil((m_iparratlayers)*(m_dlayerlength/(m_dlayerlength+7.0)));
-
-	for(int i = 0 ; i <= actuallipidlength; i++)
+	params = new ParamVector(InitStruct->Boxes,m_dforcesig,m_busesurfabs, m_bimpnorm);
+	params->SetSupphase(InitStruct->SupSLD/InitStruct->FilmSLD);
+	
+	for(int i = 0 ; i < InitStruct->Boxes; i++)
 		params->SetMutatableParameter(i,1.0);
 
-	for(int i = actuallipidlength+1; i < m_iparratlayers; i++)
-		params->SetMutatableParameter(i,1.0);	
-		
-	params->SetSubphase(m_dsubSLD/m_dfilmSLD);
+	params->SetSubphase(InitStruct->SubSLD/InitStruct->SubSLD);
 
-	m_cRefl.m_dboxsize = (m_dlayerlength+7.0)/(m_iparratlayers);
-
-	//Initialize the multilayer class
-	m_cRefl.init(m_cRefl.totalsize*resolution,m_dwavelength,dz0,m_busesurfabs,m_iparratlayers, m_dleftoffset, m_bforcenorm, m_dQerr, m_bXRonly);
-	m_cRefl.SetupRef(InitStruct->Q, InitStruct->Refl, InitStruct->ReflError, InitStruct->QError, InitStruct->QPoints, params);
-	m_cRefl.objectivefunction = objectivefunction;
-	m_cRefl.m_bImpNorm = m_bimpnorm;
 	
-	//Set the output file names
-    m_cRefl.fnpop = m_Directory + wstring(L"\\pop.dat");
-    m_cRefl.fnrf = m_Directory + wstring(L"\\rf.dat");
-    m_cRefl.fnrho = m_Directory + wstring(L"\\rho.dat");
  
 	 /////////////////////////////////////////////////////
      /******** Prepare Arrays for the Front End ********/
 	////////////////////////////////////////////////////
 
-	m_irhocount = m_cRefl.totalsize*resolution;
+	m_irhocount = m_cRefl.totalsize*InitStruct->Resolution;
 
 	#ifndef CHECKREFLCALC
 		if(m_dQerr > 0)
@@ -277,7 +215,7 @@ void StochFit::UpdateFits(CReflCalc* ml, ParamVector* params, int currentiterati
 					}
 				#else
 					Qinc[i] = ml->xi[i];
-					Refl[i] = 1.0;//ml->reflpt[i];
+					Refl[i] = ml->reflpt[i];
 				#endif
 			}
 			m_bupdated = FALSE;

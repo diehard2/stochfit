@@ -51,7 +51,6 @@ CReflCalc::~CReflCalc()
 		_mm_free(m_drj);
 		_mm_free(m_cRj);
 		_mm_free(edspacingarray);
-		_mm_free(objarray);
 		_mm_free(fresnelcurve);
 		_mm_free(qspreadsinsquaredthetai);
 		_mm_free(qspreadreflpt);
@@ -67,12 +66,14 @@ CReflCalc::CReflCalc():exi(NULL),eyi(NULL),xi(NULL),yi(NULL)
 
 void CReflCalc::init(ReflSettings* InitStruct)
 {
+	int resolution;
 	m_InitStruct = InitStruct;
 	
 	//int numberofdatapoints, double xraylambda,double d0, BOOL usesurfabs, int parratlayers, double leftoffset, BOOL forcenorm, double Qspread, bool XRonly
-    nl= InitStruct->QPoints;
+
+   
 	m_bUseSurfAbs = InitStruct->UseSurfAbs;
-	lambda = InitStruct->Wavelength
+	lambda = InitStruct->Wavelength;
 	k0 = 2.0*M_PI/lambda;
     dz0= 1.0f/InitStruct->Resolution;
 	objectivefunction = InitStruct->Objectivefunction;
@@ -82,6 +83,17 @@ void CReflCalc::init(ReflSettings* InitStruct)
 	m_ihighEDduplicatepts = 0;
 	m_ilowEDduplicatepts = 0;
 	m_bXRonly = InitStruct->XRonly;
+	m_bImpNorm = InitStruct->Impnorm;
+	//Set the total length of our surface layer - default 80 Angstroms of superphase,
+	//7 extra Angstroms of file, and 40 Angstroms of subphase
+	if(InitStruct->Totallength > 0)
+		totalsize = InitStruct->Totallength; 
+	else
+        totalsize = InitStruct->Leftoffset + InitStruct->FilmLength + 7 + 40;
+
+	nl= totalsize*InitStruct->Resolution;
+
+	m_dboxsize = (InitStruct->FilmLength+7.0)/(InitStruct->Boxes);
 
 	m_dwaveconstant = lambda*lambda/(2.0*M_PI);
 	//Setup OpenMP - currently a maximum of 6 processors is allowed. After a certain number
@@ -106,6 +118,19 @@ void CReflCalc::init(ReflSettings* InitStruct)
 	}
 
 	omp_set_num_threads(m_iuseableprocessors);
+	
+	rho_a = InitStruct->FilmSLD * 1e-6 * lambda*lambda/(2.0f*M_PI);
+
+	if(InitStruct->UseSurfAbs == TRUE)
+	{
+		beta_a = InitStruct->FilmAbs * 1e-6 * lambda*lambda/(2.0f*M_PI);;
+		beta_sub = InitStruct->SupAbs * 1e-6 * lambda*lambda/(2.0f*M_PI);;
+		beta_sup = InitStruct->SupAbs * 1e-6 * lambda*lambda/(2.0f*M_PI);;
+	}
+	else
+	{
+		beta_a = beta_sub = beta_sup = 0;
+	}
 
 	//Arrays for the electron density and twice the electron density
     nk = (MyComplex*)_mm_malloc(sizeof(MyComplex)*nl,16);
@@ -120,75 +145,86 @@ void CReflCalc::init(ReflSettings* InitStruct)
 	m_cRj = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
 
 	//Create scratch arrays for the electron density calculation
-	distarray = (float*)_mm_malloc((parratlayers+2)*sizeof(float),64);
-	rhoarray = (float*)_mm_malloc((parratlayers+2)*sizeof(float),64);
-	imagrhoarray = (float*)_mm_malloc((parratlayers+2)*sizeof(float),64);
+	distarray = (float*)_mm_malloc((InitStruct->Boxes+2)*sizeof(float),64);
+	rhoarray = (float*)_mm_malloc((InitStruct->Boxes+2)*sizeof(float),64);
+	imagrhoarray = (float*)_mm_malloc((InitStruct->Boxes+2)*sizeof(float),64);
 	edspacingarray = (float*)_mm_malloc(nl*sizeof(float),64);
 
 	for(int i = 0; i < nl; i++)
 	{
-		edspacingarray[i] = i*dz0-leftoffset;
+		edspacingarray[i] = i*dz0-InitStruct->Leftoffset;
 	}
 
-	for(int k = 0; k < parratlayers+2; k++)
+	for(int k = 0; k < InitStruct->Boxes+2; k++)
 	{
 		distarray[k] = k*m_dboxsize;
 	}
+
+	//Set the output file names
+    fnpop = InitStruct->Directory + wstring(L"\\pop.dat");
+    fnrf = InitStruct->Directory + wstring(L"\\rf.dat");
+    fnrho = InitStruct->Directory + wstring(L"\\rho.dat");
+
+	SetupRef(InitStruct);
 }
 
-void CReflCalc::SetupRef(double* Q, double* Refl, double* ReflError, double* QError, int PointCount, ParamVector* params)
+void CReflCalc::SetupRef(ReflSettings* InitStruct)
 {
 	//Now create our xi,yi,dyi, and thetai
-	m_idatapoints = PointCount;
-	xi = (float*)_mm_malloc(PointCount*sizeof(float),64);
-	yi = (float*)_mm_malloc(PointCount*sizeof(float),64);
+	m_idatapoints = InitStruct->QPoints - InitStruct->HighQOffset - InitStruct->CritEdgeOffset - 1;
+	xi = (float*)_mm_malloc(m_idatapoints*sizeof(float),64);
+	yi = (float*)_mm_malloc(m_idatapoints*sizeof(float),64);
 	
-	if(QError != NULL)
-		exi = (float*)_mm_malloc(PointCount*sizeof(float),64);
+	if(InitStruct->QError != NULL)
+		exi = (float*)_mm_malloc(m_idatapoints*sizeof(float),64);
 	
-	eyi = (float*)_mm_malloc(PointCount*sizeof(float),64);
+	eyi = (float*)_mm_malloc(m_idatapoints*sizeof(float),64);
 
-	sinthetai = (float*)_mm_malloc(PointCount*sizeof(float),64);
-	sinsquaredthetai = (float*)_mm_malloc(PointCount*sizeof(float),64);
-	qspreadsinthetai = (float*)_mm_malloc(PointCount*13*sizeof(float),64);
-	qspreadsinsquaredthetai = (float*)_mm_malloc(PointCount*13*sizeof(float),64);
-	reflpt = (float*)_mm_malloc(PointCount*sizeof(float),64);
-	qspreadreflpt = (float*)_mm_malloc(PointCount*13*sizeof(float),64);
+	sinthetai = (float*)_mm_malloc(m_idatapoints*sizeof(float),64);
+	sinsquaredthetai = (float*)_mm_malloc(m_idatapoints*sizeof(float),64);
+	qspreadsinthetai = (float*)_mm_malloc(m_idatapoints*13*sizeof(float),64);
+	qspreadsinsquaredthetai = (float*)_mm_malloc(m_idatapoints*13*sizeof(float),64);
+	reflpt = (float*)_mm_malloc(m_idatapoints*sizeof(float),64);
+	qspreadreflpt = (float*)_mm_malloc(m_idatapoints*13*sizeof(float),64);
 
 	//and fill them up
 	for(int i = 0; i< m_idatapoints; i++)
 	{
-		xi[i] = Q[i];
-		yi[i] = Refl[i];
-		eyi[i] = ReflError[i];
+		xi[i] = InitStruct->Q[i+InitStruct->CritEdgeOffset + 1];
+		yi[i] = InitStruct->Refl[i+InitStruct->CritEdgeOffset + 1];
+		eyi[i] = InitStruct->ReflError[i+InitStruct->CritEdgeOffset + 1];
 		
-		if(QError != NULL)
-			exi[i] = QError[i];
+		if(InitStruct->QError != NULL)
+			exi[i] = InitStruct->QError[i+InitStruct->CritEdgeOffset + 1];
 		
-		sinthetai[i] = Q[i]*lambda/(4*M_PI);
+		sinthetai[i] = InitStruct->Q[i+InitStruct->CritEdgeOffset + 1]*lambda/(4*M_PI);
 		reflpt[i] = 1.0;
 	}
 
 	//Calculate the qspread sinthetai's for resolution smearing
-	if(QError != NULL)
+	if(InitStruct->QError != NULL)
 	{
 		double holder = lambda/(4.0*M_PI);
-
+		float qholder;
+		float qerrorholder;
 		for(int i = 0; i < m_idatapoints; i++)
 		{
+			qholder = InitStruct->Q[i];
+			qerrorholder = InitStruct->QError[i];
+
 			qspreadsinthetai[13*i] = sinthetai[i];
-			qspreadsinthetai[13*i+1] = holder*(Q[i]+1.2*QError[i]);
-			qspreadsinthetai[13*i+2] = holder*(Q[i]-1.2*QError[i]);
-			qspreadsinthetai[13*i+3] = holder*(Q[i]+1.0*QError[i]);
-			qspreadsinthetai[13*i+4] = holder*(Q[i]-1.0*QError[i]);
-			qspreadsinthetai[13*i+5] = holder*(Q[i]+0.8*QError[i]);
-			qspreadsinthetai[13*i+6] = holder*(Q[i]-0.8*QError[i]);
-			qspreadsinthetai[13*i+7] = holder*(Q[i]+0.6*QError[i]);
-			qspreadsinthetai[13*i+8] = holder*(Q[i]-0.6*QError[i]);
-			qspreadsinthetai[13*i+9] = holder*(Q[i]+0.4*QError[i]);
-			qspreadsinthetai[13*i+10] = holder*(Q[i]-0.4*QError[i]);
-			qspreadsinthetai[13*i+11] = holder*(Q[i]+0.2*QError[i]);
-			qspreadsinthetai[13*i+12] = holder*(Q[i]-0.2*QError[i]);
+			qspreadsinthetai[13*i+1] = holder*(qholder+1.2*qerrorholder);
+			qspreadsinthetai[13*i+2] = holder*(qholder-1.2*qerrorholder);
+			qspreadsinthetai[13*i+3] = holder*(qholder+1.0*qerrorholder);
+			qspreadsinthetai[13*i+4] = holder*(qholder-1.0*qerrorholder);
+			qspreadsinthetai[13*i+5] = holder*(qholder+0.8*qerrorholder);
+			qspreadsinthetai[13*i+6] = holder*(qholder-0.8*qerrorholder);
+			qspreadsinthetai[13*i+7] = holder*(qholder+0.6*qerrorholder);
+			qspreadsinthetai[13*i+8] = holder*(qholder-0.6*qerrorholder);
+			qspreadsinthetai[13*i+9] = holder*(qholder+0.4*qerrorholder);
+			qspreadsinthetai[13*i+10] = holder*(qholder-0.4*qerrorholder);
+			qspreadsinthetai[13*i+11] = holder*(qholder+0.2*qerrorholder);
+			qspreadsinthetai[13*i+12] = holder*(qholder-0.2*qerrorholder);
 
 			if(qspreadsinthetai[13*i+1] < 0.0)
 				MessageBox(NULL, L"Error in QSpread please contact the author - the program will now crash :(", NULL,NULL);
@@ -218,8 +254,8 @@ void CReflCalc::SetupRef(double* Q, double* Refl, double* ReflError, double* QEr
 	}
 
 	//Now, create our q's for plotting, but mix-in the actual data points
-	double x0=xi[0];
-    double x1=xi[m_idatapoints-1];
+	double x0=InitStruct->Q[0];
+    double x1=InitStruct->Q[InitStruct->QPoints - 1];
     double dx=(x1-x0)/150.0;
     x1=1.1*x1-0.1*x0;
 	
@@ -283,13 +319,10 @@ void CReflCalc::SetupRef(double* Q, double* Refl, double* ReflError, double* QEr
 		qspreadsinsquaredthetai[l] = qspreadsinthetai[l]*qspreadsinthetai[l];
 	}
 	
-	//Setup the objective array
-	objarray = (float*)_mm_malloc(m_idatapoints*sizeof(float), 64);
-
 	//Setup the fresnel curve - we store the electron density portion of the refractive index in the params
 	fresnelcurve = (float*)_mm_malloc(m_idatapoints*sizeof(float), 64);
 
-	double Qc = CalcQc(*params);
+	double Qc = CalcQc(InitStruct->SubSLD, InitStruct->SupSLD);
 
 	for(int i = 0; i < m_idatapoints; i++)
 	{
@@ -352,7 +385,7 @@ void CReflCalc::paramsrf(ParamVector * g)
 				reflout << qarray[i] << " " << dataout[i] << endl;
 		}
 	#else
-		for(int i = 0;i<m_idatapoints;i++)
+		for(int i = 0;i< m_idatapoints;i++)
 		{
 			reflout << xi[i] << " " << reflpt[i] << endl;
 		}
@@ -1102,13 +1135,10 @@ void CReflCalc::QsmearRf(float* qspreadreflpt, float* refl, int datapoints)
 		refl[i] = calcholder/6.211f;
 	}
 }
-float CReflCalc::CalcQc(ParamVector g)
+float CReflCalc::CalcQc(double SubPhaseSLD, double SuperPhaseSLD)
 {
 	//Critical Q for an interface.		
-	double prefactor = 4 * M_PI/lambda;
-	
-	return prefactor * sqrt(2.0 * rho_a*(g.GetRealparams(g.RealparamsSize()-1)-g.GetRealparams(0))/
-		(1-(lambda*lambda/(2.0*M_PI))*g.GetRealparams(0)*rho_a));
+	return 4.0f * sqrt(M_PI*(SubPhaseSLD-SuperPhaseSLD));
 }
 
 float CReflCalc::CalcFresnelPoint(float Q, float Qc)

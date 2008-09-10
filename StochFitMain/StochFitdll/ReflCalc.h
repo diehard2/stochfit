@@ -36,7 +36,7 @@ private:
 	bool CheckDensity();
 
 	float m_dQSpread;
-	float CalcQc(ParamVector g);
+	float CalcQc(double SubPhaseSLD, double SuperPhaseSLD);
 	float CalcFresnelPoint(float Q, float Qc);
 	int Qpoints;
  
@@ -57,7 +57,7 @@ public:
 	float m_dboxsize;
 	float m_dnormfactor;
 	//read from file
-    float *xi,*yi,*eyi,*exi,*sinthetai,*reflpt,*dataout,*tsinthetai,*qarray, *objarray, *fresnelcurve;
+    float *xi,*yi,*eyi,*exi,*sinthetai,*reflpt,*dataout,*tsinthetai,*qarray, *fresnelcurve;
     int m_idatapoints, tarraysize;
     int nl;
 
@@ -87,7 +87,7 @@ public:
 	~CReflCalc();
 	
     void init(ReflSettings* InitStruct);
-	void SetupRef(double* Q, double* Refl, double* ReflError, double* QError, int PointCount, ParamVector* params);
+	void SetupRef(ReflSettings* InitStruct);
     double objective(ParamVector  *g);
     void paramsrf(ParamVector *g);
     

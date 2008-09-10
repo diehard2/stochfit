@@ -714,7 +714,7 @@ namespace StochasticModeling
             // 
             this.ResolutionTB.Name = "ResolutionTB";
             this.ResolutionTB.Size = new System.Drawing.Size(100, 23);
-            this.ResolutionTB.Text = "0";
+            this.ResolutionTB.Text = "3";
             // 
             // superphaseLengthToolStripMenuItem
             // 

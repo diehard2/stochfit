@@ -384,7 +384,7 @@ namespace StochasticModeling
             settings.Forcenorm = ForceNormCB.Checked;
             settings.Forcesig = Double.Parse(SigTSTB.Text);
 
-            if (int.Parse(SigTSTB.Text) > 0)
+            if (int.Parse(SigTSTB.Text) == 0)
                 settings.SigmaSearchPerc = int.Parse(SigmaSearchTB.Text);
             else
                 settings.SigmaSearchPerc = 0;

@@ -43,14 +43,12 @@
 
 
 //Define CHECKREFLCALC to see how the actual reflectivity calculation is proceeding
-//#define CHECKREFLCALC
-//Define DEBUGFILE to monitor the fit for each iteration (large file)
-#define DEBUGFILE
+#define CHECKREFLCALC
 //Define SINGLEPROCDEBUG for debugging when the development machine only has one processor
 //#define SINGLEPROCDEBUG
 
 //Maximum number of processors to run the reflectivity calculation on
-#define MAX_OMP_THREADS 6
+#define MAX_OMP_THREADS 8
 #define M_PI	3.1415926535897932384623233 
 
 using namespace MyComplexNumber;

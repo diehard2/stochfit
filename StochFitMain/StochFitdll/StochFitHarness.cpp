@@ -33,39 +33,39 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	m_ipriority = 2;
 	
 
-	m_Directory = InitStruct->Directory;
-	m_dsubSLD = InitStruct->SubSLD;
-	m_dfilmSLD = InitStruct->FilmSLD;
-	m_iparratlayers = InitStruct->Boxes;
-	m_dlayerlength = InitStruct->FilmLength;
-	m_dsurfabs = InitStruct->FilmAbs;
-	m_dwavelength = InitStruct->Wavelength;
-	m_dsubabs = InitStruct->SubAbs;
+	///*m_Directory = InitStruct->Directory;
+	//m_dsubSLD = InitStruct->SubSLD;
+	//m_dfilmSLD = InitStruct->FilmSLD;
+	//m_iparratlayers = InitStruct->Boxes;
+	//m_dlayerlength = InitStruct->FilmLength;
+	//m_dsurfabs = InitStruct->FilmAbs;
+	//m_dwavelength = InitStruct->Wavelength;
+	//m_dsubabs = InitStruct->SubAbs;
 
-	m_bimpnorm = InitStruct->Impnorm;
-	m_icurrentiteration = 0;
-	
-	m_busesurfabs = InitStruct->UseSurfAbs;
-	m_isearchalgorithm = InitStruct->Algorithm;
-	m_dRoughness = 3;
-	
-	m_dleftoffset = InitStruct->Leftoffset;
-	m_dQerr = InitStruct->QErr;
-	m_dsupSLD = InitStruct->SupSLD;
-	m_dsupabs = InitStruct->SupAbs;
-	m_dforcesig = InitStruct->Forcesig;
-	m_bdebugging = InitStruct->Debug;
-	
-	m_bforcenorm = InitStruct->Forcenorm;
-	m_bXRonly = InitStruct->XRonly;
-	m_dresolution = InitStruct->Resolution;
-	m_dtotallength = InitStruct->Totallength;
-	m_bimpnorm = InitStruct->Impnorm;
-	objectivefunction = InitStruct->Objectivefunction;
-	m_dparamtemp = InitStruct->Paramtemp;
-	m_isigmasearch = InitStruct->Sigmasearch;
-	m_iabssearch = InitStruct->AbsorptionSearchPerc;
-	m_inormsearch = InitStruct->NormalizationSearchPerc;
+	//m_bimpnorm = InitStruct->Impnorm;
+	//m_icurrentiteration = 0;
+	//
+	//m_busesurfabs = InitStruct->UseSurfAbs;
+	//m_isearchalgorithm = InitStruct->Algorithm;
+	//m_dRoughness = 3;
+	//
+	//m_dleftoffset = InitStruct->Leftoffset;
+	//m_dQerr = InitStruct->QErr;
+	//m_dsupSLD = InitStruct->SupSLD;
+	//m_dsupabs = InitStruct->SupAbs;
+	//m_dforcesig = InitStruct->Forcesig;
+	//m_bdebugging = InitStruct->Debug;
+	//
+	//m_bforcenorm = InitStruct->Forcenorm;
+	//m_bXRonly = InitStruct->XRonly;
+	//m_dresolution = InitStruct->Resolution;
+	//m_dtotallength = InitStruct->Totallength;
+	//m_bimpnorm = InitStruct->Impnorm;
+	//objectivefunction = InitStruct->Objectivefunction;
+	//m_dparamtemp = InitStruct->Paramtemp;
+	//m_isigmasearch = InitStruct->Sigmasearch;
+	//m_iabssearch = InitStruct->AbsorptionSearchPerc;
+	//m_inormsearch = InitStruct->NormalizationSearchPerc;*/
 
 	m_SA = new SA_Dispatcher();
 	
@@ -257,9 +257,9 @@ void StochFit::InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA)
 	
 
 	if(InitStruct->Algorithm == 3)
-		SA->Initialize(m_bdebugging, true, m_Directory);
+		SA->Initialize(InitStruct->Debug, true, m_Directory);
 	else
-		SA->Initialize(m_bdebugging, false, m_Directory);
+		SA->Initialize(InitStruct->Debug, false, m_Directory);
 
 	SA->Initialize_Subsytem(InitStruct);
 }

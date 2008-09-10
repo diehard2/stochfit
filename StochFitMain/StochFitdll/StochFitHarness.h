@@ -36,18 +36,19 @@ class StochFit
 		void InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA);
 	
 
-		int m_isearchalgorithm;
+		/*int m_isearchalgorithm;
 		int m_irhocount;
 		int m_irefldatacount;
 		int m_isigmasearch;
 		int m_inormsearch;
 		int m_iabssearch;
 		int objectivefunction;
-		bool m_bwarmedup;
+		
 		double m_dresolution;
 		double m_dtotallength;
-		BOOL m_bimpnorm;
+		BOOL m_bimpnorm;*/
 		SA_Dispatcher* m_SA;
+		bool m_bwarmedup;
 
 	private:
 		int Processing();
@@ -63,16 +64,16 @@ class StochFit
 		double* Rho;
 		double* Refl;
 		
-		
-		wstring m_Directory;
+	/*	
+		wstring m_Directory;*/
 		HANDLE m_hThread;
 		HANDLE mutex;
 		BOOL m_bupdated;
-		BOOL m_busesurfabs;
-		BOOL m_bforcenorm;
+		/*BOOL m_busesurfabs;
+		BOOL m_bforcenorm;*/
 		
 		bool m_bthreadstop;
-		bool m_bdebugging;
+		/*bool m_bdebugging;
 		bool m_bXRonly;
 
 		double m_dsurfabs;
@@ -90,7 +91,7 @@ class StochFit
 		double m_dsupSLD;
 		double m_dQerr;
 		double m_dforcesig;
-		double m_dparamtemp;
+		double m_dparamtemp;*/
 	
 
 		int m_itotaliterations;

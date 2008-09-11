@@ -67,7 +67,6 @@ CReflCalc::CReflCalc():exi(NULL),eyi(NULL),xi(NULL),yi(NULL)
 void CReflCalc::init(ReflSettings* InitStruct)
 {
 	int resolution;
-	m_InitStruct = InitStruct;
 	
 	//int numberofdatapoints, double xraylambda,double d0, BOOL usesurfabs, int parratlayers, double leftoffset, BOOL forcenorm, double Qspread, bool XRonly
 
@@ -160,11 +159,7 @@ void CReflCalc::init(ReflSettings* InitStruct)
 		distarray[k] = k*m_dboxsize;
 	}
 
-	//Set the output file names
-    fnpop = InitStruct->Directory + wstring(L"\\pop.dat");
-    fnrf = InitStruct->Directory + wstring(L"\\rf.dat");
-    fnrho = InitStruct->Directory + wstring(L"\\rho.dat");
-
+	
 	SetupRef(InitStruct);
 }
 
@@ -332,9 +327,9 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 
 
 //Write output files
-void CReflCalc::paramsrf(ParamVector * g)
+void CReflCalc::paramsrf(ParamVector * g, wstring rhofile, wstring reflfile)
 {
-    ofstream rhoout(fnrho.c_str());
+    ofstream rhoout(rhofile.c_str());
   
 	if(m_bUseSurfAbs == TRUE)
 		mkdensity(g);
@@ -362,7 +357,7 @@ void CReflCalc::paramsrf(ParamVector * g)
   
 	rhoout.close();
 
-	ofstream reflout(fnrf.c_str());
+	ofstream reflout(reflfile.c_str());
 	
 	if(m_bUseSurfAbs == FALSE)
 		mytransparentrf(tsinthetai, tsinsquaredthetai, tarraysize, dataout);
@@ -549,7 +544,7 @@ void CReflCalc::mkdensity(ParamVector* g)
 		}
 }
 
-//Check to see if there is any negative electron density for the XR case
+//Check to see if there is any negative electron density for the XR case, false if there is neg ED
 bool CReflCalc::CheckDensity()
 {
 	int reflpoints = nl;
@@ -574,21 +569,13 @@ double CReflCalc::objective(ParamVector * g)
 	else
 		mkdensity(g);
 
-	if(m_bXRonly)
+	if(m_bXRonly == true )
 	{
 		if(CheckDensity() == false)
-		{
-			if(m_bUseSurfAbs == false)
-				mytransparentrf(sinthetai, sinsquaredthetai, m_idatapoints, reflpt);
-			else
-				myrf(sinthetai, sinsquaredthetai, m_idatapoints, reflpt);
-
 			return -1;
-		}
-		
 	}
 
-	if(m_dQSpread < 0.005)
+	if(m_dQSpread < 0.005 || exi == NULL)
 	{
 		if(m_bUseSurfAbs == false)
 			mytransparentrf(sinthetai, sinsquaredthetai, m_idatapoints, reflpt);
@@ -600,13 +587,13 @@ double CReflCalc::objective(ParamVector * g)
 		if(m_bUseSurfAbs == false)
 		{
 			mytransparentrf(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt);
-			QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
 		}
 		else
 		{
 			myrf(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt);
-			QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
 		}
+
+		QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
 	}
 
 	//Normalize if we let the absorption vary
@@ -1150,4 +1137,26 @@ float CReflCalc::CalcFresnelPoint(float Q, float Qc)
         double term1 = sqrt(1.0f - (Qc / Q)*(Qc/Q));
         return ((1.0f - term1) / (1.0f + term1))*((1.0f - term1) / (1.0f + term1));
     }
+}
+
+int CReflCalc::GetDataCount()
+{
+	#ifndef CHECKREFLCALC
+		if(m_dQSpread < 0.005 || exi == NULL)
+			return tarraysize;
+		else 
+			return m_idatapoints;
+	#else
+		return m_idatapoints;
+	#endif
+}
+
+int CReflCalc::GetTotalSize()
+{
+	return nl;
+}
+
+double CReflCalc::GetWaveConstant()
+{
+	return m_dwaveconstant;
 }

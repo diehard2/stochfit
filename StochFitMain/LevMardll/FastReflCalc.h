@@ -25,7 +25,7 @@ class FastReflcalc
 private:
 
    double *sinthetai,*sinsquaredthetai, *qspreadsinthetai, *qspreadsinsquaredthetai, *qspreadreflpt;
-   
+   int m_icritqoffset, m_ihighqoffset;
    void ImpNorm(double* refl, int datapoints);
 
    BOOL m_bImpNorm;
@@ -33,7 +33,7 @@ private:
    double m_dQSpread;
 
 protected:
-	virtual void CalcRefl(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl);
+	 virtual void CalcRefl(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl);
      double m_dnormfactor;
 public:
 	
@@ -58,7 +58,7 @@ public:
 	
 	~FastReflcalc();
 	void QsmearRf(double* qspreadrefl, double* refl, int datapoints);
-    void init(double xraylambda,int boxnumber, double subSLD, double SupSLD, double* p, int pcount, double* RealRefl, double* RealReflErrors, int RealRefllength, bool onesigma, double QSpread, double normfactor, BOOL impnorm);
+    void init(double xraylambda,int boxnumber, double subSLD, double SupSLD, double* p, int pcount, double* RealRefl, double* RealReflErrors, int RealRefllength, bool onesigma, double QSpread, double normfactor, BOOL impnorm, int critqoffset, int highqoffset);
     void MakeTheta(double* QRange, double* QError, int QRangesize);
 
 	double* originalparams;

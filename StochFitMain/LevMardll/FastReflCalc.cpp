@@ -45,7 +45,8 @@ FastReflcalc::~FastReflcalc()
 	delete[] LengthArray;
 }
 
-void FastReflcalc::init(double xraylambda,int boxes, double subSLD, double SupSLD, double* parameters, int paramcount, double* refldata, double* reflerrors, int refldatacount, bool onesig, double QSpread, double normfactor, BOOL impnorm)
+void FastReflcalc::init(double xraylambda,int boxes, double subSLD, double SupSLD, double* parameters, int paramcount, double* refldata, double* reflerrors, int refldatacount, bool onesig, double QSpread, double normfactor, BOOL impnorm,
+						int critqoffset, int highqoffset)
 {
     lambda=xraylambda;
 	onesigma = onesig;
@@ -60,6 +61,8 @@ void FastReflcalc::init(double xraylambda,int boxes, double subSLD, double SupSL
 	m_dQSpread = QSpread/100.0;
 	m_bImpNorm = impnorm;
 	m_dnormfactor = 1.0;
+	m_icritqoffset = critqoffset;
+	m_ihighqoffset = highqoffset;
 	RhoArray = new double[boxnumber+2];
 	SigmaArray = new double[boxnumber+2];
 	LengthArray = new double[boxnumber+2];

@@ -51,10 +51,11 @@ void SA_Dispatcher::Initialize_Subsytem(ReflSettings* InitStruct)
 	
 }
 
-void SA_Dispatcher::InitializeParameters(double step, ParamVector *params, CReflCalc *m_cRefl, int sigmasearch, int abssearch, int normsearch, int algorithm)
+void SA_Dispatcher::InitializeParameters(ReflSettings* InitStruct, ParamVector *params, CReflCalc *m_cRefl)
 {
 	if(m_bUseASA == false)
-		m_cSA->InitializeParameters(step, params, m_cRefl, sigmasearch, abssearch, normsearch, algorithm);
+		m_cSA->InitializeParameters(InitStruct->Paramtemp, params, m_cRefl, InitStruct->Sigmasearch,
+			InitStruct->AbsorptionSearchPerc, InitStruct->NormalizationSearchPerc, InitStruct->Algorithm);
 	else
 		m_cASA->Initialize(params->ParamCount(),params,m_cRefl);
 

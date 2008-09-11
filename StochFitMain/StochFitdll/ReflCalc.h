@@ -35,7 +35,7 @@ private:
 	void myrf(float* sintheta, float* sinsquaredtheta, int datapoints, float* refl);
 	bool CheckDensity();
 
-	float m_dQSpread;
+	
 	float CalcQc(double SubPhaseSLD, double SuperPhaseSLD);
 	float CalcFresnelPoint(float Q, float Qc);
 	int Qpoints;
@@ -47,11 +47,8 @@ public:
 	MyComplex *nk;
 	//Variables
 
-	//File names
-	wstring fnpop;
-	wstring fnrf;
-	wstring fnrho;
-	ReflSettings* m_InitStruct;
+	float m_dQSpread;
+	
 	double m_dwaveconstant;
     float dz0;
 	float m_dboxsize;
@@ -85,11 +82,14 @@ public:
 	//Member functions
 	CReflCalc();
 	~CReflCalc();
+	int GetDataCount();
+	int GetTotalSize();
 	
     void init(ReflSettings* InitStruct);
 	void SetupRef(ReflSettings* InitStruct);
     double objective(ParamVector  *g);
-    void paramsrf(ParamVector *g);
+    void paramsrf(ParamVector *g, wstring rhofile, wstring reflfile);
+	double GetWaveConstant();
     
 	int objectivefunction;
 	double beta_sub;

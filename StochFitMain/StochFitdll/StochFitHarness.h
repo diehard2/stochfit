@@ -34,12 +34,12 @@ class StochFit
 		int Priority(int priority);
 		int GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
 		void InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA);
-	
-
-		/*int m_isearchalgorithm;
-		int m_irhocount;
-		int m_irefldatacount;
-		int m_isigmasearch;
+	int m_irhocount;
+int m_irefldatacount;
+		int m_isearchalgorithm;
+		
+		
+		/*int m_isigmasearch;
 		int m_inormsearch;
 		int m_iabssearch;
 		int objectivefunction;
@@ -52,7 +52,7 @@ class StochFit
 
 	private:
 		int Processing();
-		void LoadFromFile(CReflCalc* ml, ParamVector* params, const wchar_t* filename, wstring fileloc);
+		void LoadFromFile(CReflCalc* ml, ParamVector* params, wstring File = wstring(L""));
 		static DWORD WINAPI InterThread(LPVOID lParam);
 		void WritetoFile(CReflCalc* ml, ParamVector* params, const wchar_t* filename);
 		void UpdateFits(CReflCalc* ml, ParamVector* params, int currentiteration);
@@ -65,7 +65,7 @@ class StochFit
 		double* Refl;
 		
 	/*	
-		wstring m_Directory;*/
+		*/
 		HANDLE m_hThread;
 		HANDLE mutex;
 		BOOL m_bupdated;
@@ -80,9 +80,7 @@ class StochFit
 		double m_dwavelength;
 		double m_dsubabs;
 		double m_dsupabs;
-		double m_dRoughness;
-		double m_dChiSquare;
-		double m_dGoodnessOfFit;
+		
 		double m_dlayerlength;
 		double m_dleftoffset;
 		double m_dfilmSLD;
@@ -92,8 +90,15 @@ class StochFit
 		double m_dQerr;
 		double m_dforcesig;
 		double m_dparamtemp;*/
-	
+	//Set the output file names
+		wstring m_Directory;
+   wstring fnpop;
+   wstring fnrf;
+   wstring fnrho;
 
+double m_dRoughness;
+		double m_dChiSquare;
+		double m_dGoodnessOfFit;
 		int m_itotaliterations;
 		int m_icurrentiteration;
 		int m_iparratlayers;

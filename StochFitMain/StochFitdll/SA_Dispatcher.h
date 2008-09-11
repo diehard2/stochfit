@@ -39,7 +39,7 @@ public:
 
 	void Initialize(bool debug, bool ASAonoff, std::wstring directory);
 	void Initialize_Subsytem(ReflSettings* InitStruct);
-	void InitializeParameters(double step, ParamVector* params, CReflCalc* m_cRefl, int sigmasearch, int abssearch, int normsearch, int algorithm);
+	void InitializeParameters(ReflSettings* InitStruct, ParamVector* params, CReflCalc* m_cRefl);
 	bool Iteration(ParamVector* params);
 	double Get_Temp();
 	void Set_Temp(double Temp);

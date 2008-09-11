@@ -340,13 +340,6 @@ double SimAnneal::TakeStep(ParamVector* params)
 {
 		double roughmult = 5.0/3.0;
 		
-	/*	if(params->Get_FixedRoughness())
-			m_isigmasearch = 0;
-		if(params->Get_FixImpNorm() == false)
-			m_inormsearch = 0;
-		if(params->Get_UseSurfAbs() == false)
-			m_iabssearch = 0;*/
-		
 		//Pick the box we're going to mutate
 		int ii= random(params->GetInitializationLength()-1,0);
 		int perc = random(100, 1);

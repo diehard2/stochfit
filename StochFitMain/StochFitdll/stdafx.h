@@ -43,7 +43,7 @@
 
 
 //Define CHECKREFLCALC to see how the actual reflectivity calculation is proceeding
-#define CHECKREFLCALC
+//#define CHECKREFLCALC
 //Define SINGLEPROCDEBUG for debugging when the development machine only has one processor
 //#define SINGLEPROCDEBUG
 

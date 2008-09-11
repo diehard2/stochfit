@@ -32,8 +32,7 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	m_bwarmedup = false;
 	m_ipriority = 2;
 	
-
-	///*m_Directory = InitStruct->Directory;
+	 m_Directory = InitStruct->Directory;
 	//m_dsubSLD = InitStruct->SubSLD;
 	//m_dfilmSLD = InitStruct->FilmSLD;
 	//m_iparratlayers = InitStruct->Boxes;
@@ -67,10 +66,17 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	//m_iabssearch = InitStruct->AbsorptionSearchPerc;
 	//m_inormsearch = InitStruct->NormalizationSearchPerc;*/
 
+	//Set the output file names
+    fnpop = InitStruct->Directory + wstring(L"\\pop.dat");
+    fnrf = InitStruct->Directory + wstring(L"\\rf.dat");
+    fnrho = InitStruct->Directory + wstring(L"\\rho.dat");
+
 	m_SA = new SA_Dispatcher();
 	
 	InitializeSA(InitStruct, m_SA);
 	Initialize(InitStruct);
+
+	
 }
 
 StochFit::~StochFit()
@@ -98,7 +104,7 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 	m_cRefl.init(InitStruct);
 
 	//Setup the params - We start with a slightly roughened ED curve 
-	params = new ParamVector(InitStruct->Boxes,m_dforcesig,m_busesurfabs, m_bimpnorm);
+	params = new ParamVector(InitStruct->Boxes,InitStruct->Forcesig,InitStruct->UseSurfAbs, InitStruct->Impnorm);
 	params->SetSupphase(InitStruct->SupSLD/InitStruct->FilmSLD);
 	
 	for(int i = 0 ; i < InitStruct->Boxes; i++)
@@ -112,16 +118,8 @@ void StochFit::Initialize(ReflSettings* InitStruct)
      /******** Prepare Arrays for the Front End ********/
 	////////////////////////////////////////////////////
 
-	m_irhocount = m_cRefl.totalsize*InitStruct->Resolution;
-
-	#ifndef CHECKREFLCALC
-		if(m_dQerr > 0)
-			m_irefldatacount = m_cRefl.m_idatapoints;
-		else
-			m_irefldatacount = m_cRefl.tarraysize;
-	#else
-		m_irefldatacount = m_cRefl.m_idatapoints;
-	#endif
+	m_irhocount = m_cRefl.GetTotalSize();
+	m_irefldatacount = m_cRefl.GetDataCount();
 
 	Zinc = new double[m_irhocount];
 	Qinc = new double[m_irefldatacount];
@@ -132,10 +130,15 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 	m_bwarmedup = true;
 
 	//If we have a population already, load it
-	LoadFromFile(&m_cRefl,params, m_cRefl.fnpop.c_str(), m_Directory);
+	LoadFromFile(&m_cRefl,params);
 
 	// Update the constraints on the params
 	params->UpdateBoundaries(NULL,NULL);
+
+	m_SA->InitializeParameters(InitStruct, params, &m_cRefl);
+	
+	if(m_SA->CheckForFailure() == true)
+		MessageBox(NULL, L"Catastrophic error in SA - please contact the author", NULL,NULL);
 }
 
 int StochFit::Processing()
@@ -145,17 +148,8 @@ int StochFit::Processing()
 
 	bool accepted = false;
 
-	
-	m_SA->InitializeParameters(m_dparamtemp, params, &m_cRefl, m_isigmasearch, m_iabssearch, m_inormsearch, m_isearchalgorithm);
-	
-	if(m_SA->CheckForFailure() == true)
-	{
-		MessageBox(NULL, L"Catastrophic error in SA - please contact the author", NULL,NULL);
-		return -1;
-	}
-	 
-	 //Main loop
-	 for(int isteps=0;(isteps < m_itotaliterations) && (m_bthreadstop == false);isteps++)
+	//Main loop
+ for(int isteps=0;(isteps < m_itotaliterations) && (m_bthreadstop == false);isteps++)
 	 {
 			accepted = m_SA->Iteration(params);
 		
@@ -173,7 +167,7 @@ int StochFit::Processing()
 				if(m_isearchalgorithm != 0 && m_SA->Get_IsIterMinimum())
 					WritetoFile(&m_cRefl, params, wstring(m_Directory + L"\\BestSASolution.txt").c_str());
 
-				WritetoFile(&m_cRefl, params, m_cRefl.fnpop.c_str());
+				WritetoFile(&m_cRefl, params, fnpop.c_str());
 			}
 	 }
 
@@ -189,7 +183,7 @@ void StochFit::UpdateFits(CReflCalc* ml, ParamVector* params, int currentiterati
 		{
 			//Check to see if we're updating
 
-			ml->paramsrf(params);
+			ml->paramsrf(params, fnrho, fnrf);
 			m_dRoughness = params->getroughness();
 			
 
@@ -203,7 +197,7 @@ void StochFit::UpdateFits(CReflCalc* ml, ParamVector* params, int currentiterati
 			{
 				#ifndef CHECKREFLCALC
 					
-					if(m_dQerr > 0)
+					if(ml->m_dQSpread > 0.005)
 					{				
 						Refl[i] = ml->reflpt[i];
 						Qinc[i] = ml->xi[i];
@@ -337,8 +331,8 @@ int StochFit::Priority(int priority)
 void StochFit::WritetoFile(CReflCalc* ml, ParamVector* params, const wchar_t* filename)
 {
 	ofstream outfile;
-	outfile.open(filename);
-	outfile<< params->getroughness() <<' '<< ml->beta_a*params->getSurfAbs()*(2.*M_PI)/m_dwavelength*m_dwavelength <<
+	outfile.open(fnpop.c_str());
+	outfile<< params->getroughness() <<' '<< ml->beta_a*params->getSurfAbs()/ml->GetWaveConstant() <<
 		' '<< m_SA->Get_Temp() <<' '<< params->getImpNorm() << ' ' << m_SA->Get_AveragefSTUN() << endl;
 
 	for(int i = 0; i < params->RealparamsSize(); i++)
@@ -349,10 +343,16 @@ void StochFit::WritetoFile(CReflCalc* ml, ParamVector* params, const wchar_t* fi
 	outfile.close();
 }
 
-void StochFit::LoadFromFile(CReflCalc* ml, ParamVector* params,const wchar_t* filename, wstring fileloc )
+void StochFit::LoadFromFile(CReflCalc* ml, ParamVector* params, wstring file)
 {
    ParamVector params1 = *params;
-   ifstream infile(filename);
+   ifstream infile;
+   
+   if(file == wstring(L""))
+	 infile.open(fnpop.c_str());
+   else
+	 infile.open(file.c_str());
+
    int size = params->RealparamsSize();
    int counter = 0;
    bool kk = true;
@@ -407,7 +407,7 @@ void StochFit::LoadFromFile(CReflCalc* ml, ParamVector* params,const wchar_t* fi
     if(kk == true)
 	{
 		*params = params1;
-		ml->beta_a = beta*m_dwavelength*m_dwavelength/(2.0*M_PI);
+		ml->beta_a = beta*ml->GetWaveConstant();
 		m_SA->Set_Temp(1.0/currenttemp);
 		params->setImpNorm(normfactor);
 		m_SA->Set_AveragefSTUN(avgfSTUN);
@@ -415,9 +415,9 @@ void StochFit::LoadFromFile(CReflCalc* ml, ParamVector* params,const wchar_t* fi
 	infile.close();
 
 	//If we're resuming, and we were Tunneling, load the best file
-	if(kk == true && wstring(filename).find(L"BestSASolution.txt") == wstring::npos)
+	if(kk == true && wstring(fnpop).find(L"BestSASolution.txt") == wstring::npos)
 	{
-		LoadFromFile(ml,params, wstring(fileloc+L"BestSASolution.txt").c_str(), fileloc);
+		LoadFromFile(ml,params, wstring(m_Directory+L"BestSASolution.txt").c_str());
 	}
 
 }

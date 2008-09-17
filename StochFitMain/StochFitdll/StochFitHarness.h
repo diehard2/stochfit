@@ -34,19 +34,11 @@ class StochFit
 		int Priority(int priority);
 		int GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
 		void InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA);
-	int m_irhocount;
-int m_irefldatacount;
-		int m_isearchalgorithm;
+		void GetArraySizes(int* RhoSize, int* ReflSize);
+		bool GetWarmedUp();
 		
 		
-		/*int m_isigmasearch;
-		int m_inormsearch;
-		int m_iabssearch;
-		int objectivefunction;
 		
-		double m_dresolution;
-		double m_dtotallength;
-		BOOL m_bimpnorm;*/
 		SA_Dispatcher* m_SA;
 		bool m_bwarmedup;
 
@@ -63,47 +55,28 @@ int m_irefldatacount;
 		double* Qinc;
 		double* Rho;
 		double* Refl;
-		
-	/*	
-		*/
+
 		HANDLE m_hThread;
 		HANDLE mutex;
 		BOOL m_bupdated;
-		/*BOOL m_busesurfabs;
-		BOOL m_bforcenorm;*/
 		
 		bool m_bthreadstop;
-		/*bool m_bdebugging;
-		bool m_bXRonly;
-
-		double m_dsurfabs;
-		double m_dwavelength;
-		double m_dsubabs;
-		double m_dsupabs;
 		
-		double m_dlayerlength;
-		double m_dleftoffset;
-		double m_dfilmSLD;
-		double m_dbetalipid;
-		double m_dsubSLD;
-		double m_dsupSLD;
-		double m_dQerr;
-		double m_dforcesig;
-		double m_dparamtemp;*/
-	//Set the output file names
+		//Set the output file names
 		wstring m_Directory;
-   wstring fnpop;
-   wstring fnrf;
-   wstring fnrho;
-
-double m_dRoughness;
+		wstring fnpop;
+		wstring fnrf;
+		wstring fnrho;
+		double m_dRoughness;
 		double m_dChiSquare;
 		double m_dGoodnessOfFit;
 		int m_itotaliterations;
 		int m_icurrentiteration;
 		int m_iparratlayers;
 		int m_ipriority;
-
+		int m_irhocount;
+		int m_irefldatacount;
+		int m_isearchalgorithm;
 		CReflCalc m_cRefl;
 		ParamVector* params;
 };

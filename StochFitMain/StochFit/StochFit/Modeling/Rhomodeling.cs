@@ -92,6 +92,8 @@ namespace StochasticModeling
             this.Text = "Profile Modeling";
 
             //Setup variables
+            if (roughness == 0) roughness = 3.0;
+
             m_dRoughness = roughness;
             SubRough.Text = roughness.ToString();
             Zoffset.Text = leftoffset.ToString();
@@ -202,8 +204,8 @@ namespace StochasticModeling
         {
             SubRough.Text = rough.ToString();
 
-            for (int i = 0; i < m_tbBoxSigmaArray.Length; i++)
-                m_tbBoxSigmaArray[i].Text = rough.ToString();
+            foreach(TextBox b in m_tbBoxSigmaArray)
+                b.Text = rough.ToString();
         }
 
 
@@ -213,6 +215,10 @@ namespace StochasticModeling
             try
             {
                 BackupArrays();
+
+                if (Holdsigma.Checked)
+                    ChangeRoughnessArray(double.Parse(SubRough.Text));
+
                 //Blank our Rho data from the previous iteration
                 m_dRhoArray[0] = Double.Parse(Rho1.Text);
                 m_dRhoArray[1] = Double.Parse(Rho2.Text);
@@ -259,11 +265,11 @@ namespace StochasticModeling
                         parameters[3 * i + 4] = m_dSigmaArray[i];
                     }
 
-                    if (m_dRho != null)
-                    {
-                        RhoGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), parameters,
-                            parameters.Length, m_dZincrement, m_dZincrement.Length, m_dRho, m_dBoxRho, m_dRho.Length);
-                    }
+                    //if (m_dRho != null)
+                    //{
+                    //    RhoGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), parameters,
+                    //        parameters.Length, m_dZincrement, m_dZincrement.Length, m_dRho, m_dBoxRho, m_dRho.Length, false);
+                    //}
 
                     m_gRhoGraphing.LoadfromArray("Model Dependent Fit", m_dZincrement, m_dRho, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
                     m_gRhoGraphing.LoadfromArray("Model Dependent Box Model", m_dZincrement, m_dBoxRho, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
@@ -389,8 +395,8 @@ namespace StochasticModeling
 
             m_dCovarArray = new double[parameters.Length];
 
-            chisquaretb.Text = Rhofit(ReflData.Instance.GetWorkingDirectory, boxnumber, double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), parameters, parameters.Length,
-                   m_dZincrement, m_dZincrement.Length, m_dRealRho, m_dZincrement.Length, m_dCovarArray, m_dCovarArray.Length, info, info.Length, Holdsigma.Checked).ToString("##.### E-0");
+            //chisquaretb.Text = Rhofit(ReflData.Instance.GetWorkingDirectory, boxnumber, double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), parameters, parameters.Length,
+            //       m_dZincrement, m_dZincrement.Length, m_dRealRho, m_dZincrement.Length, m_dCovarArray, m_dCovarArray.Length, info, info.Length, Holdsigma.Checked).ToString("##.### E-0");
 
 
             //Update paramters

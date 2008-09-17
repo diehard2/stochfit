@@ -78,7 +78,7 @@ void SimAnneal::InitializeParameters(double step, ParamVector* params, CReflCalc
 	m_iabssearch = abssearch;
 	m_ialgorithm = algorithm;
 
-	m_dbestsolution = m_dState1 = m_cRefl->objective(params);
+	m_dbestsolution = m_dState1 = m_cRefl->Objective(params);
 }
 
 bool SimAnneal::EvaluateGreedy(double bestval, double curval)
@@ -364,5 +364,5 @@ double SimAnneal::TakeStep(ParamVector* params)
 			params->setImpNorm(random(params->getImpNorm()*(1.0+mc_stepsize),params->getImpNorm()*(1.0-mc_stepsize)));
 		}
 		
-		return multi->objective(params);
+		return multi->Objective(params);
 }

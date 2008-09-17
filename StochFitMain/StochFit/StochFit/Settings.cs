@@ -241,7 +241,154 @@ namespace StochasticModeling.Settings
 
         #endregion
     }
-   
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 8)]
+    public class BoxModelSettings : IDisposable
+    {
+        #region Variables
+
+        public string Directory;
+        public IntPtr Q = IntPtr.Zero;
+        public IntPtr Refl = IntPtr.Zero;
+        public IntPtr ReflError = IntPtr.Zero;
+        public IntPtr QError = IntPtr.Zero;
+        public IntPtr UL = IntPtr.Zero;
+        public IntPtr LL = IntPtr.Zero;
+        public IntPtr ParamPercs = IntPtr.Zero;
+        public int QPoints;
+        public bool OneSigma;
+        public bool WriteFiles;
+        public double SubSLD;
+        public double SupSLD;
+        public int Boxes;
+        public double Wavelength;
+        public double QSpread;
+        public bool Forcenorm;
+        public bool ImpNorm;
+        public int FitFunc;
+
+
+        public int LowQOffset;
+        public int HighQOffset;
+
+
+        [XmlIgnoreAttribute]
+        private bool disposed = false;
+
+        #endregion
+
+        #region Constructor/Destructor
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public BoxModelSettings()
+        { }
+
+        ~BoxModelSettings()
+        {
+            Dispose(false);
+        }
+        #endregion
+
+        #region Public Methods
+        public void SetArrays(double[] iQ, double[] iR, double[] iRerr, double[] iQerr, 
+            double[] ParamPercs, double[] UL, double[] LL)
+        {
+            int datasize = Marshal.SizeOf(iQ[0]) * iQ.Length;
+
+            try
+            {
+                Q = Marshal.AllocHGlobal(datasize);
+                Refl = Marshal.AllocHGlobal(datasize);
+                ReflError = Marshal.AllocHGlobal(datasize);
+                QPoints = iQ.Length;
+
+                if (iQerr != null)
+                {
+                    QError = Marshal.AllocHGlobal(datasize);
+                    Marshal.Copy(iQerr, 0, QError, iQerr.Length);
+                }
+                else
+                    QError = IntPtr.Zero;
+
+                Marshal.Copy(iQ, 0, Q, iQ.Length);
+                Marshal.Copy(iR, 0, Refl, iR.Length);
+                Marshal.Copy(iRerr, 0, ReflError, iRerr.Length);
+              
+                if (ParamPercs != null)
+                {
+                    this.ParamPercs = Marshal.AllocHGlobal(Marshal.SizeOf(ParamPercs[0]) * ParamPercs.Length);
+                    Marshal.Copy(ParamPercs, 0, this.ParamPercs, ParamPercs.Length);
+                }
+                else
+                    this.ParamPercs = IntPtr.Zero;
+
+                if (LL != null)
+                {
+                    this.LL = Marshal.AllocHGlobal(Marshal.SizeOf(LL[0])*LL.Length);
+                    Marshal.Copy(LL, 0, this.LL, LL.Length);
+                }
+                else
+                    this.LL = IntPtr.Zero;
+
+                if (UL != null)
+                {
+                    this.UL = Marshal.AllocHGlobal(Marshal.SizeOf(UL[0])*UL.Length);
+                    Marshal.Copy(UL, 0, this.UL, UL.Length);
+                }
+                else
+                    this.UL = IntPtr.Zero;
+
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+        }
+        #endregion
+
+        #region IDisposable Members
+
+        void IDisposable.Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                // Call the appropriate methods to clean up
+                // unmanaged resources here.
+                // If disposing is false,
+                // only the following code is executed.
+                if (Q != IntPtr.Zero)
+                {
+                    MessageBox.Show("test");
+                    Marshal.FreeHGlobal(Q);
+                    Marshal.FreeHGlobal(Refl);
+                    Marshal.FreeHGlobal(ReflError);
+                   // Marshal.FreeHGlobal(Parameters);
+                    
+                    if (QError != IntPtr.Zero)
+                        Marshal.FreeHGlobal(QError);
+                    if (ParamPercs != IntPtr.Zero)
+                        Marshal.FreeHGlobal(ParamPercs);
+                    if (UL != IntPtr.Zero)
+                        Marshal.FreeHGlobal(UL);
+                    if (LL != IntPtr.Zero)
+                        Marshal.FreeHGlobal(LL);
+                }
+                // Note disposing has been done.
+                disposed = true;
+            }
+        }
+
+        #endregion
+    }
     /// <summary>
     /// Serializes/Deserializes a ModelSettings class
     /// </summary>

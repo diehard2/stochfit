@@ -5,7 +5,7 @@
 	Name="LevMardll"
 	ProjectGUID="{1942BC8C-3706-48D2-8D70-3BF4237A41CE}"
 	VCNestedProjectGUID="{A2D16FE7-CD5C-4D6A-81FE-3789D54D5D13}"
-	VCNestedProjectCRC32="401007659"
+	VCNestedProjectCRC32="1447263558"
 	VCNestedProjectFileName="LevMardll.vcproj"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -100,7 +100,7 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\bin\dlls\"
 				AdditionalDependencies="libmmd.lib levmarmkl.lib libguide40.lib"
-				GenerateDebugInformation="0"
+				GenerateDebugInformation="1"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -189,8 +189,6 @@
 	</Configurations>
 	<Files>
 		<File 
-			RelativePath=".\AreaFastReflCalc.h"/>
-		<File 
 			RelativePath=".\FastReflCalc.h"/>
 		<File 
 			RelativePath=".\LevMardll.h"/>
@@ -201,9 +199,9 @@
 		<File 
 			RelativePath=".\RhoCalc.h"/>
 		<File 
-			RelativePath=".\stdafx.h"/>
+			RelativePath=".\Settings.h"/>
 		<File 
-			RelativePath=".\AreaFastReflCalc.cpp"/>
+			RelativePath=".\stdafx.h"/>
 		<File 
 			RelativePath=".\LevMar\Axb.c"/>
 		<File 

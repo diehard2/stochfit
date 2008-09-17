@@ -33,40 +33,7 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	m_ipriority = 2;
 	
 	 m_Directory = InitStruct->Directory;
-	//m_dsubSLD = InitStruct->SubSLD;
-	//m_dfilmSLD = InitStruct->FilmSLD;
-	//m_iparratlayers = InitStruct->Boxes;
-	//m_dlayerlength = InitStruct->FilmLength;
-	//m_dsurfabs = InitStruct->FilmAbs;
-	//m_dwavelength = InitStruct->Wavelength;
-	//m_dsubabs = InitStruct->SubAbs;
-
-	//m_bimpnorm = InitStruct->Impnorm;
-	//m_icurrentiteration = 0;
-	//
-	//m_busesurfabs = InitStruct->UseSurfAbs;
-	//m_isearchalgorithm = InitStruct->Algorithm;
-	//m_dRoughness = 3;
-	//
-	//m_dleftoffset = InitStruct->Leftoffset;
-	//m_dQerr = InitStruct->QErr;
-	//m_dsupSLD = InitStruct->SupSLD;
-	//m_dsupabs = InitStruct->SupAbs;
-	//m_dforcesig = InitStruct->Forcesig;
-	//m_bdebugging = InitStruct->Debug;
-	//
-	//m_bforcenorm = InitStruct->Forcenorm;
-	//m_bXRonly = InitStruct->XRonly;
-	//m_dresolution = InitStruct->Resolution;
-	//m_dtotallength = InitStruct->Totallength;
-	//m_bimpnorm = InitStruct->Impnorm;
-	//objectivefunction = InitStruct->Objectivefunction;
-	//m_dparamtemp = InitStruct->Paramtemp;
-	//m_isigmasearch = InitStruct->Sigmasearch;
-	//m_iabssearch = InitStruct->AbsorptionSearchPerc;
-	//m_inormsearch = InitStruct->NormalizationSearchPerc;*/
-
-	//Set the output file names
+	
     fnpop = InitStruct->Directory + wstring(L"\\pop.dat");
     fnrf = InitStruct->Directory + wstring(L"\\rf.dat");
     fnrho = InitStruct->Directory + wstring(L"\\rho.dat");
@@ -183,7 +150,7 @@ void StochFit::UpdateFits(CReflCalc* ml, ParamVector* params, int currentiterati
 		{
 			//Check to see if we're updating
 
-			ml->paramsrf(params, fnrho, fnrf);
+			ml->ParamsRF(params, fnrho, fnrf);
 			m_dRoughness = params->getroughness();
 			
 
@@ -420,4 +387,15 @@ void StochFit::LoadFromFile(CReflCalc* ml, ParamVector* params, wstring file)
 		LoadFromFile(ml,params, wstring(m_Directory+L"BestSASolution.txt").c_str());
 	}
 
+}
+
+void StochFit::GetArraySizes(int* RhoSize, int* ReflSize)
+{
+	*RhoSize = m_irhocount;
+	*ReflSize = m_irefldatacount;
+}
+
+bool StochFit::GetWarmedUp()
+{
+	return m_bwarmedup;
 }

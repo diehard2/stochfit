@@ -94,7 +94,7 @@ double ASA::cost_function (double *x, double *parameter_lower_bound, double *par
 
 	if(m_cparams.CopyArraytoGene(x) == true)
 	{
-		fitscore = m_cmulti->objective(&m_cparams);
+		fitscore = m_cmulti->Objective(&m_cparams);
 
 		if(fitscore > 0)
 		{

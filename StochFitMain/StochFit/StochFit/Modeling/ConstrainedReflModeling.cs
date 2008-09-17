@@ -348,11 +348,11 @@ namespace StochasticModeling
 
             parameters[3 * int.Parse(BoxCount.Text) + 1] = Double.Parse(NormCorrectTB.Text);
 
-            FastReflGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text),
-                parameters, parameters.Length,Qincrement, QErrors, Qincrement.Length, ReflectivityMap, ReflectivityMap.Length, Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
+            //FastReflGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text),
+            //    parameters, parameters.Length,Qincrement, QErrors, Qincrement.Length, ReflectivityMap, ReflectivityMap.Length, Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
             
-            RhoGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), eparameters,
-                    eparameters.Length, Z, Z.Length, ElectronDensityArray, BoxElectronDensityArray, ElectronDensityArray.Length);
+            //RhoGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), eparameters,
+            //        eparameters.Length, Z, Z.Length, ElectronDensityArray, BoxElectronDensityArray, ElectronDensityArray.Length, false);
 
             if (m_bmodelreset == true)
             {
@@ -688,9 +688,9 @@ namespace StochasticModeling
             covar = new double[parameters.Length];
 
             //Do the fit
-            chisquare = ConstrainedFastReflfit(ReflData.Instance.GetWorkingDirectory, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text), parameters,
-                parameters.Length, qrange,qerrors, qrange.Length, reflectivity, reflectivity.Length, reflectivityerrors,
-                covar, covar.Length, info, info.Length, Holdsigma.Checked, true, UL, LL, Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
+            //chisquare = ConstrainedFastReflfit(ReflData.Instance.GetWorkingDirectory, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text), parameters,
+            //    parameters.Length, qrange,qerrors, qrange.Length, reflectivity, reflectivity.Length, reflectivityerrors,
+            //    covar, covar.Length, info, info.Length, Holdsigma.Checked, true, UL, LL, Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
 
             //Update the ChiSquare
             chisquaretb.Text = chisquare.ToString("#.### E-000");
@@ -746,31 +746,12 @@ namespace StochasticModeling
             //Update report parameters
             SaveParamsforReport();
             m_bvalidfit = true;
-          //  WriteFullfitFiles();
+         
             //Add the graph to the master graph
             GraphCollection.Instance.ReflGraph = ReflGraphing;
             GraphCollection.Instance.ReflEGraph = RhoGraphing;
 
         }
-
-        //private void WriteFullfitFiles()
-        //{
-        //    using (StreamWriter sw = new StreamWriter("fullreffit.dat"))
-        //    {
-        //        string outputstring;
-        //        double Qc = Graphing.CalcQc(double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text));
-
-        //        for (int i = 0; i < RealRefl.Length; i++)
-        //        {
-        //            double QQc = (((double)Qincrement[i]) / Qc);
-        //            double DBF = (ReflectivityMap[i] / Graphing.CalcFresnelPoint((double)Qincrement[i], Qc));
-        //            outputstring = ((double)Qincrement[i]).ToString() + " " + ((double)RealRefl[i]).ToString() + " " +
-        //                ((double)RealReflErrors[i]).ToString() + " " + ReflectivityMap[i].ToString() + " " + QQc.ToString() + " " + DBF.ToString() + "\n";
-        //            sw.Write(outputstring);
-        //        }
-        //        sw.Close();
-        //    }
-        //}
 
         private void BackupArrays()
         {
@@ -1204,8 +1185,8 @@ namespace StochasticModeling
                 double[] ChiSquareArray = new double[1000];
                 double[] CovarArray = new double[1000 * parameters.Length];
                 int size = 0;
-                ConstrainedStochFit(boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text), parameters, parameters.Length, qrange, qerrors, qrange.Length, reflectivity,
-                        reflectivity.Length, reflectivityerrors, covar, covar.Length, info, info.Length, Holdsigma.Checked, false, UI.IterationCount, ParamArray, out size, parampercs, ChiSquareArray, CovarArray, UL, LL, Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
+                //ConstrainedStochFit(boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text), parameters, parameters.Length, qrange, qerrors, qrange.Length, reflectivity,
+                //        reflectivity.Length, reflectivityerrors, covar, covar.Length, info, info.Length, Holdsigma.Checked, false, UI.IterationCount, ParamArray, out size, parampercs, ChiSquareArray, CovarArray, UL, LL, Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
 
                 StochOutputWindow outwin = new StochOutputWindow(ParamArray, size, parameters.Length, ChiSquareArray, CovarArray, Holdsigma.Checked, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text),
                     Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);

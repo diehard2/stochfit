@@ -20,6 +20,7 @@
 
 #include "stdafx.h"
 #include "FastReflCalc.h"
+#include "Settings.h"
 
 // Multilayer reflection and transmission
 // Parrett scheme, L. G. Parrett, Phys. Rev. 95(2), 359(1954)
@@ -45,45 +46,48 @@ FastReflcalc::~FastReflcalc()
 	delete[] LengthArray;
 }
 
-void FastReflcalc::init(double xraylambda,int boxes, double subSLD, double SupSLD, double* parameters, int paramcount, double* refldata, double* reflerrors, int refldatacount, bool onesig, double QSpread, double normfactor, BOOL impnorm,
-						int critqoffset, int highqoffset)
+void FastReflcalc::init(BoxReflSettings* InitStruct)
 {
-    lambda=xraylambda;
-	onesigma = onesig;
-	Realrefl = refldata;
-	Realreflerrors = reflerrors;
-	realrefllength = refldatacount;
-	subphaseSLD = subSLD;
-	m_dsupsld = SupSLD;
-	param = parameters;
-	pcount = paramcount;
-	boxnumber = boxes;
-	m_dQSpread = QSpread/100.0;
-	m_bImpNorm = impnorm;
+    lambda=InitStruct->Wavelength;
+	onesigma = InitStruct->OneSigma;
+	Realrefl = InitStruct->Refl;
+	Realreflerrors = InitStruct->ReflError;
+	realrefllength = InitStruct->QPoints;
+	subphaseSLD = InitStruct->SubSLD;
+	m_dsupsld = InitStruct->SupSLD;
+	boxnumber = InitStruct->Boxes;;
+	m_dQSpread = InitStruct->QSpread/100.0;
+	m_bImpNorm = InitStruct->ImpNorm;;
 	m_dnormfactor = 1.0;
-	m_icritqoffset = critqoffset;
-	m_ihighqoffset = highqoffset;
+	m_icritqoffset = InitStruct->LowQOffset;
+	m_ihighqoffset = InitStruct->HighQOffset;
+	m_idatapoints = InitStruct->QPoints;
+
 	RhoArray = new double[boxnumber+2];
 	SigmaArray = new double[boxnumber+2];
 	LengthArray = new double[boxnumber+2];
 	ImagArray = new double[boxnumber+2];
+
+	MakeTheta(InitStruct);
 }
 
-void FastReflcalc::MakeTheta(double* QRange, double* QError, int QRangesize)
+void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
 {
-	m_idatapoints = QRangesize;
+	
+	double* QRange = InitStruct->Q;
+	double* QError = InitStruct->QError;
 
-	sinthetai = (double*)_aligned_malloc(QRangesize*sizeof(double),64);
-	sinsquaredthetai = (double*)_aligned_malloc(QRangesize*sizeof(double),64);
-	qspreadsinthetai = (double*)_aligned_malloc(QRangesize*20*sizeof(double),64);
-	qspreadsinsquaredthetai = (double*)_aligned_malloc(QRangesize*20*sizeof(double),64);
-	qspreadreflpt = (double*)_aligned_malloc(QRangesize*20*sizeof(double),64);
+	sinthetai = (double*)_aligned_malloc(m_idatapoints*sizeof(double),64);
+	sinsquaredthetai = (double*)_aligned_malloc(m_idatapoints*sizeof(double),64);
+	qspreadsinthetai = (double*)_aligned_malloc(m_idatapoints*20*sizeof(double),64);
+	qspreadsinsquaredthetai = (double*)_aligned_malloc(m_idatapoints*20*sizeof(double),64);
+	qspreadreflpt = (double*)_aligned_malloc(m_idatapoints*20*sizeof(double),64);
 
-	reflpt = (double*)_aligned_malloc(QRangesize*sizeof(double),64);
+	reflpt = (double*)_aligned_malloc(m_idatapoints*sizeof(double),64);
 
 	for(int i = 0; i< m_idatapoints; i++)
 	{
-		sinthetai[i] = QRange[i]*lambda/(4*M_PI);
+		sinthetai[i] = QRange[i]*lambda/(4.0*M_PI);
 	}
 	
 
@@ -135,8 +139,6 @@ void FastReflcalc::MakeTheta(double* QRange, double* QError, int QRangesize)
 		}
 	}
 
-
-
 	for (int l = 0; l < m_idatapoints; l++)
 	{
 		sinsquaredthetai[l] = sinthetai[l]*sinthetai[l];
@@ -146,7 +148,6 @@ void FastReflcalc::MakeTheta(double* QRange, double* QError, int QRangesize)
 	{
 		qspreadsinsquaredthetai[l] = qspreadsinthetai[l]*qspreadsinthetai[l];
 	}
-
 }
 
 
@@ -155,22 +156,29 @@ void FastReflcalc::MakeTheta(double* QRange, double* QError, int QRangesize)
   FastReflcalc* reflinst = (FastReflcalc*)data;
 
 
-  if(reflinst->onesigma == true)
+  if(reflinst->onesigma == TRUE)
 	  reflinst->mkdensityonesigma(par,m);
   else
 	  reflinst->mkdensity(par,m);
   
   reflinst->myrfdispatch();
   
-  for(int i=0; i<n; ++i)
+  for(int i = 0; i < n; ++i)
   {
-	 x[i] = (log(reflinst->reflpt[i])-log(reflinst->Realrefl[i]));
+     /*if( i >= reflinst->m_icritqoffset && i <= n-reflinst->m_ihighqoffset)
+	 {*/
+		x[i] = (log(reflinst->reflpt[i])-log(reflinst->Realrefl[i]));
 
-	 //Sometimes we get NAN. We make that solution unpalatable until I can find a workaround
-	 if(x[i] != x[i])
+		//Sometimes we get NAN. We make that solution unpalatable until I can find a workaround
+		if(x[i] != x[i])
+		{
+			x[i] = 1e6;
+		}
+	/* }
+	 else
 	 {
-		 x[i] = 1e6;
-	 }
+		 x[i] = 0;
+	 }*/
   }
 }
 
@@ -538,4 +546,10 @@ void FastReflcalc::ImpNorm(double* refl, int datapoints)
 		{
 			refl[i] = refl[i] * m_dnormfactor;
 		}
+}
+
+void FastReflcalc::SetOffsets(int LowQOffset, int HighQOffset)
+{
+	m_icritqoffset = LowQOffset;
+	m_ihighqoffset = HighQOffset;
 }

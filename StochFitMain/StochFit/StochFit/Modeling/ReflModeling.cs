@@ -35,6 +35,7 @@ using StochasticModeling;
 using System.Runtime.InteropServices;
 using StochasticModeling.Modeling;
 using System.Globalization;
+using StochasticModeling.Settings;
 
 
 namespace StochasticModeling
@@ -42,40 +43,9 @@ namespace StochasticModeling
     /// <summary>
     /// ReflModeling provides the GUI for a purely model dependent fit of the data
     /// </summary>
-    public partial class Reflmodeling : StochFormBase
+    public partial class Reflmodeling : BoxReflFitBase
     {
         #region Variables
-
-        double m_roughness = 3;
-        bool m_bvalidfit = false;
-        bool m_bUseSLD = false;
-        Graphing ReflGraphing;
-        Graphing RhoGraphing;
-        //Arrays
-        double[] RhoArray;
-        double[] LengthArray;
-        double[] SigmaArray;
-        double[] PreviousRhoArray;
-        double[] PreviousLengthArray;
-        double[] PreviousSigmaArray;
-        double[] covar;
-        double[] info;
-        double oldnormfactor;
-        double previoussigma;
-        bool initialized = false;
-        TextBox[] BoxSigmaArray;
-        TextBox[] BoxRhoArray;
-        TextBox[] BoxLengthArray;
-        double[] Qincrement;
-        double[] QErrors;
-        double[] ReflectivityMap;
-        double[] Z;
-        double[] ElectronDensityArray;
-        double[] BoxElectronDensityArray;
-        double[] RealReflErrors;
-        double[] RealRefl;
-        bool m_bmodelreset = false;
-        Thread Stochthread;
 
         public delegate void UpdateGUI(bool onoff);
         public delegate void UpdateProfilefromThread();
@@ -94,23 +64,17 @@ namespace StochasticModeling
         /// <param name="subphase">Substrate SLD</param>
         /// <param name="superphase">Superphase SLD</param>
         /// <param name="UseSLD">True if using SLD instead of ED</param>
-        public Reflmodeling(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase)
+        public Reflmodeling(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase):
+            base(roughness, inLength, inRho, inSigma, boxnumber, holdsigma, subphase, superphase)
         {
             InitializeComponent();
-            m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession; 
+           
             //Setup variables
-            m_roughness = roughness;
+           
             SubRough.Text = roughness.ToString();
 
             //Initialize the arrays
-            MakeArrays();
-            RhoArray = new double[6];
-            LengthArray = new double[6];
-            SigmaArray = new double[6];
-            RhoArray = (double[])inRho.Clone();
-            LengthArray = (double[])inLength.Clone();
-            SigmaArray = (double[])inSigma.Clone();
-            info = new double[9];
+            
             //Copy over the values
             BoxCount.Text = boxnumber.ToString();
             SubRough.Text = roughness.ToString();
@@ -136,12 +100,9 @@ namespace StochasticModeling
 
             WavelengthTB.Text = ((double)(1.24)).ToString();
 
-            //Setup arrays to hold the old values
-            PreviousRhoArray = new double[6];
-            PreviousLengthArray = new double[6];
-            PreviousSigmaArray = new double[6];
-         
+           
             Holdsigma.Checked = holdsigma;
+           
             //Setup the Graph
             ReflGraphing = new Graphing(string.Empty);
             ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
@@ -164,31 +125,7 @@ namespace StochasticModeling
                  RhoGraphing.CreateGraph(EDzedGraphControl1, "SLD Profile", "Z", "SLD", AxisType.Linear);
 
             RhoGraphing.SetAllFonts("Garamond", 20, 18);
-            //Get our Q data into a useable form
-            Qincrement = ReflData.Instance.GetQData;
-            RealRefl = ReflData.Instance.GetReflData;
-            RealReflErrors = ReflData.Instance.GetRErrors;
-            QErrors = ReflData.Instance.GetQErrors;
-
-            ReflectivityMap = new double[ReflData.Instance.GetNumberDataPoints];
-
-            //Create Z
-            Z = new double[500];
-            ElectronDensityArray = new double[500];
-            BoxElectronDensityArray = new double[500];
-
-            //Make the Z Arrays
-            double length = 0;
-
-            for (int k = 0; k < boxnumber; k++)
-            {
-                length += LengthArray[k];
-            }
-            for (int i = 0; i < 500; i++)
-            {
-                Z[i] = i * (50 + length) / 499.0;
-            }
-
+            
             RhoGraphing.Pane.XAxis.Scale.Min = 0;
             RhoGraphing.Pane.XAxis.Scale.Max = Z[Z.Length - 1];
 
@@ -216,7 +153,7 @@ namespace StochasticModeling
             BackupArrays();
         }
 
-        void MakeArrays()
+        protected override void MakeArrays()
         {
             BoxSigmaArray = new TextBox[6];
 
@@ -246,17 +183,15 @@ namespace StochasticModeling
             BoxRhoArray[5] = Rho6;
 
         }
-        void ChangeRoughnessArray(double rough)
-        {
-            for (int i = 0; i < BoxSigmaArray.Length; i++)
-                BoxSigmaArray[i].Text = rough.ToString();
-        }
+
+   
 
        
         void UpdateProfile()
         {
-            m_bvalidfit = false;
-      
+           
+            if (Holdsigma.Checked)
+                ChangeRoughnessArray(double.Parse(SubRough.Text),ref SubRough);
 
             if (initialized == false)
                 return;
@@ -274,7 +209,7 @@ namespace StochasticModeling
             }
             else
             {
-                RhoArray[0] = Double.Parse(Rho1.Text)/double.Parse(SubphaseSLD.Text);
+                RhoArray[0] = Double.Parse(Rho1.Text) / double.Parse(SubphaseSLD.Text);
                 RhoArray[1] = Double.Parse(Rho2.Text) / double.Parse(SubphaseSLD.Text);
                 RhoArray[2] = Double.Parse(Rho3.Text) / double.Parse(SubphaseSLD.Text);
                 RhoArray[3] = Double.Parse(Rho4.Text) / double.Parse(SubphaseSLD.Text);
@@ -299,44 +234,21 @@ namespace StochasticModeling
             SigmaArray[5] = Double.Parse(Sigma6.Text);
 
             oldnormfactor = Double.Parse(NormCorrectTB.Text);
+
+            double[] eparameters = null;
+          //  MakeParameters(ref eparameters, true);
+           
+           
+            
             CheckZLength();
 
-            double[] parameters = new double[3 * int.Parse(BoxCount.Text) + 2];
-            double[] eparameters = new double[3*int.Parse(BoxCount.Text)+2];
-            parameters[0] = double.Parse(SubRough.Text);
-            eparameters[0] = double.Parse(SubRough.Text);
-            eparameters[1] = 25;
-            for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-            {
-                parameters[3 * i + 1] = LengthArray[i];
-                parameters[3 * i + 2] = RhoArray[i];
-                parameters[3 * i + 3] = SigmaArray[i];
-
-                eparameters[3 * i + 2] = LengthArray[i];
-                eparameters[3 * i + 3] = RhoArray[i];
-                eparameters[3 * i + 4] = SigmaArray[i];
-            }
-
-            parameters[3 * int.Parse(BoxCount.Text) + 1] = Double.Parse(NormCorrectTB.Text);
-
-            FastReflGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), double.Parse(WavelengthTB.Text), parameters, parameters.Length,
-                  Qincrement, QErrors, Qincrement.Length, ReflectivityMap, ReflectivityMap.Length, Double.Parse(QSpreadTB.Text),ImpNormCB.Checked);
             RhoGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), eparameters,
-                    eparameters.Length, Z, Z.Length, ElectronDensityArray, BoxElectronDensityArray, ElectronDensityArray.Length);
-          
+                    eparameters.Length, Z, Z.Length, ElectronDensityArray, BoxElectronDensityArray, ElectronDensityArray.Length, Holdsigma.Checked);
 
-            if (m_bmodelreset == true)
-            {
-                ReflGraphing.Clear();
-                ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
-                m_bmodelreset = false;
-            }
-
-            //Setup the graphs
-            ReflGraphing.LoadfromArray("modelrefl", Qincrement, ReflectivityMap, System.Drawing.Color.Black, SymbolType.XCross, 4, true, string.Empty);
-            RhoGraphing.LoadfromArray("Model Dependent Fit", Z, ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
-            RhoGraphing.LoadfromArray("Model Dependent Box Fit", Z, BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
+            base.UpdateProfile();
         }
+
+      
 
        
         private void CheckZLength()
@@ -358,89 +270,29 @@ namespace StochasticModeling
 
         private void LevenbergFit_Click(object sender, EventArgs e)
         {
-            BackupArrays();
-
-            double[] parameters;
+            double[] parameters = null;
             double chisquare = 0;
-            int boxes = int.Parse(BoxCount.Text);
 
-            //Setup our ranges
-            double[] qrange = new double[Qincrement.Length - int.Parse(CritOffset.Text) - int.Parse(Rightoffset.Text)];
-            double[] reflectivity = new double[Qincrement.Length - int.Parse(CritOffset.Text) - int.Parse(Rightoffset.Text)];
-            double[] reflectivityerrors = new double[Qincrement.Length - int.Parse(CritOffset.Text) - int.Parse(Rightoffset.Text)];
-            double[] qerrors = null;
+            BackupArrays();
+           // MakeParameters(ref parameters, false);
+            covar = new double[parameters.Length];
+            chisquare = FastReflfit(ReflStruct, parameters, covar, parameters.Length, info, info.Length);
+            UpdateFromFit(parameters, chisquare);
+        }
 
-            if (ReflData.Instance.HaveErrorinQ)
-                qerrors = new double[Qincrement.Length - int.Parse(CritOffset.Text) - int.Parse(Rightoffset.Text)];
-
-            for (int i = 0; i < qrange.Length; i++)
-            {
-                qrange[i] = (double)Qincrement[int.Parse(CritOffset.Text) + i];
-                reflectivity[i] = (double)RealRefl[int.Parse(CritOffset.Text) + i];
-                reflectivityerrors[i] = (double)RealReflErrors[int.Parse(CritOffset.Text) + i];
-
-                if (ReflData.Instance.HaveErrorinQ)
-                    qerrors[i] = (double)ReflData.Instance.GetQErrorPt(int.Parse(CritOffset.Text) + i);
-            }
-
-            if (Holdsigma.Checked == true)
-            {
-                //consts - # of boxes, subphase SLD,
-                //variable - Subphase sigma (just one to start), Rho1, length1, Rho2, length2, Z-offset
-
-                //Let's set up our parameter order for a system with only one roughness (elastic sheet)
-                // 0 - Subphase roughness, 2 - 3 Layer 1 Values (Length, Rho), 4 - 5 Layer 2 Values, 6 - 7 Layer 3 Values
-                // 8 - 9 Layer 4 Values, 10 - 11 Layer 5 Values, 11 - 13 Layer 6 Values. The last box will be our imperfect
-                // normalization factor
-
-                //We have to hold the # of boxes and the subphase SLD constant, or else 
-                //the fit will wildly diverge
-
-                parameters = new double[2 + boxes * 2];
-                parameters[0] = Double.Parse(SubRough.Text);
-
-                for (int i = 0; i < boxes; i++)
-                {
-                    parameters[2 * i + 1] = LengthArray[i];
-                    parameters[2 * i + 2] = RhoArray[i];
-                }
-
-                parameters[1 + boxes * 2] = Double.Parse(NormCorrectTB.Text);
-                covar = new double[parameters.Length];
-            }
-            else
-            {
-                //Let's set up our parameter order for a system with only one roughness (elastic sheet)
-                // 0 - # of boxes 1 - Subphase SLD, 2 - Subphase roughness, 3 - Reflectivity scaling factor (not implemented), 
-                // 4 - 6 Layer 1 Values (Length, Rho, Sigma), 7 - 9 Layer 2 Values, 10 - 12 Layer 3 Values
-                // 13 - 15 Layer 4 Values, 16 - 18 Layer 5 Values, 19 - 21 Layer 6 Values. The last box will be our imperfect
-                // normalization factor
-                //
-                //
-                //We have to hold the # of boxes and the subphase SLD constant, or else 
-                //the fit will wildly diverge
-
-                parameters = new double[2 + boxes * 3];
-                parameters[0] = Double.Parse(SubRough.Text);
-
-                for (int i = 0; i < boxes; i++)
-                {
-                    parameters[3 * i + 1] = LengthArray[i];
-                    parameters[3 * i + 2] = RhoArray[i];
-                    parameters[3 * i + 3] = SigmaArray[i];
-                }
-
-                parameters[1 + boxes * 3] = Double.Parse(NormCorrectTB.Text);
-                covar = new double[parameters.Length];
-            }
-
-            //Do the fit
-            chisquare = FastReflfit(ReflData.Instance.GetWorkingDirectory, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text), 
-                parameters, parameters.Length, qrange, qerrors, qrange.Length,  reflectivity, reflectivity.Length, reflectivityerrors, covar, covar.Length, info, info.Length, 
-                Holdsigma.Checked, true, Double.Parse(QSpreadTB.Text),ImpNormCB.Checked);
+        //Update the pertinent arrays based on the fit
+        private void UpdateFromFit(double[] parameters, double chisquare)
+        {
 
             //Update the ChiSquare
             chisquaretb.Text = chisquare.ToString("#.### E-000");
+
+            int arrayconst;
+
+            if (Holdsigma.Checked)
+                arrayconst = 2;
+            else
+                arrayconst = 3;
 
             //Make sure parameters are reasonable
             for (int i = 0; i < parameters.Length; i++)
@@ -453,39 +305,24 @@ namespace StochasticModeling
             }
 
             //Update paramters
-            if (Holdsigma.Checked == true)
+            SubRough.Text = parameters[0].ToString();
+
+            for (int i = 0; i < int.Parse(BoxCount.Text); i++)
             {
-                SubRough.Text = parameters[0].ToString();
-                for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-                {
-                    BoxLengthArray[i].Text = parameters[2 * i + 1].ToString();
+                BoxLengthArray[i].Text = parameters[arrayconst * i + 1].ToString();
 
-                    if(m_bUseSLD == false)
-                        BoxRhoArray[i].Text = parameters[2 * i + 2].ToString();
-                    else
-                        BoxRhoArray[i].Text = (string)(parameters[2 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
+                if (m_bUseSLD == false)
+                    BoxRhoArray[i].Text = parameters[arrayconst * i + 2].ToString();
+                else
+                    BoxRhoArray[i].Text = (parameters[arrayconst * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
 
+                if (Holdsigma.Checked)
                     BoxSigmaArray[i].Text = parameters[0].ToString();
-                }
-                NormCorrectTB.Text = parameters[1 + 2 * int.Parse(BoxCount.Text)].ToString();
-            }
-            else
-            {
-                SubRough.Text = parameters[0].ToString();
-
-                for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-                {
-                    BoxLengthArray[i].Text = parameters[3 * i + 1].ToString();
-
-                    if(m_bUseSLD == false)
-                        BoxRhoArray[i].Text = parameters[3 * i + 2].ToString();
-                    else
-                        BoxRhoArray[i].Text = (string)(parameters[3 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
-
+                else
                     BoxSigmaArray[i].Text = parameters[3 * i + 3].ToString();
-                }
-                NormCorrectTB.Text = parameters[1 + 3 * int.Parse(BoxCount.Text)].ToString();
             }
+
+            NormCorrectTB.Text = parameters[1 + arrayconst * int.Parse(BoxCount.Text)].ToString();
 
             //Display the fit
             UpdateProfile();
@@ -493,12 +330,29 @@ namespace StochasticModeling
             //Update report parameters
             SaveParamsforReport();
             m_bvalidfit = true;
-           // WriteFullfitFiles();
 
             //Add the graph to the master graph
             GraphCollection.Instance.ReflGraph = ReflGraphing;
             GraphCollection.Instance.ReflEGraph = RhoGraphing;
+        }
 
+        protected override void SetInitStruct(ref BoxModelSettings InitStruct, double[] parampercs,double[] UL, double[] LL)
+        {
+            if (InitStruct.Q == IntPtr.Zero)
+            {
+                InitStruct.SetArrays(ReflData.Instance.GetQData, ReflData.Instance.GetReflData, ReflData.Instance.GetRErrors,
+                    ReflData.Instance.GetQErrors, parampercs, UL, LL);
+            }
+            InitStruct.Directory = ReflData.Instance.GetWorkingDirectory;
+            InitStruct.Boxes = int.Parse(BoxCount.Text);
+
+            InitStruct.SubSLD = double.Parse(SubphaseSLD.Text);
+            InitStruct.SupSLD = double.Parse(SupSLDTB.Text);
+            InitStruct.Wavelength = double.Parse(WavelengthTB.Text);
+            InitStruct.OneSigma = Holdsigma.Checked;
+            InitStruct.QSpread = double.Parse(QSpreadTB.Text);
+            InitStruct.ImpNorm = ImpNormCB.Checked;
+            InitStruct.WriteFiles = true;
         }
 
         void Stoch()
@@ -597,17 +451,17 @@ namespace StochasticModeling
                 double[] CovarArray = new double[1000 * parameters.Length];
                 int size = 0;
 
-                StochFit(boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text), parameters, parameters.Length, qrange, qerrors, qrange.Length, reflectivity,
-                      reflectivity.Length, reflectivityerrors, covar, covar.Length, info, info.Length, Holdsigma.Checked, false, UI.IterationCount, ParamArray, out size, parampercs, ChiSquareArray, CovarArray,
-                      Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
-                outwin = new StochOutputWindow(ParamArray, size, parameters.Length, ChiSquareArray, CovarArray, Holdsigma.Checked, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text),
-                       Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
+                //StochFit(boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text), parameters, parameters.Length, qrange, qerrors, qrange.Length, reflectivity,
+                //      reflectivity.Length, reflectivityerrors, covar, covar.Length, info, info.Length, Holdsigma.Checked, false, UI.IterationCount, ParamArray, out size, parampercs, ChiSquareArray, CovarArray,
+                //      Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
+                //outwin = new StochOutputWindow(ParamArray, size, parameters.Length, ChiSquareArray, CovarArray, Holdsigma.Checked, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text),
+                //       Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
 
-                if (outwin.ShowDialog() != DialogResult.Cancel)
-                {
-                    bfitting = true;
-                    chisquaretb.Text = outwin.GetParameters(out parameters, out covar);
-                }
+                //if (outwin.ShowDialog() != DialogResult.Cancel)
+                //{
+                //    bfitting = true;
+                //    chisquaretb.Text = outwin.GetParameters(out parameters, out covar);
+                //}
             }
 
             //Make sure parameters are reasonable

@@ -157,7 +157,7 @@
 				OutputFile="..\bin\Release\LevmarDLL.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\bin\dlls\"
-				GenerateDebugInformation="false"
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -284,10 +284,6 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
-			<File
-				RelativePath=".\AreaFastReflCalc.cpp"
-				>
-			</File>
 			<File
 				RelativePath=".\LevMar\Axb.c"
 				>
@@ -421,10 +417,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\AreaFastReflCalc.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FastReflCalc.h"
 				>
 			</File>
@@ -442,6 +434,10 @@
 			</File>
 			<File
 				RelativePath=".\RhoCalc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Settings.h"
 				>
 			</File>
 			<File

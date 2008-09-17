@@ -109,7 +109,6 @@ Global
 		{A48F94C1-D858-4931-8B83-4FDACA7B7BF9}.GIXOS|x86.ActiveCfg = Release|Win32
 		{A48F94C1-D858-4931-8B83-4FDACA7B7BF9}.Release|Any CPU.ActiveCfg = Release|Win32
 		{A48F94C1-D858-4931-8B83-4FDACA7B7BF9}.Release|Mixed Platforms.ActiveCfg = Release|Win32
-		{A48F94C1-D858-4931-8B83-4FDACA7B7BF9}.Release|Mixed Platforms.Build.0 = Release|Win32
 		{A48F94C1-D858-4931-8B83-4FDACA7B7BF9}.Release|Win32.ActiveCfg = Release|Win32
 		{A48F94C1-D858-4931-8B83-4FDACA7B7BF9}.Release|Win32.Build.0 = Release|Win32
 		{A48F94C1-D858-4931-8B83-4FDACA7B7BF9}.Release|x86.ActiveCfg = Release|Win32

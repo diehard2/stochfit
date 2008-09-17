@@ -24,20 +24,20 @@
 class CReflCalc {
 private:
 	MyComplex *doublenk;
-	float *tsinsquaredthetai,*sinsquaredthetai,*qspreadsinsquaredthetai,*qspreadreflpt,*qspreadsinthetai;
+	double *tsinsquaredthetai,*sinsquaredthetai,*qspreadsinsquaredthetai,*qspreadreflpt,*qspreadsinthetai;
 
 
-	void impnorm(float* refl, int datapoints, bool isimprefl);
-	void mytransparentrf(float* sintheta, float* sinsquaredtheta, int datapoints, float* refl);
+	void impnorm(double* refl, int datapoints, bool isimprefl);
+	void MyTransparentRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, MyComplex* EDP, int EDPoints);
 	void mkdensity(ParamVector *g);
 	void mkdensitytrans(ParamVector* g);
-	void QsmearRf(float* qspreadreflpt, float* reflpt, int datapoints);
-	void myrf(float* sintheta, float* sinsquaredtheta, int datapoints, float* refl);
-	bool CheckDensity();
-
+	void QsmearRf(double* qspreadreflpt, double* reflpt, int datapoints);
+	void MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, MyComplex* EDP, int EDPoints);
+	bool CheckDensity(MyComplex* EDP, int EDPoints);
+	void GetOffSets(int& HighOffset, int& LowOffset, MyComplex* EDP, int EDPoints);
 	
-	float CalcQc(double SubPhaseSLD, double SuperPhaseSLD);
-	float CalcFresnelPoint(float Q, float Qc);
+	double CalcQc(double SubPhaseSLD, double SuperPhaseSLD);
+	double CalcFresnelPoint(float Q, float Qc);
 	int Qpoints;
  
 	int m_ilowEDduplicatepts;
@@ -50,33 +50,28 @@ public:
 	float m_dQSpread;
 	
 	double m_dwaveconstant;
-    float dz0;
+    double dz0;
 	float m_dboxsize;
 	float m_dnormfactor;
 	//read from file
-    float *xi,*yi,*eyi,*exi,*sinthetai,*reflpt,*dataout,*tsinthetai,*qarray, *fresnelcurve;
+    double *xi,*yi,*eyi,*exi,*sinthetai,*reflpt,*dataout,*tsinthetai,*qarray, *fresnelcurve;
     int m_idatapoints, tarraysize;
     int nl;
 
-	float totalsize;
-    float rho_a,beta_a;
-    float lambda,k0;
-    float m_dChiSquare;
-	float m_dgoodnessoffit;
+	double totalsize;
+    double rho_a,beta_a;
+    double lambda,k0;
+    double m_dChiSquare;
+	double m_dgoodnessoffit;
 	BOOL m_bforcenorm;
-	BOOL m_bUseSurfAbs;
 	BOOL m_bImpNorm;
-	float* distarray;
-	float* rhoarray;
-	float* imagrhoarray;
-	float* edspacingarray;
 	int m_iuseableprocessors;
 
 	MyComplex* m_ckk;
-	float* m_dkk;
+	double* m_dkk;
 	MyComplex* m_cak;
 	MyComplex* m_crj;
-	float* m_drj;
+	double* m_drj;
 	MyComplex* m_cRj;
 
 	//Member functions
@@ -87,8 +82,8 @@ public:
 	
     void init(ReflSettings* InitStruct);
 	void SetupRef(ReflSettings* InitStruct);
-    double objective(ParamVector  *g);
-    void paramsrf(ParamVector *g, wstring rhofile, wstring reflfile);
+    double Objective(MyComplex* EDP, int EDPoints, bool UseAbs);
+    void ParamsRF(MyComplex* EDP, int EDPoints, BOOL UseAbs,  wstring reflfile);
 	double GetWaveConstant();
     
 	int objectivefunction;

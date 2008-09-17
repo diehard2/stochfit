@@ -293,6 +293,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CEDP.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ParamVector.cpp"
 				>
 			</File>
@@ -324,6 +328,10 @@
 			>
 			<File
 				RelativePath=".\ASA.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CEDP.h"
 				>
 			</File>
 			<File

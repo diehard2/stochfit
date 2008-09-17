@@ -29,24 +29,22 @@
 #else
 #define LEVMARDLL_API __declspec(dllimport)
 #endif
-
-extern "C" LEVMARDLL_API double FastReflfit(LPCWSTR directory, int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[],double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
-			double info[], int infosize, BOOL onesigma,BOOL writefiles, double QSpread, BOOL ImpNorm);
+#include "settings.h"
+extern "C" LEVMARDLL_API double FastReflfit(BoxReflSettings* InitStruct, double parameters[], double covar[], int paramsize, 
+			double info[], int infosize);
 
 extern "C" LEVMARDLL_API double ConstrainedFastReflfit(LPCWSTR directory, int boxes, double SLD,double SupSLD, double wavelength, double parameters[], int paramsize,
 			double QRange[],double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
 			double info[], int infosize, BOOL onesigma,BOOL writefiles, double UL[], double LL[], double QSpread, BOOL ImpNorm);
 
-extern "C" LEVMARDLL_API void FastReflGenerate(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double QSpread, BOOL impnorm);
+extern "C" LEVMARDLL_API void FastReflGenerate(BoxReflSettings* InitStruct, double parameters[], int parametersize, double Reflectivity[]);
 
 extern "C" LEVMARDLL_API double Rhofit(LPCWSTR directory, int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
 			double ZRange[], int ZSize, double ED[], int EDsize, double covariance[],
 			int covarsize, double info[], int infosize, BOOL onesigma);
 
 extern "C" LEVMARDLL_API void RhoGenerate(int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
-			double ZRange[], int ZSize, double ED[], double BoxED[], int EDsize);
+			double ZRange[], int ZSize, double ED[], double BoxED[], int EDsize, BOOL onesigma);
 
 extern "C" LEVMARDLL_API void StochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
 			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 

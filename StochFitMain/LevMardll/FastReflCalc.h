@@ -19,7 +19,7 @@
  */
 
 #pragma once
-
+#include "Settings.h"
 class FastReflcalc
 {
 private:
@@ -27,7 +27,7 @@ private:
    double *sinthetai,*sinsquaredthetai, *qspreadsinthetai, *qspreadsinsquaredthetai, *qspreadreflpt;
    int m_icritqoffset, m_ihighqoffset;
    void ImpNorm(double* refl, int datapoints);
-
+   void MakeTheta(BoxReflSettings* InitStruct);
    BOOL m_bImpNorm;
 
    double m_dQSpread;
@@ -41,9 +41,7 @@ public:
 
 	double* Realrefl, *Realreflerrors; int realrefllength;
 	int boxnumber, SubSLD;
-	
-    double dz0;
-	double sdyi;
+
 	double m_dsupsld;
 
     double *reflpt;
@@ -58,22 +56,21 @@ public:
 	
 	~FastReflcalc();
 	void QsmearRf(double* qspreadrefl, double* refl, int datapoints);
-    void init(double xraylambda,int boxnumber, double subSLD, double SupSLD, double* p, int pcount, double* RealRefl, double* RealReflErrors, int RealRefllength, bool onesigma, double QSpread, double normfactor, BOOL impnorm, int critqoffset, int highqoffset);
-    void MakeTheta(double* QRange, double* QError, int QRangesize);
+    void init(BoxReflSettings* InitStruct);
+	void SetOffsets(int LowQOffset, int HighQOffset);
 
 	double* originalparams;
 	//Density calcs
 	int CalculateZLength();
 	void MakeZ();
-	double* param; 
-	int pcount;
+
 	virtual void mkdensityonesigma(double* p, int plength);
     virtual void mkdensity(double* p, int plength);
 	void myrfdispatch();
 	
 	double CalcQc(double dSLD);
 	double CalcFresnelPoint(double Q, double Qc);
-	bool onesigma;
+	BOOL onesigma;
 	double subphaseSLD;
 
 	double* LengthArray;

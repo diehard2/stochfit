@@ -194,11 +194,11 @@ namespace StochasticModeling.Modeling
             //Make the reflectivities and electron densities
             for (int i = 0; i < ParameterArraysize; i++)
             {
-                RhoGenerate(m_iboxes, m_dSubSLD, m_dSupSLD, NewEParameter[i],
-                    NewEParameter[i].Length, Z[i], Z[i].Length, ElectronDensityArray[i], BoxElectronDensityArray[i], ElectronDensityArray.Length);
+                //RhoGenerate(m_iboxes, m_dSubSLD, m_dSupSLD, NewEParameter[i],
+                //    NewEParameter[i].Length, Z[i], Z[i].Length, ElectronDensityArray[i], BoxElectronDensityArray[i], ElectronDensityArray.Length);
 
-                FastReflGenerate(m_iboxes, m_dSubSLD, m_dSupSLD, wavelength, NewRParameter[i], NewRParameter[i].Length,
-                  Qincrement, QErrors, Qincrement.Length, ReflectivityMap[i], ReflectivityMap[i].Length, QSpread, Impnorm);
+                //FastReflGenerate(m_iboxes, m_dSubSLD, m_dSupSLD, wavelength, NewRParameter[i], NewRParameter[i].Length,
+                //  Qincrement, QErrors, Qincrement.Length, ReflectivityMap[i], ReflectivityMap[i].Length, QSpread, Impnorm);
             }
 
             ModelLB.SelectedIndex = 0;

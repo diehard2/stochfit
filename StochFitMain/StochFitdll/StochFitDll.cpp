@@ -93,8 +93,7 @@ extern "C" STOCHFIT_API void ArraySizes(int* RhoSize, int* Reflsize)
 {
 		if(stochfit != NULL)
 		{
-			*RhoSize = stochfit->m_irhocount;
-			*Reflsize = stochfit->m_irefldatacount;
+			stochfit->GetArraySizes(RhoSize, Reflsize);
 		}
 }
 
@@ -102,7 +101,7 @@ extern "C" STOCHFIT_API bool WarmedUp()
 {
 		if(stochfit != NULL)
 		{
-			return stochfit->m_bwarmedup;
+			return stochfit->GetWarmedUp();
 		}
 		else
 			return false;

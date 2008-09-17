@@ -85,7 +85,7 @@ namespace StochasticModeling
         /// <summary>
         /// Default constructor
         /// </summary>
-        public Stochfit()
+        public Stochfit():base()
         {
 
             InitializeComponent();

@@ -69,16 +69,16 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 	 ////////////////////////////////////////////////////////
 
 	m_cRefl.init(InitStruct);
+	m_cEDP.Init(InitStruct);
+
 
 	//Setup the params - We start with a slightly roughened ED curve 
 	params = new ParamVector(InitStruct->Boxes,InitStruct->Forcesig,InitStruct->UseSurfAbs, InitStruct->Impnorm);
 	params->SetSupphase(InitStruct->SupSLD/InitStruct->FilmSLD);
-	
-	for(int i = 0 ; i < InitStruct->Boxes; i++)
-		params->SetMutatableParameter(i,1.0);
-
 	params->SetSubphase(InitStruct->SubSLD/InitStruct->SubSLD);
 
+	for(int i = 0 ; i < InitStruct->Boxes; i++)
+		params->SetMutatableParameter(i,1.0);
 	
  
 	 /////////////////////////////////////////////////////
@@ -116,7 +116,7 @@ int StochFit::Processing()
 	bool accepted = false;
 
 	//Main loop
- for(int isteps=0;(isteps < m_itotaliterations) && (m_bthreadstop == false);isteps++)
+     for(int isteps=0;(isteps < m_itotaliterations) && (m_bthreadstop == false);isteps++)
 	 {
 			accepted = m_SA->Iteration(params);
 		

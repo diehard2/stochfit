@@ -21,8 +21,8 @@
 #pragma once
 #include "ParamVector.h"
 #include "ReflCalc.h"
+#include "CEDP.h"
 #include "SA_Dispatcher.h"
-
 
 class StochFit
 {
@@ -78,5 +78,6 @@ class StochFit
 		int m_irefldatacount;
 		int m_isearchalgorithm;
 		CReflCalc m_cRefl;
+		CEDP m_cEDP;
 		ParamVector* params;
 };

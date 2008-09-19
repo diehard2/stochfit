@@ -33,10 +33,11 @@ ASA::~ASA(void)
 {
 }
 
-void ASA::Initialize(int paramcount, ParamVector* params, CReflCalc* multi)
+void ASA::Initialize(ParamVector* params, CReflCalc* multi, CEDP* EDP)
 {
-	SetNumParameters(paramcount);
+	SetNumParameters(params->ParamCount());
 	m_cmulti = multi;
+	m_cEDP = EDP;
 	m_cparams = *params;
 
 	asa_alloc();
@@ -94,7 +95,8 @@ double ASA::cost_function (double *x, double *parameter_lower_bound, double *par
 
 	if(m_cparams.CopyArraytoGene(x) == true)
 	{
-		fitscore = m_cmulti->Objective(&m_cparams);
+		m_cEDP->GenerateEDP(&m_cparams);
+		fitscore = m_cmulti->Objective(m_cEDP);
 
 		if(fitscore > 0)
 		{

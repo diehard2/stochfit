@@ -76,6 +76,7 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 	params = new ParamVector(InitStruct->Boxes,InitStruct->Forcesig,InitStruct->UseSurfAbs, InitStruct->Impnorm);
 	params->SetSupphase(InitStruct->SupSLD/InitStruct->FilmSLD);
 	params->SetSubphase(InitStruct->SubSLD/InitStruct->SubSLD);
+	params->setroughness(3.0);
 
 	for(int i = 0 ; i < InitStruct->Boxes; i++)
 		params->SetMutatableParameter(i,1.0);
@@ -85,7 +86,7 @@ void StochFit::Initialize(ReflSettings* InitStruct)
      /******** Prepare Arrays for the Front End ********/
 	////////////////////////////////////////////////////
 
-	m_irhocount = m_cRefl.GetTotalSize();
+	m_irhocount = m_cEDP.Get_EDPPointCount();
 	m_irefldatacount = m_cRefl.GetDataCount();
 
 	Zinc = new double[m_irhocount];
@@ -97,12 +98,12 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 	m_bwarmedup = true;
 
 	//If we have a population already, load it
-	LoadFromFile(&m_cRefl,params);
+	LoadFromFile();
 
 	// Update the constraints on the params
 	params->UpdateBoundaries(NULL,NULL);
 
-	m_SA->InitializeParameters(InitStruct, params, &m_cRefl);
+	m_SA->InitializeParameters(InitStruct, params, &m_cRefl, &m_cEDP);
 	
 	if(m_SA->CheckForFailure() == true)
 		MessageBox(NULL, L"Catastrophic error in SA - please contact the author", NULL,NULL);
@@ -125,58 +126,59 @@ int StochFit::Processing()
 				m_dChiSquare = m_cRefl.m_dChiSquare;
 				m_dGoodnessOfFit = m_cRefl.m_dgoodnessoffit;
 			}
-		    UpdateFits(&m_cRefl, params, isteps);
+		    UpdateFits(isteps);
 
 			//Write the population file every 5000 iterations
 			if((isteps+1)%5000 == 0 || m_bthreadstop == true || isteps == m_itotaliterations-1)
 			{
 				//Write out the population file for the best minimum found so far
 				if(m_isearchalgorithm != 0 && m_SA->Get_IsIterMinimum())
-					WritetoFile(&m_cRefl, params, wstring(m_Directory + L"\\BestSASolution.txt").c_str());
+					WritetoFile(wstring(m_Directory + L"\\BestSASolution.txt").c_str());
 
-				WritetoFile(&m_cRefl, params, fnpop.c_str());
+				WritetoFile( fnpop.c_str());
 			}
 	 }
 
 	//Update the arrays one last time
-	UpdateFits(&m_cRefl, params, m_icurrentiteration);
+	UpdateFits(m_icurrentiteration);
 
 	return 0;
 }
 
-void StochFit::UpdateFits(CReflCalc* ml, ParamVector* params, int currentiteration)
+void StochFit::UpdateFits(int currentiteration)
 {
 		if(m_bupdated == TRUE)
 		{
 			//Check to see if we're updating
-
-			ml->ParamsRF(params, fnrho, fnrf);
+			m_cEDP.GenerateEDP(params);
+			m_cEDP.WriteOutputFile(fnrho);
+			m_cRefl.ParamsRF(&m_cEDP, fnrf);
 			m_dRoughness = params->getroughness();
 			
 
 			for(int i = 0; i<m_irhocount;i++)
 			{
-				Zinc[i] = i*ml->dz0;
-				Rho[i] =  ml->nk[i].re/ml->nk[m_irhocount-1].re;
+				Zinc[i] = i*m_cEDP.Get_Dz();
+				Rho[i] =  m_cEDP.m_EDP[i].re/m_cEDP.m_EDP[m_cEDP.Get_EDPPointCount()-1].re;
 			}
 			
 			for(int i = 0; i<m_irefldatacount;i++)
 			{
 				#ifndef CHECKREFLCALC
 					
-					if(ml->m_dQSpread > 0.005)
+					if(m_cRefl.m_dQSpread > 0.005)
 					{				
-						Refl[i] = ml->reflpt[i];
-						Qinc[i] = ml->xi[i];
+						Refl[i] = m_cRefl.reflpt[i];
+						Qinc[i] = m_cRefl.xi[i];
 					}
 					else
 					{
-						Refl[i] = ml->dataout[i];
-						Qinc[i] = ml->qarray[i];
+						Refl[i] = m_cRefl.dataout[i];
+						Qinc[i] = m_cRefl.qarray[i];
 					}
 				#else
-					Qinc[i] = ml->xi[i];
-					Refl[i] = ml->reflpt[i];
+					Qinc[i] = m_cRefl.xi[i];
+					Refl[i] = m_cRefl.reflpt[i];
 				#endif
 			}
 			m_bupdated = FALSE;
@@ -295,11 +297,11 @@ int StochFit::Priority(int priority)
 	return 0;
 }
 
-void StochFit::WritetoFile(CReflCalc* ml, ParamVector* params, const wchar_t* filename)
+void StochFit::WritetoFile(const wchar_t* filename)
 {
 	ofstream outfile;
 	outfile.open(fnpop.c_str());
-	outfile<< params->getroughness() <<' '<< ml->beta_a*params->getSurfAbs()/ml->GetWaveConstant() <<
+	outfile<< params->getroughness() <<' '<< m_cRefl.beta_a*params->getSurfAbs()/m_cRefl.GetWaveConstant() <<
 		' '<< m_SA->Get_Temp() <<' '<< params->getImpNorm() << ' ' << m_SA->Get_AveragefSTUN() << endl;
 
 	for(int i = 0; i < params->RealparamsSize(); i++)
@@ -310,7 +312,7 @@ void StochFit::WritetoFile(CReflCalc* ml, ParamVector* params, const wchar_t* fi
 	outfile.close();
 }
 
-void StochFit::LoadFromFile(CReflCalc* ml, ParamVector* params, wstring file)
+void StochFit::LoadFromFile(wstring file)
 {
    ParamVector params1 = *params;
    ifstream infile;
@@ -374,7 +376,7 @@ void StochFit::LoadFromFile(CReflCalc* ml, ParamVector* params, wstring file)
     if(kk == true)
 	{
 		*params = params1;
-		ml->beta_a = beta*ml->GetWaveConstant();
+		m_cRefl.beta_a = beta*m_cRefl.GetWaveConstant();
 		m_SA->Set_Temp(1.0/currenttemp);
 		params->setImpNorm(normfactor);
 		m_SA->Set_AveragefSTUN(avgfSTUN);
@@ -384,9 +386,8 @@ void StochFit::LoadFromFile(CReflCalc* ml, ParamVector* params, wstring file)
 	//If we're resuming, and we were Tunneling, load the best file
 	if(kk == true && wstring(fnpop).find(L"BestSASolution.txt") == wstring::npos)
 	{
-		LoadFromFile(ml,params, wstring(m_Directory+L"BestSASolution.txt").c_str());
+		LoadFromFile(wstring(m_Directory+L"BestSASolution.txt").c_str());
 	}
-
 }
 
 void StochFit::GetArraySizes(int* RhoSize, int* ReflSize)

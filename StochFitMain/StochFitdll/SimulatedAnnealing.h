@@ -20,6 +20,7 @@
 
 #pragma once
 #include "ReflCalc.h"
+#include "CEDP.h"
 #include "ParamVector.h"
 
 class SimAnneal
@@ -68,13 +69,14 @@ class SimAnneal
 		int m_ialgorithm;
 		double m_dState1, m_dState2;
 		double TakeStep(ParamVector* params);
+		CEDP* m_cEDP;
 	
 public:
 	SimAnneal(bool debug, std::wstring directory);
 		~SimAnneal();
 		void Initialize(ReflSettings* InitStruct);
 		bool Iteration(ParamVector* params);
-		void InitializeParameters(double step, ParamVector* params, CReflCalc* m_cRefl, int simgasearch, int abssearch, int normsearch, int algorithm);
+		void InitializeParameters(ReflSettings* InitStruct, ParamVector* params, CReflCalc* m_cRefl, CEDP* EDP);
 		bool EvaluateGreedy(double bestval, double curval);
 		bool EvaluateSA(double bestval, double curval);
 		bool EvaluateSTUN(long double bestval,long double curval);

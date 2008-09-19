@@ -44,10 +44,10 @@ class StochFit
 
 	private:
 		int Processing();
-		void LoadFromFile(CReflCalc* ml, ParamVector* params, wstring File = wstring(L""));
+		void LoadFromFile(wstring File = wstring(L""));
 		static DWORD WINAPI InterThread(LPVOID lParam);
-		void WritetoFile(CReflCalc* ml, ParamVector* params, const wchar_t* filename);
-		void UpdateFits(CReflCalc* ml, ParamVector* params, int currentiteration);
+		void WritetoFile(const wchar_t* filename);
+		void UpdateFits(int currentiteration);
 	    void Initialize(ReflSettings* InitStruct);
 	
 

@@ -22,6 +22,7 @@
 #include "ReflCalc.h"
 #include "ParamVector.h"
 #include "SimulatedAnnealing.h"
+#include "CEDP.h"
 #include "ASA.h"
 
 
@@ -39,7 +40,7 @@ public:
 
 	void Initialize(bool debug, bool ASAonoff, std::wstring directory);
 	void Initialize_Subsytem(ReflSettings* InitStruct);
-	void InitializeParameters(ReflSettings* InitStruct, ParamVector* params, CReflCalc* m_cRefl);
+	void InitializeParameters(ReflSettings* InitStruct, ParamVector* params, CReflCalc* m_cRefl, CEDP* EDP);
 	bool Iteration(ParamVector* params);
 	double Get_Temp();
 	void Set_Temp(double Temp);

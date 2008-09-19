@@ -113,7 +113,7 @@ void CEDP::MakeTranparentEDP(ParamVector* g)
 
 			//Make double array for the reflectivity calculation
 			m_DEDP[i].re = 2.0f*m_EDP[i].re;
-			m_EDP[i].im = 0.0f;
+			m_DEDP[i].im = 0.0f;
 		}
 	}
 }
@@ -184,7 +184,7 @@ void CEDP::MakeEDP(ParamVector* g)
 	}
 }
 
-void CEDP::WriteOutputFile(ParamVector* g, wstring filename)
+void CEDP::WriteOutputFile(wstring filename)
 {
 	double z = 0;
 	ofstream rhoout(filename.c_str());
@@ -212,4 +212,14 @@ double CEDP::Get_LayerThickness()
 int CEDP::Get_EDPPointCount()
 {
 	return m_iLayers;
+}
+
+BOOL CEDP::Get_UseABS()
+{
+	return m_bUseSurfAbs;
+}
+
+double CEDP::Get_Dz()
+{
+	return m_dDz0;
 }

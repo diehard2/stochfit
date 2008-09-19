@@ -101,7 +101,7 @@ void CReflCalc::init(ReflSettings* InitStruct)
 
 
 	//Create the scratch arrays for the reflectivity calculation
-	m_ckk = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
+ 	m_ckk = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
 	m_dkk = (double*)_mm_malloc(sizeof(double)*nl*m_iuseableprocessors,16);
 	m_cak = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
 	m_crj = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
@@ -276,14 +276,27 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 
 
 //Write output files
-void CReflCalc::ParamsRF(MyComplex* EDP, int EDPoints, BOOL UseAbs,  wstring reflfile)
+void CReflCalc::ParamsRF(CEDP* EDP,  wstring reflfile)
 {
 	ofstream reflout(reflfile.c_str());
 	
-	if(UseAbs == FALSE)
-		MyTransparentRF(tsinthetai, tsinsquaredthetai, tarraysize, dataout, EDP, EDPoints);
+	if(m_dQSpread < 0.005 || exi == NULL)
+	{
+		if(EDP->Get_UseABS() == false)
+			MyTransparentRF(tsinthetai, tsinsquaredthetai, tarraysize, dataout, EDP);
+		else
+			MyRF(tsinthetai, tsinsquaredthetai, tarraysize, dataout, EDP);
+	}
 	else
-		MyRF(tsinthetai, tsinsquaredthetai, tarraysize, dataout, EDP, EDPoints);
+	{
+		if(EDP->Get_UseABS())
+			MyTransparentRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
+		else
+			MyRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
+
+		QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
+	}
+
 	
 	if(m_bforcenorm == TRUE)
 	{
@@ -314,18 +327,21 @@ void CReflCalc::ParamsRF(MyComplex* EDP, int EDPoints, BOOL UseAbs,  wstring ref
 
 
 //Check to see if there is any negative electron density for the XR case, false if there is neg ED
-bool CReflCalc::CheckDensity(MyComplex* EDP, int EDPoints)
+bool CReflCalc::CheckDensity(CEDP* EDP)
 {
+	int EDPoints = EDP->Get_EDPPointCount();
+	MyComplex* tEDP = EDP->m_EDP;
+
 	for(int i = 0; i < EDPoints; i++)
 	{
-		if(EDP[i].re < 0)
+		if(tEDP[i].re < 0)
 			return false;
 	}
 
 	return true;
 }
 
-double CReflCalc::Objective(MyComplex* EDP, int EDPoints,  bool UseAbs)
+double CReflCalc::Objective(CEDP* EDP)
 {
     //double sy=0.0,sy2=0.0,b = 0.0;
 	int counter = m_idatapoints;
@@ -333,26 +349,26 @@ double CReflCalc::Objective(MyComplex* EDP, int EDPoints,  bool UseAbs)
 	
 	if(m_bXRonly == true )
 	{
-		if(CheckDensity(EDP, EDPoints) == false)
+		if(CheckDensity(EDP) == false)
 			return -1;
 	}
 
 	if(m_dQSpread < 0.005 || exi == NULL)
 	{
-		if(UseAbs == false)
-			MyTransparentRF(sinthetai, sinsquaredthetai, m_idatapoints, reflpt, EDP, EDPoints);
+		if(EDP->Get_UseABS() == false)
+			MyTransparentRF(sinthetai, sinsquaredthetai, m_idatapoints, reflpt, EDP);
 		else
-			MyRF(sinthetai, sinsquaredthetai, m_idatapoints, reflpt, EDP, EDPoints);
+			MyRF(sinthetai, sinsquaredthetai, m_idatapoints, reflpt, EDP);
 	}
 	else
 	{
-		if(UseAbs == false)
+		if(EDP->Get_UseABS())
 		{
-			MyTransparentRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP, EDPoints);
+			MyTransparentRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
 		}
 		else
 		{
-			MyRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP, EDPoints);
+			MyRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
 		}
 
 		QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
@@ -477,13 +493,17 @@ void CReflCalc::impnorm(double* refl, int datapoints, bool isimprefl)
 	}
 }
 
-void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints,  double* refl,MyComplex* DEDP, int EDPoints)
+void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints,  double* refl, CEDP* EDP)
 {
+	MyComplex* DEDP = EDP->m_DEDP;
+	int EDPoints = EDP->Get_EDPPointCount();
+
 	//Calculate some complex constants to keep them out of the loop
-	MyComplex  lengthmultiplier = -2.0*MyComplex (0.0,1.0)*dz0 ;
+	MyComplex  lengthmultiplier = -2.0*MyComplex (0.0,1.0)*EDP->Get_Dz() ;
 	MyComplex  indexsup = 1.0 - DEDP[0]/2.0;
 	MyComplex  indexsupsquared = indexsup * indexsup;
 	MyComplex  zero;
+
 	
 	int HighOffSet = 0;
 	int LowOffset = 0;
@@ -605,11 +625,14 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 	m_ihighEDduplicatepts = 0;
 }
 
-void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int datapoints,double* refl, MyComplex* DEDP, int EDPoints)
+void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int datapoints,double* refl, CEDP* EDP)
 {
+	MyComplex* DEDP = EDP->m_DEDP;
+	int EDPoints = EDP->Get_EDPPointCount();
+
 	////Calculate some complex constants to keep them out of the loop
-	MyComplex  lengthmultiplier = -2.0f*MyComplex (0.0f,1.0f)*dz0;
-	MyComplex  indexsup = 1.0 - nk[0];
+	MyComplex  lengthmultiplier = -2.0f*MyComplex (0.0f,1.0f)*EDP->Get_Dz();
+	MyComplex  indexsup = 1.0 - DEDP[0]/2.0;
 	MyComplex  indexsupsquared = indexsup * indexsup;
 	int HighOffSet = 0;
 	int LowOffset = 0;
@@ -623,7 +646,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 		
 		for(int k = 0; k<nl;k++)
 		{
-			if((indexsupsquared.re*sinsquaredtheta[i]-doublenk[k].re+DEDP[0].re/2.0f)< 0.0f)
+			if((indexsupsquared.re*sinsquaredtheta[i]-DEDP[k].re+DEDP[0].re/2.0f)< 0.0f)
 			{
 				neg -= 1;
 				break;
@@ -756,8 +779,8 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 				//The refractive index for air is 1, so there is no refractive index term for kk[0]
 			dkk[0] = k0 * indexsup.re * sintheta[l];
 
-			dtempk1 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-doublenk[1].re+doublenk[0].re);
-			dtempk2 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-doublenk[numlay-1].re+doublenk[0].re);
+			dtempk1 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-DEDP[1].re+DEDP[0].re);
+			dtempk2 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-DEDP[numlay-1].re+DEDP[0].re);
 			//Workout the wavevector k -> kk[i] = k0 *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
@@ -768,7 +791,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			#pragma ivdep
 			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
-				dkk[i] = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-doublenk[i].re+doublenk[0].re);
+				dkk[i] = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-DEDP[i].re+DEDP[0].re);
 			}
 
 			#pragma ivdep
@@ -889,11 +912,6 @@ int CReflCalc::GetDataCount()
 	#else
 		return m_idatapoints;
 	#endif
-}
-
-int CReflCalc::GetTotalSize()
-{
-	return nl;
 }
 
 double CReflCalc::GetWaveConstant()

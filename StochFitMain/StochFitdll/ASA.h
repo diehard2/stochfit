@@ -22,6 +22,7 @@
 #include "../ASA/asa_base.h"
 #include "ParamVector.h"
 #include "ReflCalc.h"
+#include "CEDP.h"
 
 class ASA :	public ASA_Base
 {
@@ -41,13 +42,14 @@ private:
 	int asa_iteration();
 	int m_i_acc;
 	bool m_bfailed;
+	CEDP* m_cEDP;
 public:
 	ASA(bool debug, wstring filename, int paramcount);
 	~ASA(void);
 
 	bool Iteration(ParamVector* params);
 	
-	void Initialize(int paramcount, ParamVector* params, CReflCalc* multi);
+	void Initialize(ParamVector* params, CReflCalc* multi, CEDP* EDP);
 	bool CheckFailure(){return m_bfailed;}
 
 	

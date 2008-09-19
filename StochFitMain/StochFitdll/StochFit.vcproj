@@ -50,7 +50,7 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="1"
+				DebugInformationFormat="4"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -69,6 +69,7 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="../bin/Debug/stochfitdll.pdb"
 				GenerateMapFile="true"
+				MapExports="true"
 				SubSystem="2"
 				ImportLibrary="$(OutDir)/Genfit.lib"
 				TargetMachine="1"

@@ -68,17 +68,19 @@ SimAnneal::~SimAnneal()
 	}
 }
 
-void SimAnneal::InitializeParameters(double step, ParamVector* params, CReflCalc* m_cRefl, int sigmasearch, int abssearch, int normsearch, int algorithm)
+void SimAnneal::InitializeParameters(ReflSettings* InitStruct, ParamVector* params, CReflCalc* m_cRefl, CEDP* EDP)
 {
 	temp_params = *params;
-	mc_stepsize = step;
+	mc_stepsize = InitStruct->Paramtemp;
 	multi = m_cRefl;
-	m_isigmasearch = sigmasearch;
-	m_inormsearch = normsearch;
-	m_iabssearch = abssearch;
-	m_ialgorithm = algorithm;
-
-	m_dbestsolution = m_dState1 = m_cRefl->Objective(params);
+	m_cEDP = EDP;
+	m_isigmasearch = InitStruct->Sigmasearch;
+	m_inormsearch = InitStruct->NormalizationSearchPerc;
+	m_iabssearch = InitStruct->AbsorptionSearchPerc;
+	m_ialgorithm = InitStruct->Algorithm;
+	
+	m_cEDP->GenerateEDP(params);
+	m_dbestsolution = m_dState1 = m_cRefl->Objective(m_cEDP);
 }
 
 bool SimAnneal::EvaluateGreedy(double bestval, double curval)
@@ -364,5 +366,6 @@ double SimAnneal::TakeStep(ParamVector* params)
 			params->setImpNorm(random(params->getImpNorm()*(1.0+mc_stepsize),params->getImpNorm()*(1.0-mc_stepsize)));
 		}
 		
-		return multi->Objective(params);
+		m_cEDP->GenerateEDP(params);
+		return multi->Objective(m_cEDP);
 }

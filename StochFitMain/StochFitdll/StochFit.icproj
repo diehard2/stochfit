@@ -5,7 +5,7 @@
 	Name="StochFitdll"
 	ProjectGUID="{0500C168-FD63-4DFE-8D66-C449E4D9E19B}"
 	VCNestedProjectGUID="{8FEF7E88-7B8D-44E8-BBE6-9ECB9DE5B5B1}"
-	VCNestedProjectCRC32="2676613955"
+	VCNestedProjectCRC32="1649207852"
 	VCNestedProjectFileName="StochFit.vcproj"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -34,7 +34,7 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="1"
-				DebugInformationFormat="1"
+				DebugInformationFormat="4"
 				OpenMP="0"/>
 			<Tool 
 				Name="LinkerTool"
@@ -44,6 +44,7 @@
 				GenerateDebugInformation="1"
 				ProgramDatabaseFile="../bin/Debug/stochfitdll.pdb"
 				GenerateMapFile="1"
+				MapExports="1"
 				SubSystem="2"
 				ImportLibrary="$(OutDir)/Genfit.lib"
 				TargetMachine="1"

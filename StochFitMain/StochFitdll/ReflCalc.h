@@ -20,20 +20,19 @@
 
 #pragma once
 #include "ParamVector.h"
+#include "CEDP.h"
 
 class CReflCalc {
 private:
-	MyComplex *doublenk;
+
 	double *tsinsquaredthetai,*sinsquaredthetai,*qspreadsinsquaredthetai,*qspreadreflpt,*qspreadsinthetai;
 
 
 	void impnorm(double* refl, int datapoints, bool isimprefl);
-	void MyTransparentRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, MyComplex* EDP, int EDPoints);
-	void mkdensity(ParamVector *g);
-	void mkdensitytrans(ParamVector* g);
+	void MyTransparentRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
 	void QsmearRf(double* qspreadreflpt, double* reflpt, int datapoints);
-	void MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, MyComplex* EDP, int EDPoints);
-	bool CheckDensity(MyComplex* EDP, int EDPoints);
+	void MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
+	bool CheckDensity(CEDP* EDP);
 	void GetOffSets(int& HighOffset, int& LowOffset, MyComplex* EDP, int EDPoints);
 	
 	double CalcQc(double SubPhaseSLD, double SuperPhaseSLD);
@@ -44,19 +43,17 @@ private:
 	int m_ihighEDduplicatepts;
 	bool m_bXRonly;
 public:
-	MyComplex *nk;
+
 	//Variables
 
 	float m_dQSpread;
 	
 	double m_dwaveconstant;
-    double dz0;
-	float m_dboxsize;
 	float m_dnormfactor;
 	//read from file
     double *xi,*yi,*eyi,*exi,*sinthetai,*reflpt,*dataout,*tsinthetai,*qarray, *fresnelcurve;
     int m_idatapoints, tarraysize;
-    int nl;
+
 
 	double totalsize;
     double rho_a,beta_a;
@@ -78,12 +75,12 @@ public:
 	CReflCalc();
 	~CReflCalc();
 	int GetDataCount();
-	int GetTotalSize();
+
 	
     void init(ReflSettings* InitStruct);
 	void SetupRef(ReflSettings* InitStruct);
-    double Objective(MyComplex* EDP, int EDPoints, bool UseAbs);
-    void ParamsRF(MyComplex* EDP, int EDPoints, BOOL UseAbs,  wstring reflfile);
+	double Objective(CEDP* EDP);
+    void ParamsRF(CEDP* EDP, wstring reflfile);
 	double GetWaveConstant();
     
 	int objectivefunction;

@@ -31,7 +31,9 @@ public:
 	void GenerateEDP(ParamVector* g);
 	double Get_LayerThickness();
 	int Get_EDPPointCount();
-	void WriteOutputFile(ParamVector* g, wstring filename);
+	BOOL Get_UseABS();
+	double Get_Dz();
+	void WriteOutputFile(wstring filename);
 
 	MyComplex* m_EDP;
 	MyComplex* m_DEDP;

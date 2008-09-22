@@ -29,32 +29,21 @@
 #else
 #define LEVMARDLL_API __declspec(dllimport)
 #endif
+
 #include "settings.h"
+
 extern "C" LEVMARDLL_API double FastReflfit(BoxReflSettings* InitStruct, double parameters[], double covar[], int paramsize, 
 			double info[], int infosize);
 
-extern "C" LEVMARDLL_API double ConstrainedFastReflfit(LPCWSTR directory, int boxes, double SLD,double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[],double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
-			double info[], int infosize, BOOL onesigma,BOOL writefiles, double UL[], double LL[], double QSpread, BOOL ImpNorm);
-
 extern "C" LEVMARDLL_API void FastReflGenerate(BoxReflSettings* InitStruct, double parameters[], int parametersize, double Reflectivity[]);
 
-extern "C" LEVMARDLL_API double Rhofit(LPCWSTR directory, int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
-			double ZRange[], int ZSize, double ED[], int EDsize, double covariance[],
-			int covarsize, double info[], int infosize, BOOL onesigma);
+extern "C" LEVMARDLL_API double Rhofit(BoxReflSettings* InitStruct, double parameters[], int parametersize, double ED[], double BoxED[],  double covariance[], int covarsize, double info[], int infosize);
 
-extern "C" LEVMARDLL_API void RhoGenerate(int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
-			double ZRange[], int ZSize, double ED[], double BoxED[], int EDsize, BOOL onesigma);
+extern "C" LEVMARDLL_API void RhoGenerate(BoxReflSettings* InitStruct, double parameters[], int paramsize, double ED[], double BoxED[]);
 
-extern "C" LEVMARDLL_API void StochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
-			double info[], int infosize, BOOL onesigma,BOOL writefiles, int iterations,double ParamArray[], int* paramarraysize, double paramperc[], double chisquarearray[], double covararray[],
-			double QSpread, BOOL ImpNorm);
+extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double parameters[], double covararray[], int paramsize, 
+			double info[], double ParamArray[], double chisquarearray[], int* paramarraysize);
 
-extern "C" LEVMARDLL_API void ConstrainedStochFit(int boxes, double SLD,double SupSLD, double wavelength, double parameters[], int paramsize,
-			double QRange[],double QError[],  int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covar[], int covarsize, 
-			double info[], int infosize, BOOL onesigma,BOOL writefiles, int iterations,double ParamArray[], int* paramarraysize, double parampercs[], double chisquarearray[], double covararray[],
-			double UL[], double LL[], double QSpread, BOOL ImpNorm);
 
 /* Leave these in so the dll can also be used as a general purpose LS minimizer*/
 

@@ -37,11 +37,13 @@ private:
 	
 	double CalcQc(double SubPhaseSLD, double SuperPhaseSLD);
 	double CalcFresnelPoint(float Q, float Qc);
+	void InitializeScratchArrays(int EDPoints);
+
 	int Qpoints;
  
-	int m_ilowEDduplicatepts;
-	int m_ihighEDduplicatepts;
+
 	bool m_bXRonly;
+	BOOL m_bReflInitialized;
 public:
 
 	//Variables
@@ -50,6 +52,7 @@ public:
 	
 	double m_dwaveconstant;
 	float m_dnormfactor;
+
 	//read from file
     double *xi,*yi,*eyi,*exi,*sinthetai,*reflpt,*dataout,*tsinthetai,*qarray, *fresnelcurve;
     int m_idatapoints, tarraysize;

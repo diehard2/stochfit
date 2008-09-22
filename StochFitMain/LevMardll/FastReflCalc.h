@@ -29,7 +29,8 @@ private:
    void ImpNorm(double* refl, int datapoints);
    void MakeTheta(BoxReflSettings* InitStruct);
    BOOL m_bImpNorm;
-
+   double* Realreflerrors; 
+   int realrefllength;
    double m_dQSpread;
 
 protected:
@@ -39,7 +40,7 @@ public:
 	
 	//Variables
 
-	double* Realrefl, *Realreflerrors; int realrefllength;
+	double* Realrefl;
 	int boxnumber, SubSLD;
 
 	double m_dsupsld;

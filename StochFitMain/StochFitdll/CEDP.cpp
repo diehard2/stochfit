@@ -28,9 +28,9 @@ void CEDP::Init(ReflSettings* InitStruct)
 
 	if(InitStruct->UseSurfAbs == TRUE)
 	{
-		m_dBeta = InitStruct->FilmAbs * 1e-6 * m_dWaveConstant;
-		m_dBeta_Sub = InitStruct->SubAbs * 1e-6 * m_dWaveConstant;
-		m_dBeta_Sup = InitStruct->SupAbs * 1e-6 * m_dWaveConstant;
+		m_dBeta = InitStruct->FilmAbs * m_dWaveConstant;
+		m_dBeta_Sub = InitStruct->SubAbs * m_dWaveConstant;
+		m_dBeta_Sup = InitStruct->SupAbs * m_dWaveConstant;
 	}
 	else
 	{

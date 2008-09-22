@@ -270,9 +270,14 @@ namespace StochasticModeling.Settings
 
         public int LowQOffset;
         public int HighQOffset;
+        public int Iterations;
 
-
-        [XmlIgnoreAttribute]
+        //EDP Specific Settings
+        public double[] MIEDP;
+        public float[] ZIncrement;
+        public int ZLength;
+ 
+         [XmlIgnoreAttribute]
         private bool disposed = false;
 
         #endregion

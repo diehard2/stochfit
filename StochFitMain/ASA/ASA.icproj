@@ -5,7 +5,7 @@
 	Name="ASA"
 	ProjectGUID="{A48F94C1-D858-4931-8B83-4FDACA7B7BF9}"
 	VCNestedProjectGUID="{16E4FAB3-4327-4ACD-98E0-394A4FC4E829}"
-	VCNestedProjectCRC32="989886946"
+	VCNestedProjectCRC32="1386062758"
 	VCNestedProjectFileName="ASA.vcproj"
 	Keyword="Win32Proj">
 	<Platforms>

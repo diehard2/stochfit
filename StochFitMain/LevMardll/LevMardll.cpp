@@ -46,16 +46,13 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     return TRUE;
 }
 
-extern "C" LEVMARDLL_API double Rhofit(LPCWSTR directory, int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
-			double ZRange[], int ZSize, double ED[], int EDsize, double covariance[],
-			int covarsize, double info[], int infosize, BOOL onesigma)
+extern "C" LEVMARDLL_API double Rhofit(BoxReflSettings* InitStruct, double parameters[], int parametersize, double ED[], double BoxED[], double covariance[], int covarsize, double info[], int infosize)
 {
 	USES_CONVERSION;
-	string direc = W2A(directory);
 
 	double ChiSquare = 0;
 	double opts[LM_OPTS_SZ];
-	double* xvec = new double[ZSize] ;
+	double* xvec = new double[InitStruct->ZLength] ;
 	double *work, *covar;
 	int ret;
 
@@ -63,34 +60,23 @@ extern "C" LEVMARDLL_API double Rhofit(LPCWSTR directory, int boxes, double SLD,
 	opts[4]=-LM_DIFF_DELTA; // relevant only if the finite difference jacobian version is used 
 
 	RhoCalc Rho;
-	Rho.init(boxes,SLD,SupSLD,ED,ZRange,ZSize,onesigma);
+	Rho.init(InitStruct);
 
 	//Allocate a dummy array - Our real calculation is done in Refl.objective
-	for(int i = 0; i < ZSize; i++)
-	{
-		xvec[i] = 0;
-	}
+	memset(xvec, 0, InitStruct->ZLength*sizeof(double));
 
 	//Allocate workspace and our covariance matrix
-	work=new double[((LM_DIF_WORKSZ(paramsize, ZSize)+paramsize*ZSize))];
-	covar=work+LM_DIF_WORKSZ(paramsize, ZSize);
+	work=new double[((LM_DIF_WORKSZ(parametersize, InitStruct->ZLength)+parametersize*InitStruct->ZLength))];
+	covar=work+LM_DIF_WORKSZ(parametersize, InitStruct->ZLength);
 
-	ret = dlevmar_dif(Rho.objective, parameters, xvec,  paramsize,ZSize, 1000, opts, info, work, covar,(void*)(&Rho)); 
+	ret = dlevmar_dif(Rho.objective, parameters, xvec,  parametersize,InitStruct->ZLength, 1000, opts, info, work, covar,(void*)(&Rho)); 
 	
 	//Calculate the current density
-	if(onesigma == TRUE)
-	{
-		Rho.mkdensityonesigma(parameters,paramsize);
-		Rho.mkdensityboxmodel(parameters,paramsize);
-	}
-	else
-	{
-		Rho.mkdensity(parameters, paramsize);
-		Rho.mkdensityboxmodel(parameters,paramsize);
-	}
+	Rho.mkdensity(parameters,parametersize);
+	Rho.mkdensityboxmodel(parameters,parametersize);
 
 	//Calculate ChiSquare
-	for(int i = 0; i< ZSize;i++)
+	for(int i = 0; i< InitStruct->ZLength;i++)
 	{
 		if(ED[i] != 0)
 			ChiSquare += (ED[i]-Rho.nk[i])*(ED[i]-Rho.nk[i])/ED[i];
@@ -98,13 +84,13 @@ extern "C" LEVMARDLL_API double Rhofit(LPCWSTR directory, int boxes, double SLD,
 	//ChiSquare /= ZSize-paramsize;
 
 	//Calculate the standard deviations in the parameters
-	for(int i = 0; i< paramsize;i++)
+	for(int i = 0; i< parametersize;i++)
 	{
-		covariance[i] = sqrt(covar[i*(paramsize+1)]);
+		covariance[i] = sqrt(covar[i*(parametersize+1)]);
 	}
 	
 	//Make output files
-	Rho.writefiles(string(direc + string("\\rhofit.dat")).c_str());
+	Rho.writefiles(string(W2A(InitStruct->Directory) + string("\\rhofit.dat")).c_str());
 	
 	delete xvec;
 	delete work;
@@ -112,20 +98,14 @@ extern "C" LEVMARDLL_API double Rhofit(LPCWSTR directory, int boxes, double SLD,
 	return ChiSquare;
 }
 
-extern "C" LEVMARDLL_API void RhoGenerate(int boxes, double SLD, double SupSLD, double parameters[], int paramsize,
-			double ZRange[], int ZSize, double ED[], double BoxED[], int EDsize, BOOL onesigma)
+extern "C" LEVMARDLL_API void RhoGenerate(BoxReflSettings* InitStruct, double parameters[], int paramsize, double ED[], double BoxED[])
 {
 	RhoCalc Rho;
-	Rho.init(boxes,SLD,SupSLD,NULL,ZRange,ZSize,onesigma);
-	
-	if(onesigma == TRUE)
-		Rho.mkdensityonesigma(parameters, paramsize);
-	else
-		Rho.mkdensity(parameters,paramsize);
-
+	Rho.init(InitStruct);
+	Rho.mkdensity(parameters,paramsize);
 	Rho.mkdensityboxmodel(parameters,paramsize);
 
-	for(int i = 0; i< ZSize; i++)
+	for(int i = 0; i< InitStruct->ZLength; i++)
 	{
 		ED[i] = Rho.nk[i];
 		BoxED[i] = Rho.nkb[i];
@@ -233,398 +213,193 @@ extern "C" LEVMARDLL_API double FastReflfit(BoxReflSettings* InitStruct, double 
 	return ChiSquare;
 }
 
-//
-//extern "C" LEVMARDLL_API void StochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-//			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covariance[], int covarsize, 
-//			double info[], int infosize, BOOL onesigma,BOOL writefiles, int iterations, double ParamArray[], int* paramarraysize, double parampercs[], double chisquarearray[], double covararray[],
-//			double QSpread, BOOL Impnorm)
-//{
-//	FastReflcalc Refl;
-//	Refl.init(wavelength,boxes,SLD,SupSLD,parameters,paramsize, Reflectivity, Errors, reflectivitysize, (bool)onesigma, QSpread,1.0, Impnorm, 0, 0);
-//	Refl.Realreflerrors = Errors;
-//	Refl.MakeTheta(QRange, QError,QSize);
-//	
-//	//Setup the fit
-//
-//	double opts[LM_OPTS_SZ];
-//	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20;
-//	opts[4]=-LM_DIFF_DELTA; // relevant only if the finite difference jacobian version is used 
-//	
-//	//Allocate a dummy array - Our real calculation is done in Refl.objective
-//	double* xvec = new double[QSize] ;
-//	for(int i = 0; i < QSize; i++)
-//	{
-//		xvec[i] = 0;
-//	}
-//	//Copy starting solution
-//	double* origguess = new double[paramsize];
-//	memcpy(origguess, parameters, sizeof(double)*paramsize);
-//
-//	//Starting solution
-//	//dlevmar_dif(Refl.objective, parameters, xvec,  paramsize,QSize, 1000, opts, info, NULL, NULL,(void*)(&Refl)); 
-//	if(onesigma == true)
-//		Refl.mkdensityonesigma(parameters,paramsize);
-//	else
-//		Refl.mkdensity(parameters, paramsize);
-//
-//	Refl.myrfdispatch();
-//
-//	double bestchisquare = 0;
-//	for(int i = 0; i < reflectivitysize; i++)
-//	{
-//		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]))*(log(Refl.reflpt[i])-log(Reflectivity[i]));
-//	}
-//
-//	double* tempcovararray = new double[paramsize*paramsize];
-//	memset(tempcovararray,0.0, sizeof(double)*paramsize*paramsize);
-//	ParameterContainer original(parameters, tempcovararray, paramsize,onesigma,bestchisquare,parampercs[6]);
-//	delete[] tempcovararray;
-//
-//	vector<ParameterContainer> temp;
-//	temp.reserve(6000);
-//
-//	omp_set_num_threads(omp_get_num_procs());
-//
-//#pragma omp parallel
-//{
-//	FastReflcalc locRefl;
-//	locRefl.init(wavelength,boxes,SLD,SupSLD,parameters,paramsize, Reflectivity, Errors, reflectivitysize, (bool)onesigma, QSpread,1.0, Impnorm, 0, 0);
-//	locRefl.Realreflerrors = Errors;
-//	locRefl.MakeTheta(QRange, QError, QSize);
-//
-//	//Initialize random number generator
-//	int seed = time_seed();
-//	CRandomMersenne randgen(time_seed()+omp_get_thread_num());
-//
-//	ParameterContainer localanswer;
-//	double locparameters[20];
-//    double locbestchisquare = bestchisquare;
-//	double bestparam[20];
-//	int vecsize = 1000;
-//	int veccount = 0;
-//	ParameterContainer* vec = (ParameterContainer*)malloc(vecsize*sizeof(ParameterContainer));
-//	
-//	double locinfo[9];
-//
-//	//Allocate workspace - these will be private to each thread
-//
-//	double* work, *covar;
-//	work=(double*)malloc((LM_DIF_WORKSZ(paramsize, QSize)+paramsize*QSize)*sizeof(double));
-//	covar=work+LM_DIF_WORKSZ(paramsize, QSize);
-//
-//
-//	#pragma omp for schedule(runtime)
-//	for(int i = 0; i<iterations;i++) 
-//	{
-//		locparameters[0] = randgen.IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
-//		for(int k = 0; k<boxes; k++)
-//		{
-//			if(onesigma == TRUE)
-//			{
-//				locparameters[2*k+1] = randgen.IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
-//				locparameters[2*k+2] = randgen.IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
-//			}
-//			else
-//			{
-//				locparameters[3*k+1] = randgen.IRandom(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
-//				locparameters[3*k+2] = randgen.IRandom(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
-//				locparameters[3*k+3] = randgen.IRandom(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
-//			}
-//		}
-//
-//		locparameters[paramsize-1] = origguess[paramsize-1];
-//		
-//		
-//		
-//		dlevmar_dif(locRefl.objective, locparameters, xvec,  paramsize,QSize, 500, opts, locinfo, work,covar,(void*)(&locRefl)); 
-//		
-//		localanswer.SetContainer(locparameters,covar,paramsize,onesigma,locinfo[1], parampercs[6]);
-//
-//		if(locinfo[1] < bestchisquare && localanswer.IsReasonable() == true)
-//		{
-//			//Resize the private arrays if we need the space
-//			if(veccount+2 == vecsize)
-//			{
-//						vecsize += 1000;
-//						vec = (ParameterContainer*)realloc(vec,vecsize*sizeof(ParameterContainer));
-//			}
-//
-//			bool unique = true;
-//			int arraysize = veccount;
-//
-//			//Check if the answer already exists
-//			for(int i = 0; i < arraysize; i++)
-//			{
-//				if(localanswer == vec[i])
-//				{
-//					unique = false; 
-//					i = arraysize;
-//				}
-//			}
-//			//If the answer is unique add it to our set of answers
-//			if(unique == true)
-//			{
-//				vec[veccount] = localanswer;
-//				veccount++;
-//			}
-//		}
-//	}
-//	#pragma omp critical (AddVecs)
-//	{
-//		for(int i = 0; i < veccount; i++)
-//		{
-//			temp.push_back(vec[i]);
-//		}
-//	}
-//	free(vec);
-//	free(work);
-//}
-//
-//delete[] xvec;
-//delete[] origguess;
-//
-////Sort the answers
-////Get the total number of answers
-//temp.push_back(original);
-//
-//vector<ParameterContainer> allsolutions;
-//allsolutions.reserve(6000);
-//
-//int tempsize = temp.size();
-//allsolutions.push_back(temp[0]);
-//
-//for(int i = 1; i < tempsize; i++)
-//{
-//	int allsolutionssize = allsolutions.size();
-//	for(int j = 0; j < allsolutionssize;j++)
-//		{
-//			if(temp[i] == allsolutions[j])
-//			{
-//				break;
-//			}
-//			if(j == allsolutionssize-1)
-//			{
-//				allsolutions.push_back(temp[i]);
-//			}
-//		}
-//}
-//
-//if(allsolutions.size() > 0)
-//{
-//	sort(allsolutions.begin(), allsolutions.end());
-//}
-//
-//for(int i = 0; i < allsolutions.size() && i < 1000 && allsolutions.size() > 0; i++)
-//{
-//	for(int j = 0; j < paramsize; j++)
-//	{
-//		ParamArray[(i)*paramsize+j] = (allsolutions.at(i).GetParamArray())[j];
-//		covararray[(i)*paramsize+j] = (allsolutions.at(i).GetCovarArray())[j];
-//	}
-//	chisquarearray[i] = (allsolutions.at(i).GetScore());
-//}
-//*paramarraysize = min(allsolutions.size(),999);
-//}
-//
-//extern "C" LEVMARDLL_API void ConstrainedStochFit(int boxes, double SLD, double SupSLD, double wavelength, double parameters[], int paramsize,
-//			double QRange[], double QError[], int QSize, double Reflectivity[], int reflectivitysize, double Errors[],double covariance[], int covarsize, 
-//			double info[], int infosize, BOOL onesigma,BOOL writefiles, int iterations, double ParamArray[], int* paramarraysize, double parampercs[], double chisquarearray[], double covararray[],
-//			double UL[], double LL[], double QSpread, BOOL ImpNorm)
-//{
-//	FastReflcalc Refl;
-//	Refl.init(wavelength,boxes,SLD,SupSLD,parameters,paramsize, Reflectivity, Errors, reflectivitysize, (bool)onesigma,
-//		QSpread,1.0,ImpNorm, 0, 0);
-//	Refl.Realreflerrors = Errors;
-//	Refl.MakeTheta(QRange,QError, QSize);
-//	
-//	//Setup the fit
-//
-//	double opts[LM_OPTS_SZ];
-//	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20;
-//	opts[4]=-LM_DIFF_DELTA; // relevant only if the finite difference jacobian version is used 
-//	
-//	//Allocate a dummy array - Our real calculation is done in Refl.objective
-//	double* xvec = new double[QSize] ; 
-//	for(int i = 0; i < QSize; i++)
-//	{
-//		xvec[i] = 0;
-//	}
-//	//Copy starting solution
-//	double* origguess = new double[paramsize];
-//	memcpy(origguess, parameters, sizeof(double)*paramsize);
-//
-//	//Starting solution
-//	//dlevmar_bc_dif(Refl.objective, parameters, xvec,  paramsize,QSize, LL, UL,100,  opts, info, NULL,NULL,(void*)(&Refl)); 
-//	
-//	if(onesigma == true)
-//		Refl.mkdensityonesigma(parameters,paramsize);
-//	else
-//		Refl.mkdensity(parameters, paramsize);
-//
-//	Refl.myrfdispatch();
-//
-//	double bestchisquare = 0;
-//	for(int i = 0; i < reflectivitysize; i++)
-//	{
-//		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]))*(log(Refl.reflpt[i])-log(Reflectivity[i]));
-//	}
-//
-//	double* tempcovararray = new double[paramsize*paramsize];
-//	memset(tempcovararray,0.0, sizeof(double)*paramsize*paramsize);
-//	ParameterContainer original(parameters, tempcovararray, paramsize,onesigma,bestchisquare, parampercs[6]);
-//	delete[] tempcovararray;
-//
-//	vector<ParameterContainer> temp;
-//	temp.reserve(6000);
-//
-//	omp_set_num_threads(omp_get_num_procs());
-//
-//#pragma omp parallel
-//{
-//	FastReflcalc locRefl;
-//	locRefl.init(wavelength,boxes,SLD,SupSLD,parameters,paramsize, Reflectivity, Errors, reflectivitysize, (bool)onesigma,
-//		QSpread,1.0,ImpNorm, 0, 0);
-//	locRefl.Realreflerrors = Errors;
-//	locRefl.MakeTheta(QRange, QError, QSize);
-//	
-//
-//	//Initialize random number generator
-//	int seed = time_seed();
-//	CRandomMersenne randgen(time_seed()+omp_get_thread_num());
-//
-//	ParameterContainer localanswer;
-//	double locparameters[20];
-//    double locbestchisquare = bestchisquare;
-//	double bestparam[20];
-//	int vecsize = 1000;
-//	int veccount = 0;
-//	ParameterContainer* vec = (ParameterContainer*)malloc(vecsize*sizeof(ParameterContainer)*50);
-//	
-//	double locinfo[9];
-//
-//	//Allocate workspace - these will be private to each thread
-//
-//	double* work, *covar;
-//	work=new double[((LM_DIF_WORKSZ(paramsize, QSize)+paramsize*QSize))];
-//	covar=work+LM_DIF_WORKSZ(paramsize, QSize);
-//	int threadnum = omp_get_thread_num();
-//
-//	#pragma omp for schedule(runtime)
-//	for(int i = 0; i<iterations;i++) 
-//	{
-//		
-//		//Permute the answer
-//		locparameters[0] = randgen.IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
-//		for(int k = 0; k<boxes; k++)
-//		{
-//			if(onesigma == TRUE)
-//			{
-//				locparameters[2*k+1] = randgen.IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
-//				locparameters[2*k+2] = randgen.IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
-//			}
-//			else
-//			{
-//				locparameters[3*k+1] = randgen.IRandom(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
-//				locparameters[3*k+2] = randgen.IRandom(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
-//				locparameters[3*k+3] = randgen.IRandom(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
-//			}
-//		}
-//		locparameters[paramsize-1] = origguess[paramsize-1];
-//
-//		dlevmar_bc_dif(locRefl.objective, locparameters, xvec,  paramsize,QSize, LL, UL,500,  opts, locinfo, work,covar,(void*)(&locRefl)); 
-//		localanswer.SetContainer(locparameters,covar,paramsize,onesigma,locinfo[1], parampercs[6]);
-//
-//		if(locinfo[1] < bestchisquare && localanswer.IsReasonable() == true)
-//		{
-//			//Resize the private arrays if we need the space
-//			if(veccount+2 == vecsize)
-//			{
-//						vecsize += 1000;
-//						vec = (ParameterContainer*)realloc(vec,vecsize*sizeof(ParameterContainer));
-//			}
-//
-//			bool unique = true;
-//			int arraysize = veccount;
-//
-//			//Check if the answer already exists
-//			for(int i = 0; i < arraysize; i++)
-//			{
-//				if(localanswer == vec[i])
-//				{
-//					unique = false; 
-//					i = arraysize;
-//				}
-//			}
-//			//If the answer is unique add it to our set of answers
-//			if(unique == true)
-//			{
-//				vec[veccount] = localanswer;
-//				veccount++;
-//			}
-//		}
-//	}
-//#pragma omp critical
-//	{
-//		for(int i = 0; i < veccount; i++)
-//		{
-//			temp.push_back(vec[i]);
-//		}
-//	}
-//	free(vec);
-//	delete(work);
-//}
-//
-//delete[] xvec;
-//delete[] origguess;
-//
-////Sort the answers
-////Get the total number of answers
-//temp.push_back(original);
-//
-//vector<ParameterContainer> allsolutions;
-//allsolutions.reserve(6000);
-//
-//int tempsize = temp.size();
-//allsolutions.push_back(temp[0]);
-//
-//
-//for(int i = 1; i < tempsize; i++)
-//{
-//	int allsolutionssize = allsolutions.size();
-//	for(int j = 0; j < allsolutionssize;j++)
-//		{
-//			if(temp[i] == allsolutions[j])
-//			{
-//				break;
-//			}
-//			if(j == allsolutionssize-1)
-//			{
-//				allsolutions.push_back(temp[i]);
-//			}
-//		}
-//}
-//
-//
-//if(allsolutions.size() > 0)
-//{
-//	sort(allsolutions.begin(), allsolutions.end());
-//}
-//
-//
-//
-//for(int i = 0; i < allsolutions.size() && i < 1000 && allsolutions.size() > 0; i++)
-//{
-//	for(int j = 0; j < paramsize; j++)
-//	{
-//		ParamArray[(i)*paramsize+j] = (allsolutions.at(i).GetParamArray())[j];
-//		covararray[(i)*paramsize+j] = (allsolutions.at(i).GetCovarArray())[j];
-//	}
-//	chisquarearray[i] = (allsolutions.at(i).GetScore());
-//
-//}
-//*paramarraysize = min(allsolutions.size(),999);
-//}
-////
+
+extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double parameters[], double covararray[], int paramsize, 
+			double info[], double ParamArray[], double chisquarearray[], int* paramarraysize)
+{
+	FastReflcalc Refl;
+	Refl.init(InitStruct);
+	double* Reflectivity = InitStruct->Refl;
+	int QSize = InitStruct->QPoints;
+	double* parampercs = InitStruct->ParamPercs;
+
+	//Setup the fit
+	double opts[LM_OPTS_SZ];
+	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20;
+	opts[4]=-LM_DIFF_DELTA; // relevant only if the finite difference jacobian version is used 
+	
+	//Allocate a dummy array - Our real calculation is done in Refl.objective
+	double* xvec = new double[InitStruct->QPoints] ;
+	for(int i = 0; i < InitStruct->QPoints; i++)
+	{
+		xvec[i] = 0;
+	}
+
+	//Copy starting solution
+	double* origguess = new double[paramsize];
+	memcpy(origguess, parameters, sizeof(double)*paramsize);
+
+	Refl.myrfdispatch();
+
+	double bestchisquare = 0;
+	for(int i = 0; i < InitStruct->QPoints; i++)
+	{
+		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]))*(log(Refl.reflpt[i])-log(Reflectivity[i]));
+	}
+
+	double* tempcovararray = new double[paramsize*paramsize];
+	memset(tempcovararray,0.0, sizeof(double)*paramsize*paramsize);
+	ParameterContainer original(parameters, tempcovararray, paramsize,InitStruct->OneSigma,
+		bestchisquare, parampercs[6]);
+	delete[] tempcovararray;
+
+	vector<ParameterContainer> temp;
+	temp.reserve(6000);
+
+	omp_set_num_threads(omp_get_num_procs());
+
+#pragma omp parallel
+{
+	FastReflcalc locRefl;
+	locRefl.init(InitStruct);
+
+	//Initialize random number generator
+	int seed = time_seed();
+	CRandomMersenne randgen(time_seed()+omp_get_thread_num());
+
+	ParameterContainer localanswer;
+	double locparameters[20];
+    double locbestchisquare = bestchisquare;
+	double bestparam[20];
+	int vecsize = 1000;
+	int veccount = 0;
+	ParameterContainer* vec = (ParameterContainer*)malloc(vecsize*sizeof(ParameterContainer));
+	
+	double locinfo[9];
+
+	//Allocate workspace - these will be private to each thread
+
+	double* work, *covar;
+	work=(double*)malloc((LM_DIF_WORKSZ(paramsize, QSize)+paramsize*QSize)*sizeof(double));
+	covar=work+LM_DIF_WORKSZ(paramsize, QSize);
+
+
+	#pragma omp for schedule(runtime)
+	for(int i = 0; i < InitStruct->Iterations;i++) 
+	{
+		locparameters[0] = randgen.IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
+		for(int k = 0; k< InitStruct->Boxes; k++)
+		{
+			if(InitStruct->OneSigma == TRUE)
+			{
+				locparameters[2*k+1] = randgen.IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
+				locparameters[2*k+2] = randgen.IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
+			}
+			else
+			{
+				locparameters[3*k+1] = randgen.IRandom(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
+				locparameters[3*k+2] = randgen.IRandom(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
+				locparameters[3*k+3] = randgen.IRandom(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
+			}
+		}
+
+		locparameters[paramsize-1] = origguess[paramsize-1];
+		
+		
+		if(InitStruct->UL == NULL)
+			dlevmar_dif(locRefl.objective, locparameters, xvec,  paramsize, InitStruct->QPoints, 500, opts, locinfo, work,covar,(void*)(&locRefl)); 
+		else
+			dlevmar_bc_dif(locRefl.objective, locparameters, xvec, paramsize, InitStruct->QPoints, InitStruct->LL, InitStruct->UL,
+				500, opts, locinfo, work,covar,(void*)(&locRefl)); 
+		
+		localanswer.SetContainer(locparameters,covar,paramsize,InitStruct->OneSigma,locinfo[1], parampercs[6]);
+
+		if(locinfo[1] < bestchisquare && localanswer.IsReasonable() == true)
+		{
+			//Resize the private arrays if we need the space
+			if(veccount+2 == vecsize)
+			{
+						vecsize += 1000;
+						vec = (ParameterContainer*)realloc(vec,vecsize*sizeof(ParameterContainer));
+			}
+
+			bool unique = true;
+			int arraysize = veccount;
+
+			//Check if the answer already exists
+			for(int i = 0; i < arraysize; i++)
+			{
+				if(localanswer == vec[i])
+				{
+					unique = false; 
+					i = arraysize;
+				}
+			}
+			//If the answer is unique add it to our set of answers
+			if(unique == true)
+			{
+				vec[veccount] = localanswer;
+				veccount++;
+			}
+		}
+	}
+	#pragma omp critical (AddVecs)
+	{
+		for(int i = 0; i < veccount; i++)
+		{
+			temp.push_back(vec[i]);
+		}
+	}
+	free(vec);
+	free(work);
+}
+
+delete[] xvec;
+delete[] origguess;
+
+//Sort the answers
+//Get the total number of answers
+temp.push_back(original);
+
+vector<ParameterContainer> allsolutions;
+allsolutions.reserve(6000);
+
+int tempsize = temp.size();
+allsolutions.push_back(temp[0]);
+
+for(int i = 1; i < tempsize; i++)
+{
+	int allsolutionssize = allsolutions.size();
+	for(int j = 0; j < allsolutionssize;j++)
+		{
+			if(temp[i] == allsolutions[j])
+			{
+				break;
+			}
+			if(j == allsolutionssize-1)
+			{
+				allsolutions.push_back(temp[i]);
+			}
+		}
+}
+
+if(allsolutions.size() > 0)
+{
+	sort(allsolutions.begin(), allsolutions.end());
+}
+
+for(int i = 0; i < allsolutions.size() && i < 1000 && allsolutions.size() > 0; i++)
+{
+	for(int j = 0; j < paramsize; j++)
+	{
+		ParamArray[(i)*paramsize+j] = (allsolutions.at(i).GetParamArray())[j];
+		covararray[(i)*paramsize+j] = (allsolutions.at(i).GetCovarArray())[j];
+	}
+	chisquarearray[i] = (allsolutions.at(i).GetScore());
+}
+*paramarraysize = min(allsolutions.size(),999);
+}
+
 extern "C" LEVMARDLL_API void FastReflGenerate(BoxReflSettings* InitStruct, double parameters[], int parametersize, double Reflectivity[])
 {
 	FastReflcalc FastRefl;

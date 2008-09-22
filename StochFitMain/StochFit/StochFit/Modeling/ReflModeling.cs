@@ -276,7 +276,7 @@ namespace StochasticModeling
             BackupArrays();
            // MakeParameters(ref parameters, false);
             covar = new double[parameters.Length];
-            chisquare = FastReflfit(ReflStruct, parameters, covar, parameters.Length, info, info.Length);
+            chisquare = FastReflfit(InfoStruct, parameters, covar, parameters.Length, info, info.Length);
             UpdateFromFit(parameters, chisquare);
         }
 

@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "Settings.h"
+
 class RhoCalc
 {
 private:
@@ -29,7 +31,7 @@ private:
 	double* MIRho;
 	double* param; 
 	
-	double* ZIncrement;
+	float* ZIncrement;
 
 	double* m_LengthArray;
 	double* m_RhoArray;
@@ -49,9 +51,8 @@ private:
 public:	
 	//Member functions
 	~RhoCalc();
-    void init(int boxes, double subSLD, double supSLD, double* Rho,  double* Zinc, int zdatacount, bool onesig);
+    void init(BoxReflSettings* InitStruct);
 	void mkdensityboxmodel(double* p, int plenght);
-	void mkdensityonesigma(double* p, int plength);
     void mkdensity(double* p, int plength);	
     static void objective(double *p, double *x, int m, int n, void *data);
 	void writefiles(const char* filename);

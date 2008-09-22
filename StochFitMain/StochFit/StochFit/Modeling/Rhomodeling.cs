@@ -43,7 +43,7 @@ namespace StochasticModeling
     /// <summary>
     /// Fits a model dependent electron density profile to the model independent electron density profile
     /// </summary>
-    public partial class Rhomodeling : StochFormBase
+    public partial class Rhomodeling : BoxReflFitBase
     {
         #region Variables
 
@@ -84,7 +84,8 @@ namespace StochasticModeling
         /// <param name="subsld">The subphase SLD</param>
         /// <param name="supsld">The superphase SLD</param>
         /// <param name="UseSLD">True if using SLD instead of ED</param>
-        public Rhomodeling(double[] Z, double[] ERho, double roughness, string leftoffset, string subsld, string supsld)
+        public Rhomodeling(double[] Z, double[] ERho, double roughness, string leftoffset, string subsld, string supsld)//:
+           // base(roughness, 
         {
             InitializeComponent();
             m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
@@ -204,6 +205,7 @@ namespace StochasticModeling
         {
             SubRough.Text = rough.ToString();
 
+            
             foreach(TextBox b in m_tbBoxSigmaArray)
                 b.Text = rough.ToString();
         }
@@ -300,28 +302,7 @@ namespace StochasticModeling
             UpdateProfile();
         }
 
-        private void GreyFields()
-        {
-            for (int i = 0; i < 6; i++)
-            {
-                if (i < int.Parse(BoxCount.Text))
-                {
-                    m_tbBoxLengthArray[i].Enabled = true;
-                    m_tbBoxRhoArray[i].Enabled = true;
-
-                    if (Holdsigma.Checked)
-                        m_tbBoxSigmaArray[i].Enabled = false;
-                    else
-                        m_tbBoxSigmaArray[i].Enabled = true;
-                }
-                else
-                {
-                    m_tbBoxLengthArray[i].Enabled = false;
-                    m_tbBoxRhoArray[i].Enabled = false;
-                    m_tbBoxSigmaArray[i].Enabled = false;
-                }
-            }
-        }
+       
 
         private void LevenbergFit_Click(object sender, EventArgs e)
         {

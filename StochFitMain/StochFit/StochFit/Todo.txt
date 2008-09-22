@@ -5,4 +5,6 @@ x gray out unused boxes dynamically
 x check threading in C++ modules for speed - not a problem
 full refldata
 make sure all files are printed
-itextsharp update
+xitextsharp update
+
+update to 3.5

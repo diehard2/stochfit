@@ -22,16 +22,6 @@
 #include "FastReflCalc.h"
 #include "Settings.h"
 
-// Multilayer reflection and transmission
-// Parrett scheme, L. G. Parrett, Phys. Rev. 95(2), 359(1954)
-// formulea to use
-//      n \cos(\theta) = \cos(\theta_0)
-//
-//      (E_{k,+} + E_{k,-} ) \cos(\theta_k) = ( E_{k+1,+}/a + E_{k+1,-} a) \cos( \theta_{k+1})
-//      (E_{k,+} - E_{k,-} ) \sin(\theta_k) = ( E_{k+1,+}/a - E_{k+1,-} a) \sin( \theta_{k+1})
-//      a = exp( i k_{k+1} d_{k+1})
-//      k_{k+1} = sqrt( n^2 - \cos^2(\theta_0)) k_0
-
 FastReflcalc::~FastReflcalc()
 {
 	_aligned_free(sinsquaredthetai);
@@ -165,8 +155,8 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
   
   for(int i = 0; i < n; ++i)
   {
-     /*if( i >= reflinst->m_icritqoffset && i <= n-reflinst->m_ihighqoffset)
-	 {*/
+    if( i >= reflinst->m_icritqoffset && i <= n-reflinst->m_ihighqoffset)
+	 {
 		x[i] = (log(reflinst->reflpt[i])-log(reflinst->Realrefl[i]));
 
 		//Sometimes we get NAN. We make that solution unpalatable until I can find a workaround
@@ -174,11 +164,11 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
 		{
 			x[i] = 1e6;
 		}
-	/* }
+	}
 	 else
 	 {
 		 x[i] = 0;
-	 }*/
+	 }
   }
 }
 

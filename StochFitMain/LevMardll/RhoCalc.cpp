@@ -20,16 +20,17 @@
 
 #include "stdafx.h"
 #include "Rhocalc.h"
+#include "settings.h"
 
-void RhoCalc::init(int boxes, double subSLD, double SupSLD, double* Rho,  double* Zinc, int zdatacount, bool onesig)
+void RhoCalc::init(BoxReflSettings* InitStruct)
 {
-   	onesigma = onesig;
-	boxnumber = boxes;
-	ZIncrement = Zinc;
-	Zlength = zdatacount;
-	MIRho = Rho;	
-	SubSLD = subSLD;
-	m_dSupSLD = SupSLD;
+   	onesigma = InitStruct->OneSigma;
+	boxnumber = InitStruct->Boxes;
+	ZIncrement = InitStruct->ZIncrement;
+	Zlength = InitStruct->ZLength;
+	MIRho = InitStruct->MIEDP;	
+	SubSLD = InitStruct->SubSLD;
+	m_dSupSLD = InitStruct->SupSLD;
 
 	nk = (double*)_aligned_malloc(sizeof(double)*Zlength,16);
 	nkb = (double*)_aligned_malloc(sizeof(double)*Zlength,16);
@@ -41,7 +42,6 @@ void RhoCalc::init(int boxes, double subSLD, double SupSLD, double* Rho,  double
 	m_LengthArray = new double[boxnumber];
 	m_RhoArray = new double[boxnumber];
 	m_SigmaArray = new double[boxnumber];
-   
 }
 
 RhoCalc::~RhoCalc()
@@ -59,11 +59,7 @@ RhoCalc::~RhoCalc()
  void RhoCalc::objective(double* par, double* x, int m, int n, void* data)
 {
   RhoCalc* rhoinst = (RhoCalc*)data;
-
-  if(rhoinst->onesigma == true)
-	  rhoinst->mkdensityonesigma(par,m);
-  else
-	  rhoinst->mkdensity(par,m);
+  rhoinst->mkdensity(par,m);
 
   //This gets squared in the LM routines
   for(int i=0; i<rhoinst->Zlength; ++i)
@@ -180,22 +176,6 @@ void RhoCalc::mkdensityboxmodel(double* p, int plength)
 	}
 }
 
-void RhoCalc::mkdensityonesigma(double* p, int plength)
-{
-	//Dump our parameters into individual arrays so they're easier to deal with
-	double SubRough = p[0];
-	double Zoffset = p[1];
-
-	for(int i = 0; i< boxnumber;i++)
-	{
-		m_LengthArray[i] = p[2*i+2];
-		m_RhoArray[i] = p[2*i+3];
-		m_SigmaArray[i] = p[0];
-	}
-
-	Rhocalculate(SubRough, Zoffset);
-}
-
 void RhoCalc::mkdensity(double* p, int plength)
 {
 	//Move our parameters into individual arrays so they're easier to deal with
@@ -203,11 +183,24 @@ void RhoCalc::mkdensity(double* p, int plength)
 	double SubRough = p[0];
 	double ZOffset = p[1];
 
-	for(int i = 0; i< boxnumber;i++)
+	if(onesigma == TRUE)
 	{
-		m_LengthArray[i] = p[3*i+2];
-		m_RhoArray[i] = p[3*i+3];
-		m_SigmaArray[i] = p[3*i+4];
+		for(int i = 0; i< boxnumber;i++)
+		{
+			m_LengthArray[i] = p[2*i+2];
+			m_RhoArray[i] = p[2*i+3];
+			m_SigmaArray[i] = p[0];
+		}
+	}
+	else
+	{
+		for(int i = 0; i< boxnumber;i++)
+		{
+			m_LengthArray[i] = p[3*i+2];
+			m_RhoArray[i] = p[3*i+3];
+			m_SigmaArray[i] = p[3*i+4];
+		}
+
 	}
 	
 	Rhocalculate(SubRough, ZOffset);
@@ -221,5 +214,4 @@ void RhoCalc::writefiles(const char* filename)
 		outrhofile<< ZIncrement[i] << ' ' << nk[i] << ' ' << nkb[i] << std::endl;
 	}
 	outrhofile.close();
-
 }

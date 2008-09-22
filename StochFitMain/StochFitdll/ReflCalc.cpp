@@ -55,17 +55,11 @@ CReflCalc::~CReflCalc()
 
 }
 
-CReflCalc::CReflCalc():exi(NULL),eyi(NULL),xi(NULL),yi(NULL)
+CReflCalc::CReflCalc():exi(NULL),eyi(NULL),xi(NULL),yi(NULL), m_bReflInitialized(FALSE)
 {}
 
 void CReflCalc::init(ReflSettings* InitStruct)
 {
-	int resolution;
-	
-	//int numberofdatapoints, double xraylambda,double d0, BOOL usesurfabs, int parratlayers, double leftoffset, BOOL forcenorm, double Qspread, bool XRonly
-
-   
-	
 	lambda = InitStruct->Wavelength;
 	k0 = 2.0*M_PI/lambda;
     
@@ -98,17 +92,6 @@ void CReflCalc::init(ReflSettings* InitStruct)
 	}
 
 	omp_set_num_threads(m_iuseableprocessors);
-
-
-	//Create the scratch arrays for the reflectivity calculation
- 	m_ckk = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
-	m_dkk = (double*)_mm_malloc(sizeof(double)*nl*m_iuseableprocessors,16);
-	m_cak = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
-	m_crj = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
-	m_drj = (double*)_mm_malloc(sizeof(double)*nl*m_iuseableprocessors,16);
-	m_cRj = (MyComplex *)_mm_malloc(sizeof(MyComplex )*nl*m_iuseableprocessors,16);
-
-	
 	SetupRef(InitStruct);
 }
 
@@ -123,7 +106,6 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 		exi = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
 	
 	eyi = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
-
 	sinthetai = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
 	sinsquaredthetai = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
 	qspreadsinthetai = (double*)_mm_malloc(m_idatapoints*13*sizeof(double),64);
@@ -279,6 +261,8 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 void CReflCalc::ParamsRF(CEDP* EDP,  wstring reflfile)
 {
 	ofstream reflout(reflfile.c_str());
+	
+	
 	
 	if(m_dQSpread < 0.005 || exi == NULL)
 	{
@@ -498,6 +482,11 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 	MyComplex* DEDP = EDP->m_DEDP;
 	int EDPoints = EDP->Get_EDPPointCount();
 
+	if(m_bReflInitialized == FALSE)
+	{
+		InitializeScratchArrays(EDP->Get_EDPPointCount());
+	}
+
 	//Calculate some complex constants to keep them out of the loop
 	MyComplex  lengthmultiplier = -2.0*MyComplex (0.0,1.0)*EDP->Get_Dz() ;
 	MyComplex  indexsup = 1.0 - DEDP[0]/2.0;
@@ -514,7 +503,7 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 	{
 		//Figure out the number of the thread we're currently in
 		int threadnum = omp_get_thread_num();
-		int arrayoffset = threadnum*nl;
+		int arrayoffset = threadnum*EDPoints;
 
 		double* dkk = m_dkk+arrayoffset;
 		MyComplex * kk = m_ckk+arrayoffset;
@@ -527,14 +516,14 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 		
 		/********Boundary conditions********/
 		//No reflection in the last layer
-		Rj[nl-1] = 0.0f;
+		Rj[EDPoints-1] = 0.0f;
 		//The first layer and the last layer are assumed to be infinite e^-(0+i*(layerlength)) = 1+e^(-inf*i*beta) = 1 + 0*i*beta
-		ak[nl-1] = 1.0f;
+		ak[EDPoints-1] = 1.0f;
 		ak[0] = 1.0f;
 		
 		//In order to vectorize loops, you cannot use global variables
-		int nlminone = nl-1;
-		int numlay =  nl;
+		int nlminone = EDPoints-1;
+		int numlay =  EDPoints;
 
 		#pragma omp for schedule(runtime)
 		for(int l = 0; l < datapoints;l++)
@@ -609,9 +598,10 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 			
 			//Parratt recursion of the amplitude reflectivity
 			
-			for(int i = nl-2; i >= 0 ;i--)
+			for(int i = EDPoints-2; i >= 0 ;i--)
 			{
 				Rj[i] = ak[i]*(Rj[i+1]+rj[i])/(Rj[i+1]*rj[i]+1.0);
+					
 			}
 			
 			
@@ -619,10 +609,9 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 			//The magnitude of the reflection at layer 0 is the measured reflectivity of the film
 			holder = compabs(Rj[0]);
 			refl[l] = holder*holder;
+			Sleep(1);
 		}
 	}
-	m_ilowEDduplicatepts = 0;
-	m_ihighEDduplicatepts = 0;
 }
 
 void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int datapoints,double* refl, CEDP* EDP)
@@ -630,21 +619,28 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 	MyComplex* DEDP = EDP->m_DEDP;
 	int EDPoints = EDP->Get_EDPPointCount();
 
+	if(m_bReflInitialized == FALSE)
+	{
+		InitializeScratchArrays(EDP->Get_EDPPointCount());
+	}
+
+
 	////Calculate some complex constants to keep them out of the loop
 	MyComplex  lengthmultiplier = -2.0f*MyComplex (0.0f,1.0f)*EDP->Get_Dz();
 	MyComplex  indexsup = 1.0 - DEDP[0]/2.0;
 	MyComplex  indexsupsquared = indexsup * indexsup;
 	int HighOffSet = 0;
 	int LowOffset = 0;
-	int offset = 0;
-	int neg = 0;
+	int offset = datapoints;
+	
 
 	GetOffSets(HighOffSet, LowOffset, DEDP, EDPoints);
 
+	//Find the point at which we no longer need to use complex numbers exclusively
     for(int i = 0; i< datapoints;i++)
 	{	
-		
-		for(int k = 0; k<nl;k++)
+		int neg = 0;
+		for(int k = 0; k<EDPoints;k++)
 		{
 			if((indexsupsquared.re*sinsquaredtheta[i]-DEDP[k].re+DEDP[0].re/2.0f)< 0.0f)
 			{
@@ -654,18 +650,26 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 		}
 		if(neg == 0)
 		{
-			if(m_dQSpread < 0.005f)
+			if(m_dQSpread == 0.0)
 					break;
 		}
 		else
 			offset = i;
 	}
 
+	//In order to vectorize loops, you cannot use global variables
+	int EDPointsMinOne = EDPoints-1;
+	
+
+
+
+		
+
 	#pragma omp parallel
 	{
 		//Figure out the number of the thread we're currently in
 		int threadnum = omp_get_thread_num();
-		int arrayoffset = threadnum*nl;
+		int arrayoffset = threadnum*EDPoints;
 
 		double* dkk = m_dkk+arrayoffset;
 		MyComplex * kk = m_ckk+arrayoffset;
@@ -676,17 +680,13 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 		MyComplex  cholder, tempk1, tempk2, zero;
 		double holder, dtempk1, dtempk2;
 
-		
 		/********Boundary conditions********/
 		//No reflection in the last layer
-		Rj[nl-1] = 0.0f;
+		Rj[EDPointsMinOne] = 0.0f;
 		//The first layer and the last layer are assumed to be infinite
-		ak[nl-1] = 1.0f;
+		ak[EDPointsMinOne] = 1.0f;
 		ak[0] = 1.0f;
-
-		//In order to vectorize loops, you cannot use global variables
-		int nlminone = nl-1;
-		int numlay =  nl;
+		
 
 		#pragma omp for nowait schedule(guided)
 		for(int l = 0; l<= offset;l++)
@@ -696,7 +696,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			kk[0] = k0 * indexsup * sintheta[l];
 
 			tempk1 = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[1]+DEDP[0]);
-			tempk2 = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[numlay-1]+DEDP[0]);
+			tempk2 = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[EDPointsMinOne]+DEDP[0]);
 			//Workout the wavevector k -> kk[i] = k0 *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
@@ -705,13 +705,13 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			}
 
 			#pragma ivdep
-			for(int i = LowOffset+1; i < m_ihighEDduplicatepts;i++)
+			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
 				kk[i] = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[i]+DEDP[0]);
 			}
 
 			#pragma ivdep
-			for(int i = HighOffSet; i < numlay; i++)
+			for(int i = HighOffSet; i < EDPoints; i++)
 			{
 				kk[i] = tempk2;
 			}
@@ -719,7 +719,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			//Make the phase factors ak -> ak[i] = compexp(-1.0*imaginary*kk[i]*dz0/2.0);
 
 			tempk1 = compexp(lengthmultiplier*kk[1]);
-			tempk2 = compexp(lengthmultiplier*kk[numlay-1]);
+			tempk2 = compexp(lengthmultiplier*kk[EDPointsMinOne]);
 
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
@@ -734,7 +734,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			}
 
 			#pragma ivdep
-			for(int i = HighOffSet; i < numlay-1; i++)
+			for(int i = HighOffSet; i < EDPointsMinOne; i++)
 			{
 				ak[i] = tempk2;
 			}
@@ -742,7 +742,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			//Make the Fresnel coefficients -> rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
 			
 			#pragma ivdep
-			for(int i = 0; i <= LowOffset;i++)
+			for(int i = 0; i < LowOffset;i++)
 			{
 				rj[i] = zero;
 			}
@@ -754,7 +754,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			}
 			
 			#pragma ivdep
-			for(int i = HighOffSet; i < numlay-1; i++)
+			for(int i = HighOffSet; i < EDPointsMinOne; i++)
 			{
 				rj[i] = zero;
 			}
@@ -762,7 +762,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			
 			//Parratt recursion of the amplitude reflectivity
 			
-			for(int i = nl-2; i >= 0 ;i--)
+			for(int i = EDPoints-2; i >= 0 ;i--)
 			{
 				Rj[i] = ak[i]*(Rj[i+1]+rj[i])/(Rj[i+1]*rj[i]+1.0);
 			}
@@ -780,7 +780,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			dkk[0] = k0 * indexsup.re * sintheta[l];
 
 			dtempk1 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-DEDP[1].re+DEDP[0].re);
-			dtempk2 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-DEDP[numlay-1].re+DEDP[0].re);
+			dtempk2 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-DEDP[EDPointsMinOne].re+DEDP[0].re);
 			//Workout the wavevector k -> kk[i] = k0 *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
@@ -795,7 +795,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			}
 
 			#pragma ivdep
-			for(int i = HighOffSet; i < numlay; i++)
+			for(int i = HighOffSet; i < EDPoints; i++)
 			{
 				dkk[i] = dtempk2;
 			}
@@ -803,7 +803,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			//Make the phase factors ak -> ak[i] = compexp(-1.0*imaginary*kk[i]*dz0/2.0);
 
 			tempk1 = compexp(lengthmultiplier*dkk[1]);
-			tempk2 = compexp(lengthmultiplier*dkk[numlay-1]);
+			tempk2 = compexp(lengthmultiplier*dkk[EDPointsMinOne]);
 
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
@@ -818,7 +818,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			}
 
 			#pragma ivdep
-			for(int i = HighOffSet; i < numlay-1; i++)
+			for(int i = HighOffSet; i < EDPointsMinOne; i++)
 			{
 				ak[i] = tempk2;
 			}
@@ -838,7 +838,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			}
 			
 			#pragma ivdep
-			for(int i = HighOffSet; i < numlay-1; i++)
+			for(int i = HighOffSet; i < EDPointsMinOne; i++)
 			{
 				drj[i] = 0.0f;
 			}
@@ -846,7 +846,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			
 			//Parratt recursion of the amplitude reflectivity
 			
-			for(int i = nl-2; i >= 0 ;i--)
+			for(int i = EDPoints-2; i >= 0 ;i--)
 			{
 				Rj[i] = ak[i]*(Rj[i+1]+drj[i])/(Rj[i+1]*drj[i]+1.0);
 			}
@@ -857,8 +857,19 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			refl[l] = holder*holder;
 		}
 	}
-	m_ilowEDduplicatepts = 0;
-	m_ihighEDduplicatepts = 0;
+}
+
+void CReflCalc::InitializeScratchArrays(int EDPoints)
+{
+	//Create the scratch arrays for the reflectivity calculation
+ 	m_ckk = (MyComplex *)_mm_malloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
+	m_dkk = (double*)_mm_malloc(sizeof(double)*EDPoints*m_iuseableprocessors,16);
+	m_cak = (MyComplex *)_mm_malloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
+	m_crj = (MyComplex *)_mm_malloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
+	m_drj = (double*)_mm_malloc(sizeof(double)*EDPoints*m_iuseableprocessors,16);
+	m_cRj = (MyComplex *)_mm_malloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
+
+	m_bReflInitialized = TRUE;
 }
 
 void CReflCalc::QsmearRf(double* qspreadreflpt, double* refl, int datapoints)

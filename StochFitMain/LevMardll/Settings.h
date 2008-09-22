@@ -24,5 +24,11 @@ struct BoxReflSettings
         int FitFunc;
         int LowQOffset;
         int HighQOffset;
+		int Iterations;
+		//EDP Specific Settings
+		double* MIEDP;
+		float* ZIncrement;
+		int ZLength;
+
 };
 #pragma pack(pop)

@@ -9,137 +9,74 @@ using System.Threading;
 using System.Drawing;
 using ZedGraph;
 
+#pragma warning disable 1591
+
 namespace StochasticModeling
 {
     public class BoxReflFitBase : Form
     {
-                /// <summary>
+        /// <summary>
         /// Generates a reflectivity using the Nevot-Croce correction to the Parratt recursion
         /// </summary>
-        /// <param name="boxes">Number of boxes in the model</param>
-        /// <param name="SLD">Subphase SLD</param>
-        /// <param name="SupSLD">Superphase SLD</param>
-        /// <param name="wavelength">X-ray wavelength</param>
-        /// <param name="parameters">Parameter array. See code for setup</param>
-        /// <param name="paramsize">Element count of parameters</param>
-        /// <param name="QRange">Array of Q values to calculate reflectivity points for</param>
-        /// <param name="QError">Array of error in Q. Can be NULL</param>
-        /// <param name="QSize">QRange element count</param>
-        /// <param name="Reflectivity">Allocated array of QSize elements that recieves the </param>
-        /// <param name="reflectivitysize">Element count of the reflectivity array</param>
-        /// <param name="QSpread">Percent error in Q</param>
-        /// <param name="ImpNorm">True if the curve is believed to be imperfectly normalized, false otherwise</param>
-        /// <returns></returns>
+        /// <param name="InitStruct"></param>
+        /// <param name="parameters"></param>
+        /// <param name="parametersize"></param>
+        /// <param name="ReflectivityMap"></param>
         [DllImport("LevMardll.dll", EntryPoint = "FastReflGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         protected static extern void FastReflGenerate(BoxModelSettings InitStruct, double[] parameters, int parametersize, double[] ReflectivityMap);
 
         /// <summary>
-        /// Performs a Levenberg-Marquadt least squares fit of the data
+        /// Performs a Levenberg-Marquadt least squares fit of Reflectivity data
         /// </summary>
-        /// <param name="directory">The working directory</param>
-        /// <param name="boxes">Number of boxes in the model</param>
-        /// <param name="SLD">Subphase SLD</param>
-        /// <param name="SupSLD">Superphase SLD</param>
-        /// <param name="wavelength">Wavelength in Angstroms</param>
-        /// <param name="parameters">The parameter array</param>
-        /// <param name="paramsize">The size of the parameter array</param>
-        /// <param name="QRange">Q array</param>
-        /// <param name="QErrors">Error in Q array if it exists. NULL otherwise</param>
-        /// <param name="QSize">Size of QRange</param>
-        /// <param name="Reflectivity">Array that will recieve the reflectivity</param>
-        /// <param name="reflectivitysize">Size of Reflectivity</param>
-        /// <param name="Errors">Array containing the error for Reflectivity in standard deviation</param>
-        /// <param name="covar">Array which recieves the covariance matrix</param>
-        /// <param name="covarsize">Size of covar</param>
-        /// <param name="info">Array which recieves information regarding the terminating conditions of the fit</param>
-        /// <param name="infosize">Size of info</param>
-        /// <param name="onesigma">True if the system can be treated as an elastic sheet</param>
-        /// <param name="writefiles">Write output files to the specified directory</param>
-        /// <param name="Qspread">Error in Q as a fixed percentage</param>
-        /// <param name="ImpNorm">Choose whether to correct the reflectivity for imperfect normalization</param>
-        /// <returns>The Chi square value for the fit</returns>
-        [DllImport("LevMardll.dll", EntryPoint = "FastReflfit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern double FastReflfit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int covarsize, double[] info, int infosize);
-
-        /// <summary>
-        /// Generates a smoothed and box electron density profile
-        /// </summary>
-        /// <param name="boxes"></param>
-        /// <param name="SLD"></param>
-        /// <param name="SupSLD"></param>
+        /// <param name="InitStruct"></param>
         /// <param name="parameters"></param>
-        /// <param name="paramsize"></param>
-        /// <param name="ZRange"></param>
-        /// <param name="ZSize"></param>
-        /// <param name="ED"></param>
-        /// <param name="BoxED"></param>
-        /// <param name="EDSize"></param>
-        [DllImport("LevMardll.dll", EntryPoint = "RhoGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern void RhoGenerate(int boxes, double SLD, double SupSLD, double[] parameters, int paramsize,
-           double[] ZRange, int ZSize, double[] ED, double[] BoxED, int EDSize, bool onesigma);
-
-        /// <summary>
-        /// Fits an electron density profile to the electron density profile generated by the model independent fit
-        /// </summary>
-        /// <param name="directory"></param>
-        /// <param name="boxes"></param>
-        /// <param name="SLD"></param>
-        /// <param name="SupSLD"></param>
-        /// <param name="parameters"></param>
-        /// <param name="paramsize"></param>
-        /// <param name="ZRange"></param>
-        /// <param name="ZSize"></param>
-        /// <param name="ED"></param>
-        /// <param name="EDsize"></param>
-        /// <param name="covariance"></param>
+        /// <param name="covar"></param>
         /// <param name="covarsize"></param>
         /// <param name="info"></param>
         /// <param name="infosize"></param>
-        /// <param name="onesigma"></param>
         /// <returns></returns>
+        [DllImport("LevMardll.dll", EntryPoint = "FastReflfit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        protected static extern double FastReflfit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int covarsize, double[] info, int infosize);
+
+       /// <summary>
+       /// Generates a smoothed and box electron density profile
+       /// </summary>
+       /// <param name="InitStruct"></param>
+       /// <param name="parameters"></param>
+       /// <param name="parametersize"></param>
+       /// <param name="ED"></param>
+       /// <param name="BoxED"></param>
+        [DllImport("LevMardll.dll", EntryPoint = "RhoGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        protected static extern void RhoGenerate(BoxModelSettings InitStruct, double[] parameters, int parametersize, double[] ED, double[] BoxED);
+
+       /// <summary>
+       ///  Fits an electron density profile to the electron density profile generated by the model independent fit
+       /// </summary>
+       /// <param name="InitStruct"></param>
+       /// <param name="parameters"></param>
+       /// <param name="covar"></param>
+       /// <param name="covarsize"></param>
+       /// <param name="info"></param>
+       /// <param name="infosize"></param>
+       /// <returns></returns>
         [DllImport("LevMardll.dll", EntryPoint = "Rhofit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern double Rhofit(string directory, int boxes, double SLD, double SupSLD, double[] parameters, int paramsize,
-            double[] ZRange, int ZSize, double[] ED, int EDsize, double[] covariance,
-            int covarsize, double[] info, int infosize, bool onesigma);
+        protected static extern double Rhofit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int covarsize, double[] info, int infosize);
 
 
         /// <summary>
-        /// Performs a constrained Levenberg-Marquadt least squares fit of the data
+        /// Performs a stochastic search of the parameter space using a constrained Levenberg-Marquadt least squares 
+        /// minimization
         /// </summary>
-        /// <param name="boxes">Number of boxes in the model</param>
-        /// <param name="SLD">Subphase SLD</param>
-        /// <param name="SupSLD">Superphase SLD</param>
-        /// <param name="wavelength">X-ray wavelength</param>
-        /// <param name="parameters">Parameter array. See code for setup</param>
-        /// <param name="paramsize">Element count of parameters</param>
-        /// <param name="QRange">Array of Q values to calculate reflectivity points for</param>
-        /// <param name="QError">Array of error in Q. Can be NULL</param>
-        /// <param name="QSize">QRange element count</param>
-        /// <param name="Reflectivity">Allocated array of QSize elements that recieves the </param>
-        /// <param name="reflectivitysize">Element count of the reflectivity array</param>
-        /// <param name="Errors">Array of errors in the reflectivity data</param>
-        /// <param name="covar">The original covariance array to fill</param>
-        /// <param name="covarsize">Element count of covar</param>
-        /// <param name="info">Array of size 6, returns information pertaining to the fit</param>
-        /// <param name="infosize">Element count of info</param>
-        /// <param name="onesigma">If the film is to be treated as an elastic sheet, set to true</param>
-        /// <param name="writefiles">Set to true to write files</param>
-        /// <param name="iterations">Total number of iterations for the stochastic fitting</param>
-        /// <param name="ParamArray">Returns the array of all fits. Allocated to a size of 1000 * paramsize</param>
-        /// <param name="paramarraysize">Element count of ParamArray</param>
-        /// <param name="parampercs">The percentage by which each parameter can vary, with an element count of 6. 1 and 2 correspond to the thickness
-        /// of the file, 2 and 3 correspond to the electron density, and 4 and 5 correspond to the roughness</param>
-        /// <param name="chisquarearray">Array of Chi square values for each model found</param>
-        /// <param name="Covararray">Covariance array for each model found</param>
-        /// <param name="UL">Array of upper limits of paramsize elements for each parameter in ParamArray</param>
-        /// <param name="LL">Array of lower limits of paramsize elements for each parameter in ParamArray</param>
-        /// <param name="QSpread">Percent error in Q</param>
-        /// <param name="ImpNorm">True if the curve is believed to be imperfectly normalized, false otherwise</param>   
-        [DllImport("LevMardll.dll", EntryPoint = "ConstrainedStochFit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        protected static extern void ConstrainedStochFit(int boxes, double SLD, double SupSLD, double wavelength, double[] parameters, int paramsize,
-            double[] QRange, double[] QError, int QSize, double[] Reflectivity, int reflectivitysize, double[] Errors, double[] covar, int covarsize, double[] info, int infosize, bool onesigma, bool writefiles, int iterations,
-            double[] ParamArray, out int paramarraysize, double[] parampercs, double[] chisquarearray, double[] Covararray, double[] UL, double[] LL, double QSpread, bool ImpNorm);
-
+        /// <param name="InitStruct"></param>
+        /// <param name="parameters"></param>
+        /// <param name="covar"></param>
+        /// <param name="covarsize"></param>
+        /// <param name="info"></param>
+        /// <param name="infosize"></param>
+        [DllImport("LevMardll.dll", EntryPoint = "StochFit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        protected static extern void ConstrainedStochFit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int paramsize, double[] info, int infosize, double[] ParamArray, double[] chisquarearray, ref int paramarraysize);
+        
+        
         /// <summary>
         /// The culture is set to US for the purposes of inputting data to the numerical routines
         /// </summary>
@@ -164,11 +101,11 @@ namespace StochasticModeling
         protected double oldnormfactor;
         protected double previoussigma;
         protected bool initialized = false;
-        protected TextBox[] BoxSigmaArray;
-        protected TextBox[] BoxRhoArray;
-        protected TextBox[] BoxLengthArray;
-        protected TextBox[] SubphaseRoughness;
-        protected TextBox[] NormalizationFactor;
+        protected List<TextBox> BoxSigmaArray;
+        protected List<TextBox> BoxRhoArray;
+        protected List<TextBox> BoxLengthArray;
+        protected List<TextBox> SubphaseRoughness;
+        protected TextBox NormalizationFactor;
         protected double[] Qincrement;
         protected double[] QErrors;
         protected double[] ReflectivityMap;
@@ -178,15 +115,23 @@ namespace StochasticModeling
         protected double[] RealReflErrors;
         protected double[] RealRefl;
         protected bool m_bmodelreset = false;
-        protected BoxModelSettings ReflStruct;
+        protected BoxModelSettings InfoStruct;
         protected Thread Stochthread;
+        private CheckBox Holdsigma;
+        private TextBox BoxCount;
 
     #endregion
+
+        public BoxReflFitBase(double[] Z, double[] ERho, double roughness, string leftoffset, string subsld, string supsld)
+        {
+
+        
+        }
 
 
         public BoxReflFitBase(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase)
         {
-            ReflStruct = new BoxModelSettings();
+            InfoStruct = new BoxModelSettings();
             m_roughness = roughness;
             m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
             
@@ -297,9 +242,7 @@ namespace StochasticModeling
         protected virtual void ChangeRoughnessArray(double rough, ref TextBox t)
         {
             t.Text = rough.ToString();
-
-            foreach (TextBox b in BoxSigmaArray)
-                b.Text = rough.ToString();
+            BoxSigmaArray.ForEach(p => p.Text = rough.ToString());
         }
 
         protected virtual void UpdateProfile()
@@ -313,7 +256,7 @@ namespace StochasticModeling
 
            // MakeParameters(ref parameters, false);
             //Generare Reflectivity and ED          
-            FastReflGenerate(ReflStruct, parameters, parameters.Length, ReflectivityMap);
+            FastReflGenerate(InfoStruct, parameters, parameters.Length, ReflectivityMap);
 
             if (m_bmodelreset == true)
             {
@@ -377,12 +320,36 @@ namespace StochasticModeling
                 parameters[1 + boxcount * arrayconst] = normcorrection;
 
 
-            SetInitStruct(ref ReflStruct, null, null, null);
+            SetInitStruct(ref InfoStruct, null, null, null);
         }
 
         protected virtual void SetInitStruct(ref BoxModelSettings InitStruct, double[] parampercs, double[] UL, double[] LL)
         {
 
+        }
+
+        protected void  GreyFields()
+        {
+
+            for (int i = 0; i < 6; i++)
+            {
+                if (i < int.Parse(BoxCount.Text))
+                {
+                    BoxLengthArray[i].Enabled = true;
+                    BoxRhoArray[i].Enabled = true;
+
+                    if (Holdsigma.Checked)
+                        BoxSigmaArray[i].Enabled = false;
+                    else
+                        BoxSigmaArray[i].Enabled = true;
+                }
+                else
+                {
+                    BoxLengthArray[i].Enabled = false;
+                    BoxRhoArray[i].Enabled = false;
+                    BoxSigmaArray[i].Enabled = false;
+                }
+            }
         }
     }
 }

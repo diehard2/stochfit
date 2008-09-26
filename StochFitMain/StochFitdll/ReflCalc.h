@@ -59,7 +59,7 @@ public:
 
 
 	double totalsize;
-    double rho_a,beta_a;
+
     double lambda,k0;
     double m_dChiSquare;
 	double m_dgoodnessoffit;
@@ -87,6 +87,4 @@ public:
 	double GetWaveConstant();
     
 	int objectivefunction;
-	double beta_sub;
-	double beta_sup;
 };

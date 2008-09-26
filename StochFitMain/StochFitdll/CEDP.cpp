@@ -38,8 +38,8 @@ void CEDP::Init(ReflSettings* InitStruct)
 	}
 
 	//Arrays for the electron density profile and twice the electron density profile
-    m_EDP = (MyComplex*)_mm_malloc(sizeof(MyComplex)*m_iLayers,16);
-    m_DEDP = (MyComplex*)_mm_malloc(sizeof(MyComplex)*m_iLayers,16);
+    m_EDP = (MyComplex*)_mm_malloc(sizeof(MyComplex)*m_iLayers,64);
+    m_DEDP = (MyComplex*)_mm_malloc(sizeof(MyComplex)*m_iLayers,64);
 	m_fEDSpacingArray = (float*)_mm_malloc(m_iLayers*sizeof(float),64);
 
 	//Create scratch arrays for the electron density calculation

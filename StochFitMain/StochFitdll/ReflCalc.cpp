@@ -116,14 +116,14 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 	//and fill them up
 	for(int i = 0; i< m_idatapoints; i++)
 	{
-		xi[i] = InitStruct->Q[i+InitStruct->CritEdgeOffset + 1];
-		yi[i] = InitStruct->Refl[i+InitStruct->CritEdgeOffset + 1];
-		eyi[i] = InitStruct->ReflError[i+InitStruct->CritEdgeOffset + 1];
+		xi[i] = InitStruct->Q[i+InitStruct->CritEdgeOffset];
+		yi[i] = InitStruct->Refl[i+InitStruct->CritEdgeOffset];
+		eyi[i] = InitStruct->ReflError[i+InitStruct->CritEdgeOffset];
 		
 		if(InitStruct->QError != NULL)
-			exi[i] = InitStruct->QError[i+InitStruct->CritEdgeOffset + 1];
+			exi[i] = InitStruct->QError[i+InitStruct->CritEdgeOffset];
 		
-		sinthetai[i] = InitStruct->Q[i+InitStruct->CritEdgeOffset + 1]*lambda/(4*M_PI);
+		sinthetai[i] = InitStruct->Q[i+InitStruct->CritEdgeOffset]*lambda/(4*M_PI);
 		reflpt[i] = 1.0;
 	}
 

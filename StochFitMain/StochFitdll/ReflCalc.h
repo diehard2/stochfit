@@ -34,12 +34,7 @@ private:
 	void MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
 	bool CheckDensity(CEDP* EDP);
 	void GetOffSets(int& HighOffset, int& LowOffset, MyComplex* EDP, int EDPoints);
-	
-	double CalcQc(double SubPhaseSLD, double SuperPhaseSLD);
-	double CalcFresnelPoint(float Q, float Qc);
 	void InitializeScratchArrays(int EDPoints);
-
-	int Qpoints;
  
 
 	bool m_bXRonly;
@@ -54,7 +49,7 @@ public:
 	float m_dnormfactor;
 
 	//read from file
-    double *xi,*yi,*eyi,*exi,*sinthetai,*reflpt,*dataout,*tsinthetai,*qarray, *fresnelcurve;
+    double *xi,*yi,*eyi,*exi,*sinthetai,*reflpt,*dataout,*tsinthetai,*qarray;
     int m_idatapoints, tarraysize;
 
 
@@ -80,7 +75,7 @@ public:
 	int GetDataCount();
 
 	
-    void init(ReflSettings* InitStruct);
+    void Init(ReflSettings* InitStruct);
 	void SetupRef(ReflSettings* InitStruct);
 	double Objective(CEDP* EDP);
     void ParamsRF(CEDP* EDP, wstring reflfile);

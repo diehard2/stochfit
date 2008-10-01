@@ -42,8 +42,6 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	
 	InitializeSA(InitStruct, m_SA);
 	Initialize(InitStruct);
-
-	
 }
 
 StochFit::~StochFit()
@@ -68,19 +66,12 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 	 /******** Setup Variables and ReflectivityClass ********/
 	 ////////////////////////////////////////////////////////
 
-	m_cRefl.init(InitStruct);
+	m_cRefl.Init(InitStruct);
 	m_cEDP.Init(InitStruct);
 
 
 	//Setup the params - We start with a slightly roughened ED curve 
-	params = new ParamVector(InitStruct->Boxes,InitStruct->Forcesig,InitStruct->UseSurfAbs, InitStruct->Impnorm);
-	params->SetSupphase(InitStruct->SupSLD/InitStruct->FilmSLD);
-	params->SetSubphase(InitStruct->SubSLD/InitStruct->SubSLD);
-	params->setroughness(3.0);
-
-	for(int i = 0 ; i < InitStruct->Boxes; i++)
-		params->SetMutatableParameter(i,1.0);
-	
+	params = new ParamVector(InitStruct);
  
 	 /////////////////////////////////////////////////////
      /******** Prepare Arrays for the Front End ********/
@@ -162,11 +153,11 @@ void StochFit::UpdateFits(int currentiteration)
 				Rho[i] =  m_cEDP.m_EDP[i].re/m_cEDP.m_EDP[m_cEDP.Get_EDPPointCount()-1].re;
 			}
 			
-			for(int i = 0; i<m_irefldatacount;i++)
+			for(int i = 0; i < m_irefldatacount;i++)
 			{
 				#ifndef CHECKREFLCALC
 					
-					if(m_cRefl.m_dQSpread > 0.005)
+					if(m_cRefl.m_dQSpread > 0.0)
 					{				
 						Refl[i] = m_cRefl.reflpt[i];
 						Qinc[i] = m_cRefl.xi[i];
@@ -217,8 +208,6 @@ int StochFit::Cancel()
 
 void StochFit::InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA)
 {
-	
-
 	if(InitStruct->Algorithm == 3)
 		SA->Initialize(InitStruct->Debug, true, m_Directory);
 	else
@@ -269,9 +258,7 @@ int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, dou
 int StochFit::Priority(int priority)
 {
 	//The higher priorities seem to sometimes cause race conditions and have
-	//been removed
-
-	//If the thread exists, change its priority. If we haven't started yet
+	//been removed. If the thread exists, change its priority. If we haven't started yet
 	//set the base priority
 
 	if(m_hThread != NULL)
@@ -301,7 +288,7 @@ void StochFit::WritetoFile(const wchar_t* filename)
 {
 	ofstream outfile;
 	outfile.open(fnpop.c_str());
-	outfile<< params->getroughness() <<' '<< m_cRefl.beta_a*params->getSurfAbs()/m_cRefl.GetWaveConstant() <<
+	outfile<< params->getroughness() <<' '<< m_cEDP.Get_FilmAbs()*params->getSurfAbs()/m_cEDP.Get_WaveConstant() <<
 		' '<< m_SA->Get_Temp() <<' '<< params->getImpNorm() << ' ' << m_SA->Get_AveragefSTUN() << endl;
 
 	for(int i = 0; i < params->RealparamsSize(); i++)
@@ -376,7 +363,7 @@ void StochFit::LoadFromFile(wstring file)
     if(kk == true)
 	{
 		*params = params1;
-		m_cRefl.beta_a = beta*m_cRefl.GetWaveConstant();
+		m_cEDP.Set_FilmAbs(beta);
 		m_SA->Set_Temp(1.0/currenttemp);
 		params->setImpNorm(normfactor);
 		m_SA->Set_AveragefSTUN(avgfSTUN);

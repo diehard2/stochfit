@@ -21,33 +21,24 @@
 #include "stdafx.h"
 #include "ParamVector.h"
 
-ParamVector::ParamVector(int l,  float force_sig, bool use_surf_abs, bool fix_impnorm):m_bfixroughness(false),
+ParamVector::ParamVector(ReflSettings* InitStruct):m_bfixroughness(false),
 m_busesurfabs(false), m_bfiximpnorm(false), m_bXROnly(false), m_binitialized(false), m_isurfabs_index(-1), m_iimpnorm_index(-1),
 m_iroughness_index(-1)
 {
 	m_binitialized = true;
-
-	length = m_dparameter_size = l;
+	m_busesurfabs = InitStruct->UseSurfAbs;
+	m_bfiximpnorm = InitStruct->Impnorm;
 	
-	if(force_sig > 0.0)
-	{
-		m_bfixroughness = true;
-		roughness = force_sig;
-	}
-	else
-	{
-		m_iroughness_index = m_dparameter_size;
-		m_dparameter_size++;
-	}
-
-	if(use_surf_abs == true)
+	length = m_dparameter_size = InitStruct->Boxes;
+	
+	if(m_busesurfabs == true)
 	{
 		m_busesurfabs = true;
 		m_isurfabs_index = m_dparameter_size;
 		m_dparameter_size++;
 	}
 
-	if(fix_impnorm == true)
+	if(InitStruct->Impnorm == TRUE)
 	{
 		m_bfiximpnorm = true;
 		m_iimpnorm_index = m_dparameter_size;
@@ -66,13 +57,28 @@ m_iroughness_index(-1)
 	}
 
     gnome.resize(length+2); //Add in 2 layers for superphase and subphase
-
 	
-	setroughness(2.0);
 	setImpNorm(1.0);
 	setSurfAbs(1.0);
 
+	SetSupphase(InitStruct->SupSLD/InitStruct->FilmSLD);
+	SetSubphase(InitStruct->SubSLD/InitStruct->FilmSLD);
 	
+
+	if(InitStruct->Forcesig > 0.0)
+	{
+		m_bfixroughness = true;
+		roughness = InitStruct->Forcesig;
+	}
+	else
+	{
+		m_iroughness_index = m_dparameter_size;
+		m_dparameter_size++;
+		setroughness(2.0f);
+	}
+
+	for(int i = 0 ; i < InitStruct->Boxes; i++)
+		SetMutatableParameter(i,1.0);
 }
 
 ParamVector::ParamVector():m_bfixroughness(false),m_busesurfabs(false), m_bfiximpnorm(false), m_bXROnly(false), m_binitialized(false)

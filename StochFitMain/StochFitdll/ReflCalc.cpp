@@ -45,7 +45,6 @@ CReflCalc::~CReflCalc()
 		_mm_free(m_crj);
 		_mm_free(m_drj);
 		_mm_free(m_cRj);
-	    _mm_free(fresnelcurve);
 		_mm_free(qspreadsinsquaredthetai);
 		_mm_free(qspreadreflpt);
 		_mm_free(qspreadsinthetai);
@@ -58,7 +57,7 @@ CReflCalc::~CReflCalc()
 CReflCalc::CReflCalc():exi(NULL),eyi(NULL),xi(NULL),yi(NULL), m_bReflInitialized(FALSE)
 {}
 
-void CReflCalc::init(ReflSettings* InitStruct)
+void CReflCalc::Init(ReflSettings* InitStruct)
 {
 	lambda = InitStruct->Wavelength;
 	k0 = 2.0*M_PI/lambda;
@@ -70,26 +69,19 @@ void CReflCalc::init(ReflSettings* InitStruct)
 	m_bXRonly = InitStruct->XRonly;
 	m_bImpNorm = InitStruct->Impnorm;
 	
-	//Setup OpenMP - currently a maximum of 6 processors is allowed. After a certain number
+	//Setup OpenMP - currently a maximum of 8 processors is allowed. After a certain number
 	//of data points, there will not be much of a benefit to allowing additional processors
 	//to work on the calculation. If more than 2-300 data points are being analyzed, it would
 	//make sense to increase this number
 	if(MAX_OMP_THREADS > omp_get_num_procs())
-	{
-		#ifdef SINGLEPROCDEBUG
-			m_iuseableprocessors = 1;
-		#else
 			m_iuseableprocessors = omp_get_num_procs();
-		#endif
-	}
 	else
-	{
-		#ifdef SINGLEPROCDEBUG
-			m_iuseableprocessors = 1;
-		#else
 			m_iuseableprocessors = MAX_OMP_THREADS;
-		#endif
-	}
+
+	//For Debugging Purposes
+    #ifdef SINGLEPROCDEBUG
+			m_iuseableprocessors = 1;
+	#endif
 
 	omp_set_num_threads(m_iuseableprocessors);
 	SetupRef(InitStruct);
@@ -244,16 +236,6 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 	{
 		qspreadsinsquaredthetai[l] = qspreadsinthetai[l]*qspreadsinthetai[l];
 	}
-	
-	//Setup the fresnel curve - we store the electron density portion of the refractive index in the params
-	fresnelcurve = (double*)_mm_malloc(m_idatapoints*sizeof(double), 64);
-
-	double Qc = CalcQc(InitStruct->SubSLD, InitStruct->SupSLD);
-
-	for(int i = 0; i < m_idatapoints; i++)
-	{
-		fresnelcurve[i] = CalcFresnelPoint(xi[i], Qc);
-	}
 }
 
 
@@ -264,7 +246,7 @@ void CReflCalc::ParamsRF(CEDP* EDP,  wstring reflfile)
 	
 	
 	
-	if(m_dQSpread < 0.005 || exi == NULL)
+	if(m_dQSpread == 0.0 || exi == NULL)
 	{
 		if(EDP->Get_UseABS() == false)
 			MyTransparentRF(tsinthetai, tsinsquaredthetai, tarraysize, dataout, EDP);
@@ -308,8 +290,6 @@ void CReflCalc::ParamsRF(CEDP* EDP,  wstring reflfile)
 }
 
 
-
-
 //Check to see if there is any negative electron density for the XR case, false if there is neg ED
 bool CReflCalc::CheckDensity(CEDP* EDP)
 {
@@ -337,9 +317,9 @@ double CReflCalc::Objective(CEDP* EDP)
 			return -1;
 	}
 
-	if(m_dQSpread < 0.005 || exi == NULL)
+	if(m_dQSpread == 0.0 || exi == NULL)
 	{
-		if(EDP->Get_UseABS() == false)
+		if(EDP->Get_UseABS() == FALSE)
 			MyTransparentRF(sinthetai, sinsquaredthetai, m_idatapoints, reflpt, EDP);
 		else
 			MyRF(sinthetai, sinsquaredthetai, m_idatapoints, reflpt, EDP);
@@ -347,13 +327,9 @@ double CReflCalc::Objective(CEDP* EDP)
 	else
 	{
 		if(EDP->Get_UseABS())
-		{
 			MyTransparentRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
-		}
 		else
-		{
 			MyRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
-		}
 
 		QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
 	}
@@ -433,17 +409,7 @@ double CReflCalc::Objective(CEDP* EDP)
 		
 
 	}
-	else if(objectivefunction == 4)
-	{
-		//R/Rf error
-		for(int i = 0; i< counter; i++)
-		{
-			calcholder1 = (yi[i]/fresnelcurve[i]-reflpt[i]/fresnelcurve[i]);
-			m_dgoodnessoffit += calcholder1*calcholder1/(eyi[i]/fresnelcurve[i]);
-		}
-		
-		m_dgoodnessoffit /= counter+1;
-	}
+	
 
 
 	//Calculate the Chi Square of R/Rf(reduced with no parameters)
@@ -896,27 +862,12 @@ void CReflCalc::QsmearRf(double* qspreadreflpt, double* refl, int datapoints)
 		refl[i] = calcholder/6.211f;
 	}
 }
-double CReflCalc::CalcQc(double SubPhaseSLD, double SuperPhaseSLD)
-{
-	//Critical Q for an interface.		
-	return 4.0f * sqrt(M_PI*(SubPhaseSLD-SuperPhaseSLD));
-}
 
-double CReflCalc::CalcFresnelPoint(float Q, float Qc)
-{
-    if (Q <= Qc)
-        return 1.0f;
-    else
-    {
-        double term1 = sqrt(1.0f - (Qc / Q)*(Qc/Q));
-        return ((1.0f - term1) / (1.0f + term1))*((1.0f - term1) / (1.0f + term1));
-    }
-}
 
 int CReflCalc::GetDataCount()
 {
 	#ifndef CHECKREFLCALC
-		if(m_dQSpread < 0.005 || exi == NULL)
+		if(m_dQSpread == 0.0 || exi == NULL)
 			return tarraysize;
 		else 
 			return m_idatapoints;

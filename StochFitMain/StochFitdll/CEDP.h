@@ -32,7 +32,10 @@ public:
 	double Get_LayerThickness();
 	int Get_EDPPointCount();
 	BOOL Get_UseABS();
+	float Get_FilmAbs();
 	double Get_Dz();
+	float Get_WaveConstant();
+	void Set_FilmAbs(float absorption);
 	void WriteOutputFile(wstring filename);
 
 	MyComplex* m_EDP;

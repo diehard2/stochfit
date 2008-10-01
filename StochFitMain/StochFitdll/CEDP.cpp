@@ -223,3 +223,18 @@ double CEDP::Get_Dz()
 {
 	return m_dDz0;
 }
+
+float CEDP::Get_FilmAbs()
+{
+	return m_dBeta;
+}
+
+float CEDP::Get_WaveConstant()
+{
+	return m_dWaveConstant;
+}
+
+void CEDP::Set_FilmAbs(float abs)
+{
+	m_dBeta = abs*m_dWaveConstant;
+}

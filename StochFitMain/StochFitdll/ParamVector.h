@@ -20,6 +20,7 @@
 
 #pragma once
 #include "stdafx.h"
+#include "SettingsStruct.h"
 
 class ParamVector 
 {
@@ -42,7 +43,7 @@ class ParamVector
 		void SetBounds(float lowrough, float highrough, float highimp, float highabs);
 
 	public:
-		ParamVector(int l, float force_sig, bool use_surf_abs, bool fix_impnorm);
+		ParamVector(ReflSettings* InitStruct);
 		ParamVector();
 		int RealparamsSize();
 		int GetInitializationLength();

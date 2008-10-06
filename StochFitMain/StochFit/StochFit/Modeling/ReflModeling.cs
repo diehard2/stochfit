@@ -155,32 +155,32 @@ namespace StochasticModeling
 
         protected override void MakeArrays()
         {
-            BoxSigmaArray = new TextBox[6];
+            //BoxSigmaArray = new TextBox[6];
 
-            BoxSigmaArray[0] = Sigma1;
-            BoxSigmaArray[1] = Sigma2;
-            BoxSigmaArray[2] = Sigma3;
-            BoxSigmaArray[3] = Sigma4;
-            BoxSigmaArray[4] = Sigma5;
-            BoxSigmaArray[5] = Sigma6;
+            //BoxSigmaArray[0] = Sigma1;
+            //BoxSigmaArray[1] = Sigma2;
+            //BoxSigmaArray[2] = Sigma3;
+            //BoxSigmaArray[3] = Sigma4;
+            //BoxSigmaArray[4] = Sigma5;
+            //BoxSigmaArray[5] = Sigma6;
 
-            BoxLengthArray = new TextBox[6];
+            //BoxLengthArray = new TextBox[6];
 
-            BoxLengthArray[0] = LLength1;
-            BoxLengthArray[1] = LLength2;
-            BoxLengthArray[2] = LLength3;
-            BoxLengthArray[3] = LLength4;
-            BoxLengthArray[4] = LLength5;
-            BoxLengthArray[5] = LLength6;
+            //BoxLengthArray[0] = LLength1;
+            //BoxLengthArray[1] = LLength2;
+            //BoxLengthArray[2] = LLength3;
+            //BoxLengthArray[3] = LLength4;
+            //BoxLengthArray[4] = LLength5;
+            //BoxLengthArray[5] = LLength6;
 
-            BoxRhoArray = new TextBox[6];
+            //BoxRhoArray = new TextBox[6];
 
-            BoxRhoArray[0] = Rho1;
-            BoxRhoArray[1] = Rho2;
-            BoxRhoArray[2] = Rho3;
-            BoxRhoArray[3] = Rho4;
-            BoxRhoArray[4] = Rho5;
-            BoxRhoArray[5] = Rho6;
+            //BoxRhoArray[0] = Rho1;
+            //BoxRhoArray[1] = Rho2;
+            //BoxRhoArray[2] = Rho3;
+            //BoxRhoArray[3] = Rho4;
+            //BoxRhoArray[4] = Rho5;
+            //BoxRhoArray[5] = Rho6;
 
         }
 
@@ -242,8 +242,8 @@ namespace StochasticModeling
             
             CheckZLength();
 
-            RhoGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), eparameters,
-                    eparameters.Length, Z, Z.Length, ElectronDensityArray, BoxElectronDensityArray, ElectronDensityArray.Length, Holdsigma.Checked);
+            //RhoGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), eparameters,
+            //        eparameters.Length, Z, Z.Length, ElectronDensityArray, BoxElectronDensityArray, ElectronDensityArray.Length, Holdsigma.Checked);
 
             base.UpdateProfile();
         }
@@ -344,14 +344,22 @@ namespace StochasticModeling
                     ReflData.Instance.GetQErrors, parampercs, UL, LL);
             }
             InitStruct.Directory = ReflData.Instance.GetWorkingDirectory;
-            InitStruct.Boxes = int.Parse(BoxCount.Text);
+            InitStruct.Boxes = BoxCount.ToInt();
 
-            InitStruct.SubSLD = double.Parse(SubphaseSLD.Text);
-            InitStruct.SupSLD = double.Parse(SupSLDTB.Text);
-            InitStruct.Wavelength = double.Parse(WavelengthTB.Text);
+            InitStruct.SubSLD = SubphaseSLD.ToDouble();
+            InitStruct.SupSLD = SupSLDTB.ToDouble();
+            
+            if(WavelengthTB != null)
+                InitStruct.Wavelength = double.Parse(WavelengthTB.Text);
+
             InitStruct.OneSigma = Holdsigma.Checked;
-            InitStruct.QSpread = double.Parse(QSpreadTB.Text);
-            InitStruct.ImpNorm = ImpNormCB.Checked;
+
+            if(QSpreadTB != null)
+                InitStruct.QSpread = double.Parse(QSpreadTB.Text);
+
+            if(ImpNormCB != null)
+                InitStruct.ImpNorm = ImpNormCB.Checked;
+            
             InitStruct.WriteFiles = true;
         }
 

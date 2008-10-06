@@ -273,8 +273,8 @@ namespace StochasticModeling.Settings
         public int Iterations;
 
         //EDP Specific Settings
-        public double[] MIEDP;
-        public float[] ZIncrement;
+        public IntPtr MIEDP = IntPtr.Zero;
+        public IntPtr ZIncrement = IntPtr.Zero;
         public int ZLength;
  
          [XmlIgnoreAttribute]
@@ -352,6 +352,24 @@ namespace StochasticModeling.Settings
             }
 
         }
+
+        public void SetZ(double[] Z, double[] iMIEDP)
+        {
+            try
+            {
+                ZIncrement  = Marshal.AllocHGlobal(Marshal.SizeOf(Z[0]) * Z.Length);
+                Marshal.Copy(Z, 0, ZIncrement, Z.Length);
+                ZLength = Z.Length;
+                if (iMIEDP != null)
+                {
+                    MIEDP =  Marshal.AllocHGlobal(Marshal.SizeOf(iMIEDP[0]) * iMIEDP.Length);
+                    Marshal.Copy(iMIEDP, 0, MIEDP, iMIEDP.Length);
+                }
+
+            }
+            catch { }
+
+        }
         #endregion
 
         #region IDisposable Members
@@ -372,11 +390,9 @@ namespace StochasticModeling.Settings
                 // only the following code is executed.
                 if (Q != IntPtr.Zero)
                 {
-                    MessageBox.Show("test");
                     Marshal.FreeHGlobal(Q);
                     Marshal.FreeHGlobal(Refl);
                     Marshal.FreeHGlobal(ReflError);
-                   // Marshal.FreeHGlobal(Parameters);
                     
                     if (QError != IntPtr.Zero)
                         Marshal.FreeHGlobal(QError);
@@ -386,6 +402,10 @@ namespace StochasticModeling.Settings
                         Marshal.FreeHGlobal(UL);
                     if (LL != IntPtr.Zero)
                         Marshal.FreeHGlobal(LL);
+                    if (MIEDP != IntPtr.Zero)
+                        Marshal.FreeHGlobal(MIEDP);
+                    if (ZIncrement != IntPtr.Zero)
+                        Marshal.FreeHGlobal(ZIncrement);
                 }
                 // Note disposing has been done.
                 disposed = true;

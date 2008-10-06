@@ -31,7 +31,7 @@ private:
 	double* MIRho;
 	double* param; 
 	
-	float* ZIncrement;
+	double* ZIncrement;
 
 	double* m_LengthArray;
 	double* m_RhoArray;

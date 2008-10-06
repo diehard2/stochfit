@@ -45,6 +45,17 @@ m_iroughness_index(-1)
 		m_dparameter_size++;
 	}
 
+	if(InitStruct->Forcesig > 0.0)
+	{
+		m_bfixroughness = true;
+		roughness = InitStruct->Forcesig;
+	}
+	else
+	{
+		m_iroughness_index = m_dparameter_size;
+		m_dparameter_size++;
+	}
+
 	data_params_low_val.resize(m_dparameter_size);
 	data_params_high_val.resize(m_dparameter_size);
 	data_params.resize(m_dparameter_size);
@@ -65,17 +76,7 @@ m_iroughness_index(-1)
 	SetSubphase(InitStruct->SubSLD/InitStruct->FilmSLD);
 	
 
-	if(InitStruct->Forcesig > 0.0)
-	{
-		m_bfixroughness = true;
-		roughness = InitStruct->Forcesig;
-	}
-	else
-	{
-		m_iroughness_index = m_dparameter_size;
-		m_dparameter_size++;
-		setroughness(2.0f);
-	}
+	setroughness(2.0f);
 
 	for(int i = 0 ; i < InitStruct->Boxes; i++)
 		SetMutatableParameter(i,1.0);

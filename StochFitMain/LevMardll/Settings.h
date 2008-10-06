@@ -27,7 +27,7 @@ struct BoxReflSettings
 		int Iterations;
 		//EDP Specific Settings
 		double* MIEDP;
-		float* ZIncrement;
+		double* ZIncrement;
 		int ZLength;
 
 };

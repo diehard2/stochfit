@@ -90,7 +90,7 @@ void CReflCalc::Init(ReflSettings* InitStruct)
 void CReflCalc::SetupRef(ReflSettings* InitStruct)
 {
 	//Now create our xi,yi,dyi, and thetai
-	m_idatapoints = InitStruct->QPoints - InitStruct->HighQOffset - InitStruct->CritEdgeOffset - 1;
+	m_idatapoints = InitStruct->QPoints - InitStruct->HighQOffset - InitStruct->CritEdgeOffset;
 	xi = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
 	yi = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
 	
@@ -222,6 +222,7 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 	for(int l=0; l<m_idatapoints; l++)
 	{
 		sinsquaredthetai[l] = sinthetai[l]*sinthetai[l];
+
 	}
 
 	//Calculate the theta's we'll use to make our plotting reflectivity
@@ -230,6 +231,7 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 	for(int l=0; l<tarraysize; l++)
 	{
 		tsinsquaredthetai[l] = tsinthetai[l]*tsinthetai[l];
+				Sleep(10);
 	}
 
 	for(int l=0; l < m_idatapoints*13; l++)
@@ -595,7 +597,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 	MyComplex  lengthmultiplier = -2.0f*MyComplex (0.0f,1.0f)*EDP->Get_Dz();
 	MyComplex  indexsup = 1.0 - DEDP[0]/2.0;
 	MyComplex  indexsupsquared = indexsup * indexsup;
-	int HighOffSet = 0;
+	int HighOffSet = EDPoints;
 	int LowOffset = 0;
 	int offset = datapoints;
 	
@@ -603,7 +605,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 	GetOffSets(HighOffSet, LowOffset, DEDP, EDPoints);
 
 	//Find the point at which we no longer need to use complex numbers exclusively
-    for(int i = 0; i< datapoints;i++)
+      for(int i = 0; i< datapoints;i++)
 	{	
 		int neg = 0;
 		for(int k = 0; k<EDPoints;k++)
@@ -616,11 +618,11 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 		}
 		if(neg == 0)
 		{
-			if(m_dQSpread == 0.0)
-					break;
-		}
-		else
 			offset = i;
+			if(m_dQSpread > 0)
+				break;
+		}
+	
 	}
 
 	//In order to vectorize loops, you cannot use global variables
@@ -655,7 +657,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 		
 
 		#pragma omp for nowait schedule(guided)
-		for(int l = 0; l<= offset;l++)
+		for(int l = 0; l< offset;l++)
 		{
 
 			//The refractive index for air is 1, so there is no refractive index term for kk[0]
@@ -740,7 +742,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 
 		//Now calculate the rest using doubles
 		#pragma omp for schedule(guided)
-		for(int l = offset+1; l < datapoints;l++)
+		for(int l = offset; l < datapoints;l++)
 		{
 				//The refractive index for air is 1, so there is no refractive index term for kk[0]
 			dkk[0] = k0 * indexsup.re * sintheta[l];

@@ -1,7 +1,7 @@
 SET MKLVER=10.0.2.019
 SET UtilPath=%~dp0
 SET MKLPath=%ProgramFiles%\Intel\MKL\%MKLVER%\tools\builder
-SET VSPath=%ProgramFiles%\Microsoft Visual Studio 8\vc\bin
+SET VSPath=%ProgramFiles%\Microsoft Visual Studio 9.0\vc\bin
 
 ::Set the MSVC environmental variables
 if "%MSVCDir%" == "" call "%VSPath%\vcvars32.bat"

@@ -91,6 +91,8 @@ namespace StochasticModeling
 
             ZGControl.ZoomEvent += new ZedGraphControl.ZoomEventHandler(ZoomEvent);
             GraphContextMenuBuilder(MyContextMenuBuilder);
+            //Set all fonts here to give a consistent look
+            SetAllFonts("Garamond", 20, 18);
         }
 
         private void ZoomEvent(ZedGraphControl sender, ZoomState oldState, ZoomState newState)

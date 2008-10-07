@@ -46,7 +46,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     return TRUE;
 }
 
-extern "C" LEVMARDLL_API double Rhofit(BoxReflSettings* InitStruct, double parameters[], int parametersize, double ED[], double BoxED[], double covariance[], int covarsize, double info[], int infosize)
+extern "C" LEVMARDLL_API double Rhofit(BoxReflSettings* InitStruct, double parameters[], double covariance[], int parametersize, double info[], int infosize)
 {
 	USES_CONVERSION;
 
@@ -78,10 +78,9 @@ extern "C" LEVMARDLL_API double Rhofit(BoxReflSettings* InitStruct, double param
 	//Calculate ChiSquare
 	for(int i = 0; i< InitStruct->ZLength;i++)
 	{
-		if(ED[i] != 0)
-			ChiSquare += (ED[i]-Rho.nk[i])*(ED[i]-Rho.nk[i])/ED[i];
+		if(InitStruct->MIEDP[i] > 0.0)
+			ChiSquare += (InitStruct->MIEDP[i]-Rho.nk[i])*(InitStruct->MIEDP[i]-Rho.nk[i])/InitStruct->MIEDP[i];
 	}
-	//ChiSquare /= ZSize-paramsize;
 
 	//Calculate the standard deviations in the parameters
 	for(int i = 0; i< parametersize;i++)

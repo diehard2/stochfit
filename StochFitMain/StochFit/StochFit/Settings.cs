@@ -343,7 +343,7 @@ namespace StochasticModeling.Settings
                 }
                 else
                     this.UL = IntPtr.Zero;
-
+                ZLength = 100;
 
             }
             catch (Exception ex)
@@ -357,14 +357,15 @@ namespace StochasticModeling.Settings
         {
             try
             {
-                ZIncrement  = Marshal.AllocHGlobal(Marshal.SizeOf(Z[0]) * Z.Length);
+                ZIncrement = Marshal.AllocHGlobal(Marshal.SizeOf(Z[0]) * Z.Length);
                 Marshal.Copy(Z, 0, ZIncrement, Z.Length);
-                ZLength = Z.Length;
+
                 if (iMIEDP != null)
                 {
-                    MIEDP =  Marshal.AllocHGlobal(Marshal.SizeOf(iMIEDP[0]) * iMIEDP.Length);
+                    MIEDP = Marshal.AllocHGlobal(Marshal.SizeOf(iMIEDP[0]) * iMIEDP.Length);
                     Marshal.Copy(iMIEDP, 0, MIEDP, iMIEDP.Length);
                 }
+                ZLength = Z.Length;
 
             }
             catch { }
@@ -374,7 +375,7 @@ namespace StochasticModeling.Settings
 
         #region IDisposable Members
 
-        void IDisposable.Dispose()
+        public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);

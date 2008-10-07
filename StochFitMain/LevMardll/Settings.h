@@ -19,8 +19,8 @@ struct BoxReflSettings
         int Boxes;
         double Wavelength;
         double QSpread;
-        bool Forcenorm;
-        bool ImpNorm;
+        BOOL Forcenorm;
+        BOOL ImpNorm;
         int FitFunc;
         int LowQOffset;
         int HighQOffset;

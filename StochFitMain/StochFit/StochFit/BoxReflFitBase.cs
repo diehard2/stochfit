@@ -325,10 +325,10 @@ namespace StochasticModeling
             {
                 parameters = new double[arrayconst + 1 + boxcount * 2];
 
-                if (LeftOffset == null)
+                if (ZOffsetTB == null)
                     parameters[1] = 25;
                 else
-                    parameters[1] = LeftOffset.ToDouble();
+                    parameters[1] = ZOffsetTB.ToDouble();
                 EDconst++;
             }
             else
@@ -405,12 +405,14 @@ namespace StochasticModeling
 
         protected void BackupArrays()
         {
-            for (int i = 0; i < RhoArray.Count; i++)
-            {
-                PreviousRhoArray[i] = RhoArray[i];
-                PreviousSigmaArray[i] = SigmaArray[i];
-                PreviousLengthArray[i] = LengthArray[i];
-            }
+            PreviousRhoArray.Clear();
+            PreviousSigmaArray.Clear();
+            PreviousLengthArray.Clear();
+
+            RhoArray.ForEach(p => PreviousRhoArray.Add(p));
+            SigmaArray.ForEach(p => PreviousSigmaArray.Add(p));
+            LengthArray.ForEach(p => PreviousLengthArray.Add(p));
+            
             m_dPrevioussigma = SubphaseRoughness.ToDouble();
             m_dPreviouszoffset = ZOffsetTB.ToDouble();
         }

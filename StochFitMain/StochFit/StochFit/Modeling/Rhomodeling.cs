@@ -36,6 +36,7 @@ using System.Drawing.Imaging;
 using StochasticModeling;
 using System.Runtime.InteropServices;
 using System.Globalization;
+using StochasticModeling.Settings;
 
 
 namespace StochasticModeling
@@ -117,6 +118,8 @@ namespace StochasticModeling
              if (Z != null)
                  m_gRhoGraphing.LoadfromArray("Model Independent Fit", Z, RealRho, System.Drawing.Color.Black, SymbolType.None, 0, true, string.Empty);
 
+             SetInitStruct(ref InfoStruct, null, null, null);
+
              MakeArrays();
              ChangeRoughnessArray(roughness);
              GreyFields(); 
@@ -192,9 +195,7 @@ namespace StochasticModeling
                     double[] parameters = null;
 
                                  
-                    MakeParameters(ref parameters, true, false, BoxCount.ToInt(), 0, SubRough.ToDouble());
-
-                    SetInitStruct(ref InfoStruct, null, null, null);
+                    MakeParameters(ref parameters, true, true, BoxCount.ToInt(), 0, SubRough.ToDouble());
 
                     if (ElectronDensityArray != null)
                     {
@@ -215,7 +216,6 @@ namespace StochasticModeling
         {
             base.SetInitStruct(ref InitStruct, parampercs, UL, LL);
             InitStruct.SetZ(Z, RealRho);
-
         }
 
     
@@ -235,50 +235,36 @@ namespace StochasticModeling
           
             double[] info = new double[9];
             double[] parameters = null;
-            int boxnumber = int.Parse(BoxCount.Text);
+            int arrayconst;
            
-            base.MakeParameters(ref parameters, true, Holdsigma.Checked, BoxCount.ToInt(), 0, SubphaseSLD.ToDouble());
-           
+            base.MakeParameters(ref parameters, true, Holdsigma.Checked, BoxCount.ToInt(), 0, SubRough.ToDouble());
+            
             m_dCovarArray = new double[parameters.Length];
 
-            //chisquaretb.Text = Rhofit(ReflData.Instance.GetWorkingDirectory, boxnumber, double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), parameters, parameters.Length,
-            //       m_dZincrement, m_dZincrement.Length, m_dRealRho, m_dZincrement.Length, m_dCovarArray, m_dCovarArray.Length, info, info.Length, Holdsigma.Checked).ToString("##.### E-0");
+            chisquaretb.Text = Rhofit(InfoStruct, parameters, m_dCovarArray, parameters.Length, info, info.Length).ToString("##.### E-0");
 
+            SubRough.Text = parameters[0].ToString();
+            Zoffset.Text = parameters[1].ToString();
+
+            if (Holdsigma.Checked == true)
+                arrayconst = 2;
+            else
+                arrayconst = 3;
 
             //Update paramters
-            if (Holdsigma.Checked == true)
+            for (int i = 0; i < BoxCount.ToInt(); i++)
             {
-                SubRough.Text = parameters[0].ToString();
-                Zoffset.Text = parameters[1].ToString();
+                BoxLengthArray[i].Text = parameters[arrayconst * i + 2].ToString();
 
-                for (int i = 0; i < boxnumber; i++)
-                {
-                    BoxLengthArray[i].Text = parameters[2 * i + 2].ToString();
+                if(m_bUseSLD == false)
+                    BoxRhoArray[i].Text = parameters[arrayconst * i + 3].ToString();
+                else
+                    BoxRhoArray[i].Text = (parameters[arrayconst * i + 3]*SubphaseSLD.ToDouble()).ToString();
 
-                    if(m_bUseSLD == false)
-                        BoxRhoArray[i].Text = parameters[2 * i + 3].ToString();
-                    else
-                        BoxRhoArray[i].Text = (string)(parameters[2 * i + 3]*double.Parse(SubphaseSLD.Text)).ToString();
-    
+                if(Holdsigma.Checked)
                     BoxSigmaArray[i].Text = parameters[0].ToString();
-                }
-            }
-            else
-            {
-                SubRough.Text = parameters[0].ToString();
-                Zoffset.Text = parameters[1].ToString();
-
-                for (int i = 0; i < boxnumber; i++)
-                {
-                    BoxLengthArray[i].Text = parameters[3 * i + 2].ToString();
-
-                    if(m_bUseSLD == false)
-                        BoxRhoArray[i].Text = parameters[3 * i + 3].ToString();
-                    else
-                        BoxRhoArray[i].Text = (string)(parameters[3 * i + 3] * double.Parse(SubphaseSLD.Text)).ToString();
-
+                else
                     BoxSigmaArray[i].Text = parameters[3 * i + 4].ToString();
-                }
             }
 
             //Display the fit

@@ -37,7 +37,7 @@ extern "C" LEVMARDLL_API double FastReflfit(BoxReflSettings* InitStruct, double 
 
 extern "C" LEVMARDLL_API void FastReflGenerate(BoxReflSettings* InitStruct, double parameters[], int parametersize, double Reflectivity[]);
 
-extern "C" LEVMARDLL_API double Rhofit(BoxReflSettings* InitStruct, double parameters[], int parametersize, double ED[], double BoxED[],  double covariance[], int covarsize, double info[], int infosize);
+extern "C" LEVMARDLL_API double Rhofit(BoxReflSettings* InitStruct, double parameters[], double covariance[], int parametersize, double info[], int infosize);
 
 extern "C" LEVMARDLL_API void RhoGenerate(BoxReflSettings* InitStruct, double parameters[], int paramsize, double ED[], double BoxED[]);
 

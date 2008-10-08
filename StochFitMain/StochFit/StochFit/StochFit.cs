@@ -89,7 +89,7 @@ namespace StochasticModeling
         /// <summary>
         /// Default constructor
         /// </summary>
-        public Stochfit():base()
+        public Stochfit()
         {
 
             InitializeComponent();
@@ -295,11 +295,7 @@ namespace StochasticModeling
                     reflgraphobject.SetBounds();
 
                     if (UseAbsCB.Checked == false)
-                    {
-                        SubAbs.Enabled = false;
-                        SupAbsTB.Enabled = false;
-                        SurfAbs.Enabled = false;
-                    }
+                        SubAbs.Enabled =  SupAbsTB.Enabled = SurfAbs.Enabled = false;
                 }
             }
             catch(Exception ex)
@@ -522,21 +518,19 @@ namespace StochasticModeling
             if (double.Parse(Rholipid.Text) == 0)
                 Rholipid.Text = "0.1";
 
-            SetProgressBar(Int32.Parse(IterationsTB.Text), 0, -1);
+            SetProgressBar(IterationsTB.ToInt(), 0, -1);
 
-            int iterations = Int32.Parse(IterationsTB.Text);
+            int iterations = IterationsTB.ToInt();
             if (progressBar1.Value > 0 && progressBar1.Value < iterations)
             {
-                iterations = int.Parse(IterationsTB.Text) - progressBar1.Value;
+                iterations = IterationsTB.ToInt() - progressBar1.Value;
             }
-            reflgraphobject.SubSLD = Double.Parse(SubSLDTB.Text);
+            reflgraphobject.SubSLD = SubSLDTB.ToDouble();
             
             ModelSettings settings = new ModelSettings();
             GetReflSettings(ref settings);
 
             Calculations.Init(settings);
-
-
             Calculations.Start(iterations);
             Calculations.GenPriority(Priority.SelectedIndex);
 
@@ -546,23 +540,18 @@ namespace StochasticModeling
             myTimer.Start();
 
             DisableInterface(true);
-            MiscParametersBox.Enabled = true;
-
-            OptionsMenuItem.Enabled = true;
-
+           
             setModelOptionsToolStripMenuItem.Enabled = setResolutionOptionsToolStripMenuItem.Enabled =
             miscellaneousOptionsToolStripMenuItem.Enabled =  setModelOptionsToolStripMenuItem.DropDown.Enabled = setResolutionOptionsToolStripMenuItem.DropDown.Enabled =
             miscellaneousOptionsToolStripMenuItem.DropDown.Enabled = false;
 
-            Rhomodel.Enabled = true;
-            Cancelbutton.Enabled = true;
-            
-            
-            reflgraphobject.ProgramRunningState = true;
+            MiscParametersBox.Enabled = OptionsMenuItem.Enabled = reflgraphobject.ProgramRunningState = Rhomodel.Enabled = Cancelbutton.Enabled = true;
+           
             previtertime = DateTime.Now;
 
             //WriteSettings to file
             WriteSettings();
+            settings.Dispose();
         }
 
         void SetProgressBar(int maximum, int minimum, int currentiteration)

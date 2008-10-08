@@ -211,7 +211,7 @@ namespace StochasticModeling.Settings
 
         #region IDisposable Members
 
-        void IDisposable.Dispose()
+        public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);

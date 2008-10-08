@@ -118,7 +118,7 @@ namespace StochasticModeling
              if (Z != null)
                  m_gRhoGraphing.LoadfromArray("Model Independent Fit", Z, RealRho, System.Drawing.Color.Black, SymbolType.None, 0, true, string.Empty);
 
-             SetInitStruct(ref InfoStruct, null, null, null);
+             
 
              MakeArrays();
              ChangeRoughnessArray(roughness);
@@ -193,14 +193,16 @@ namespace StochasticModeling
                 if (Z != null)
                 {
                     double[] parameters = null;
-
+                    InfoStruct = new BoxModelSettings();
                                  
                     MakeParameters(ref parameters, true, true, BoxCount.ToInt(), 0, SubRough.ToDouble());
-
+                    SetInitStruct(ref InfoStruct, null, null, null);
                     if (ElectronDensityArray != null)
                     {
                         RhoGenerate(InfoStruct, parameters, parameters.Length, ElectronDensityArray, BoxElectronDensityArray);
                     }
+
+                    InfoStruct.Dispose();
 
                     m_gRhoGraphing.LoadfromArray("Model Dependent Fit", Z, ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
                     m_gRhoGraphing.LoadfromArray("Model Dependent Box Model", Z, BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
@@ -240,8 +242,14 @@ namespace StochasticModeling
             base.MakeParameters(ref parameters, true, Holdsigma.Checked, BoxCount.ToInt(), 0, SubRough.ToDouble());
             
             m_dCovarArray = new double[parameters.Length];
+            
+            InfoStruct = new BoxModelSettings();
+            SetInitStruct(ref InfoStruct, null, null, null);
+            
 
             chisquaretb.Text = Rhofit(InfoStruct, parameters, m_dCovarArray, parameters.Length, info, info.Length).ToString("##.### E-0");
+
+            InfoStruct.Dispose();
 
             SubRough.Text = parameters[0].ToString();
             Zoffset.Text = parameters[1].ToString();

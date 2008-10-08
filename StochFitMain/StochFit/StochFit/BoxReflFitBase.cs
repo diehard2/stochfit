@@ -143,7 +143,7 @@ namespace StochasticModeling
         public BoxReflFitBase(double[] Z, double[] ERho, double roughness, string subsld, string supsld)
         {
             m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
-            InfoStruct = new BoxModelSettings();
+           
             m_roughness = roughness;
             m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
 
@@ -178,7 +178,7 @@ namespace StochasticModeling
 
         public BoxReflFitBase(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase)
         {
-            InfoStruct = new BoxModelSettings();
+           
             m_roughness = roughness;
             m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
             

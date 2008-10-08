@@ -197,7 +197,7 @@ void RhoCalc::mkdensity(double* p, int plength)
 		for(int i = 0; i< boxnumber;i++)
 		{
 			m_LengthArray[i] = p[3*i+2];
-			m_RhoArray[i] = p[3*i+3];
+ 			m_RhoArray[i] = p[3*i+3];
 			m_SigmaArray[i] = p[3*i+4];
 		}
 

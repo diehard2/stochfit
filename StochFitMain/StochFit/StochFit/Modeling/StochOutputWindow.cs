@@ -39,7 +39,7 @@ namespace StochasticModeling.Modeling
     /// <summary>
     /// Displays the fits collected from the stochastic parameter space search
     /// </summary>
-    public partial class StochOutputWindow : StochFormBase
+    public partial class StochOutputWindow : Form
     {
         double[][] ParameterArray;
         double[][] CovarArray;

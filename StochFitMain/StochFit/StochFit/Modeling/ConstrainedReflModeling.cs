@@ -42,7 +42,7 @@ namespace StochasticModeling
     /// <summary>
     /// Form for the Constrained Reflectivity Modeling Routines
     /// </summary>
-    public partial class ConstrainedReflmodeling : StochFormBase
+    public partial class ConstrainedReflmodeling : Form
     {
         #region Variables
 
@@ -1279,16 +1279,27 @@ namespace StochasticModeling
             constr.ShowDialog(this);
         }
 
+
         /// <summary>
         /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
         /// in number entry
         /// </summary>
         /// <param name="sender">A textbox is expected as input</param>
         /// <param name="e">return true if the number can be cast to a double or false if not</param>
-        protected override void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
+        protected void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            base.ValidateNumericalInput(sender, e);
+            try
+            {
+                base.OnValidating(e);
+                Double.Parse(((TextBox)sender).Text);
+            }
+            catch
+            {
+                MessageBox.Show("Error in input - A real number was expected");
+                e.Cancel = true;
+            }
         }
+
 
         /// <summary>
         /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
@@ -1296,13 +1307,22 @@ namespace StochasticModeling
         /// </summary>
         /// <param name="sender">A textbox is expected as input</param>
         /// <param name="e">return true if the number can be cast to an integer or false if not</param>
-        protected override void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
+        protected  void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            base.ValidateIntegerInput(sender, e);
+            try
+            {
+                base.OnValidating(e);
+                Convert.ToInt32(((TextBox)sender).Text);
+            }
+            catch
+            {
+                MessageBox.Show("Error in input - An integer was expected");
+                e.Cancel = true;
+            }
 
             if (((TextBox)sender).Name == "BoxCount")
             {
-                if (int.Parse(BoxCount.Text) > 6)
+                if (BoxCount.ToInt() > 6)
                 {
                     MessageBox.Show("Six is the maximum number of boxes");
                     e.Cancel = true;

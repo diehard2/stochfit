@@ -43,7 +43,7 @@ namespace StochasticModeling
     /// <summary>
     /// Main GUI for the StochFit program
     /// </summary>
-    public partial class Stochfit : StochFormBase
+    public partial class Stochfit:Form
     {
         #region Variables
 
@@ -75,6 +75,10 @@ namespace StochasticModeling
         double m_dSTUNgammadec = 0.85;
         bool m_bmodelreset = false;
         int previnstanceiter = 0;
+        /// <summary>
+        /// The culture is set to US for the purposes of inputting data to the numerical routines
+        /// </summary>
+        protected CultureInfo m_CI = new CultureInfo("en-US");
 
         public delegate void UpdateGUI(string SALowest, string SATemp, string SAMode, int Iterations, string Itertime,
             string ChiSquare,string FitScore);
@@ -530,11 +534,11 @@ namespace StochasticModeling
             ModelSettings settings = new ModelSettings();
             GetReflSettings(ref settings);
 
-            Init(settings);
+            Calculations.Init(settings);
 
 
-            Start(iterations);
-            GenPriority(Priority.SelectedIndex);
+            Calculations.Start(iterations);
+            Calculations.GenPriority(Priority.SelectedIndex);
 
             myTimer = new System.Timers.Timer();
             myTimer.Elapsed += new ElapsedEventHandler(OnUpdateTimer);
@@ -579,7 +583,7 @@ namespace StochasticModeling
         private void Canceled()
         {
             myTimer.Stop();
-            CancelFit();
+            Calculations.CancelFit();
 
             DisableInterface(false);
             Cancelbutton.Enabled = false;
@@ -601,7 +605,7 @@ namespace StochasticModeling
             {
                 if (MessageBox.Show("Verify fitting cancellation", "Cancelling", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    CancelFit();
+                    Calculations.CancelFit();
                     Thread.Sleep(700);
                 }
                 else
@@ -618,12 +622,12 @@ namespace StochasticModeling
             {
                 int Zlength, Qlength;
 
-                while (WarmedUp() == false)
+                while (Calculations.WarmedUp() == false)
                 {
                     Thread.Sleep(100);
                 }
 
-                ArraySizes(out Zlength, out Qlength);
+                Calculations.ArraySizes(out Zlength, out Qlength);
 
                 Z = new double[Zlength];
                 Rho = new double[Zlength];
@@ -643,8 +647,8 @@ namespace StochasticModeling
                 bool isfinished;
 
                 // Get the progress of the iterations
-                int iterations = GetData(Z, Rho, Q, Refl, out m_droughness, out chisquare, out fitscore, out isfinished);
-                SAparams(out lowestenergy, out temp, out mode);
+                int iterations = Calculations.GetData(Z, Rho, Q, Refl, out m_droughness, out chisquare, out fitscore, out isfinished);
+                Calculations.SAparams(out lowestenergy, out temp, out mode);
 
                 span = DateTime.Now - previtertime;
 
@@ -898,7 +902,7 @@ namespace StochasticModeling
         private void Priority_SelectedIndexChanged(object sender, EventArgs e)
         {
             //The highest two priorities were... problematic
-            GenPriority(Priority.SelectedIndex);
+            Calculations.GenPriority(Priority.SelectedIndex);
         }
 
         private void fresnelcb_CheckedChanged(object sender, EventArgs e)
@@ -947,7 +951,7 @@ namespace StochasticModeling
 
         private void forceRQ4GraphingToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            base.MenuItem_Check(sender, e);
+            MenuItem_Check(sender, e);
             m_bmodelreset = true;
             Properties.Settings.Default.ForceRQ4 = forceRQ4GraphingToolStripMenuItem.Checked;
             Properties.Settings.Default.Save();
@@ -956,7 +960,7 @@ namespace StochasticModeling
 
         private void neutronDataToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            base.MenuItem_Check(sender, e);
+            MenuItem_Check(sender, e);
 
             rhographobject.IsNeutron = UseSLDToolStripMenuItem.Checked;
             rhographobject.SubSLD = double.Parse(SubSLDTB.Text);
@@ -983,42 +987,7 @@ namespace StochasticModeling
 
         private void debugToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            base.MenuItem_Check(sender, e);
-        } 
-        #endregion
-
-        #region Base Methods
-
-        /// <summary>
-        /// Sets the "check" state on a menu item
-        /// </summary>
-        /// <param name="sender">Expects a ToolStripMenuItem</param>
-        /// <param name="e"></param>
-        protected override void MenuItem_Check(object sender, EventArgs e)
-        {
-            base.MenuItem_Check(sender, e);
-        }
-
-        /// <summary>
-        /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
-        /// in number entry
-        /// </summary>
-        /// <param name="sender">A textbox is expected as input</param>
-        /// <param name="e">return true if the number can be cast to a double or false if not</param>
-        protected override void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            base.ValidateNumericalInput(sender, e);
-        }
-
-        /// <summary>
-        /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
-        /// in number entry 
-        /// </summary>
-        /// <param name="sender">A textbox is expected as input</param>
-        /// <param name="e">return true if the number can be cast to an integer or false if not</param>
-        protected override void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            base.ValidateIntegerInput(sender, e);
+            MenuItem_Check(sender, e);
         } 
         #endregion
 
@@ -1088,6 +1057,56 @@ namespace StochasticModeling
             NormSearchLI.DropDown.Enabled = ImpNormCB.Checked;
         }
 
+        /// <summary>
+        /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+        /// in number entry
+        /// </summary>
+        /// <param name="sender">A textbox is expected as input</param>
+        /// <param name="e">return true if the number can be cast to a double or false if not</param>
+        protected void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            try
+            {
+                base.OnValidating(e);
+                Double.Parse(((TextBox)sender).Text);
+            }
+            catch
+            {
+                MessageBox.Show("Error in input - A real number was expected");
+                e.Cancel = true;
+            }
+        }
+
+        /// <summary>
+        /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+        /// in number entry 
+        /// </summary>
+        /// <param name="sender">A textbox is expected as input</param>
+        /// <param name="e">return true if the number can be cast to an integer or false if not</param>
+        protected void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            try
+            {
+                base.OnValidating(e);
+                Convert.ToInt32(((TextBox)sender).Text);
+            }
+            catch
+            {
+                MessageBox.Show("Error in input - An integer was expected");
+                e.Cancel = true;
+            }
+        }
+
+        /// <summary>
+        /// Sets the "check" state on a menu item
+        /// </summary>
+        /// <param name="sender">Expects a ToolStripMenuItem</param>
+        /// <param name="e"></param>
+        protected void MenuItem_Check(object sender, EventArgs e)
+         {
+             ((ToolStripMenuItem)sender).Checked = !((ToolStripMenuItem)sender).Checked;
+         }
+    
        
         
     }

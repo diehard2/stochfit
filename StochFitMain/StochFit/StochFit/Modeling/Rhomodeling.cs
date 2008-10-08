@@ -195,7 +195,7 @@ namespace StochasticModeling
                     double[] parameters = null;
                     InfoStruct = new BoxModelSettings();
                                  
-                    MakeParameters(ref parameters, true, true, BoxCount.ToInt(), 0, SubRough.ToDouble());
+                    MakeParameters(ref parameters, true, Holdsigma.Checked, BoxCount.ToInt(), 0, SubRough.ToDouble());
                     SetInitStruct(ref InfoStruct, null, null, null);
                     if (ElectronDensityArray != null)
                     {
@@ -218,6 +218,7 @@ namespace StochasticModeling
         {
             base.SetInitStruct(ref InitStruct, parampercs, UL, LL);
             InitStruct.SetZ(Z, RealRho);
+            InitStruct.OneSigma = Holdsigma.Checked;
         }
 
     

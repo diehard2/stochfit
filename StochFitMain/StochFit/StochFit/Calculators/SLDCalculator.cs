@@ -34,7 +34,7 @@ namespace StochasticModeling
     /// <summary>
     /// Scattering Length Density Calculator for X-ray and Neutrons
     /// </summary>
-     public partial class SLDCalculator : StochFormBase
+     public partial class SLDCalculator : Form
     {
          /// <summary>
          /// Constructor
@@ -214,9 +214,18 @@ namespace StochasticModeling
          /// </summary>
          /// <param name="sender">A textbox is expected as input</param>
          /// <param name="e">return true if the number can be cast to a double or false if not</param>
-         protected override void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
+         protected void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
          {
-             base.ValidateNumericalInput(sender, e);
+             try
+             {
+                 base.OnValidating(e);
+                 Double.Parse(((TextBox)sender).Text);
+             }
+             catch
+             {
+                 MessageBox.Show("Error in input - A real number was expected");
+                 e.Cancel = true;
+             }
          }
 
          /// <summary>
@@ -225,9 +234,18 @@ namespace StochasticModeling
          /// </summary>
          /// <param name="sender">A textbox is expected as input</param>
          /// <param name="e">return true if the number can be cast to an integer or false if not</param>
-         protected override void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
+         protected void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
          {
-             base.ValidateIntegerInput(sender, e);
+             try
+             {
+                 base.OnValidating(e);
+                 Convert.ToInt32(((TextBox)sender).Text);
+             }
+             catch
+             {
+                 MessageBox.Show("Error in input - An integer was expected");
+                 e.Cancel = true;
+             }
          }
     }
 }

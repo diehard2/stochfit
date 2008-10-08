@@ -241,8 +241,7 @@
     </Compile>
     <Compile Include="ReportGenerator.cs" />
     <Compile Include="Settings.cs" />
-    <Compile Include="StochFormBase.cs">
-      <SubType>Form</SubType>
+    <Compile Include="InteropCalcs.cs">
     </Compile>
   </ItemGroup>
   <ItemGroup>

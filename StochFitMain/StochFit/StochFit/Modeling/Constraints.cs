@@ -34,7 +34,7 @@ namespace StochasticModeling.Modeling
     /// <summary>
     /// This form allows one to enter constraints for the model dependent fitting routines
     /// </summary>
-    public partial class Constraints : StochFormBase
+    public partial class Constraints : Form
     {
         #region Variables
 
@@ -191,30 +191,30 @@ namespace StochasticModeling.Modeling
             IsInitialized = true;
 
             if (SubRoughMinTB.Text != string.Empty)
-                SubRoughMin = double.Parse(SubRoughMinTB.Text);
+                SubRoughMin = SubRoughMinTB.ToDouble();
             if (SubRoughMaxTB.Text != string.Empty)
-                SubRoughMax = double.Parse(SubRoughMaxTB.Text);
+                SubRoughMax = SubRoughMaxTB.ToDouble();
 
             if (NormMinTB.Text != string.Empty)
-                NormMin = double.Parse(NormMinTB.Text);
+                NormMin = NormMinTB.ToDouble();
             if (NormMaxTB.Text != string.Empty)
-                NormMax = double.Parse(NormMaxTB.Text);
+                NormMax = NormMaxTB.ToDouble();
 
             //Update parameters
             for (int i = 0; i < m_iboxcount; i++)
             {
                 if (TBRhoHighArray[i].Text != string.Empty)
-                    RhoHighArray[i] = double.Parse(TBRhoHighArray[i].Text);
+                    RhoHighArray[i] = TBRhoHighArray[i].ToDouble();
                 if (TBRhoLowArray[i].Text != string.Empty)
-                    RhoLowArray[i] = double.Parse(TBRhoLowArray[i].Text);
+                    RhoLowArray[i] = TBRhoLowArray[i].ToDouble();
                 if (TBSigmaHighArray[i].Text != string.Empty)
-                    SigmaHighArray[i] = double.Parse(TBSigmaHighArray[i].Text);
+                    SigmaHighArray[i] = TBSigmaHighArray[i].ToDouble();
                 if (TBSigmaLowArray[i].Text != string.Empty)
-                    SigmaLowArray[i] = double.Parse(TBSigmaLowArray[i].Text);
+                    SigmaLowArray[i] = TBSigmaLowArray[i].ToDouble();
                 if (TBLengthHighArray[i].Text != string.Empty)
-                    ThickHighArray[i] = double.Parse(TBLengthHighArray[i].Text);
+                    ThickHighArray[i] = TBLengthHighArray[i].ToDouble();
                 if (TBLengthLowArray[i].Text != string.Empty)
-                    ThickLowArray[i] = double.Parse(TBLengthLowArray[i].Text);
+                    ThickLowArray[i] = TBLengthLowArray[i].ToDouble();
             }
 
             this.Close();
@@ -255,16 +255,25 @@ namespace StochasticModeling.Modeling
             get { return IsInitialized; }
         }
 
+
         /// <summary>
         /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
         /// in number entry
         /// </summary>
         /// <param name="sender">A textbox is expected as input</param>
         /// <param name="e">return true if the number can be cast to a double or false if not</param>
-        protected override void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
+        protected void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if(((TextBox)sender).Text != string.Empty)
-                base.ValidateNumericalInput(sender, e);
+            try
+            {
+                base.OnValidating(e);
+                Double.Parse(((TextBox)sender).Text);
+            }
+            catch
+            {
+                MessageBox.Show("Error in input - A real number was expected");
+                e.Cancel = true;
+            }
         }
     }
 }

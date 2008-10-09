@@ -62,7 +62,7 @@ namespace StochasticModeling
         double[] Q;
         double[] Refl;
         Object lockobj;
-
+        ModelSettings InfoStruct;
         int colorswitch = 0;
         double m_dAnnealtemp = 10;
         int m_iAnnealplat = 4000;
@@ -83,6 +83,8 @@ namespace StochasticModeling
         public delegate void UpdateGUI(string SALowest, string SATemp, string SAMode, int Iterations, string Itertime,
             string ChiSquare,string FitScore);
 
+
+
         #endregion
 
         #region Constructor and Form Setup
@@ -98,6 +100,7 @@ namespace StochasticModeling
             Properties.Settings.Default.UseSLDSingleSession = UseSLDToolStripMenuItem.Checked = Properties.Settings.Default.UseSLD;
             forceRQ4GraphingToolStripMenuItem.Checked = Properties.Settings.Default.ForceRQ4;
 
+            InfoStruct = new ModelSettings();
             //Object for thread synchronization
             lockobj = new Object();
             //Class instances that make controlling the graph easier
@@ -182,9 +185,9 @@ namespace StochasticModeling
                     FileNameTB.Text = origreflfilename;
                     settingsfile = origreflfilename + "settings.xml";
                     reflgraphobject.SetAllFonts("Garamond", 20, 18);
-                    reflgraphobject.SubSLD = Double.Parse(SubSLDTB.Text);
-                    reflgraphobject.SupSLD = Double.Parse(SupSLDTB.Text);
-                    reflgraphobject.Wavelength = Double.Parse(wavelength.Text);
+                    reflgraphobject.SubSLD = SubSLDTB.ToDouble();
+                    reflgraphobject.SupSLD = SupSLDTB.ToDouble();
+                    reflgraphobject.Wavelength = wavelength.ToDouble();
                     reflgraphobject.GetHighQOffset = ReflData.Instance.GetNumberDataPoints;
                     reflgraphobject.GetLowQOffset = 0;
                     reflgraphobject.SetGraphType(forceRQ4GraphingToolStripMenuItem.Checked, fresnelcb.Checked);
@@ -336,30 +339,11 @@ namespace StochasticModeling
         private void GetReflSettings(ref ModelSettings settings)
         {
             FileInfo info = new FileInfo(origreflfilename);
+            ReflData ReflArr = ReflData.Instance;
             int newdatapoints = ReflData.Instance.GetNumberDataPoints;
 
-            double[] q = new double[newdatapoints];
-            double[] r = new double[newdatapoints];
-            double[] re = new double[newdatapoints];
-            double[] qe = null;
-
-            if (ReflData.Instance.HaveErrorinQ)
-                qe = new double[newdatapoints];
-
-            //Move the data into truncated arrays so we don't have to constantly recalculate in the numerically intensive portions
-            for (int i = 0; i < ReflData.Instance.GetNumberDataPoints ; i++)
-            {
-                q[i] = ReflData.Instance.GetQDataPt(i);
-                r[i] = ReflData.Instance.GetReflDataPt(i);
-                re[i] = ReflData.Instance.GetRErrorPt(i);
-
-                if (qe != null)
-                    qe[i] = ReflData.Instance.GetQErrorPt(i);
-            }
-
             settings.Directory = info.DirectoryName;
-            settings.SetArrays(q, r, re, qe, newdatapoints);
-            settings.QPoints = newdatapoints;
+            settings.SetArrays(ReflArr.GetQData, ReflArr.GetReflData, ReflArr.GetRErrors, ReflArr.GetQErrors);
 
             FillSettingsStruct(ref settings);
         }
@@ -369,15 +353,15 @@ namespace StochasticModeling
             settings.Title = TitleTB.Text;
             settings.CritEdgeOffset = int.Parse(critedgeoffTB.Text);
             settings.HighQOffset = int.Parse(HQoffsetTB.Text);
-            settings.SurflayerSLD = Double.Parse(Rholipid.Text);
-            settings.SubSLD = Double.Parse(SubSLDTB.Text);
-            settings.SupSLD = Double.Parse(SupSLDTB.Text);
-            settings.Boxes = Int32.Parse(Boxlayers.Text);
-            settings.Surflayerlength = Double.Parse(layerlength.Text);
-            settings.SurflayerAbs = Double.Parse(SurfAbs.Text);
-            settings.Wavelength = Double.Parse(wavelength.Text);
-            settings.SubAbs = Double.Parse(SubAbs.Text);
-            settings.SupAbs = Double.Parse(SupAbsTB.Text);
+            settings.SurflayerSLD = Rholipid.ToDouble();
+            settings.SubSLD = SubSLDTB.ToDouble();
+            settings.SupSLD = SupSLDTB.ToDouble();
+            settings.Boxes = Boxlayers.ToInt();
+            settings.Surflayerlength = layerlength.ToDouble();
+            settings.SurflayerAbs = SurfAbs.ToDouble();
+            settings.Wavelength = wavelength.ToDouble();
+            settings.SubAbs = SubAbs.ToDouble();
+            settings.SupAbs = SupAbsTB.ToDouble();
             settings.UseAbs = UseAbsCB.Checked;
             settings.SupOffset = Double.Parse(SupoffsetTB.Text);
             settings.Percerror = Double.Parse(QErrTB.Text);
@@ -397,8 +381,6 @@ namespace StochasticModeling
             settings.FitFunc = objectiveCB.SelectedIndex;
             settings.ParamTemp = Double.Parse(ParamTempTB.Text);
             
-            
-
             if (UseAbsCB.Checked)
                 settings.AbsorptionSearchPerc = int.Parse(AbsorptionSearchTB.Text);
             else
@@ -527,10 +509,10 @@ namespace StochasticModeling
             }
             reflgraphobject.SubSLD = SubSLDTB.ToDouble();
             
-            ModelSettings settings = new ModelSettings();
-            GetReflSettings(ref settings);
+            
+            GetReflSettings(ref InfoStruct);
 
-            Calculations.Init(settings);
+            Calculations.Init(InfoStruct);
             Calculations.Start(iterations);
             Calculations.GenPriority(Priority.SelectedIndex);
 
@@ -551,7 +533,7 @@ namespace StochasticModeling
 
             //WriteSettings to file
             WriteSettings();
-            settings.Dispose();
+            InfoStruct.Dispose();
         }
 
         void SetProgressBar(int maximum, int minimum, int currentiteration)

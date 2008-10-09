@@ -179,33 +179,37 @@ namespace StochasticModeling.Settings
         #endregion
 
         #region Public Methods
-        public void SetArrays(double[] iQ, double[] iR, double[] iRerr, double[] iQerr, int iQSize)
+        public void SetArrays(double[] iQ, double[] iR, double[] iRerr, double[] iQerr)
         {
-            int size = Marshal.SizeOf(iQ[0])*iQ.Length;
+            //Blank our arrays if they hold data
+            if (Q == IntPtr.Zero)
+                ReleaseMemory();
 
-            try
-            {
-                Q = Marshal.AllocHGlobal(size);
-                Refl = Marshal.AllocHGlobal(size);
-                ReflError = Marshal.AllocHGlobal(size);
+            int size = Marshal.SizeOf(iQ[0]) * iQ.Length;
 
-                if (iQerr != null)
-                    QError = Marshal.AllocHGlobal(size);
-                else
-                    QError = IntPtr.Zero;
+                try
+                {
+                    QPoints = iQ.Length;
+                    Q = Marshal.AllocHGlobal(size);
+                    Refl = Marshal.AllocHGlobal(size);
+                    ReflError = Marshal.AllocHGlobal(size);
 
-                Marshal.Copy(iQ, 0,Q, iQ.Length);
-                Marshal.Copy(iR, 0, Refl, iR.Length);
-                Marshal.Copy(iRerr, 0, ReflError, iRerr.Length);
+                    if (iQerr != null)
+                        QError = Marshal.AllocHGlobal(size);
+                    else
+                        QError = IntPtr.Zero;
 
-                if (iQerr != null)
-                    Marshal.Copy(iQerr, 0, QError, iQerr.Length);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
+                    Marshal.Copy(iQ, 0, Q, iQ.Length);
+                    Marshal.Copy(iR, 0, Refl, iR.Length);
+                    Marshal.Copy(iRerr, 0, ReflError, iRerr.Length);
 
+                    if (iQerr != null)
+                        Marshal.Copy(iQerr, 0, QError, iQerr.Length);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
         }
         #endregion
 
@@ -225,7 +229,15 @@ namespace StochasticModeling.Settings
                 // unmanaged resources here.
                 // If disposing is false,
                 // only the following code is executed.
-                if (Q != IntPtr.Zero)
+                ReleaseMemory();
+                // Note disposing has been done.
+                disposed = true;
+            }
+        }
+
+        private void ReleaseMemory()
+        {
+            if (Q != IntPtr.Zero)
                 {
                     Marshal.FreeHGlobal(Q);
                     Marshal.FreeHGlobal(Refl);
@@ -234,9 +246,6 @@ namespace StochasticModeling.Settings
                     if (QError != IntPtr.Zero)
                         Marshal.FreeHGlobal(QError);
                 }
-                // Note disposing has been done.
-                disposed = true;
-            }
         }
 
         #endregion

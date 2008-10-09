@@ -5,7 +5,7 @@
 	Name="StochFitdll"
 	ProjectGUID="{0500C168-FD63-4DFE-8D66-C449E4D9E19B}"
 	VCNestedProjectGUID="{8FEF7E88-7B8D-44E8-BBE6-9ECB9DE5B5B1}"
-	VCNestedProjectCRC32="1850728053"
+	VCNestedProjectCRC32="719594539"
 	VCNestedProjectFileName="StochFit.vcproj"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -84,12 +84,10 @@
 			<Tool 
 				Name="CppCmplrTool"
 				WholeProgramOptimization="0"
-				Optimization="2"
+				Optimization="1000"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="0"
 				FavorSizeOrSpeed="1"
-				OmitFramePointers="1"
-				EnableFiberSafeOptimizations="1"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;STOCHFIT_EXPORTS"
 				MinimalRebuild="1"
 				ExceptionHandling="1"

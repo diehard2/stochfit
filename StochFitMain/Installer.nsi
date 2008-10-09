@@ -3,7 +3,7 @@
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "StochFit"
 !define LOWER_PRODUCT_NAME "stochfit"
-!define PRODUCT_VERSION "1.6.6"
+!define PRODUCT_VERSION "2.0 Beta"
 !define PRODUCT_PUBLISHER "The University of Chicago"
 !define PRODUCT_WEB_SITE "https://sourceforge.net/projects/stochfit"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\StochFit.exe"
@@ -12,8 +12,8 @@
 
 
 ;Required .NET framework
-!define MIN_FRA_MAJOR "2"
-!define MIN_FRA_MINOR "*"
+!define MIN_FRA_MAJOR "3"
+!define MIN_FRA_MINOR "5"
 !define MIN_FRA_BUILD "*"
 
 ; Set the compression to lzma (current best)
@@ -110,15 +110,10 @@ Function .onInit
   Abort
  ; End Only allow one version
 
- ; Begin Check .NET version
-  StrCpy $InstallDotNET "No"
-  Call CheckFramework
 
-  StrCmp $0 "1" +3
-        StrCpy $InstallDotNET "Yes"
-      MessageBox MB_OK|MB_ICONINFORMATION "${PRODUCT_NAME} requires that the .NET Framework 2.0 is installed. The latest .NET Framework will be downloaded and installed automatically during installation of ${PRODUCT_NAME}."
- Pop $0
- ; End Check .NET version
+
+  
+
 
 FunctionEnd
 
@@ -127,16 +122,24 @@ FunctionEnd
 Section "MainSection" SEC01
   SetOutPath "$INSTDIR"
   SetOverwrite ifnewer
-  
+
+ ; Begin Check .NET version
+  StrCpy $InstallDotNET "No"
+  Call CheckFramework
+     StrCmp $0 "1" +3
+        StrCpy $InstallDotNET "Yes"
+      MessageBox MB_OK|MB_ICONINFORMATION "${PRODUCT_NAME} requires that the .NET Framework 3.5 SP1 is installed. The latest .NET Framework will be downloaded and installed automatically during installation of ${PRODUCT_NAME}."
+     Pop $0
+  ; End Check .NET version
   ; Get .NET if required
   ${If} $InstallDotNET == "Yes"
      SetDetailsView hide
-     inetc::get /caption "Downloading .NET Framework 3.5" /canceltext "Cancel" "http://www.microsoft.com/downloads/info.aspx?na=90&p=&SrcDisplayLang=en&SrcCategoryId=&SrcFamilyId=333325fd-ae52-4e35-b531-508d977d32a6&u=http%3a%2f%2fdownload.microsoft.com%2fdownload%2f7%2f0%2f3%2f703455ee-a747-4cc8-bd3e-98a615c3aedb%2fdotNetFx35setup.exe" "$INSTDIR\dotnetfx.exe" /end
+     inetc::get /caption "Downloading .NET Framework 3.5" /canceltext "Cancel" "http://www.microsoft.com/downloads/info.aspx?na=90&p=&SrcDisplayLang=en&SrcCategoryId=&SrcFamilyId=ab99342f-5d1a-413d-8319-81da479ab0d7&u=http%3a%2f%2fdownload.microsoft.com%2fdownload%2f0%2f6%2f1%2f061f001c-8752-4600-a198-53214c69b51f%2fdotnetfx35setup.exe" "$INSTDIR\dotnetfx.exe" /end
      Pop $1
 
      ${If} $1 != "OK"
            Delete "$INSTDIR\dotnetfx.exe"
-           Abort "Installation cancelled, ${PRODUCT_NAME} requires the .NET Framework"
+           Abort "Installation cancelled, ${PRODUCT_NAME} requires the .NET 3.5 Framework"
      ${EndIf}
 
      ExecWait "$INSTDIR\dotnetfx.exe"
@@ -155,7 +158,8 @@ Section "MainSection" SEC01
   File "Bin\Release\StochFit.exe"
   File "Bin\dlls\vcredist_x86.exe"
   
-   StrCpy $R0 '/q:a /c:"VCREDI~3.EXE /q:a /c:""msiexec /i vcredist.msi /qn"" "'
+   ;StrCpy $R0 '/q:a /c:"VCREDI~3.EXE /q:a /c:""msiexec /i vcredist.msi /qn"" "'
+   StrCpy $R0 '/Q'
    ExecWait '"$INSTDIR\vcredist_x86.exe" $R0 '
    Delete "$INSTDIR\VCredist.exe"
 

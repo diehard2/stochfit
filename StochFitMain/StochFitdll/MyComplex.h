@@ -26,7 +26,7 @@ namespace MyComplexNumber{
 
 	//Complex Class definition
 
-	struct MyComplex
+	__declspec(align(16))struct MyComplex
 	{
 	  public:
 		double re;
@@ -62,13 +62,13 @@ namespace MyComplexNumber{
 			return MyComplex(s*re,s*im);
 		} 
 
-		friend const MyComplex operator*(MyComplex lhs, MyComplex rhs)
+		friend const MyComplex operator*(const MyComplex& lhs, const MyComplex& rhs)
 		{
 			return MyComplex((lhs.re*rhs.re-lhs.im*rhs.im),(lhs.re*rhs.im+lhs.im*rhs.re));
 
 		}
 
-		friend const MyComplex operator/(MyComplex lhs, MyComplex rhs)
+		friend const MyComplex operator/(const MyComplex& lhs,const MyComplex& rhs)
 		{
 			double denom = rhs.re*rhs.re+rhs.im*rhs.im;
 			
@@ -76,17 +76,17 @@ namespace MyComplexNumber{
 		}
 
 		
-		friend MyComplex operator+(MyComplex lhs,MyComplex rhs)
+		friend MyComplex operator+(const MyComplex& lhs,const MyComplex& rhs)
 		{
 			return MyComplex(lhs.re+rhs.re,lhs.im+rhs.im);
 		}
 
-		friend const MyComplex operator-(const MyComplex lhs, const MyComplex rhs)
+		friend const MyComplex operator-(const MyComplex& lhs, const MyComplex& rhs)
 		{
 			return MyComplex(lhs.re-rhs.re,lhs.im-rhs.im);
 		}
 
-		friend bool operator==(MyComplex lhs,MyComplex rhs)
+		friend bool operator==(const MyComplex& lhs,const MyComplex& rhs)
 		{
 			if(lhs.re == rhs.re && lhs.im == rhs.im)
 				return true;
@@ -94,7 +94,7 @@ namespace MyComplexNumber{
 			return false;
 		}
 		
-		friend bool operator!=(MyComplex lhs,MyComplex rhs)
+		friend bool operator!=(const MyComplex& lhs,const MyComplex& rhs)
 		{
 			if(lhs.re == rhs.re && lhs.im == rhs.im)
 				return false;
@@ -105,28 +105,28 @@ namespace MyComplexNumber{
 
 	//Complex functions
 
-	inline MyComplex compexp(MyComplex comp)
+	inline MyComplex compexp(const MyComplex& comp)
 	{
 		double exponent = exp(comp.re);
 		return MyComplex(exponent*cos(comp.im),exponent*sin(comp.im));
 	}
 
-	inline MyComplex compcos(MyComplex comp)
+	inline MyComplex compcos(const MyComplex& comp)
 	{
 		return MyComplex(cos(comp.re)*cosh(comp.im),0.0-(sin(comp.re)*sinh(comp.im)));
 	}
 
-	inline MyComplex compsin(MyComplex comp)
+	inline MyComplex compsin(const MyComplex& comp)
 	{
 		return MyComplex(sin(comp.re)*cosh(comp.im),cos(comp.re)*sinh(comp.im));
 	}
 
-	inline float comparg(MyComplex comp)
+	inline float comparg(const MyComplex& comp)
 	{
 		return atan2(comp.im, comp.re);
 	}
 
-	inline MyComplex compsqrt(MyComplex comp)
+	inline MyComplex compsqrt(const MyComplex& comp)
 	{
 		//Use the half angle relation to calculate the square root. Prevents buffer
 		//over/under flows. Don't change this code. This problem actually occurs
@@ -146,7 +146,7 @@ namespace MyComplexNumber{
 		return MyComplex(sqrt(comp.re),0.0);
 	};
 
-	inline double compabs(MyComplex comp)
+	inline double compabs(const MyComplex& comp)
 	{
 		//While inefficient, this prevents buffer under/overflows - from Numerical Recipes in C++
 		double placeholder=0.0f;
@@ -180,7 +180,7 @@ namespace MyComplexNumber{
 		
 	};
 	
-	inline MyComplex cln(MyComplex comp)
+	inline MyComplex cln(const MyComplex& comp)
 	{
 		return MyComplex(logf(compabs(comp)),comparg(comp));
 	}

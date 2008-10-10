@@ -91,19 +91,19 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 {
 	//Now create our xi,yi,dyi, and thetai
 	m_idatapoints = InitStruct->QPoints - InitStruct->HighQOffset - InitStruct->CritEdgeOffset;
-	xi = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
-	yi = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
+	xi = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
+	yi = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
 	
 	if(InitStruct->QError != NULL)
-		exi = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
+		exi = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
 	
-	eyi = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
-	sinthetai = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
-	sinsquaredthetai = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
-	qspreadsinthetai = (double*)_mm_malloc(m_idatapoints*13*sizeof(double),64);
-	qspreadsinsquaredthetai = (double*)_mm_malloc(m_idatapoints*13*sizeof(double),64);
-	reflpt = (double*)_mm_malloc(m_idatapoints*sizeof(double),64);
-	qspreadreflpt = (double*)_mm_malloc(m_idatapoints*13*sizeof(double),64);
+	eyi = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
+	sinthetai = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
+	sinsquaredthetai = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
+	qspreadsinthetai = (double*)_mm_malloc(m_idatapoints*13*sizeof(double),16);
+	qspreadsinsquaredthetai = (double*)_mm_malloc(m_idatapoints*13*sizeof(double),16);
+	reflpt = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
+	qspreadreflpt = (double*)_mm_malloc(m_idatapoints*13*sizeof(double),16);
 
 	//and fill them up
 	for(int i = 0; i< m_idatapoints; i++)
@@ -116,10 +116,10 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 			exi[i] = InitStruct->QError[i+InitStruct->CritEdgeOffset];
 		
 		sinthetai[i] = InitStruct->Q[i+InitStruct->CritEdgeOffset]*lambda/(4*M_PI);
-		reflpt[i] = 1.0;
 	}
 
-	//Calculate the qspread sinthetai's for resolution smearing
+	//Calculate the qspread sinthetai's for resolution smearing - the first case deals with user supplied errors, the second
+	//handles a constant error in q
 	if(InitStruct->QError != NULL)
 	{
 		double holder = lambda/(4.0*M_PI);
@@ -177,9 +177,9 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
     double dx=(x1-x0)/150.0;
     x1=1.1*x1-0.1*x0;
 	
-	tsinthetai = (double*)_mm_malloc(3000*sizeof(double),64);
-	dataout = (double*)_mm_malloc(3000*sizeof(double),64);
-	qarray = (double*)_mm_malloc(3000*sizeof(double),64);
+	tsinthetai = (double*)_mm_malloc(3000*sizeof(double),16);
+	dataout = (double*)_mm_malloc(3000*sizeof(double),16);
+	qarray = (double*)_mm_malloc(3000*sizeof(double),16);
 	tarraysize = 0;
 
 	int j=0;
@@ -226,12 +226,11 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 	}
 
 	//Calculate the theta's we'll use to make our plotting reflectivity
-	tsinsquaredthetai = (double*)_mm_malloc(tarraysize*sizeof(double),64);
+	tsinsquaredthetai = (double*)_mm_malloc(tarraysize*sizeof(double),16);
 
 	for(int l=0; l<tarraysize; l++)
 	{
 		tsinsquaredthetai[l] = tsinthetai[l]*tsinthetai[l];
-				Sleep(10);
 	}
 
 	for(int l=0; l < m_idatapoints*13; l++)
@@ -572,12 +571,9 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 					
 			}
 			
-			
-			
 			//The magnitude of the reflection at layer 0 is the measured reflectivity of the film
 			holder = compabs(Rj[0]);
 			refl[l] = holder*holder;
-			Sleep(1);
 		}
 	}
 }
@@ -610,7 +606,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 		int neg = 0;
 		for(int k = 0; k<EDPoints;k++)
 		{
-			if((indexsupsquared.re*sinsquaredtheta[i]-DEDP[k].re+DEDP[0].re/2.0f)< 0.0f)
+			if((indexsupsquared.re*sinsquaredtheta[i]-DEDP[k].re+DEDP[0].re)< 0.0)
 			{
 				neg -= 1;
 				break;
@@ -619,7 +615,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 		if(neg == 0)
 		{
 			offset = i;
-			if(m_dQSpread > 0)
+			if(m_dQSpread == 0)
 				break;
 		}
 	
@@ -627,11 +623,6 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 
 	//In order to vectorize loops, you cannot use global variables
 	int EDPointsMinOne = EDPoints-1;
-	
-
-
-
-		
 
 	#pragma omp parallel
 	{
@@ -885,7 +876,7 @@ double CReflCalc::GetWaveConstant()
 
 void CReflCalc::GetOffSets(int& HighOffset, int& LowOffset, MyComplex* EDP, int EDPoints)
 {
-	//Find duplicate pts so we don't do the same calculation over and over again
+		//Find duplicate pts so we don't do the same calculation over and over again
 		for(int i = 0; i < EDPoints; i++)
 		{
 			if(EDP[i].re == EDP[0].re)

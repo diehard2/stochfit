@@ -512,7 +512,6 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 			//The magnitude of the reflection at layer 0 is the measured reflectivity of the film
 			holder = compabs(Rj[0]);
 			refl[l] = holder*holder;
-			Sleep(1);
 		}
 	}
 }

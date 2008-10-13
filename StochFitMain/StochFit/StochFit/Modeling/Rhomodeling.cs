@@ -44,12 +44,19 @@ namespace StochasticModeling
     /// <summary>
     /// Fits a model dependent electron density profile to the model independent electron density profile
     /// </summary>
-    public partial class Rhomodeling : BoxReflFitBase
+    public partial class Rhomodeling : Form
     {
         #region Variables
 
-        
-    
+
+        List<TextBox> BoxSigmaArray;
+        List<TextBox> BoxLengthArray;
+        List<TextBox> BoxRhoArray;
+
+        protected Graphing ReflGraphing;
+        protected Graphing RhoGraphing;
+
+        private BoxReflFitBase RhoCalc;
         private Graphing m_gRhoGraphing;
 
         #endregion
@@ -63,18 +70,22 @@ namespace StochasticModeling
         /// <param name="leftoffset">The offset in Z for the first box</param>
         /// <param name="subsld">The subphase SLD</param>
         /// <param name="supsld">The superphase SLD</param>
-        public Rhomodeling(double[] Z, double[] ERho, double roughness, string leftoffset, string subsld, string supsld):base(Z, ERho,roughness, subsld, supsld)
+        public Rhomodeling(double[] Z, double[] ERho, double roughness, string leftoffset, string subsld, string supsld)
            // base(roughness, 
         {
             InitializeComponent();
-            
-            
+            bool SetupWithSLD = Properties.Settings.Default.UseSLDSingleSession;
+            RhoCalc = new BoxReflFitBase(Z, ERho);
+
+            List<TextBox> BoxSigmaArray = new List<TextBox>(6);
+            List<TextBox> BoxLengthArray = new List<TextBox>(6);
+            List<TextBox> BoxRhoArray = new List<TextBox>(6);
+
             this.Text = "Profile Modeling";
 
             //Setup variables
             if (roughness == 0) roughness = 3.0;
 
-            m_dRoughness = roughness;
             SubRough.Text = roughness.ToString();
             Zoffset.Text = leftoffset.ToString();
           
@@ -82,13 +93,13 @@ namespace StochasticModeling
             SupSLDTB.Text = supsld;
 
             //Set default array values
-            if (m_bUseSLD == false)
-                Rho2.Text = Rho1.Text = ((double)1.1).ToString();
+            if (SetupWithSLD == false)
+                Rho2.Text = Rho1.Text = (1.1).ToString();
             else
-                Rho2.Text = Rho1.Text = ((double)1.3*double.Parse(subsld)).ToString();
+                Rho2.Text = Rho1.Text = (1.3*double.Parse(subsld)).ToString();
 
-            Sigma2.Text = Sigma1.Text = ((double)3.25).ToString();
-            LLength1.Text = LLength2.Text = ((double)15.1).ToString();
+            Sigma2.Text = Sigma1.Text = (3.25).ToString();
+            LLength1.Text = LLength2.Text = (15.1).ToString();
             
 
             //Initialize the arrays
@@ -100,9 +111,9 @@ namespace StochasticModeling
              //Setup the Graph
              m_gRhoGraphing = new Graphing(string.Empty);
              m_gRhoGraphing.SubSLD = double.Parse(subsld);
-             m_gRhoGraphing.IsNeutron = m_bUseSLD;
+             m_gRhoGraphing.IsNeutron = SetupWithSLD;
 
-             if (m_bUseSLD == false)
+             if (SetupWithSLD == false)
              {
                  m_gRhoGraphing.CreateGraph(RhoGraph, "Electron Density Profile", "Z", "Normalized Electron Density", AxisType.Linear);
                  RhoLabel.Text = "Normalized Rho";
@@ -127,16 +138,11 @@ namespace StochasticModeling
              UpdateProfile();
         }
 
-        protected override void MakeArrays()
+        /// <summary>
+        /// Make textbox arrays so we can more easily iterate over them
+        /// </summary>
+        protected  void MakeArrays()
         {
-            SubphaseSLDTB = SubphaseSLD;
-            BoxCountTB = BoxCount;
-            SubRoughTB = SubRough;
-            ZOffsetTB = Zoffset;
-            SuperSLDTB = SupSLDTB;
-            HoldsigmaCB = Holdsigma;
-            SubphaseRoughness = SubRoughTB;
-
             BoxSigmaArray.Add(Sigma1);
             BoxSigmaArray.Add(Sigma2);
             BoxSigmaArray.Add(Sigma3);
@@ -199,7 +205,7 @@ namespace StochasticModeling
                     SetInitStruct(ref InfoStruct, null, null, null);
                     if (ElectronDensityArray != null)
                     {
-                        RhoGenerate(InfoStruct, parameters, parameters.Length, ElectronDensityArray, BoxElectronDensityArray);
+                        Calculations.RhoGenerate(InfoStruct, parameters, parameters.Length, ElectronDensityArray, BoxElectronDensityArray);
                     }
 
                     InfoStruct.Dispose();
@@ -214,7 +220,7 @@ namespace StochasticModeling
             }
         }
 
-        protected override void SetInitStruct(ref StochasticModeling.Settings.BoxModelSettings InitStruct, double[] parampercs, double[] UL, double[] LL)
+        protected  void SetInitStruct(ref StochasticModeling.Settings.BoxModelSettings InitStruct, double[] parampercs, double[] UL, double[] LL)
         {
             base.SetInitStruct(ref InitStruct, parampercs, UL, LL);
             InitStruct.SetZ(Z, RealRho);
@@ -234,118 +240,118 @@ namespace StochasticModeling
 
         private void LevenbergFit_Click(object sender, EventArgs e)
         {
-            BackupArrays();
+        //    BackupArrays();
           
-            double[] info = new double[9];
-            double[] parameters = null;
-            int arrayconst;
+        //    double[] info = new double[9];
+        //    double[] parameters = null;
+        //    int arrayconst;
            
-            base.MakeParameters(ref parameters, true, Holdsigma.Checked, BoxCount.ToInt(), 0, SubRough.ToDouble());
+        //    base.MakeParameters(ref parameters, true, Holdsigma.Checked, BoxCount.ToInt(), 0, SubRough.ToDouble());
             
-            m_dCovarArray = new double[parameters.Length];
+        //    m_dCovarArray = new double[parameters.Length];
             
-            InfoStruct = new BoxModelSettings();
-            SetInitStruct(ref InfoStruct, null, null, null);
-            
+        //    InfoStruct = new BoxModelSettings();
+        //    SetInitStruct(ref InfoStruct, null, null, null);
 
-            chisquaretb.Text = Rhofit(InfoStruct, parameters, m_dCovarArray, parameters.Length, info, info.Length).ToString("##.### E-0");
 
-            InfoStruct.Dispose();
+        //    chisquaretb.Text = Calculations.Rhofit(InfoStruct, parameters, m_dCovarArray, parameters.Length, info, info.Length).ToString("##.### E-0");
 
-            SubRough.Text = parameters[0].ToString();
-            Zoffset.Text = parameters[1].ToString();
+        //    InfoStruct.Dispose();
 
-            if (Holdsigma.Checked == true)
-                arrayconst = 2;
-            else
-                arrayconst = 3;
+        //    SubRough.Text = parameters[0].ToString();
+        //    Zoffset.Text = parameters[1].ToString();
 
-            //Update paramters
-            for (int i = 0; i < BoxCount.ToInt(); i++)
-            {
-                BoxLengthArray[i].Text = parameters[arrayconst * i + 2].ToString();
+        //    if (Holdsigma.Checked == true)
+        //        arrayconst = 2;
+        //    else
+        //        arrayconst = 3;
 
-                if(m_bUseSLD == false)
-                    BoxRhoArray[i].Text = parameters[arrayconst * i + 3].ToString();
-                else
-                    BoxRhoArray[i].Text = (parameters[arrayconst * i + 3]*SubphaseSLD.ToDouble()).ToString();
+        //    //Update paramters
+        //    for (int i = 0; i < BoxCount.ToInt(); i++)
+        //    {
+        //        BoxLengthArray[i].Text = parameters[arrayconst * i + 2].ToString();
 
-                if(Holdsigma.Checked)
-                    BoxSigmaArray[i].Text = parameters[0].ToString();
-                else
-                    BoxSigmaArray[i].Text = parameters[3 * i + 4].ToString();
-            }
+        //        if(m_bUseSLD == false)
+        //            BoxRhoArray[i].Text = parameters[arrayconst * i + 3].ToString();
+        //        else
+        //            BoxRhoArray[i].Text = (parameters[arrayconst * i + 3]*SubphaseSLD.ToDouble()).ToString();
 
-            //Display the fit
-            UpdateProfile();
+        //        if(Holdsigma.Checked)
+        //            BoxSigmaArray[i].Text = parameters[0].ToString();
+        //        else
+        //            BoxSigmaArray[i].Text = parameters[3 * i + 4].ToString();
+        //    }
+
+        //    //Display the fit
+        //    UpdateProfile();
           
-            //Write graph to the master graph
-            GraphCollection.Instance.RhoGraph = m_gRhoGraphing;
+        //    //Write graph to the master graph
+        //    GraphCollection.Instance.RhoGraph = m_gRhoGraphing;
 
-            SaveParamsforReport();
-        }
+        //    SaveParamsforReport();
+       }
 
         private void SaveParamsforReport()
         {
-            ReportGenerator g = ReportGenerator.Instance;
-            g.ClearRhoModelInfo();
+        //    ReportGenerator g = ReportGenerator.Instance;
+        //    g.ClearRhoModelInfo();
 
-            List<string> info = new List<string>();
+        //    List<string> info = new List<string>();
 
-            if (Holdsigma.Checked)
-            {
-                if(m_bUseSLD == false)
-                    info.Add("The electron density profile was fit with a single roughness parameter\n");
-                else
-                    info.Add("The SLD profile was fit with a single roughness parameter\n");
-            }
-            else
-            {
-                if(m_bUseSLD == false)
-                    info.Add(String.Format("The electron density profile was fit with {0} roughness parameters\n", (BoxCount.ToInt() + 1)));
-                else
-                    info.Add(String.Format("The SLD profile was fit with {0} roughness parameters\n", (BoxCount.ToInt() + 1)));
-            }
+        //    if (Holdsigma.Checked)
+        //    {
+        //        if(m_bUseSLD == false)
+        //            info.Add("The electron density profile was fit with a single roughness parameter\n");
+        //        else
+        //            info.Add("The SLD profile was fit with a single roughness parameter\n");
+        //    }
+        //    else
+        //    {
+        //        if(m_bUseSLD == false)
+        //            info.Add(String.Format("The electron density profile was fit with {0} roughness parameters\n", (BoxCount.ToInt() + 1)));
+        //        else
+        //            info.Add(String.Format("The SLD profile was fit with {0} roughness parameters\n", (BoxCount.ToInt() + 1)));
+        //    }
 
-            info.Add(string.Format("Chi Square: " + chisquaretb.Text + "\n"));
-            info.Add(string.Format("The subphase roughness was: {0:#.### E-0} " + (char)0x00B1 + " {1:#.### E-0}\n", SubRough.ToDouble(), m_dCovarArray[0]));
+        //    info.Add(string.Format("Chi Square: " + chisquaretb.Text + "\n"));
+        //    info.Add(string.Format("The subphase roughness was: {0:#.### E-0} " + (char)0x00B1 + " {1:#.### E-0}\n", SubRough.ToDouble(), m_dCovarArray[0]));
 
-            int offset = 0;
+        //    int offset = 0;
 
-            if (!Holdsigma.Checked)
-                offset = 1;
+        //    if (!Holdsigma.Checked)
+        //        offset = 1;
             
-                for (int i = 0; i < BoxCount.ToInt(); i++)
-                {
-                    info.Add((i + 1).ToString());
-                    info.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + m_dCovarArray[(2+offset) * i + 1].ToString("#.### E-0"));
+        //        for (int i = 0; i < BoxCount.ToInt(); i++)
+        //        {
+        //            info.Add((i + 1).ToString());
+        //            info.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + m_dCovarArray[(2+offset) * i + 1].ToString("#.### E-0"));
                     
-                    if(m_bUseSLD == false)
-                        info.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + m_dCovarArray[(2+offset) * i + 2].ToString("#.### E-0"));
-                    else
-                        info.Add((RhoArray[i]).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (m_dCovarArray[(2+offset) * i + 2]).ToString("#.### E-0"));
+        //            if(m_bUseSLD == false)
+        //                info.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + m_dCovarArray[(2+offset) * i + 2].ToString("#.### E-0"));
+        //            else
+        //                info.Add((RhoArray[i]).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (m_dCovarArray[(2+offset) * i + 2]).ToString("#.### E-0"));
                     
-                    if(Holdsigma.Checked)
-                        info.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + m_dCovarArray[0].ToString("#.### E-0"));
-                    else
-                        info.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + m_dCovarArray[3 * i + 3].ToString("#.### E-0"));
-                }
-            g.SetRhoModelInfo = info;
+        //            if(Holdsigma.Checked)
+        //                info.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + m_dCovarArray[0].ToString("#.### E-0"));
+        //            else
+        //                info.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + m_dCovarArray[3 * i + 3].ToString("#.### E-0"));
+        //        }
+        //    g.SetRhoModelInfo = info;
         }
 
         private void UndoFit_Click(object sender, EventArgs e)
         {
-            for (int i = 0; i < 6; i++)
-            {
-                BoxRhoArray[i].Text = PreviousRhoArray[i].ToString();
-                BoxLengthArray[i].Text = PreviousLengthArray[i].ToString() ;
-                BoxSigmaArray[i].Text = PreviousSigmaArray[i].ToString();
-            }
+        //    for (int i = 0; i < 6; i++)
+        //    {
+        //        BoxRhoArray[i].Text = PreviousRhoArray[i].ToString();
+        //        BoxLengthArray[i].Text = PreviousLengthArray[i].ToString() ;
+        //        BoxSigmaArray[i].Text = PreviousSigmaArray[i].ToString();
+        //    }
 
-            SubRough.Text = m_dPrevioussigma.ToString();
-            Zoffset.Text = m_dPreviouszoffset.ToString();
+        //    SubRough.Text = m_dPrevioussigma.ToString();
+        //    Zoffset.Text = m_dPreviouszoffset.ToString();
 
-            UpdateProfile();
+        //    UpdateProfile();
         }
 
         //Show errors associated with the fit
@@ -419,15 +425,44 @@ namespace StochasticModeling
                 GraphCollection.Instance.RhoGraph = m_gRhoGraphing;
         }
 
+        protected void GreyFields()
+        {
+
+            for (int i = 0; i < 6; i++)
+            {
+                if (i < int.Parse(BoxCountTB))
+                {
+                    BoxLengthArray[i].Enabled = true;
+                    BoxRhoArray[i].Enabled = true;
+                    BoxSigmaArray[i].Enabled = !HoldsigmaCB.Checked;
+                }
+                else
+                {
+                    BoxLengthArray[i].Enabled = false;
+                    BoxRhoArray[i].Enabled = false;
+                    BoxSigmaArray[i].Enabled = false;
+                }
+            }
+        }
+
         /// <summary>
         /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
-        /// in number entry 
+        /// in number entry
         /// </summary>
         /// <param name="sender">A textbox is expected as input</param>
-        /// <param name="e">return true if the number can be cast to an double or false if not</param>
-        protected override void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
+        /// <param name="e">return true if the number can be cast to a double or false if not</param>
+        protected virtual void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            base.ValidateNumericalInput(sender, e);
+            try
+            {
+                base.OnValidating(e);
+                Double.Parse(((TextBox)sender).Text);
+            }
+            catch
+            {
+                MessageBox.Show("Error in input - A real number was expected");
+                e.Cancel = true;
+            }
         }
 
         /// <summary>
@@ -436,17 +471,19 @@ namespace StochasticModeling
         /// </summary>
         /// <param name="sender">A textbox is expected as input</param>
         /// <param name="e">return true if the number can be cast to an integer or false if not</param>
-        protected override void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
+        protected virtual void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            base.ValidateIntegerInput(sender, e);
-
-            if (BoxCount.ToInt()  > 6)
+            try
             {
-                MessageBox.Show("Six is the maximum number of boxes");
+                base.OnValidating(e);
+                Convert.ToInt32(((TextBox)sender).Text);
+            }
+            catch
+            {
+                MessageBox.Show("Error in input - An integer was expected");
                 e.Cancel = true;
             }
         }
-
         private double GetSubSLD
         {
             get { return double.Parse(SubphaseSLD.Text); }

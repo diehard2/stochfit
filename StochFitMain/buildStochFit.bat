@@ -1,6 +1,6 @@
 :: This script file builds all of the versions of STochFit. It requires the 
 :: Intel compiler, Microsoft Visual Studio, and the Intel MKL.
-:: You may have to change the paths below if you have a different version.
+:: You will have to change the paths below if you have a different version.
 
 SET MKLVER=10.0.2.019
 SET UtilPath=%~dp0

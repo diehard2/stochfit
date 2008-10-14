@@ -69,6 +69,8 @@ namespace StochasticModeling
         protected double m_dPrevioussigma;
         protected double m_dPreviouszoffset;
 
+        public delegate void UpdateProfileHandler(object sender, EventArgs e);
+        public event UpdateProfileHandler Update;
 
     #endregion
 
@@ -109,7 +111,7 @@ namespace StochasticModeling
             m_roughness = roughness;
             m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
             
-            MakeArrays();
+          
             RhoArray = new List<double>(inRho);
             LengthArray = new List<double>(inLength);
             SigmaArray = new List<double>(inSigma);
@@ -147,19 +149,8 @@ namespace StochasticModeling
         }
 
 
-        protected virtual void MakeArrays()
-        {
 
-        }
-
-
-        protected virtual void ChangeRoughnessArray(double rough, ref TextBox t)
-        {
-            SubRoughTB = rough;
-            SigmaArray.ForEach(p => p = rough);
-        }
-
-        protected virtual void UpdateProfile()
+        public virtual void UpdateProfile()
         {
            m_bvalidfit = false;
 
@@ -188,7 +179,7 @@ namespace StochasticModeling
            // RhoGraphing.LoadfromArray("Model Dependent Box Fit", Z, BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
         }
 
-        protected void MakeParameters(ref double[] parameters, bool IsED, bool onesigma, int boxcount,  double normcorrection, double subrough)
+        public void MakeParameters(ref double[] parameters, bool IsED, bool onesigma, int boxcount, double normcorrection, double subrough)
         {
             int arrayconst = 0;
             int EDconst = 0;
@@ -285,6 +276,22 @@ namespace StochasticModeling
             
             //m_dPrevioussigma = SubphaseRoughness.ToDouble();
             //m_dPreviouszoffset = ZOffsetTB.ToDouble();
+        }
+
+        public double GetSubRoughness
+        {
+            get
+            {
+                return SubphaseRoughness;
+            }
+        }
+
+        public bool IsOneSigma
+        {
+            get
+            {
+                return HoldsigmaCB;
+            }
         }
     }
 }

@@ -132,12 +132,17 @@ namespace StochasticModeling
              
 
              MakeArrays();
-             ChangeRoughnessArray(roughness);
+             ChangeRoughnessArray();
              GreyFields(); 
              //Create the electron density graph
-             UpdateProfile();
+             //UpdateProfile();
+            RhoCalc.Update += new BoxReflFitBase.UpdateProfileHandler(UpdateProfile);
         }
 
+        public void UpdateProfile(object sender, EventArgs e)
+        {
+
+        }
         /// <summary>
         /// Make textbox arrays so we can more easily iterate over them
         /// </summary>
@@ -165,10 +170,13 @@ namespace StochasticModeling
             BoxRhoArray.Add(Rho6);
         }
 
-        private void ChangeRoughnessArray(double rough)
+        private void ChangeRoughnessArray()
         {
-            SubRough.Text = rough.ToString();
-            BoxSigmaArray.ForEach( p => p.Text = rough.ToString());
+            if (RhoCalc.IsOneSigma)
+            {
+                SubRough.Text = RhoCalc.GetSubRoughness.ToString();
+                BoxSigmaArray.ForEach(p => p.Text = RhoCalc.GetSubRoughness.ToString());
+            }
         }
 
 
@@ -222,7 +230,7 @@ namespace StochasticModeling
 
         protected  void SetInitStruct(ref StochasticModeling.Settings.BoxModelSettings InitStruct, double[] parampercs, double[] UL, double[] LL)
         {
-            base.SetInitStruct(ref InitStruct, parampercs, UL, LL);
+            SetInitStruct(ref InitStruct, parampercs, UL, LL);
             InitStruct.SetZ(Z, RealRho);
             InitStruct.OneSigma = Holdsigma.Checked;
         }

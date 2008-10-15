@@ -55,7 +55,7 @@ namespace StochasticModeling
 
         protected Graphing ReflGraphing;
         protected Graphing RhoGraphing;
-
+        private bool m_bmodelreset = false;
         private BoxReflFitBase RhoCalc;
         private Graphing m_gRhoGraphing;
 
@@ -127,22 +127,36 @@ namespace StochasticModeling
              m_gRhoGraphing.SetGraphType(false, false);
 
              if (Z != null)
-                 m_gRhoGraphing.LoadfromArray("Model Independent Fit", Z, RealRho, System.Drawing.Color.Black, SymbolType.None, 0, true, string.Empty);
+                 m_gRhoGraphing.LoadfromArray("Model Independent Fit", Z, ERho, System.Drawing.Color.Black, SymbolType.None, 0, true, string.Empty);
 
              
 
              MakeArrays();
+             SetUpCalculation();
              ChangeRoughnessArray();
              GreyFields(); 
              //Create the electron density graph
              //UpdateProfile();
-            RhoCalc.Update += new BoxReflFitBase.UpdateProfileHandler(UpdateProfile);
+             RhoCalc.Update += new BoxReflFitBase.UpdateProfileHandler(UpdateProfile);
         }
 
         public void UpdateProfile(object sender, EventArgs e)
         {
+            Zoffset.Text = RhoCalc.ZOffset.ToString();
+            SubRough.Text = RhoCalc.GetSubRoughness.ToString();
+            
+            //Blank our Rho data from the previous iteration
+            for (int i = 0; i < BoxRhoArray.Count; i++)
+            {
+                BoxRhoArray[i].Text = RhoCalc.RhoArray[i].ToString();
+                BoxSigmaArray[i].Text = RhoCalc.SigmaArray[i].ToString();
+                BoxLengthArray[i].Text = RhoCalc.LengthArray[i].ToString();
+            }
 
+            RhoGraphing.LoadfromArray("Model Dependent Fit", RhoCalc.Get_Z, RhoCalc.Get_Rho, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
+            RhoGraphing.LoadfromArray("Model Dependent Box Fit", RhoCalc.Get_Z, RhoCalc.Get_BoxRho, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
         }
+
         /// <summary>
         /// Make textbox arrays so we can more easily iterate over them
         /// </summary>
@@ -172,7 +186,7 @@ namespace StochasticModeling
 
         private void ChangeRoughnessArray()
         {
-            if (RhoCalc.IsOneSigma)
+            if (Holdsigma.Checked)
             {
                 SubRough.Text = RhoCalc.GetSubRoughness.ToString();
                 BoxSigmaArray.ForEach(p => p.Text = RhoCalc.GetSubRoughness.ToString());
@@ -180,59 +194,37 @@ namespace StochasticModeling
         }
 
 
-        private void UpdateProfile()
+        private void SetUpCalculation()
         {
             //Fill Rho array
             try
             {
-                BackupArrays();
-
-                if (Holdsigma.Checked)
-                    ChangeRoughnessArray(SubRough.ToDouble());
+                RhoCalc.IsOneSigma = Holdsigma.Checked;
+                RhoCalc.ZOffset = Zoffset.ToDouble();
+                RhoCalc.GetSubRoughness = SubRough.ToDouble();
+                RhoCalc.BoxCount = BoxCount.ToInt();
+                RhoCalc.SubphaseSLD = SubphaseSLD.ToDouble();
+                RhoCalc.SuperphaseSLD = SupSLDTB.ToDouble();
 
                 //Blank our Rho data from the previous iteration
-                RhoArray.Clear();
-                BoxRhoArray.ForEach(p => RhoArray.Add(p.ToDouble()));
+                RhoCalc.RhoArray.Clear();
+                BoxRhoArray.ForEach(p => RhoCalc.RhoArray.Add(p.ToDouble()));
 
                 //Fill Length array
-                LengthArray.Clear();
-                BoxLengthArray.ForEach(p => LengthArray.Add(p.ToDouble()));
+                RhoCalc.LengthArray.Clear();
+                BoxLengthArray.ForEach(p => RhoCalc.LengthArray.Add(p.ToDouble()));
            
                 //Fill Sigma array
-                SigmaArray.Clear();
-                BoxSigmaArray.ForEach(p => SigmaArray.Add(p.ToDouble()));
+                RhoCalc.SigmaArray.Clear();
+                BoxSigmaArray.ForEach(p => RhoCalc.SigmaArray.Add(p.ToDouble()));
 
-                m_dZ_offset = Zoffset.ToDouble();
-
-                if (Z != null)
-                {
-                    double[] parameters = null;
-                    InfoStruct = new BoxModelSettings();
-                                 
-                    MakeParameters(ref parameters, true, Holdsigma.Checked, BoxCount.ToInt(), 0, SubRough.ToDouble());
-                    SetInitStruct(ref InfoStruct, null, null, null);
-                    if (ElectronDensityArray != null)
-                    {
-                        Calculations.RhoGenerate(InfoStruct, parameters, parameters.Length, ElectronDensityArray, BoxElectronDensityArray);
-                    }
-
-                    InfoStruct.Dispose();
-
-                    m_gRhoGraphing.LoadfromArray("Model Dependent Fit", Z, ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
-                    m_gRhoGraphing.LoadfromArray("Model Dependent Box Model", Z, BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
-                }
+                if (Holdsigma.Checked)
+                    ChangeRoughnessArray();
             }
             catch (Exception ex)
             {
                MessageBox.Show(ex.Message.ToString());
             }
-        }
-
-        protected  void SetInitStruct(ref StochasticModeling.Settings.BoxModelSettings InitStruct, double[] parampercs, double[] UL, double[] LL)
-        {
-            SetInitStruct(ref InitStruct, parampercs, UL, LL);
-            InitStruct.SetZ(Z, RealRho);
-            InitStruct.OneSigma = Holdsigma.Checked;
         }
 
     
@@ -241,7 +233,7 @@ namespace StochasticModeling
         private void Field_Validated (object sender, EventArgs e)
         {
             GreyFields();
-            UpdateProfile();
+            SetUpCalculation();
         }
 
        

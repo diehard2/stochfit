@@ -28,9 +28,9 @@ namespace StochasticModeling
         protected bool m_bUseSLD = false;
         
         //Arrays
-        protected List<double> RhoArray;
-        protected List<double> LengthArray;
-        protected List<double> SigmaArray;
+        protected List<double> _RhoArray;
+        protected List<double> _LengthArray;
+        protected List<double> _SigmaArray;
         protected List<double> PreviousRhoArray;
         protected List<double> PreviousLengthArray;
         protected List<double> PreviousSigmaArray;
@@ -39,7 +39,7 @@ namespace StochasticModeling
         protected double oldnormfactor;
         protected double previoussigma;
         protected bool initialized = false;
-        protected double SubphaseRoughness;
+        protected double _SubphaseRoughness;
         protected double LeftOffset;
         protected double NormalizationFactor;
         protected double SubphaseSLDTB;
@@ -66,7 +66,7 @@ namespace StochasticModeling
         protected double m_dZ_offset = 15;
         protected double m_dRoughness = 3;
         protected double[] m_dCovarArray;
-        protected double m_dPrevioussigma;
+        //protected double m_dPrevioussigma;
         protected double m_dPreviouszoffset;
 
         public delegate void UpdateProfileHandler(object sender, EventArgs e);
@@ -85,9 +85,9 @@ namespace StochasticModeling
             
 
            
-            RhoArray = new List<double>(6);
-            LengthArray = new List<double>(6);
-            SigmaArray = new List<double>(6);
+            _RhoArray = new List<double>(6);
+            _LengthArray = new List<double>(6);
+            _SigmaArray = new List<double>(6);
             info = new double[9];
 
             //Setup arrays to hold the old values
@@ -112,9 +112,9 @@ namespace StochasticModeling
             m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
             
           
-            RhoArray = new List<double>(inRho);
-            LengthArray = new List<double>(inLength);
-            SigmaArray = new List<double>(inSigma);
+            _RhoArray = new List<double>(inRho);
+            _LengthArray = new List<double>(inLength);
+            _SigmaArray = new List<double>(inSigma);
             info = new double[9];
 
             //Setup arrays to hold the old values
@@ -140,7 +140,7 @@ namespace StochasticModeling
 
             for (int k = 0; k < boxnumber; k++)
             {
-                length += LengthArray[k];
+                length += _LengthArray[k];
             }
             for (int i = 0; i < 500; i++)
             {
@@ -148,8 +148,7 @@ namespace StochasticModeling
             }
         }
 
-
-
+               
         public virtual void UpdateProfile()
         {
            m_bvalidfit = false;
@@ -157,28 +156,55 @@ namespace StochasticModeling
            double[] parameters = null;
            double[] eparameters = null;
            
-           MakeParameters(ref eparameters, true, HoldsigmaCB, BoxCountTB,NormalizationFactor, SubphaseRoughness);
+           MakeParameters(ref eparameters, true, HoldsigmaCB, BoxCountTB,NormalizationFactor, _SubphaseRoughness);
+          
+           InfoStruct = new BoxModelSettings();
+           SetInitStruct(ref InfoStruct, null, null, null);
+
            Calculations.RhoGenerate(InfoStruct, eparameters, eparameters.Length, ElectronDensityArray, BoxElectronDensityArray);
 
-           //if(ReflGraphing != null)
+           InfoStruct.Dispose();
+           //if (Qincrement != null)
            //{
-           //     MakeParameters(ref parameters, false, HoldsigmaCB.Checked, BoxCountTB.ToInt(), NormalizationFactor.ToDouble(), SubphaseRoughness.ToDouble());
-           //     Calculations.FastReflGenerate(InfoStruct, parameters, parameters.Length, ReflectivityMap);
+           //    MakeParameters(ref parameters, false, HoldsigmaCB.Checked, BoxCountTB.ToInt(), NormalizationFactor.ToDouble(), SubphaseRoughness.ToDouble());
+           //    Calculations.FastReflGenerate(InfoStruct, parameters, parameters.Length, ReflectivityMap);
 
-           //     if (m_bmodelreset == true)
-           //     {
-           //         ReflGraphing.Clear();
-           //         ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
-           //         m_bmodelreset = false;
-           //     }
+           //    if (m_bmodelreset == true)
+           //    {
+           //        ReflGraphing.Clear();
+           //        ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
+           //        m_bmodelreset = false;
+           //    }
 
-           //     //Setup the graphs
-           //     ReflGraphing.LoadfromArray("modelrefl", Qincrement, ReflectivityMap, System.Drawing.Color.Black, SymbolType.XCross, 4, true, string.Empty);
+           //    //Setup the graphs
+           //    ReflGraphing.LoadfromArray("modelrefl", Qincrement, ReflectivityMap, System.Drawing.Color.Black, SymbolType.XCross, 4, true, string.Empty);
            //}
-           // RhoGraphing.LoadfromArray("Model Dependent Fit", Z, ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
-           // RhoGraphing.LoadfromArray("Model Dependent Box Fit", Z, BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
+          
         }
 
+        public double[] Get_Z
+        {
+            get
+            {
+                return Z;
+            }
+        }
+
+        public double[] Get_Rho
+        {
+            get
+            {
+                return ElectronDensityArray;
+            }
+        }
+
+        public double[] Get_BoxRho
+        {
+            get
+            {
+                return BoxElectronDensityArray;
+            }
+        }
         public void MakeParameters(ref double[] parameters, bool IsED, bool onesigma, int boxcount, double normcorrection, double subrough)
         {
             int arrayconst = 0;
@@ -204,7 +230,7 @@ namespace StochasticModeling
             {
                 parameters = new double[arrayconst + 1 + boxcount * 2];
 
-                if (ZOffsetTB == null)
+                if (ZOffsetTB == 0)
                     parameters[1] = 25;
                 else
                     parameters[1] = ZOffsetTB;
@@ -219,15 +245,15 @@ namespace StochasticModeling
 
             for (int i = 0; i < boxcount; i++)
             {
-                parameters[arrayconst * i + 1 + EDconst] = LengthArray[i];
+                parameters[arrayconst * i + 1 + EDconst] = _LengthArray[i];
 
                 if (!m_bUseSLD)
-                    parameters[arrayconst * i + 2 + EDconst] = RhoArray[i];
+                    parameters[arrayconst * i + 2 + EDconst] = _RhoArray[i];
                 else
-                    parameters[arrayconst * i + 2 + EDconst] = RhoArray[i] / SubphaseSLDTB;
+                    parameters[arrayconst * i + 2 + EDconst] = _RhoArray[i] / SubphaseSLDTB;
 
                 if (!onesigma)
-                    parameters[3 * i + 3 + EDconst] = SigmaArray[i];
+                    parameters[3 * i + 3 + EDconst] = _SigmaArray[i];
             }
 
             if (!IsED)
@@ -247,22 +273,36 @@ namespace StochasticModeling
             InitStruct.SubSLD = SubphaseSLDTB;
             InitStruct.SupSLD = SuperSLDTB;
 
-            if (WavelengthTB != null)
+            if (WavelengthTB != 0)
                 InitStruct.Wavelength = WavelengthTB;
 
             InitStruct.OneSigma = HoldsigmaCB;
 
-            if (QSpreadTB != null)
+            if (QSpreadTB != 0)
                 InitStruct.QSpread = QSpreadTB;
 
-            if (ImpNormCB != null)
+            if (ImpNormCB == true)
                 InitStruct.ImpNorm = ImpNormCB;
+            
+            if(Z != null)
+                InitStruct.SetZ(Z, RealRho);
 
             InitStruct.WriteFiles = true;
 
         }
 
-      
+        public void UndoFit()
+        {
+            for (int i = 0; i < PreviousRhoArray.Count; i++)
+            {
+                RhoArray[i] = PreviousRhoArray[i];
+                SigmaArray[i] = PreviousSigmaArray[i];
+                LengthArray[i] = PreviousLengthArray[i];
+            }
+            SubRoughTB = previoussigma;
+            ZOffsetTB = m_dPreviouszoffset;
+
+        }
 
         protected void BackupArrays()
         {
@@ -270,9 +310,9 @@ namespace StochasticModeling
             PreviousSigmaArray.Clear();
             PreviousLengthArray.Clear();
 
-            RhoArray.ForEach(p => PreviousRhoArray.Add(p));
-            SigmaArray.ForEach(p => PreviousSigmaArray.Add(p));
-            LengthArray.ForEach(p => PreviousLengthArray.Add(p));
+            _RhoArray.ForEach(p => PreviousRhoArray.Add(p));
+            _SigmaArray.ForEach(p => PreviousSigmaArray.Add(p));
+            _LengthArray.ForEach(p => PreviousLengthArray.Add(p));
             
             //m_dPrevioussigma = SubphaseRoughness.ToDouble();
             //m_dPreviouszoffset = ZOffsetTB.ToDouble();
@@ -282,17 +322,82 @@ namespace StochasticModeling
         {
             get
             {
-                return SubphaseRoughness;
+                return _SubphaseRoughness;
+            }
+            set
+            {
+                _SubphaseRoughness = value;
             }
         }
 
         public bool IsOneSigma
         {
-            get
+            set
             {
-                return HoldsigmaCB;
+                HoldsigmaCB = value;
             }
         }
+
+        public double ZOffset
+        {
+            get
+            {
+                return ZOffsetTB;
+            }
+            set
+            {
+                ZOffsetTB = value;
+            }
+        }
+
+        public int BoxCount
+        {
+            set
+            {
+                BoxCountTB = value;
+            }
+        }
+
+        public double SubphaseSLD
+        {
+            set
+            {
+                SubphaseSLDTB = value;
+            }
+        }
+
+        public double SuperphaseSLD
+        {
+            set
+            {
+                SuperSLDTB = value;
+            }
+        }
+
+        public List<double> RhoArray
+        {
+            get
+            {
+                return _RhoArray;
+            }
+        }
+
+        public List<double> LengthArray
+        {
+            get
+            {
+                return _LengthArray;
+            }
+        }
+
+        public List<double> SigmaArray
+        {
+            get
+            {
+                return SigmaArray;
+            }
+        }
+            
     }
 }
 

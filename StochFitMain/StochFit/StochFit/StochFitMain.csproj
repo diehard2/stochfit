@@ -142,6 +142,8 @@
     </Compile>
     <Compile Include="BoxReflFitBase.cs">
     </Compile>
+    <Compile Include="ReflFit.cs" />
+    <Compile Include="RhoFit.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Graphing\GraphingBase.cs" />
     <Compile Include="Modeling\AnnealingParams.cs">

@@ -187,7 +187,6 @@ namespace StochasticModeling
                     reflgraphobject.SetAllFonts("Garamond", 20, 18);
                     reflgraphobject.SubSLD = SubSLDTB.ToDouble();
                     reflgraphobject.SupSLD = SupSLDTB.ToDouble();
-                    reflgraphobject.Wavelength = wavelength.ToDouble();
                     reflgraphobject.GetHighQOffset = ReflData.Instance.GetNumberDataPoints;
                     reflgraphobject.GetLowQOffset = 0;
                     reflgraphobject.SetGraphType(forceRQ4GraphingToolStripMenuItem.Checked, fresnelcb.Checked);
@@ -230,7 +229,6 @@ namespace StochasticModeling
                             {
                                 reflgraphobject.SubSLD = double.Parse(SubSLDTB.Text);
                                 reflgraphobject.SupSLD = double.Parse(SupSLDTB.Text);
-                                reflgraphobject.Wavelength = double.Parse(wavelength.Text);
                                 reflgraphobject.SetGraphType(forceRQ4GraphingToolStripMenuItem.Checked, fresnelcb.Checked);
                                 reflgraphobject.GetLowQOffset = int.Parse(critedgeoffTB.Text);
                                 reflgraphobject.GetHighQOffset = ReflData.Instance.GetNumberDataPoints - int.Parse(HQoffsetTB.Text);

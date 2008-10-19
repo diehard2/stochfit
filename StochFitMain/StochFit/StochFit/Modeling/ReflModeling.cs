@@ -52,143 +52,113 @@ namespace StochasticModeling
         List<TextBox> SigmaArray;
         List<TextBox> LengthArray;
         List<TextBox> RhoArray;
-
+        private ReflFit ReflCalc;
         protected Graphing ReflGraphing;
         protected Graphing RhoGraphing;
+        bool m_bUseSLD;
         #endregion
 
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="roughness">Overall roughness value</param>
-        /// <param name="inLength">Length array with element count boxnumber</param>
-        /// <param name="inRho">Electron density array with element count boxnumber</param>
-        /// <param name="inSigma">Roughness array with element count boxnumber</param>
-        /// <param name="boxnumber">The number of boxes in the model</param>
-        /// <param name="holdsigma">True if the film is to be treated as an elastic sheet, false otherwise</param>
-        /// <param name="subphase">Substrate SLD</param>
-        /// <param name="superphase">Superphase SLD</param>
-        /// <param name="UseSLD">True if using SLD instead of ED</param>
-        public Reflmodeling(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase)
+        public Reflmodeling(RhoFit FitBase)
         {
             InitializeComponent();
+
+            m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
            
-            //Setup variables
-           
-            //SubRough.Text = roughness.ToString();
+            ReflCalc = new ReflFit(FitBase as BoxReflFitBase);
 
-            ////Initialize the arrays
-            
-            ////Copy over the values
-            //BoxCount.Text = boxnumber.ToString();
-            //SubRough.Text = roughness.ToString();
-            //SubphaseSLD.Text = subphase;
-            //SupSLDTB.Text = superphase;
+            SigmaArray = new List<TextBox>(6);
+            LengthArray = new List<TextBox>(6);
+            RhoArray = new List<TextBox>(6);
 
-            //if (m_bUseSLD)
-            //    tabControl1.TabPages[1].Text = "SLD";
-            //else
-            //    tabControl1.TabPages[1].Text = "Electron Density";
+            if (m_bUseSLD)
+            {
+                tabControl1.TabPages[1].Text = "SLD";
+                RhoLabel.Text = "SLD";
+            }
+            else
+            {
+                tabControl1.TabPages[1].Text = "Electron Density";
+                RhoLabel.Text = "Normalized Rho";
+            }
 
-            //if (m_bUseSLD == false)
-            //    RhoLabel.Text = "Normalized Rho";
-            //else
-            //    RhoLabel.Text = "SLD";
+            ReflCalc.IsOneSigma = ReflCalc.IsOneSigma;
+            WavelengthTB.Text = ((double)(1.24)).ToString();
 
-            //for (int i = 0; i < 6; i++)
-            //{
-            //    BoxRhoArray[i].Text = RhoArray[i].ToString();
-            //    BoxLengthArray[i].Text = LengthArray[i].ToString();
-            //    BoxSigmaArray[i].Text = SigmaArray[i].ToString();
-            //}
 
-            //WavelengthTB.Text = ((double)(1.24)).ToString();
 
-           
-            //Holdsigma.Checked = holdsigma;
-           
-            ////Setup the Graph
-            //ReflGraphing = new Graphing(string.Empty);
-            //ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
-            //ReflGraphing.SubSLD = Double.Parse(SubphaseSLD.Text);
-            //ReflGraphing.SupSLD = Double.Parse(SupSLDTB.Text);
-            //ReflGraphing.Wavelength = Double.Parse(WavelengthTB.Text);
-            //ReflGraphing.CreateGraph(RhoGraph, "Reflectivity", "Q/Qc", "Intensity / Fresnel", AxisType.Log);
-            //ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", System.Drawing.Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
-            //ReflGraphing.SetAllFonts("Garamond", 22, 18);
 
-            //RhoGraphing = new Graphing(string.Empty);
-            //RhoGraphing.SubSLD = double.Parse(subphase);
-            //RhoGraphing.IsNeutron = m_bUseSLD;
-            //RhoGraphing.SetGraphType(false, false);
+            //Setup the Graph
+            ReflGraphing = new Graphing(string.Empty);
+            ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
+            ReflGraphing.SubSLD = ReflCalc.SubphaseSLD;
+            ReflGraphing.SupSLD = ReflCalc.SuperphaseSLD;
+            ReflGraphing.CreateGraph(RhoGraph, "Reflectivity", "Q/Qc", "Intensity / Fresnel", AxisType.Log);
+            ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", System.Drawing.Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
+            ReflGraphing.SetAllFonts("Garamond", 22, 18);
 
-            //if(m_bUseSLD == false)
-            //    RhoGraphing.CreateGraph(EDzedGraphControl1, "Electron Density Profile", "Z", "Normalized Electron Density",
-            //      AxisType.Linear);
-            //else
-            //     RhoGraphing.CreateGraph(EDzedGraphControl1, "SLD Profile", "Z", "SLD", AxisType.Linear);
+            RhoGraphing = new Graphing(string.Empty);
+            RhoGraphing.SubSLD = ReflCalc.SubphaseSLD;
+            RhoGraphing.IsNeutron = m_bUseSLD;
+            RhoGraphing.SetGraphType(false, false);
 
-            //RhoGraphing.SetAllFonts("Garamond", 20, 18);
-            
-            //RhoGraphing.Pane.XAxis.Scale.Min = 0;
-            //RhoGraphing.Pane.XAxis.Scale.Max = Z[Z.Length - 1];
+            if (m_bUseSLD == false)
+                RhoGraphing.CreateGraph(EDzedGraphControl1, "Electron Density Profile", "Z", "Normalized Electron Density",
+                  AxisType.Linear);
+            else
+                RhoGraphing.CreateGraph(EDzedGraphControl1, "SLD Profile", "Z", "SLD", AxisType.Linear);
+
+            RhoGraphing.SetAllFonts("Garamond", 20, 18);
+
+            RhoGraphing.Pane.XAxis.Scale.Min = 0;
+            RhoGraphing.Pane.XAxis.Scale.Max = ReflCalc.Get_Z[ReflCalc.Get_Z.Length - 1];
 
             ////Create the reflectivity density graph
             //initialized = true;
             //UpdateProfile();
 
-            //loadingCircle1.Visible = false;
-            //loadingCircle1.NumberSpoke = 25;
-            //loadingCircle1.InnerCircleRadius = 60;
-            //loadingCircle1.OuterCircleRadius = 120;
-            //loadingCircle1.RotationSpeed = 150;
-            //loadingCircle1.SpokeThickness = 3;
+            loadingCircle1.Visible = false;
+            loadingCircle1.NumberSpoke = 25;
+            loadingCircle1.InnerCircleRadius = 60;
+            loadingCircle1.OuterCircleRadius = 120;
+            loadingCircle1.RotationSpeed = 150;
+            loadingCircle1.SpokeThickness = 3;
 
-            //loadingCircle2.Visible = false;
-            //loadingCircle2.NumberSpoke = 25;
-            //loadingCircle2.InnerCircleRadius = 60;
-            //loadingCircle2.OuterCircleRadius = 120;
-            //loadingCircle2.RotationSpeed = 150;
-            //loadingCircle2.SpokeThickness = 3;
+            loadingCircle2.Visible = false;
+            loadingCircle2.NumberSpoke = 25;
+            loadingCircle2.InnerCircleRadius = 60;
+            loadingCircle2.OuterCircleRadius = 120;
+            loadingCircle2.RotationSpeed = 150;
+            loadingCircle2.SpokeThickness = 3;
 
-            //GreyFields();
+            GreyFields();
             ////Setup the callback if the graph updates the bounds
             //ReflGraphing.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
             //BackupArrays();
         }
 
-        protected  void MakeArrays()
+        private void MakeArrays()
         {
-            //BoxSigmaArray = new TextBox[6];
+            SigmaArray.Add(Sigma1);
+            SigmaArray.Add(Sigma2);
+            SigmaArray.Add(Sigma3);
+            SigmaArray.Add(Sigma4);
+            SigmaArray.Add(Sigma5);
+            SigmaArray.Add(Sigma6);
 
-            //BoxSigmaArray[0] = Sigma1;
-            //BoxSigmaArray[1] = Sigma2;
-            //BoxSigmaArray[2] = Sigma3;
-            //BoxSigmaArray[3] = Sigma4;
-            //BoxSigmaArray[4] = Sigma5;
-            //BoxSigmaArray[5] = Sigma6;
+            LengthArray.Add(LLength1);
+            LengthArray.Add(LLength2);
+            LengthArray.Add(LLength3);
+            LengthArray.Add(LLength4);
+            LengthArray.Add(LLength5);
+            LengthArray.Add(LLength6);
 
-            //BoxLengthArray = new TextBox[6];
-
-            //BoxLengthArray[0] = LLength1;
-            //BoxLengthArray[1] = LLength2;
-            //BoxLengthArray[2] = LLength3;
-            //BoxLengthArray[3] = LLength4;
-            //BoxLengthArray[4] = LLength5;
-            //BoxLengthArray[5] = LLength6;
-
-            //BoxRhoArray = new TextBox[6];
-
-            //BoxRhoArray[0] = Rho1;
-            //BoxRhoArray[1] = Rho2;
-            //BoxRhoArray[2] = Rho3;
-            //BoxRhoArray[3] = Rho4;
-            //BoxRhoArray[4] = Rho5;
-            //BoxRhoArray[5] = Rho6;
-
+            RhoArray.Add(Rho1);
+            RhoArray.Add(Rho2);
+            RhoArray.Add(Rho3);
+            RhoArray.Add(Rho4);
+            RhoArray.Add(Rho5);
+            RhoArray.Add(Rho6);
         }
-
-   
 
        
         void UpdateProfile()
@@ -339,33 +309,7 @@ namespace StochasticModeling
             GraphCollection.Instance.ReflEGraph = RhoGraphing;
         }
 
-        protected  void SetInitStruct(ref BoxModelSettings InitStruct, double[] parampercs,double[] UL, double[] LL)
-        {
-            if (InitStruct.Q == IntPtr.Zero)
-            {
-                InitStruct.SetArrays(ReflData.Instance.GetQData, ReflData.Instance.GetReflData, ReflData.Instance.GetRErrors,
-                    ReflData.Instance.GetQErrors, parampercs, UL, LL);
-            }
-            InitStruct.Directory = ReflData.Instance.GetWorkingDirectory;
-            InitStruct.Boxes = BoxCount.ToInt();
-
-            InitStruct.SubSLD = SubphaseSLD.ToDouble();
-            InitStruct.SupSLD = SupSLDTB.ToDouble();
-            
-            if(WavelengthTB != null)
-                InitStruct.Wavelength = double.Parse(WavelengthTB.Text);
-
-            InitStruct.OneSigma = Holdsigma.Checked;
-
-            if(QSpreadTB != null)
-                InitStruct.QSpread = double.Parse(QSpreadTB.Text);
-
-            if(ImpNormCB != null)
-                InitStruct.ImpNorm = ImpNormCB.Checked;
-            
-            InitStruct.WriteFiles = true;
-        }
-
+   
         void Stoch()
         {
             //double[] parameters;
@@ -559,174 +503,15 @@ namespace StochasticModeling
         //    }
         //}
 
-        private void BackupArrays()
-        {
-            //for (int i = 0; i < 6; i++)
-            //{
-            //    if(m_bUseSLD == true)
-            //        PreviousRhoArray[i] = RhoArray[i]*double.Parse(SubphaseSLD.Text);
-            //    else
-            //        PreviousRhoArray[i] = RhoArray[i];
-
-            //    PreviousSigmaArray[i] = SigmaArray[i];
-            //    PreviousLengthArray[i] = LengthArray[i];
-            //}
-            //previoussigma = double.Parse(SubRough.Text);
-            //oldnormfactor = Double.Parse(NormCorrectTB.Text);
-        }
 
         private void UndoFit_Click(object sender, EventArgs e)
         {
-            //for (int i = 0; i < 6; i++)
-            //{
-            //    BoxRhoArray[i].Text = PreviousRhoArray[i].ToString();
-            //    BoxLengthArray[i].Text = PreviousLengthArray[i].ToString();
-            //    BoxSigmaArray[i].Text = PreviousSigmaArray[i].ToString();
-            //}
-            //SubRough.Text = previoussigma.ToString();
-            //NormCorrectTB.Text = oldnormfactor.ToString();
-           
-            //UpdateProfile();
+            ReflCalc.UndoFit();
         }
 
         #region Reporting Functions
-        /// <summary>
-        /// Write a pdf report for documentation
-        /// </summary>
-        private void SaveParamsforReport()
-        {
-            ReportGenerator g = ReportGenerator.Instance;
-            //g.ClearReflModelInfo();
-
-            //List<string> ginfo = new List<string>();
-
-            //if (Holdsigma.Checked)
-            //    ginfo.Add("The reflectivity curve was fit with a single roughness parameter\n");
-            //else
-            //    ginfo.Add(String.Format("The reflectivity curve was fit with {0} roughness parameters\n", (int.Parse(BoxCount.Text) + 1)));
-
-            //ginfo.Add(string.Format("Percent Error in Q: " + QSpreadTB.Text + "\n"));
-            //ginfo.Add(string.Format("Normalization Constant: " + NormCorrectTB.Text + "\n"));
-            //ginfo.Add(string.Format("Critical Edge Offset: " + CritOffset.Text + "\n"));
-            //ginfo.Add(string.Format("High Q Offset: " + Rightoffset.Text + "\n"));
-            //ginfo.Add(string.Format("Superphase SLD: " + SupSLDTB.Text + "\n"));
-            //ginfo.Add(string.Format("Subphase SLD: " + SubphaseSLD.Text + "\n"));
-            //ginfo.Add(string.Format("Wavelength: " + WavelengthTB.Text + "\n"));
-            //ginfo.Add(string.Format("Chi Square for reflectivity fit: " + chisquaretb.Text + "\n"));
-            //ginfo.Add(string.Format("The subphase roughness was: {0:#.### E-0} " + (char)0x00B1 + " {1:#.### E-0}\n", double.Parse(SubRough.Text), covar[0]));
-      
-            //if (Holdsigma.Checked == true)
-            //{
-            //    for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-            //    {
-            //        ginfo.Add((i + 1).ToString());
-            //        ginfo.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[2 * i + 1].ToString("#.### E-0"));
-
-            //        if(m_bUseSLD == false)
-            //            ginfo.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[2 * i + 2].ToString("#.### E-0"));
-            //        else
-            //            ginfo.Add((RhoArray[i]*GetSubSLD).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (covar[2 * i + 2]*GetSubSLD).ToString("#.### E-0"));
-
-            //        ginfo.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[0].ToString("#.### E-0"));
-            //    }
-            //}
-            //else
-            //{
-            //    for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-            //    {
-            //        ginfo.Add((i + 1).ToString());
-            //        ginfo.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[3 * i + 1].ToString("#.### E-0"));
-
-            //        if(m_bUseSLD == false)
-            //            ginfo.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[3 * i + 2].ToString("#.### E-0"));
-            //        else
-            //            ginfo.Add((RhoArray[i]*GetSubSLD).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (covar[3 * i + 2]*GetSubSLD).ToString("#.### E-0"));
-
-            //        ginfo.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[3 * i + 3].ToString("#.### E-0"));
-            //    }
-            //}
-            //g.SetReflModelInfo = ginfo;
-        }
-
-        //Format error reporting
-        private string ErrorReport()
-        {
-            //StringBuilder output = new StringBuilder();
-
-            //if (m_bvalidfit == true && covar != null)
-            //{
-            //    output.Append("\u03C3 = " + string.Format("{0:#.### E-0} ", double.Parse(SubRough.Text)) + " " +
-            //        (char)0x00B1 + " " + covar[0].ToString("#.### E-0") + Environment.NewLine + Environment.NewLine);
-
-            //    for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-            //    {
-            //        if (Holdsigma.Checked == true)
-            //        {
-            //            output.Append("Layer " + (i + 1).ToString() + Environment.NewLine);
-
-            //            if(m_bUseSLD == false)
-            //                output.Append("\t" + " \u03C1 = " + RhoArray[i].ToString("#.### E-0") + " " +
-            //                    (char)0x00B1 + " " + covar[2 * i + 2].ToString("#.### E-0") + Environment.NewLine);
-            //            else
-            //                output.Append("\t" + " SLD = " + (RhoArray[i] * GetSubSLD ).ToString("#.### E-0") + " " +
-            //                    (char)0x00B1 + " " + (covar[2 * i + 2] * GetSubSLD).ToString("#.### E-0") + Environment.NewLine);
-
-            //            output.Append("\t" + " Length = " + LengthArray[i].ToString("#.### E-0") + " " +
-            //            (char)0x00B1 + " " + covar[2 * i + 1].ToString("#.### E-0") + Environment.NewLine);
-            //        }
-            //        else
-            //        {
-            //            output.Append("Layer " + (i + 1).ToString() + Environment.NewLine);
-
-            //            if(m_bUseSLD == false)
-            //                output.Append("\t" + " \u03C1 = " + RhoArray[i].ToString("#.### E-0") + " " +
-            //                    (char)0x00B1 + " " + covar[3 * i + 2].ToString("#.### E-0") + Environment.NewLine);
-            //            else
-            //                output.Append("\t" + " SLD = " + (RhoArray[i] * GetSubSLD).ToString("#.### E-0") + " " +
-            //                   (char)0x00B1 + " " + (covar[3 * i + 2] * GetSubSLD).ToString("#.### E-0") + Environment.NewLine);
-
-            //            output.Append("\t" + " Length = " + LengthArray[i].ToString("#.### E-0") + " " +
-            //                (char)0x00B1 + " " + covar[3 * i + 1].ToString("#.### E-0") + Environment.NewLine);
-            //            output.Append("\t" + " \u03C3 = " + SigmaArray[i].ToString("#.### E-0") + " " +
-            //                (char)0x00B1 + " " + covar[3 * i + 3].ToString("#.### E-0") + Environment.NewLine);
-            //        }
-            //    }
-
-            //    if (ImpNormCB.Checked)
-            //        output.Append(Environment.NewLine + "Normalization factor = " + Double.Parse(NormCorrectTB.Text).ToString("#.###") + " " +
-            //           (char)0x00B1 + " " + covar[covar.Length - 1].ToString("#.### E-0") + Environment.NewLine);
-
-            //    output.Append(Environment.NewLine + "Levenberg-Marquadt output" + Environment.NewLine + "\tNumber of iterations : " + info[5].ToString() + Environment.NewLine);
-            //    output.Append("Reason for termination: " + termreason((int)info[6]));
-
-            //    return output.ToString();
-            //}
-            //else
-            //{
-                return "No fitting has been performed";
-           // }
-        }
-
-        private string termreason(int reason)
-        {
-            switch (reason)
-            {
-                case 1:
-                    return "Stopped by small gradient J^T e - OK";
-                case 2:
-                    return "Stopped by small Dp - OK";
-                case 3:
-                    return "Stopped by itmax - Likely Failure";
-                case 4:
-                    return "Singular matrix. Restart from current p with increased \u03BC - Failure";
-                case 5:
-                    return "No further error reduction is possible. Restart with increased \u03BC - Failure";
-                case 6:
-                    return "Stopped by small error - OK";
-                default:
-                    return "?";
-            }
-        }
+       
+       
 
         #endregion
 
@@ -740,7 +525,7 @@ namespace StochasticModeling
         private void button1_Click(object sender, EventArgs e)
         {
             LevmarOutput lo = new LevmarOutput();
-            lo.DisplayOutput(ErrorReport());
+            lo.DisplayOutput(ReflCalc.ErrorReport());
             lo.ShowDialog();
         }
 
@@ -757,12 +542,12 @@ namespace StochasticModeling
             try
             {
                 GreyFields();
-                ReflGraphing.SupSLD = double.Parse(SupSLDTB.Text);
-                ReflGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
-                RhoGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
-                RhoGraphing.SupSLD = double.Parse(SupSLDTB.Text);
-                ReflGraphing.Wavelength = double.Parse(WavelengthTB.Text);
+                ReflGraphing.SupSLD = SupSLDTB.ToDouble();
+                ReflGraphing.SubSLD = SubphaseSLD.ToDouble();
+                RhoGraphing.SubSLD = SubphaseSLD.ToDouble();
+                RhoGraphing.SupSLD = SupSLDTB.ToDouble();
                 ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
+                ReflCalc.UpdateProfile();
                 UpdateProfile();
             }
             catch { }
@@ -771,27 +556,19 @@ namespace StochasticModeling
 
         private void GreyFields()
         {
-            //for (int i = 0; i < 6; i++)
-            //{
-            //    if (i < int.Parse(BoxCount.Text))
-            //    {
-            //        BoxLengthArray[i].Enabled = true;
-            //        BoxRhoArray[i].Enabled = true;
 
-            //        if (Holdsigma.Checked)
-            //            BoxSigmaArray[i].Enabled = false;
-            //        else
-            //            BoxSigmaArray[i].Enabled = true;
-            //    }
-            //    else
-            //    {
-            //        BoxLengthArray[i].Enabled = false;
-            //        BoxRhoArray[i].Enabled = false;
-            //        BoxSigmaArray[i].Enabled = false;
-            //    }
-            //}
-
-          //  NormCorrectTB.Enabled = ImpNormCB.Checked;
+            for (int i = 0; i < 6; i++)
+            {
+                if (i < BoxCount.ToInt())
+                {
+                    RhoArray[i].Enabled = LengthArray[i].Enabled = true;
+                    SigmaArray[i].Enabled = !Holdsigma.Checked;
+                }
+                else
+                {
+                    SigmaArray[i].Enabled = RhoArray[i].Enabled = LengthArray[i].Enabled = false;
+                }
+            }
         }
 
         private void MajorVariable_Changed(object sender, EventArgs e)

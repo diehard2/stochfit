@@ -149,7 +149,6 @@ namespace StochasticModeling
             ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
             ReflGraphing.SubSLD = Double.Parse(SubphaseSLD.Text);
             ReflGraphing.SupSLD = Double.Parse(SupSLDTB.Text);
-            ReflGraphing.Wavelength = Double.Parse(WavelengthTB.Text);
             ReflGraphing.CreateGraph(RhoGraph, "Reflectivity", "Q/Qc", "Intensity / Fresnel", AxisType.Log);
             ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", System.Drawing.Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
             ReflGraphing.SetAllFonts("Garamond", 22, 18);
@@ -378,7 +377,6 @@ namespace StochasticModeling
                 RhoGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
                 RhoGraphing.SupSLD = double.Parse(SupSLDTB.Text);
                 ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
-                ReflGraphing.Wavelength = double.Parse(WavelengthTB.Text);
                 ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
 
                 UpdateProfile();

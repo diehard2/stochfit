@@ -143,7 +143,6 @@ namespace StochasticModeling.Modeling
             ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, true);
             ReflGraphing.SubSLD = SubSLD;
             ReflGraphing.SupSLD = SupSLD;
-            ReflGraphing.Wavelength = wavelength;
             ReflGraphing.CreateGraph(ReflGraph, "Reflectivity", "Q/Qc", "Intensity / Fresnel", AxisType.Log);
             ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", System.Drawing.Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
             ReflGraphing.SetAllFonts("Garamond", 22, 18);

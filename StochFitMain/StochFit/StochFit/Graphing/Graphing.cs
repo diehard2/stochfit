@@ -42,7 +42,6 @@ namespace StochasticModeling
     {
         private double m_dSubSLD = 0;
         private double m_dSupSLD = 0;
-        private double m_dlambda = 1.0;
         private bool m_bDBF = false;
         private string m_sfilename;
         private bool m_bRunning = false;
@@ -248,7 +247,7 @@ namespace StochasticModeling
                 m_bdatafile = true;
                 m_bnegativeerrorval = false;
 
-                double Qc = CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda);
+                double Qc = CalcQc(m_dSubSLD, m_dSupSLD);
 
                 if (Qc < .005 && m_bDBF)
                 {
@@ -364,7 +363,7 @@ namespace StochasticModeling
                 if (datafile != string.Empty)
                 {
                     PointPairList list = new PointPairList();
-                    double Qc = CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda);
+                    double Qc = CalcQc(m_dSubSLD, m_dSupSLD);
                     using (StreamReader sr = new StreamReader(datafile))
                     {
                         String dataline;
@@ -420,7 +419,7 @@ namespace StochasticModeling
         {
             RemoveGraphfromArray(name);
 
-            double Qc = CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda);
+            double Qc = CalcQc(m_dSubSLD, m_dSupSLD);
             
             if (Qc < .005 && m_bDBF)
             {
@@ -462,7 +461,7 @@ namespace StochasticModeling
 
         protected override void GetPointList(double[] X, double[] Y, ref PointPairList List)
         {
-            double Qc = CalcQc(m_dSubSLD, m_dSupSLD, m_dlambda);
+            double Qc = CalcQc(m_dSubSLD, m_dSupSLD);
 
             for (int i = 0; i < X.Length; i++)
             {
@@ -488,7 +487,7 @@ namespace StochasticModeling
         /// <param name="SupSLD">Superphase SLD</param>
         /// <param name="lambda">X-ray wavelength</param>
         /// <returns>Critical Q</returns>
-        static public double CalcQc(double dSLD, double SupSLD, double lambda)
+        static public double CalcQc(double dSLD, double SupSLD)
         {
             if (dSLD - SupSLD > 0)
                 return 4 * Math.Sqrt((Math.PI * (dSLD - SupSLD) * 1e-6));
@@ -673,15 +672,6 @@ namespace StochasticModeling
                 else
                     return false;
             }
-        }
-
-        /// <summary>
-        /// Get/Set the wavelength of light in Angstroms
-        /// </summary>
-        public double Wavelength
-        {
-            get { return m_dlambda; }
-            set { m_dlambda = value; }
         }
 
         /// <summary>

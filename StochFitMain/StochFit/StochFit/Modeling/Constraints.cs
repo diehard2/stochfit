@@ -29,6 +29,8 @@ using System.Threading;
 using System.Globalization;
 using StochasticModeling;
 
+#pragma warning disable 1591
+
 namespace StochasticModeling.Modeling
 {
     /// <summary>
@@ -58,39 +60,39 @@ namespace StochasticModeling.Modeling
         /// </summary>
         public double NormMin;
 
-        TextBox[] TBRhoHighArray;
-        TextBox[] TBRhoLowArray;
-        TextBox[] TBLengthHighArray;
-        TextBox[] TBLengthLowArray;
-        TextBox[] TBSigmaHighArray;
-        TextBox[] TBSigmaLowArray;
+        List<TextBox> TBRhoHighArray;
+        List<TextBox> TBRhoLowArray;
+        List<TextBox> TBLengthHighArray;
+        List<TextBox> TBLengthLowArray;
+        List<TextBox> TBSigmaHighArray;
+        List<TextBox> TBSigmaLowArray;
 
         /// <summary>
         /// Maximum allowed value of the electron density of a box
         /// </summary>
-        public double[] RhoHighArray;
+        public List<double> RhoHighArray;
         /// <summary>
         /// Minimum allowed value of the electron density of a box
         /// </summary>
-        public double[] RhoLowArray;
+        public List<double> RhoLowArray;
         /// <summary>
         /// Maximum allowed value of the thickness of a box
         /// </summary>
-        public double[] ThickHighArray;
+        public List<double> ThickHighArray;
         /// <summary>
         /// Minimum allowed value of the thickness of a box
         /// </summary>
-        public double[] ThickLowArray;
+        public List<double> ThickLowArray;
         /// <summary>
         /// Maximum allowed value of the rougness of an interface
         /// </summary>
-        public double[] SigmaHighArray;
+        public List<double> SigmaHighArray;
         /// <summary>
         /// Minimum allowed value of the roughness of an interface
         /// </summary>
-        public double[] SigmaLowArray;
+        public List<double> SigmaLowArray;
 
-        private bool m_bUseSLD = false;
+      
         #endregion
 
         /// <summary>
@@ -101,22 +103,17 @@ namespace StochasticModeling.Modeling
         public Constraints(int boxcount, bool UseSLD)
         {
             InitializeComponent();
-
-            m_bUseSLD = UseSLD;
-
-            if (m_bUseSLD == true)
-                Rholabel.Text = "SLD";
-
+                       
             m_iboxcount = boxcount;
 
             UpdateControlArrays();
 
-            RhoHighArray = new double[boxcount];
-            RhoLowArray = new double[boxcount];
-            ThickHighArray = new double[boxcount];
-            ThickLowArray = new double[boxcount];
-            SigmaHighArray = new double[boxcount];
-            SigmaLowArray = new double[boxcount];
+            RhoHighArray = new List<double>(new double[boxcount]);
+            RhoLowArray = new List<double>(new double[boxcount]);
+            ThickHighArray = new List<double>(new double[boxcount]);
+            ThickLowArray = new List<double>(new double[boxcount]);
+            SigmaHighArray = new List<double>(new double[boxcount]);
+            SigmaLowArray = new List<double>(new double[boxcount]);
 
             SubRoughMax = 10000;
             SubRoughMin = -10000;
@@ -136,12 +133,12 @@ namespace StochasticModeling.Modeling
 
         private void UpdateControlArrays()
         {
-            TBRhoHighArray = new TextBox[m_iboxcount];
-            TBRhoLowArray = new TextBox[m_iboxcount];
-            TBLengthHighArray = new TextBox[m_iboxcount];
-            TBLengthLowArray = new TextBox[m_iboxcount];
-            TBSigmaHighArray = new TextBox[m_iboxcount];
-            TBSigmaLowArray = new TextBox[m_iboxcount];
+            TBRhoHighArray = new List<TextBox>(new TextBox[6]);
+            TBRhoLowArray = new List<TextBox>(new TextBox[6]);
+            TBLengthHighArray = new List<TextBox>(new TextBox[6]);
+            TBLengthLowArray = new List<TextBox>(new TextBox[6]);
+            TBSigmaHighArray = new List<TextBox>(new TextBox[6]);
+            TBSigmaLowArray = new List<TextBox>(new TextBox[6]);
 
             TBRhoHighArray[0] = RhoMaxTB1;
             TBRhoHighArray[1] = RhoMaxTB2;
@@ -188,35 +185,54 @@ namespace StochasticModeling.Modeling
 
         private void OK_Click(object sender, EventArgs e)
         {
-            IsInitialized = true;
+            //Check if any of our fields are initialized
+            int checkforinit = 0;
 
-            if (SubRoughMinTB.Text != string.Empty)
-                SubRoughMin = SubRoughMinTB.ToDouble();
-            if (SubRoughMaxTB.Text != string.Empty)
-                SubRoughMax = SubRoughMaxTB.ToDouble();
+            if (SubRoughMaxTB.Text != string.Empty || SubRoughMinTB.Text != string.Empty || NormMaxTB.Text != string.Empty || NormMinTB.Text != string.Empty)
+                checkforinit++;
 
-            if (NormMinTB.Text != string.Empty)
-                NormMin = NormMinTB.ToDouble();
-            if (NormMaxTB.Text != string.Empty)
-                NormMax = NormMaxTB.ToDouble();
+            Action<TextBox> f = p => { if (p.Text != string.Empty)checkforinit++; };
+            TBRhoHighArray.ForEach(f);
+            TBRhoLowArray.ForEach(f);
+            TBSigmaHighArray.ForEach(f);
+            TBSigmaLowArray.ForEach(f);
+            TBLengthHighArray.ForEach(f);
+            TBLengthLowArray.ForEach(f);
 
-            //Update parameters
-            for (int i = 0; i < m_iboxcount; i++)
+            if (checkforinit == 0)
+                IsInitialized = false;
+            else
             {
-                if (TBRhoHighArray[i].Text != string.Empty)
-                    RhoHighArray[i] = TBRhoHighArray[i].ToDouble();
-                if (TBRhoLowArray[i].Text != string.Empty)
-                    RhoLowArray[i] = TBRhoLowArray[i].ToDouble();
-                if (TBSigmaHighArray[i].Text != string.Empty)
-                    SigmaHighArray[i] = TBSigmaHighArray[i].ToDouble();
-                if (TBSigmaLowArray[i].Text != string.Empty)
-                    SigmaLowArray[i] = TBSigmaLowArray[i].ToDouble();
-                if (TBLengthHighArray[i].Text != string.Empty)
-                    ThickHighArray[i] = TBLengthHighArray[i].ToDouble();
-                if (TBLengthLowArray[i].Text != string.Empty)
-                    ThickLowArray[i] = TBLengthLowArray[i].ToDouble();
-            }
+                IsInitialized = true;
 
+                if (SubRoughMinTB.Text != string.Empty)
+                    SubRoughMin = SubRoughMinTB.ToDouble();
+                if (SubRoughMaxTB.Text != string.Empty)
+                    SubRoughMax = SubRoughMaxTB.ToDouble();
+
+                if (NormMinTB.Text != string.Empty)
+                    NormMin = NormMinTB.ToDouble();
+                if (NormMaxTB.Text != string.Empty)
+                    NormMax = NormMaxTB.ToDouble();
+
+                //Update parameters
+                for (int i = 0; i < m_iboxcount; i++)
+                {
+                    if (TBRhoHighArray[i].Text != string.Empty)
+                        RhoHighArray[i] = TBRhoHighArray[i].ToDouble();
+                    if (TBRhoLowArray[i].Text != string.Empty)
+                        RhoLowArray[i] = TBRhoLowArray[i].ToDouble();
+                    if (TBSigmaHighArray[i].Text != string.Empty)
+                        SigmaHighArray[i] = TBSigmaHighArray[i].ToDouble();
+                    if (TBSigmaLowArray[i].Text != string.Empty)
+                        SigmaLowArray[i] = TBSigmaLowArray[i].ToDouble();
+                    if (TBLengthHighArray[i].Text != string.Empty)
+                        ThickHighArray[i] = TBLengthHighArray[i].ToDouble();
+                    if (TBLengthLowArray[i].Text != string.Empty)
+                        ThickLowArray[i] = TBLengthLowArray[i].ToDouble();
+                }
+            }
+          
             this.Close();
         }
 
@@ -232,8 +248,18 @@ namespace StochasticModeling.Modeling
             }
         }
 
+        public void ShowDialog(bool UseSLD)
+        {
+            if (UseSLD == true)
+                Rholabel.Text = "SLD";
+            ShowDialog();
+        }
+
         private void ClearBoxes()
         {
+            SubRoughMaxTB.Text = string.Empty;
+            SubRoughMinTB.Text = string.Empty;
+
             for (int i = 0; i < m_iboxcount; i++)
             {
                 TBRhoHighArray[i].Text = string.Empty;
@@ -242,8 +268,6 @@ namespace StochasticModeling.Modeling
                 TBSigmaLowArray[i].Text = string.Empty;
                 TBLengthHighArray[i].Text = string.Empty;
                 TBLengthLowArray[i].Text = string.Empty;
-                SubRoughMaxTB.Text = string.Empty;
-                SubRoughMinTB.Text = string.Empty;
             }
         }
 
@@ -267,7 +291,8 @@ namespace StochasticModeling.Modeling
             try
             {
                 base.OnValidating(e);
-                Double.Parse(((TextBox)sender).Text);
+                if(((TextBox)sender).Text != string.Empty)
+                    Double.Parse(((TextBox)sender).Text);
             }
             catch
             {

@@ -139,7 +139,7 @@ extern "C" LEVMARDLL_API double FastReflfit(BoxReflSettings* InitStruct, double 
 	
 	work=new double[((LM_DIF_WORKSZ(paramsize, InitStruct->QPoints)+paramsize*InitStruct->QPoints))];
 	covar=work+LM_DIF_WORKSZ(paramsize, InitStruct->QPoints);
-	Refl.SetOffsets(0,0);
+	//Refl.SetOffsets(0,0);
 
 	if(InitStruct->UL == NULL)
 		dlevmar_dif(Refl.objective,params, xvec, paramsize,InitStruct->QPoints, 1000, opts, info, work, covar,(void*)(&Refl)); 
@@ -238,6 +238,11 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 	double* origguess = new double[paramsize];
 	memcpy(origguess, parameters, sizeof(double)*paramsize);
 
+	if(InitStruct->OneSigma == TRUE)
+		Refl.mkdensityonesigma(parameters, paramsize);
+	else
+		Refl.mkdensity(parameters, paramsize);
+
 	Refl.myrfdispatch();
 
 	double bestchisquare = 0;
@@ -255,7 +260,7 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 	vector<ParameterContainer> temp;
 	temp.reserve(6000);
 
-	omp_set_num_threads(omp_get_num_procs());
+	omp_set_num_threads(1);//omp_get_num_procs());
 
 #pragma omp parallel
 {

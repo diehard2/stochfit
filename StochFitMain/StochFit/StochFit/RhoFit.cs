@@ -73,7 +73,7 @@ namespace StochasticModeling
             m_dCovarArray = new double[parameters.Length];
 
             InfoStruct = new BoxModelSettings();
-            SetInitStruct(ref InfoStruct, null, null, null);
+            SetInitStruct(ref InfoStruct, null);
 
 
             m_dChiSquare = Calculations.Rhofit(InfoStruct, parameters, m_dCovarArray, parameters.Length, info, info.Length);
@@ -123,7 +123,7 @@ namespace StochasticModeling
             throw new NotImplementedException();
         }
 
-        public override void StochFit()
+        public override string StochFit(double[] parampercs, int iterations)
         {
             throw new NotImplementedException();
         }

@@ -35,7 +35,9 @@ using StochasticModeling;
 using System.Runtime.InteropServices;
 using StochasticModeling.Modeling;
 using System.Globalization;
+using StochasticModeling.Settings;
 
+#pragma warning disable 1591
 
 namespace StochasticModeling
 {
@@ -46,64 +48,41 @@ namespace StochasticModeling
     {
         #region Variables
 
-        double m_roughness = 3;
+        ReflFit ReflCalc;
         Graphing ReflGraphing;
         Graphing RhoGraphing;
         //Arrays
-        double[] RhoArray;
-        double[] LengthArray;
-        double[] SigmaArray;
-        double[] PreviousRhoArray;
-        double[] PreviousLengthArray;
-        double[] PreviousSigmaArray;
-        double[] covar;
-        double[] info;
-        double previoussigma;
+       
         bool initialized = false;
         bool m_bUseSLD = false;
-        TextBox[] BoxSigmaArray;
-        TextBox[] BoxRhoArray;
-        TextBox[] BoxLengthArray;
-        CheckBox[] HoldSigmaArray;
-        CheckBox[] HoldRhoArray;
-        CheckBox[] HoldLengthArray;
-        double[] Qincrement;
-        double[] ReflectivityMap;
-        double[] RealReflErrors;
-        double[] RealRefl;
-        double[] QErrors;
-        Constraints constr;
+        List<TextBox> SigmaArray;
+        List<TextBox> RhoArray;
+        List<TextBox> LengthArray;
+        List<CheckBox> HoldSigmaArray;
+        List<CheckBox> HoldRhoArray;
+        List<CheckBox> HoldLengthArray;
+       
+        Constraints ConstrForm;
         bool m_bmodelreset = false;
-        bool m_bvalidfit = false;
-        double oldnormfactor;
-        double[] Z;
-        double[] ElectronDensityArray;
-        double[] BoxElectronDensityArray;
-        Thread Stochthread;
+      
+       
+       Thread Stochthread;
 
-        public delegate void UpdateGUI(bool onoff);
-        public delegate void UpdateProfilefromThread();
         #endregion
 
-        /// <summary>
-        /// Model dependent reflectivity fitting subject to constraints
-        /// </summary>
-        /// <param name="roughness">Starting roughness parameter for the substrate/film interface</param>
-        /// <param name="inLength">Length array with boxnumber elements</param>
-        /// <param name="inRho">Electron density array with boxnumber elements</param>
-        /// <param name="inSigma">Roughness array with boxnumber elements</param>
-        /// <param name="boxnumber">Number of boxes in the model</param>
-        /// <param name="holdsigma">Treat the film as an elastic sheet if true, false otherwise</param>
-        /// <param name="subphase">Substrate SLD</param>
-        /// <param name="superphase">Superphase SLD</param>
-        /// <param name="UseSLD">True if using SLD instead of ED</param>
-        public ConstrainedReflmodeling(double roughness, double[] inLength, double[] inRho, double[] inSigma, int boxnumber, bool holdsigma, string subphase, string superphase)
+        public ConstrainedReflmodeling(RhoFit RhoCalc)
         {
             InitializeComponent();
 
-            //Setup variables
-            m_roughness = roughness;
+            ReflCalc = new ReflFit(RhoCalc as BoxReflFitBase);
             m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
+
+            SigmaArray = new List<TextBox>(6);
+            LengthArray = new List<TextBox>(6);
+            RhoArray = new List<TextBox>(6);
+            HoldSigmaArray = new List<CheckBox>(6);
+            HoldLengthArray = new List<CheckBox>(6);
+            HoldRhoArray = new List<CheckBox>(6);
 
             if (m_bUseSLD)
             {
@@ -113,273 +92,218 @@ namespace StochasticModeling
             else
                 tabControl1.TabPages[1].Text = "Electron Density";
 
-            SubRough.Text = roughness.ToString();
+            WavelengthTB.Text = ((double)(1.24)).ToString();
 
             //Initialize the arrays
             MakeArrays();
-            RhoArray = new double[6];
-            LengthArray = new double[6];
-            SigmaArray = new double[6];
-            RhoArray = (double[])inRho.Clone();
-            LengthArray = (double[])inLength.Clone();
-            SigmaArray = (double[])inSigma.Clone();
-            info = new double[9];
+           
             //Copy over the values
-            BoxCount.Text = boxnumber.ToString();
-            SubRough.Text = roughness.ToString();
-            SubphaseSLD.Text = subphase;
-            SupSLDTB.Text = superphase;
+            BoxCount.Text = RhoCalc.BoxCount.ToString();
+            SubRough.Text = RhoCalc.GetSubRoughness.ToString();
+            SubphaseSLD.Text = RhoCalc.SubphaseSLD.ToString();
+            SupSLDTB.Text = RhoCalc.SuperphaseSLD.ToString();
+            Holdsigma.Checked = RhoCalc.IsOneSigma;
 
-            for (int i = 0; i < 6; i++)
-            {
-                BoxRhoArray[i].Text = RhoArray[i].ToString();
-                BoxLengthArray[i].Text = LengthArray[i].ToString();
-                BoxSigmaArray[i].Text = SigmaArray[i].ToString();
-            }
-            WavelengthTB.Text = ((double)(1.24)).ToString();
-
-            //Setup arrays to hold the old values
-            PreviousRhoArray = new double[6];
-            PreviousLengthArray = new double[6];
-            PreviousSigmaArray = new double[6];
-     
-            Holdsigma.Checked = holdsigma;
+           
             //Setup the Graph
             ReflGraphing = new Graphing(string.Empty);
             ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
-            ReflGraphing.SubSLD = Double.Parse(SubphaseSLD.Text);
-            ReflGraphing.SupSLD = Double.Parse(SupSLDTB.Text);
+            ReflGraphing.SubSLD = SubphaseSLD.ToDouble();
+            ReflGraphing.SupSLD = SupSLDTB.ToDouble();
             ReflGraphing.CreateGraph(RhoGraph, "Reflectivity", "Q/Qc", "Intensity / Fresnel", AxisType.Log);
             ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", System.Drawing.Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
-            ReflGraphing.SetAllFonts("Garamond", 22, 18);
-
+            
             //Set up ED Graph
             RhoGraphing = new Graphing(string.Empty);
-            RhoGraphing.SubSLD = double.Parse(subphase);
+            RhoGraphing.SubSLD = SubphaseSLD.ToDouble();
             RhoGraphing.IsNeutron = m_bUseSLD;
             RhoGraphing.SetGraphType(false, false);
+            
             if (m_bUseSLD == false)
-                RhoGraphing.CreateGraph(EDzedGraphControl1, "Electron Density Profile", "Z", "Normalized Electron Density",
-                  AxisType.Linear);
+                RhoGraphing.CreateGraph(EDzedGraphControl1, "Electron Density Profile", "Z", "Normalized Electron Density", AxisType.Linear);
             else
                 RhoGraphing.CreateGraph(EDzedGraphControl1, "SLD Profile", "Z", "SLD", AxisType.Linear);
 
-            RhoGraphing.SetAllFonts("Garamond", 20, 18);
-
-            //Create Z
-            Z = new double[500];
-            ElectronDensityArray = new double[500];
-            BoxElectronDensityArray = new double[500];
-
-            //Make the Z Arrays
-
-
-            double length = 0;
-
-            for (int k = 0; k < boxnumber; k++)
-            {
-                length += LengthArray[k];
-            }
-            for (int i = 0; i < 500; i++)
-            {
-                Z[i] = i * (50 + length) / 499.0;
-            }
-
+           
             RhoGraphing.Pane.XAxis.Scale.Min = 0;
-            RhoGraphing.Pane.XAxis.Scale.Max = Z[Z.Length - 1];
-
-            //Get our Q data into a useable form
-            Qincrement = ReflData.Instance.GetQData;
-            RealRefl = ReflData.Instance.GetReflData;
-            RealReflErrors = ReflData.Instance.GetRErrors;
-            QErrors = ReflData.Instance.GetQErrors;
-
-            ReflectivityMap = new double[ReflData.Instance.GetNumberDataPoints];
-
+            RhoGraphing.Pane.XAxis.Scale.Max = ReflCalc.Get_Z[ReflCalc.Get_Z.Length - 1];
 
             //Create the reflectivity density graph
             initialized = true;
-            UpdateProfile();
+            //UpdateProfile();
 
-            loadingCircle1.Visible = false;
-            loadingCircle1.NumberSpoke = 25;
-            loadingCircle1.InnerCircleRadius = 60;
-            loadingCircle1.OuterCircleRadius = 120;
-            loadingCircle1.RotationSpeed = 150;
-            loadingCircle1.SpokeThickness = 3;
-
-            loadingCircle2.Visible = false;
-            loadingCircle2.NumberSpoke = 25;
-            loadingCircle2.InnerCircleRadius = 60;
-            loadingCircle2.OuterCircleRadius = 120;
-            loadingCircle2.RotationSpeed = 150;
-            loadingCircle2.SpokeThickness = 3;
+            loadingCircle2.Visible = loadingCircle1.Visible = false;
+            loadingCircle2.NumberSpoke = loadingCircle1.NumberSpoke = 25;
+            loadingCircle2.InnerCircleRadius = loadingCircle1.InnerCircleRadius = 60;
+            loadingCircle2.OuterCircleRadius = loadingCircle1.OuterCircleRadius = 120;
+            loadingCircle2.RotationSpeed = loadingCircle1.RotationSpeed = 150;
+            loadingCircle2.SpokeThickness = loadingCircle1.SpokeThickness = 3;
 
             //Initialize constrain form
-            constr = new Constraints(6, m_bUseSLD);
+            ConstrForm = new Constraints(6, m_bUseSLD);
             GreyFields();
             //Setup the callback if the graph updates the bounds
             ReflGraphing.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
-            BackupArrays();
+           
+            ReflCalc.Update += new BoxReflFitBase.UpdateProfileHandler(ReflCalc_Update);
+            MakeReflectivity();
         }
 
-        void MakeArrays()
+        void ReflCalc_Update(object sender, EventArgs e)
         {
-            BoxSigmaArray = new TextBox[6];
-            HoldSigmaArray = new CheckBox[6];
-            BoxSigmaArray[0] = Sigma1;
-            BoxSigmaArray[1] = Sigma2;
-            BoxSigmaArray[2] = Sigma3;
-            BoxSigmaArray[3] = Sigma4;
-            BoxSigmaArray[4] = Sigma5;
-            BoxSigmaArray[5] = Sigma6;
+           SubRough.Text = ReflCalc.GetSubRoughness.ToString() ;
+           NormCorrectTB.Text = ReflCalc.NormalizationFactor.ToString();
 
-            HoldSigmaArray[0] = SigCB1;
-            HoldSigmaArray[1] = SigCB2;
-            HoldSigmaArray[2] = SigCB3;
-            HoldSigmaArray[3] = SigCB4;
-            HoldSigmaArray[4] = SigCB5;
-            HoldSigmaArray[5] = SigCB6;
+            //Blank our Rho data from the previous iteration
 
-            BoxLengthArray = new TextBox[6];
-            HoldLengthArray = new CheckBox[6];
+            for (int i = 0; i < RhoArray.Count; i++)
+            {
+                if(!m_bUseSLD)
+                    RhoArray[i].Text = ReflCalc.RhoArray[i].ToString();
+                else
+                    RhoArray[i].Text = (ReflCalc.RhoArray[i]/ReflCalc.SubphaseSLD).ToString();
 
-            BoxLengthArray[0] = LLength1;
-            BoxLengthArray[1] = LLength2;
-            BoxLengthArray[2] = LLength3;
-            BoxLengthArray[3] = LLength4;
-            BoxLengthArray[4] = LLength5;
-            BoxLengthArray[5] = LLength6;
 
-            HoldLengthArray[0] = LLCB1;
-            HoldLengthArray[1] = LLCB2;
-            HoldLengthArray[2] = LLCB3;
-            HoldLengthArray[3] = LLCB4;
-            HoldLengthArray[4] = LLCB5;
-            HoldLengthArray[5] = LLCB6;
-
-            BoxRhoArray = new TextBox[6];
-            HoldRhoArray = new CheckBox[6];
-
-            BoxRhoArray[0] = Rho1;
-            BoxRhoArray[1] = Rho2;
-            BoxRhoArray[2] = Rho3;
-            BoxRhoArray[3] = Rho4;
-            BoxRhoArray[4] = Rho5;
-            BoxRhoArray[5] = Rho6;
-
-            HoldRhoArray[0] = RhoCB1;
-            HoldRhoArray[1] = RhoCB2;
-            HoldRhoArray[2] = RhoCB3;
-            HoldRhoArray[3] = RhoCB4;
-            HoldRhoArray[4] = RhoCB5;
-            HoldRhoArray[5] = RhoCB6;
-        }
-
-        void ChangeRoughnessArray(double rough)
-        {
-            for (int i = 0; i < BoxSigmaArray.Length; i++)
-                BoxSigmaArray[i].Text = rough.ToString();
-        }
-     
-        void UpdateProfile()
-        {
-            //Fill Rho array
-            m_bvalidfit = false;
+                LengthArray[i].Text = ReflCalc.LengthArray[i].ToString();
+                SigmaArray[i].Text = ReflCalc.SigmaArray[i].ToString();
+            }
             
 
-            if (initialized == false)
-                return;
+            if (Holdsigma.Checked)
+                ChangeRoughnessArray();
 
-            if (m_bUseSLD == false)
-            {
-                RhoArray[0] = Double.Parse(Rho1.Text);
-                RhoArray[1] = Double.Parse(Rho2.Text);
-                RhoArray[2] = Double.Parse(Rho3.Text);
-                RhoArray[3] = Double.Parse(Rho4.Text);
-                RhoArray[4] = Double.Parse(Rho5.Text);
-                RhoArray[5] = Double.Parse(Rho6.Text);
-            }
-            else
-            {
-                RhoArray[0] = Double.Parse(Rho1.Text) / double.Parse(SubphaseSLD.Text);
-                RhoArray[1] = Double.Parse(Rho2.Text) / double.Parse(SubphaseSLD.Text);
-                RhoArray[2] = Double.Parse(Rho3.Text) / double.Parse(SubphaseSLD.Text);
-                RhoArray[3] = Double.Parse(Rho4.Text) / double.Parse(SubphaseSLD.Text);
-                RhoArray[4] = Double.Parse(Rho5.Text) / double.Parse(SubphaseSLD.Text);
-                RhoArray[5] = Double.Parse(Rho6.Text) / double.Parse(SubphaseSLD.Text);
-            }
-            //Fill Length array
-            LengthArray[0] = Double.Parse(LLength1.Text);
-            LengthArray[1] = Double.Parse(LLength2.Text);
-            LengthArray[2] = Double.Parse(LLength3.Text);
-            LengthArray[3] = Double.Parse(LLength4.Text);
-            LengthArray[4] = Double.Parse(LLength5.Text);
-            LengthArray[5] = Double.Parse(LLength6.Text);
 
-            //Fill Sigma array
-            SigmaArray[0] = Double.Parse(Sigma1.Text);
-            SigmaArray[1] = Double.Parse(Sigma2.Text);
-            SigmaArray[2] = Double.Parse(Sigma3.Text);
-            SigmaArray[3] = Double.Parse(Sigma4.Text);
-            SigmaArray[4] = Double.Parse(Sigma5.Text);
-            SigmaArray[5] = Double.Parse(Sigma6.Text);
-
-            oldnormfactor = Double.Parse(NormCorrectTB.Text);
-            CheckZLength();
-
-            double[] parameters = new double[3 * int.Parse(BoxCount.Text) + 2];
-            double[] eparameters = new double[3 * int.Parse(BoxCount.Text) + 2];
-
-            parameters[0] = double.Parse(SubRough.Text);
-            eparameters[0] = double.Parse(SubRough.Text);
-            eparameters[1] = 25;
-            for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-            {
-                parameters[3 * i + 1] = LengthArray[i];
-                parameters[3 * i + 2] = RhoArray[i];
-                parameters[3 * i + 3] = SigmaArray[i];
-
-                eparameters[3 * i + 2] = LengthArray[i];
-                eparameters[3 * i + 3] = RhoArray[i];
-                eparameters[3 * i + 4] = SigmaArray[i];
-            }
-
-            parameters[3 * int.Parse(BoxCount.Text) + 1] = Double.Parse(NormCorrectTB.Text);
-
-            //FastReflGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text),
-            //    parameters, parameters.Length,Qincrement, QErrors, Qincrement.Length, ReflectivityMap, ReflectivityMap.Length, Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
-            
-            //RhoGenerate(int.Parse(BoxCount.Text), double.Parse(SubphaseSLD.Text), double.Parse(SupSLDTB.Text), eparameters,
-            //        eparameters.Length, Z, Z.Length, ElectronDensityArray, BoxElectronDensityArray, ElectronDensityArray.Length, false);
-
-            if (m_bmodelreset == true)
+            if (m_bmodelreset)
             {
                 ReflGraphing.Clear();
                 ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
                 m_bmodelreset = false;
             }
-         
+
             //Setup graphs
-            ReflGraphing.LoadfromArray("modelrefl", Qincrement, ReflectivityMap, System.Drawing.Color.Black, SymbolType.XCross, 4, true, string.Empty);
-            RhoGraphing.LoadfromArray("Model Dependent Fit", Z, ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
-            RhoGraphing.LoadfromArray("Model Dependent Box Fit", Z, BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
+            ReflGraphing.LoadfromArray("modelrefl", ReflData.Instance.GetQData , ReflCalc.ReflectivityMap, System.Drawing.Color.Black, SymbolType.XCross, 4, true, string.Empty);
+            RhoGraphing.LoadfromArray("Model Dependent Fit", ReflCalc.Z, ReflCalc.ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
+            RhoGraphing.LoadfromArray("Model Dependent Box Fit", ReflCalc.Z, ReflCalc.BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
+
+            RhoGraphing.Pane.XAxis.Scale.Min = 0;
+            RhoGraphing.Pane.XAxis.Scale.Max = ReflCalc.Get_Z[ReflCalc.Get_Z.Length - 1];
+        }
+        
+        private void ChangeRoughnessArray()
+        {
+            if (Holdsigma.Checked)
+            {
+                SubRough.Text = ReflCalc.GetSubRoughness.ToString();
+                SigmaArray.ForEach(p => p.Text = ReflCalc.GetSubRoughness.ToString());
+            }
         }
 
+        private void MakeReflectivity()
+        {
+            //Fill Rho array
+            try
+            {
+                ReflCalc.IsOneSigma = Holdsigma.Checked;
+                ReflCalc.ZOffset = 25;
+                ReflCalc.GetSubRoughness = SubRough.ToDouble();
+                ReflCalc.BoxCount = BoxCount.ToInt();
+                ReflCalc.SubphaseSLD = SubphaseSLD.ToDouble();
+                ReflCalc.SuperphaseSLD = SupSLDTB.ToDouble();
+                ReflCalc.HighQOffset = Rightoffset.ToDouble();
+                ReflCalc.LowQOffset = CritOffset.ToDouble();
+                ReflCalc.NormalizationFactor = NormCorrectTB.ToDouble();
+                ReflCalc.ImpNormCB = ImpNormCB.Checked;
+                ReflCalc.QSpreadTB = QSpreadTB.ToDouble();
+                //Blank our Rho data from the previous iteration
+                ReflCalc.RhoArray.Clear();
+                ReflCalc.LengthArray.Clear();
+                ReflCalc.SigmaArray.Clear();
+
+                RhoArray.ForEach(p => ReflCalc.RhoArray.Add(p.ToDouble()));
+                LengthArray.ForEach(p => ReflCalc.LengthArray.Add(p.ToDouble()));
+                SigmaArray.ForEach(p => ReflCalc.SigmaArray.Add(p.ToDouble()));
+
+                if (Holdsigma.Checked)
+                    ChangeRoughnessArray();
+
+                GreyFields();
+
+                ReflCalc.UpdateProfile();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message.ToString());
+            }
+        }
+
+        void MakeArrays()
+        {
+
+            SigmaArray.Add(Sigma1);
+            SigmaArray.Add(Sigma2);
+            SigmaArray.Add(Sigma3);
+            SigmaArray.Add(Sigma4);
+            SigmaArray.Add(Sigma5);
+            SigmaArray.Add(Sigma6);
+
+            LengthArray.Add(LLength1);
+            LengthArray.Add(LLength2);
+            LengthArray.Add(LLength3);
+            LengthArray.Add(LLength4);
+            LengthArray.Add(LLength5);
+            LengthArray.Add(LLength6);
+
+            RhoArray.Add(Rho1);
+            RhoArray.Add(Rho2);
+            RhoArray.Add(Rho3);
+            RhoArray.Add(Rho4);
+            RhoArray.Add(Rho5);
+            RhoArray.Add(Rho6);
+
+            //Arrays for determining if a value should be held constant during the fitting
+            HoldSigmaArray.Add(SigCB1);
+            HoldSigmaArray.Add(SigCB2);
+            HoldSigmaArray.Add(SigCB3);
+            HoldSigmaArray.Add(SigCB4);
+            HoldSigmaArray.Add(SigCB5);
+            HoldSigmaArray.Add(SigCB6);
+
+            HoldLengthArray.Add(LLCB1);
+            HoldLengthArray.Add(LLCB2);
+            HoldLengthArray.Add(LLCB3);
+            HoldLengthArray.Add(LLCB4);
+            HoldLengthArray.Add(LLCB5);
+            HoldLengthArray.Add(LLCB6);
+
+            
+            HoldRhoArray.Add(RhoCB1);
+            HoldRhoArray.Add(RhoCB2);
+            HoldRhoArray.Add(RhoCB3);
+            HoldRhoArray.Add(RhoCB4);
+            HoldRhoArray.Add(RhoCB5);
+            HoldRhoArray.Add(RhoCB6);
+        }
+
+        void ChangeRoughnessArray(double rough)
+        {
+            for (int i = 0; i < SigmaArray.Count; i++)
+                SigmaArray[i].Text = rough.ToString();
+        }
+     
         //Update our variables after validation
         private void Variable_Changed(object sender, EventArgs e)
         {
             try
             {
                 GreyFields();
-                ReflGraphing.SupSLD = double.Parse(SupSLDTB.Text);
-                ReflGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
+                ReflGraphing.SupSLD = SupSLDTB.ToDouble();
+                ReflGraphing.SubSLD = SubphaseSLD.ToDouble();
                 RhoGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
                 RhoGraphing.SupSLD = double.Parse(SupSLDTB.Text);
                 ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
                 ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
 
-                UpdateProfile();
+                MakeReflectivity();
             }
             catch { }
         }
@@ -390,19 +314,16 @@ namespace StochasticModeling
             {
                 if (i < int.Parse(BoxCount.Text))
                 {
-                    BoxLengthArray[i].Enabled = true;
-                    BoxRhoArray[i].Enabled = true;
-
+                    RhoArray[i].Enabled = LengthArray[i].Enabled = true;
+                   
                     if (Holdsigma.Checked)
-                        BoxSigmaArray[i].Enabled = false;
+                        SigmaArray[i].Enabled = false;
                     else
-                        BoxSigmaArray[i].Enabled = true;
+                        SigmaArray[i].Enabled = true;
                 }
                 else
                 {
-                    BoxLengthArray[i].Enabled = false;
-                    BoxRhoArray[i].Enabled = false;
-                    BoxSigmaArray[i].Enabled = false;
+                    SigmaArray[i].Enabled = RhoArray[i].Enabled = LengthArray[i].Enabled = false;
                 }
             }
 
@@ -419,418 +340,19 @@ namespace StochasticModeling
             catch { }
         }
 
-        private void CheckZLength()
-        {
-            double length = 0;
-
-            for (int k = 0; k < int.Parse(BoxCount.Text); k++)
-                length += LengthArray[k];
-            
-            length += 50;
-
-            if (length != Z[Z.Length - 1])
-            {
-                for (int i = 0; i < 500; i++)
-                    Z[i] = i * length / 499.0;
-            }
-
-            RhoGraphing.Pane.XAxis.Scale.Min = 0;
-            RhoGraphing.Pane.XAxis.Scale.Max = Z[Z.Length - 1];
-        }
-
         private void LevenbergFit_Click(object sender, EventArgs e)
         {
-            BackupArrays();
-            double chisquare = 0;
-            double[] parameters;
-            double[] UL;
-            double[] LL;
-            int boxes = int.Parse(BoxCount.Text);
+            GetConstraints();
+            chisquaretb.Text = ReflCalc.DataFit();
 
-            //Setup arrays
-            //Setup our ranges
-            double[] qrange = new double[Qincrement.Length - int.Parse(CritOffset.Text) - int.Parse(Rightoffset.Text)];
-            double[] reflectivity = new double[Qincrement.Length - int.Parse(CritOffset.Text) - int.Parse(Rightoffset.Text)];
-            double[] reflectivityerrors = new double[Qincrement.Length - int.Parse(CritOffset.Text) - int.Parse(Rightoffset.Text)];
-            double[] qerrors = null;
-
-            if (ReflData.Instance.HaveErrorinQ)
-                qerrors = new double[Qincrement.Length - int.Parse(CritOffset.Text) - int.Parse(Rightoffset.Text)];
-
-            for (int i = 0; i < qrange.Length; i++)
-            {
-                qrange[i] = (double)Qincrement[int.Parse(CritOffset.Text) + i];
-                reflectivity[i] = (double)RealRefl[int.Parse(CritOffset.Text) + i];
-                reflectivityerrors[i] = (double)RealReflErrors[int.Parse(CritOffset.Text) + i];
-
-                if (ReflData.Instance.HaveErrorinQ)
-                    qerrors[i] = (double)ReflData.Instance.GetQErrorPt(int.Parse(CritOffset.Text) + i);
-            }
-
-
-            if (Holdsigma.Checked == true)
-            {
-                //consts - # of boxes, subphase SLD,
-                //variable - Subphase sigma (just one to start), Rho1, length1, Rho2, length2, Z-offset
-
-                //Let's set up our parameter order for a system with only one roughness (elastic sheet)
-                // 0 - Subphase roughness, 2 - 3 Layer 1 Values (Length, Rho), 4 - 5 Layer 2 Values, 6 - 7 Layer 3 Values
-                // 8 - 9 Layer 4 Values, 10 - 11 Layer 5 Values, 11 - 13 Layer 6 Values
-                //
-
-                //We have to hold the # of boxes and the subphase SLD constant, or else 
-                //the fit will wildly diverge
-
-                parameters = new double[2 + boxes * 2];
-                UL = new double[2 + boxes * 2];
-                LL = new double[2 + boxes * 2];
-
-                parameters[0] = Double.Parse(SubRough.Text);
-                if (SubRoughCB.Checked == true)
-                {
-                    UL[0] = Double.Parse(SubRough.Text);
-                    LL[0] = Double.Parse(SubRough.Text);
-                }
-                else if (constr.Initialized == false)
-                {
-                    UL[0] = 10000;
-                    LL[0] = -10000;
-                }
-                else
-                {
-                    UL[0] = constr.SubRoughMax;
-                    LL[0] = constr.SubRoughMin;
-                }
-
-                if(NormCB.Checked == true)
-                {
-                    UL[UL.Length-1] = Double.Parse(NormCorrectTB.Text);
-                    LL[UL.Length - 1] = Double.Parse(NormCorrectTB.Text);
-                }
-                else if (constr.Initialized == false)
-                {
-                    UL[UL.Length - 1] = 10000;
-                    LL[UL.Length - 1] = -10000;
-                }
-                else
-                {
-                    UL[UL.Length - 1] = constr.NormMax;
-                    LL[UL.Length - 1] = constr.NormMin;
-                }
-
-
-                for (int i = 0; i < boxes; i++)
-                {
-                    parameters[2 * i + 1] = LengthArray[i];
-                    parameters[2 * i + 2] = RhoArray[i];
-
-                    //Check for constraints
-                    if (constr.Initialized == true)
-                    {
-                        UL[2 * i + 1] = constr.ThickHighArray[i];
-                        LL[2 * i + 1] = constr.ThickLowArray[i];
-
-                        if (m_bUseSLD == false)
-                        {
-                            UL[2 * i + 2] = constr.RhoHighArray[i];
-                            LL[2 * i + 2] = constr.RhoLowArray[i];
-                        }
-                        else
-                        {
-                            if (GetSubSLD > 0)
-                            {
-                                UL[2 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
-                                LL[2 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
-                            }
-                            else
-                            {
-                                LL[2 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
-                                UL[2 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        UL[2*i+1] = 10000;
-                        LL[2*i+1] = -10000;
-                        UL[2 * i + 2] = 10000;
-                        LL[2 * i + 2] = -10000;
-                    }
-                    //Check for holds - holds take precedence over constraints
-                    if (HoldLengthArray[i].Checked == true)
-                    {
-                        UL[2 * i + 1] = LengthArray[i];
-                        LL[2 * i + 1] = LengthArray[i];
-                    }
-                    if (HoldRhoArray[i].Checked == true)
-                    {
-                        UL[2 * i + 2] = RhoArray[i];
-                        LL[2 * i + 2] = RhoArray[i];
-                    }
-                }
-                parameters[1 + boxes * 2] = Double.Parse(NormCorrectTB.Text);
-            }
-            else
-            {
-                //Let's set up our parameter order for a system with only one roughness (elastic sheet)
-                // 0 - # of boxes 1 - Subphase SLD, 2 - Subphase roughness, 3 - Reflectivity scaling factor (not implemented), 
-                // 4 - 6 Layer 1 Values (Length, Rho, Sigma), 7 - 9 Layer 2 Values, 10 - 12 Layer 3 Values
-                // 13 - 15 Layer 4 Values, 16 - 18 Layer 5 Values, 19 - 21 Layer 6 Values
-                //
-                // Hold = false, Change = true
-                //
-                //We have to hold the # of boxes and the subphase SLD constant, or else 
-                //the fit will wildly diverge
-
-                parameters = new double[2 + boxes * 3];
-                UL = new double[2 + boxes * 3];
-                LL = new double[2 + boxes * 3];
-
-                parameters[0] = Double.Parse(SubRough.Text);
-                if (SubRoughCB.Checked == true)
-                {
-                    UL[0] = Double.Parse(SubRough.Text);
-                    LL[0] = Double.Parse(SubRough.Text);
-                }
-                else if (constr.Initialized == false)
-                {
-                    UL[0] = 10000;
-                    LL[0] = -10000;
-                }
-                else
-                {
-                    UL[0] = constr.SubRoughMax;
-                    LL[0] = constr.SubRoughMin;
-                }
-
-                if (NormCB.Checked == true)
-                {
-                    UL[UL.Length - 1] = Double.Parse(NormCorrectTB.Text);
-                    LL[UL.Length - 1] = Double.Parse(NormCorrectTB.Text);
-                }
-                else if (constr.Initialized == false)
-                {
-                    UL[UL.Length - 1] = 10000;
-                    LL[UL.Length - 1] = -10000;
-                }
-                else
-                {
-                    UL[UL.Length - 1] = constr.NormMax;
-                    LL[UL.Length - 1] = constr.NormMin;
-                }
-
-                for (int i = 0; i < boxes; i++)
-                {
-                    parameters[3 * i + 1] = LengthArray[i];
-                    parameters[3 * i + 2] = RhoArray[i];
-                    parameters[3 * i + 3] = SigmaArray[i];
-
-                    //Check for constraints
-                    if (constr.Initialized == true)
-                    {
-                        UL[3 * i + 1] = constr.ThickHighArray[i];
-                        LL[3 * i + 1] = constr.ThickLowArray[i];
-
-                        if (m_bUseSLD == false)
-                        {
-                            UL[3 * i + 2] = constr.RhoHighArray[i];
-                            LL[3 * i + 2] = constr.RhoLowArray[i];
-                        }
-                        else
-                        {
-                            if (GetSubSLD > 0)
-                            {
-                                UL[3 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
-                                LL[3 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
-                            }
-                            else
-                            {
-                                LL[3 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
-                                UL[3 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
-                            }
-                        }
-
-                        UL[3 * i + 3] = constr.SigmaHighArray[i];
-                        LL[3 * i + 3] = constr.SigmaLowArray[i];
-                    }
-                    else
-                    {
-                        UL[3 * i + 1] = 10000;
-                        LL[3 * i + 1] = -10000;
-                        UL[3 * i + 2] = 10000;
-                        LL[3 * i + 2] = -10000;
-                        UL[3 * i + 3] = 10000;
-                        LL[3 * i + 3] = -10000;
-                    }
-                    //Check for holds - holds take precedence over constraints
-                    if (HoldLengthArray[i].Checked == true)
-                    {
-                        UL[3 * i + 1] = LengthArray[i];
-                        LL[3 * i + 1] = LengthArray[i];
-                    }
-                    if (HoldRhoArray[i].Checked == true)
-                    {
-                        UL[3 * i + 2] = RhoArray[i];
-                        LL[3 * i + 2] = RhoArray[i];
-                    }
-                    if (HoldSigmaArray[i].Checked == true)
-                    {
-                        UL[3 * i + 3] = SigmaArray[i];
-                        LL[3 * i + 3] = SigmaArray[i];
-                    }
-                }
-                parameters[1 + boxes *3] = Double.Parse(NormCorrectTB.Text);
-
-            }
-
-            covar = new double[parameters.Length];
-
-            //Do the fit
-            //chisquare = ConstrainedFastReflfit(ReflData.Instance.GetWorkingDirectory, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text), parameters,
-            //    parameters.Length, qrange,qerrors, qrange.Length, reflectivity, reflectivity.Length, reflectivityerrors,
-            //    covar, covar.Length, info, info.Length, Holdsigma.Checked, true, UL, LL, Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
-
-            //Update the ChiSquare
-            chisquaretb.Text = chisquare.ToString("#.### E-000");
-
-            //Make sure parameters are reasonable
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                if (parameters[i] * 0.3 < covar[i])
-                {
-                    MessageBox.Show("The error in a fitting parameter is greater than 30% of the parameter value. Check the 'Fit details' button for more information");
-                    break;
-                }
-            }
-
-            //Update paramters
-            if (Holdsigma.Checked == true)
-            {
-                SubRough.Text = parameters[0].ToString();
-                for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-                {
-                    BoxLengthArray[i].Text = parameters[2 * i + 1].ToString();
-
-                    if (m_bUseSLD == false)
-                        BoxRhoArray[i].Text = parameters[2 * i + 2].ToString();
-                    else
-                        BoxRhoArray[i].Text = (string)(parameters[2 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
-
-                    BoxSigmaArray[i].Text = parameters[0].ToString();
-                }
-                NormCorrectTB.Text = parameters[1 + 2 * int.Parse(BoxCount.Text)].ToString();
-            }
-            else
-            {
-                SubRough.Text = parameters[0].ToString();
-
-                for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-                {
-                    BoxLengthArray[i].Text = parameters[3 * i + 1].ToString();
-
-                    if (m_bUseSLD == false)
-                        BoxRhoArray[i].Text = parameters[3 * i + 2].ToString();
-                    else
-                        BoxRhoArray[i].Text = (string)(parameters[3 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
-
-                    BoxSigmaArray[i].Text = parameters[3 * i + 3].ToString();
-                }
-                NormCorrectTB.Text = parameters[1 + 3 * int.Parse(BoxCount.Text)].ToString();
-            }
-
-            //Display the fit
-            UpdateProfile();
-
-            //Update report parameters
-            SaveParamsforReport();
-            m_bvalidfit = true;
-         
             //Add the graph to the master graph
             GraphCollection.Instance.ReflGraph = ReflGraphing;
             GraphCollection.Instance.ReflEGraph = RhoGraphing;
-
         }
-
-        private void BackupArrays()
-        {
-            for (int i = 0; i < 6; i++)
-            {
-                if (m_bUseSLD == true)
-                    PreviousRhoArray[i] = RhoArray[i] * double.Parse(SubphaseSLD.Text);
-                else
-                    PreviousRhoArray[i] = RhoArray[i];
-
-                PreviousSigmaArray[i] = SigmaArray[i];
-                PreviousLengthArray[i] = LengthArray[i];
-            }
-            previoussigma = double.Parse(SubRough.Text);
-            oldnormfactor = Double.Parse(NormCorrectTB.Text);
-        }
-
+       
         private void UndoFit_Click(object sender, EventArgs e)
         {
-            for (int i = 0; i < 6; i++)
-            {
-                BoxRhoArray[i].Text = PreviousRhoArray[i].ToString();
-                BoxLengthArray[i].Text = PreviousLengthArray[i].ToString();
-                BoxSigmaArray[i].Text = PreviousSigmaArray[i].ToString();
-            }
-            SubRough.Text = previoussigma.ToString();
-            NormCorrectTB.Text = oldnormfactor.ToString();
-
-            UpdateProfile();
-        }
-
-        //Write a pdf report for documentation
-        private void SaveParamsforReport()
-        {
-            ReportGenerator g = ReportGenerator.Instance;
-            g.ClearReflModelInfo();
-
-            List<string> ginfo = new List<string>();
-
-            if (Holdsigma.Checked)
-            {
-                ginfo.Add("The reflectivity curve was fit with a single roughness parameter\n");
-            }
-            else
-            {
-                ginfo.Add(String.Format("The reflectivity curve was fit with {0} roughness parameters\n", (int.Parse(BoxCount.Text) + 1)));
-            }
-
-            ginfo.Add(String.Format("Percent Error in Q: " + QSpreadTB.Text + "\n"));
-            ginfo.Add(String.Format("Normalization Constant: " + NormCorrectTB.Text + "\n"));
-            ginfo.Add(String.Format("Critical Edge Offset: " + CritOffset.Text + "\n"));
-            ginfo.Add(String.Format("High Q Offset: " + Rightoffset.Text + "\n"));
-            ginfo.Add(String.Format("Superphase SLD: " + SupSLDTB.Text + "\n"));
-            ginfo.Add(String.Format("Subphase SLD: " + SubphaseSLD.Text + "\n"));
-            ginfo.Add(String.Format("Wavelength: " + WavelengthTB.Text + "\n"));
-            ginfo.Add(String.Format("Chi Square for reflectivity fit: " + chisquaretb.Text + "\n"));
-
-            ginfo.Add(String.Format("The subphase roughness was: {0:#.### E-0} " +(char)0x00B1 + " {1:#.### E-0}\n", double.Parse(SubRough.Text), covar[0]));
-            if (Holdsigma.Checked == true)
-            {
-                for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-                {
-                    ginfo.Add((i + 1).ToString());
-                    ginfo.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[2 * i + 1].ToString("#.### E-0"));
-                    ginfo.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[2 * i + 2].ToString("#.### E-0"));
-                    ginfo.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[0].ToString("#.### E-0"));
-                }
-            }
-            else
-            {
-                for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-                {
-                    ginfo.Add((i + 1).ToString());
-                    ginfo.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[3 * i + 1].ToString("#.### E-0"));
-                    ginfo.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[3 * i + 2].ToString("#.### E-0"));
-                    ginfo.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + covar[3 * i + 3].ToString("#.### E-0"));
-                }
-
-            }
-
-            g.SetReflModelInfo = ginfo;
+            ReflCalc.UndoFit();
         }
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)
@@ -842,425 +364,108 @@ namespace StochasticModeling
         private void button1_Click(object sender, EventArgs e)
         {
             LevmarOutput lo = new LevmarOutput();
-            lo.DisplayOutput(ErrorReport());
+            lo.DisplayOutput(ReflCalc.ErrorReport());
             lo.ShowDialog();
         }
 
-        //Format error reporting
-        private string ErrorReport()
+        private bool ModelChooserUI(double[] ParamArray, double[] ChiSquareArray, double[] CovarArray, int size, int paramcount, BoxModelSettings InfoStruct,
+            ref double[] chosenparameters, ref double[] chosencovar, ref string chosenchisquare)
         {
-            StringBuilder output = new StringBuilder();
+            StochOutputWindow outwin = new StochOutputWindow(ParamArray, size, paramcount, ChiSquareArray, CovarArray, Holdsigma.Checked, InfoStruct.Boxes,
+                InfoStruct.SubSLD, InfoStruct.SupSLD, InfoStruct.Wavelength, InfoStruct.QSpread, InfoStruct.ImpNorm);
 
-            if (m_bvalidfit == true && covar != null)
+
+            if (outwin.ShowDialog() != DialogResult.Cancel)
             {
-                output.Append("\u03C3 = " + string.Format("{0:#.### E-0} ", double.Parse(SubRough.Text)) + " " +
-                    (char)0x00B1 + " " + covar[0].ToString("#.### E-0") + Environment.NewLine + Environment.NewLine);
-
-                for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-                {
-                    if (Holdsigma.Checked == true)
-                    {
-                        output.Append("Layer " + (i + 1).ToString() + Environment.NewLine);
-
-                        if (m_bUseSLD == false)
-                            output.Append("\t" + " \u03C1 = " + RhoArray[i].ToString("#.### E-0") + " " +
-                                (char)0x00B1 + " " + covar[2 * i + 2].ToString("#.### E-0") + Environment.NewLine);
-                        else
-                            output.Append("\t" + " SLD = " + (RhoArray[i] * GetSubSLD).ToString("#.### E-0") + " " +
-                                (char)0x00B1 + " " + (covar[2 * i + 2] * GetSubSLD).ToString("#.### E-0") + Environment.NewLine);
-
-                        output.Append("\t" + " Length = " + LengthArray[i].ToString("#.### E-0") + " " +
-                        (char)0x00B1 + " " + covar[2 * i + 1].ToString("#.### E-0") + Environment.NewLine);
-                    }
-                    else
-                    {
-                        output.Append("Layer " + (i + 1).ToString() + Environment.NewLine);
-
-                        if (m_bUseSLD == false)
-                            output.Append("\t" + " \u03C1 = " + RhoArray[i].ToString("#.### E-0") + " " +
-                                (char)0x00B1 + " " + covar[3 * i + 2].ToString("#.### E-0") + Environment.NewLine);
-                        else
-                            output.Append("\t" + " SLD = " + (RhoArray[i] * GetSubSLD).ToString("#.### E-0") + " " +
-                               (char)0x00B1 + " " + (covar[3 * i + 2] * GetSubSLD).ToString("#.### E-0") + Environment.NewLine);
-
-                        output.Append("\t" + " Length = " + LengthArray[i].ToString("#.### E-0") + " " +
-                            (char)0x00B1 + " " + covar[3 * i + 1].ToString("#.### E-0") + Environment.NewLine);
-                        output.Append("\t" + " \u03C3 = " + SigmaArray[i].ToString("#.### E-0") + " " +
-                            (char)0x00B1 + " " + covar[3 * i + 3].ToString("#.### E-0") + Environment.NewLine);
-                    }
-                }
-
-                if (ImpNormCB.Checked)
-                    output.Append(Environment.NewLine + "Normalization factor = " + Double.Parse(NormCorrectTB.Text).ToString("#.###") + " " +
-                       (char)0x00B1 + " " + covar[covar.Length - 1].ToString("#.### E-0") + Environment.NewLine);
-
-                output.Append(Environment.NewLine + "Levenberg-Marquadt output" + Environment.NewLine + "\tNumber of iterations : " + info[5].ToString() + Environment.NewLine);
-                output.Append("Reason for termination: " + termreason((int)info[6]));
-
-                return output.ToString();
+                chosenchisquare = outwin.GetParameters(out chosenparameters, out chosencovar);
+                return true;
             }
             else
-            {
-                return "No fitting has been performed";
-            }
-        }
-
-        private string termreason(int reason)
-        {
-            switch (reason)
-            {
-                case 1:
-                    return "Stopped by small gradient J^T e - OK";
-                case 2:
-                    return "Stopped by small Dp - OK";
-                case 3:
-                    return "Stopped by itmax - Likely Failure";
-                case 4:
-                    return "Singular matrix. Restart from current p with increased \u03BC - Failure";
-                case 5:
-                    return "No further error reduction is possible. Restart with increased \u03BC - Failure";
-                case 6:
-                    return "Stopped by small error - OK";
-                default:
-                    return "?";
-            }
+                return false;
+        
         }
 
         void Stoch()
         {
-            double[] parameters;
-            double[] parampercs = new double[7];
-            double[] UL;
-            double[] LL;
+              double[] parampercs = new double[7];
+        
+              bool bfitting = false;
+              StochFitUI UI = new StochFitUI();
 
+              ReflCalc.ModelChooser = new ReflFit.StochasticModel(ModelChooserUI);
+              if (UI.ShowDialog() == DialogResult.OK)
+              {
+                  UI.GetParamPercs(ref parampercs);
+                  chisquaretb.Text = ReflCalc.StochFit(parampercs, UI.IterationCount);
+        
 
-            bool bfitting = false;
-            int boxes = int.Parse(BoxCount.Text);
+        //        
+        //    }
 
-            //Setup our ranges
-            double[] qrange = new double[Qincrement.Length - int.Parse(CritOffset.Text) - int.Parse(Rightoffset.Text)];
-            double[] reflectivity = new double[Qincrement.Length - int.Parse(CritOffset.Text) - int.Parse(Rightoffset.Text)];
-            double[] reflectivityerrors = new double[Qincrement.Length - int.Parse(CritOffset.Text) - int.Parse(Rightoffset.Text)];
-            double[] qerrors = null;
+        //    //Make sure parameters are reasonable
+        //    for (int i = 0; i < parameters.Length; i++)
+        //    {
+        //        if (parameters[i] * 0.3 < covar[i])
+        //        {
+        //            MessageBox.Show("The error in a fitting parameter is greater than 30% of the parameter value. Check the 'Fit details' button for more information");
+        //            break;
+        //        }
+        //    }
 
-            if (ReflData.Instance.HaveErrorinQ)
-                qerrors = new double[Qincrement.Length - int.Parse(CritOffset.Text) - int.Parse(Rightoffset.Text)];
+        //    //Update paramters
 
-            for (int i = 0; i < qrange.Length; i++)
-            {
-                qrange[i] = (double)Qincrement[int.Parse(CritOffset.Text) + i];
-                reflectivity[i] = (double)RealRefl[int.Parse(CritOffset.Text) + i];
-                reflectivityerrors[i] = (double)RealReflErrors[int.Parse(CritOffset.Text) + i];
+        //    if (bfitting == true)
+        //    {
+        //        //Update paramters
+        //            if (Holdsigma.Checked == true)
+        //            {
+        //                SubRough.Text = parameters[0].ToString();
+        //                for (int i = 0; i < int.Parse(BoxCount.Text); i++)
+        //                {
+        //                    BoxLengthArray[i].Text = parameters[2 * i + 1].ToString();
 
-                if (ReflData.Instance.HaveErrorinQ)
-                    qerrors[i] = (double)ReflData.Instance.GetQErrorPt(int.Parse(CritOffset.Text) + i);
-            }
+        //                    if(m_bUseSLD == false)
+        //                        BoxRhoArray[i].Text = parameters[2 * i + 2].ToString();
+        //                    else
+        //                        BoxRhoArray[i].Text = (string)(parameters[2 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
 
+        //                    BoxSigmaArray[i].Text = parameters[0].ToString();
+        //                }
+        //                NormCorrectTB.Text = parameters[1 + 2 * int.Parse(BoxCount.Text)].ToString();
+        //            }
+        //            else
+        //            {
+        //                SubRough.Text = parameters[0].ToString();
 
-            if (Holdsigma.Checked == true)
-            {
-                //consts - # of boxes, subphase SLD,
-                //variable - Subphase sigma (just one to start), Rho1, length1, Rho2, length2, Z-offset
+        //                for (int i = 0; i < int.Parse(BoxCount.Text); i++)
+        //                {
+        //                    BoxLengthArray[i].Text = parameters[3 * i + 1].ToString();
 
-                //Let's set up our parameter order for a system with only one roughness (elastic sheet)
-                // 0 - Subphase roughness, 2 - 3 Layer 1 Values (Length, Rho), 4 - 5 Layer 2 Values, 6 - 7 Layer 3 Values
-                // 8 - 9 Layer 4 Values, 10 - 11 Layer 5 Values, 11 - 13 Layer 6 Values
-                //
+        //                    if(m_bUseSLD == false)
+        //                        BoxRhoArray[i].Text = parameters[3 * i + 2].ToString();
+        //                    else
+        //                        BoxRhoArray[i].Text = (string)(parameters[3 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
 
-                //We have to hold the # of boxes and the subphase SLD constant, or else 
-                //the fit will wildly diverge
-
-                parameters = new double[2 + boxes * 2];
-                UL = new double[2 + boxes * 2];
-                LL = new double[2 + boxes * 2];
-
-                parameters[0] = Double.Parse(SubRough.Text);
-                if (SubRoughCB.Checked == true)
-                {
-                    UL[0] = Double.Parse(SubRough.Text);
-                    LL[0] = Double.Parse(SubRough.Text);
-                }
-                else if (constr.Initialized == false)
-                {
-                    UL[0] = 10000;
-                    LL[0] = -10000;
-                }
-                else
-                {
-                    UL[0] = constr.SubRoughMax;
-                    LL[0] = constr.SubRoughMin;
-                }
-
-                if (NormCB.Checked == true)
-                {
-                    UL[UL.Length - 1] = Double.Parse(NormCorrectTB.Text);
-                    LL[UL.Length - 1] = Double.Parse(NormCorrectTB.Text);
-                }
-                else if (constr.Initialized == false)
-                {
-                    UL[UL.Length - 1] = 10000;
-                    LL[UL.Length - 1] = -10000;
-                }
-                else
-                {
-                    UL[UL.Length - 1] = constr.NormMax;
-                    LL[UL.Length - 1] = constr.NormMin;
-                }
-
-                for (int i = 0; i < boxes; i++)
-                {
-                    parameters[2 * i + 1] = LengthArray[i];
-                    parameters[2 * i + 2] = RhoArray[i];
-
-                    //Check for constraints
-                    if (constr.Initialized == true)
-                    {
-                        UL[2 * i + 1] = constr.ThickHighArray[i];
-                        LL[2 * i + 1] = constr.ThickLowArray[i];
-                        
-                        if (m_bUseSLD == false)
-                        {
-                            UL[2 * i + 2] = constr.RhoHighArray[i];
-                            LL[2 * i + 2] = constr.RhoLowArray[i];
-                        }
-                        else
-                        {
-                            if (GetSubSLD > 0)
-                            {
-                                UL[2 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
-                                LL[2 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
-                            }
-                            else
-                            {
-                                LL[2 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
-                                UL[2 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        UL[2*i+1] = 10000;
-                        LL[2*i+1] = -10000;
-                        UL[2 * i + 2] = 10000;
-                        LL[2 * i + 2] = -10000;
-                    }
-                    //Check for holds - holds take precedence over constraints
-                    if (HoldLengthArray[i].Checked == true)
-                    {
-                        UL[2 * i + 1] = LengthArray[i];
-                        LL[2 * i + 1] = LengthArray[i];
-                    }
-                    if (HoldRhoArray[i].Checked == true)
-                    {
-                        UL[2 * i + 2] = RhoArray[i];
-                        LL[2 * i + 2] = RhoArray[i];
-                    }
-
-                }
-
-                parameters[1 + boxes * 2] = Double.Parse(NormCorrectTB.Text);
-            }
-            else
-            {
-                //Let's set up our parameter order for a system with only one roughness (elastic sheet)
-                // 0 - # of boxes 1 - Subphase SLD, 2 - Subphase roughness, 3 - Reflectivity scaling factor (not implemented), 
-                // 4 - 6 Layer 1 Values (Length, Rho, Sigma), 7 - 9 Layer 2 Values, 10 - 12 Layer 3 Values
-                // 13 - 15 Layer 4 Values, 16 - 18 Layer 5 Values, 19 - 21 Layer 6 Values
-                //
-                // Hold = false, Change = true
-                //
-                //We have to hold the # of boxes and the subphase SLD constant, or else 
-                //the fit will wildly diverge
-                
-                parameters = new double[2 + boxes * 3];
-                UL = new double[2 + boxes * 3];
-                LL = new double[2 + boxes * 3];
-
-                parameters[0] = Double.Parse(SubRough.Text);
-                if (SubRoughCB.Checked == true)
-                {
-                    UL[0] = Double.Parse(SubRough.Text);
-                    LL[0] = Double.Parse(SubRough.Text);
-                }
-                else if (constr.Initialized == false)
-                {
-                    UL[0] = 10000;
-                    LL[0] = -10000;
-                }
-                else
-                {
-                    UL[0] = constr.SubRoughMax;
-                    LL[0] = constr.SubRoughMin;
-                }
-
-                if (NormCB.Checked == true)
-                {
-                    UL[UL.Length - 1] = Double.Parse(NormCorrectTB.Text);
-                    LL[UL.Length - 1] = Double.Parse(NormCorrectTB.Text);
-                }
-                else if (constr.Initialized == false)
-                {
-                    UL[UL.Length - 1] = 10000;
-                    LL[UL.Length - 1] = -10000;
-                }
-                else
-                {
-                    UL[UL.Length - 1] = constr.NormMax;
-                    LL[UL.Length - 1] = constr.NormMin;
-                }
-
-                for (int i = 0; i < boxes; i++)
-                {
-                    parameters[3 * i + 1] = LengthArray[i];
-                    parameters[3 * i + 2] = RhoArray[i];
-                    parameters[3 * i + 3] = SigmaArray[i];
-
-                    //Check for constraints
-                    if (constr.Initialized == true)
-                    {
-                        UL[3 * i + 1] = constr.ThickHighArray[i];
-                        LL[3 * i + 1] = constr.ThickLowArray[i];
-                      
-                        if (m_bUseSLD == false)
-                        {
-                            UL[3 * i + 2] = constr.RhoHighArray[i];
-                            LL[3 * i + 2] = constr.RhoLowArray[i];
-                        }
-                        else
-                        {
-                            if (GetSubSLD > 0)
-                            {
-                                UL[3 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
-                                LL[3 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
-                            }
-                            else
-                            {
-                                LL[3 * i + 2] = constr.RhoHighArray[i] / GetSubSLD;
-                                UL[3 * i + 2] = constr.RhoLowArray[i] / GetSubSLD;
-                            }
-                        }
-                        
-                        UL[3 * i + 3] = constr.SigmaHighArray[i];
-                        LL[3 * i + 3] = constr.SigmaLowArray[i];
-                    }
-                    else
-                    {
-                        UL[3 * i + 1] = 10000;
-                        LL[3 * i + 1] = -10000;
-                        UL[3 * i + 2] = 10000;
-                        LL[3 * i + 2] = -10000;
-                        UL[3 * i + 3] = 10000;
-                        LL[3 * i + 3] = -10000;
-                    }
-                    //Check for holds - holds take precedence over constraints
-                    if (HoldLengthArray[i].Checked == true)
-                    {
-                        UL[3 * i + 1] = LengthArray[i];
-                        LL[3 * i + 1] = LengthArray[i];
-                    }
-                    if (HoldRhoArray[i].Checked == true)
-                    {
-                        UL[3 * i + 2] = RhoArray[i];
-                        LL[3 * i + 2] = RhoArray[i];
-                    }
-                    if (HoldSigmaArray[i].Checked == true)
-                    {
-                        UL[3 * i + 3] = SigmaArray[i];
-                        LL[3 * i + 3] = SigmaArray[i];
-                    }
-                }
-                parameters[1 + boxes * 3] = Double.Parse(NormCorrectTB.Text);
-            }
-
-            covar = new double[parameters.Length];
-
-            StochFitUI UI = new StochFitUI();
-
-            if (UI.ShowDialog() == DialogResult.OK)
-            {
-                UI.GetParamPercs(ref parampercs);
-                double[] ParamArray = new double[1000 * parameters.Length];
-                double[] ChiSquareArray = new double[1000];
-                double[] CovarArray = new double[1000 * parameters.Length];
-                int size = 0;
-                //ConstrainedStochFit(boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text), Double.Parse(WavelengthTB.Text), parameters, parameters.Length, qrange, qerrors, qrange.Length, reflectivity,
-                //        reflectivity.Length, reflectivityerrors, covar, covar.Length, info, info.Length, Holdsigma.Checked, false, UI.IterationCount, ParamArray, out size, parampercs, ChiSquareArray, CovarArray, UL, LL, Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
-
-                StochOutputWindow outwin = new StochOutputWindow(ParamArray, size, parameters.Length, ChiSquareArray, CovarArray, Holdsigma.Checked, boxes, Double.Parse(SubphaseSLD.Text), Double.Parse(SupSLDTB.Text),
-                    Double.Parse(WavelengthTB.Text), Double.Parse(QSpreadTB.Text), ImpNormCB.Checked);
-
-                if (outwin.ShowDialog() != DialogResult.Cancel)
-                {
-                    chisquaretb.Text = outwin.GetParameters(out parameters, out covar);
-                    bfitting = true;
-                }
-            }
-
-            //Make sure parameters are reasonable
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                if (parameters[i] * 0.3 < covar[i])
-                {
-                    MessageBox.Show("The error in a fitting parameter is greater than 30% of the parameter value. Check the 'Fit details' button for more information");
-                    break;
-                }
-            }
-
-            //Update paramters
-
-            if (bfitting == true)
-            {
-                //Update paramters
-                    if (Holdsigma.Checked == true)
-                    {
-                        SubRough.Text = parameters[0].ToString();
-                        for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-                        {
-                            BoxLengthArray[i].Text = parameters[2 * i + 1].ToString();
-
-                            if(m_bUseSLD == false)
-                                BoxRhoArray[i].Text = parameters[2 * i + 2].ToString();
-                            else
-                                BoxRhoArray[i].Text = (string)(parameters[2 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
-
-                            BoxSigmaArray[i].Text = parameters[0].ToString();
-                        }
-                        NormCorrectTB.Text = parameters[1 + 2 * int.Parse(BoxCount.Text)].ToString();
-                    }
-                    else
-                    {
-                        SubRough.Text = parameters[0].ToString();
-
-                        for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-                        {
-                            BoxLengthArray[i].Text = parameters[3 * i + 1].ToString();
-
-                            if(m_bUseSLD == false)
-                                BoxRhoArray[i].Text = parameters[3 * i + 2].ToString();
-                            else
-                                BoxRhoArray[i].Text = (string)(parameters[3 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
-
-                            BoxSigmaArray[i].Text = parameters[3 * i + 3].ToString();
-                        }
-                        NormCorrectTB.Text = parameters[1 + 3 * int.Parse(BoxCount.Text)].ToString();
-                    }
+        //                    BoxSigmaArray[i].Text = parameters[3 * i + 3].ToString();
+        //                }
+        //                NormCorrectTB.Text = parameters[1 + 3 * int.Parse(BoxCount.Text)].ToString();
+        //            }
 
                
-                this.Invoke(new UpdateProfilefromThread(this.UpdateProfile));
-                LevenbergFit_Click(null, null);
-            }
-            //Restore window
-            this.Invoke(new UpdateGUI(this.DisablePanel), new object[] { false });
+        //        this.Invoke(new UpdateProfilefromThread(this.UpdateProfile));
+        //        LevenbergFit_Click(null, null);
+              }
+        //    //Restore window
+              this.Invoke((ThreadStart)delegate() { DisablePanel(false); }); 
         }
 
 
        
         private void button2_Click(object sender, EventArgs e)
         {
-            BackupArrays();
-            Stochthread = new Thread(new ThreadStart(Stoch));
-            
+            Stochthread = new Thread(delegate() { Stoch(); });
             Stochthread.Start();
+          
             DisablePanel(true);
         }
 
@@ -1272,12 +477,137 @@ namespace StochasticModeling
             loadingCircle1.Active = loadingCircle1.Visible = onoff;
         }
         
+        //Set up the constraints
         private void button3_Click(object sender, EventArgs e)
         {
-            constr.ShowDialog(this);
+            ConstrForm.ShowDialog(this);
+            GetConstraints();
         }
 
+        private void GetConstraints()
+        {
+            int arrayconst = 2;
+            int holdcount = 0;
 
+            if (SubRoughCB.Checked || SubRoughCB.Checked)
+                holdcount++;
+
+            //Check if any holds have been set
+            Action<CheckBox> f = p => { if (p.Checked == true) holdcount++; };
+
+            HoldRhoArray.ForEach(f);
+            HoldSigmaArray.ForEach(f);
+            HoldLengthArray.ForEach(f);
+
+            //Setup all of our constraints if true, if it has been uninitialized, 
+            if (ConstrForm.Initialized || holdcount > 0)
+            {
+                if (ReflCalc.IsOneSigma == false) arrayconst = 3;
+
+                ReflCalc.UL = new double[2 + arrayconst * ReflCalc.BoxCount];
+                ReflCalc.LL = new double[2 + arrayconst * ReflCalc.BoxCount];
+                int ULLength = ReflCalc.UL.Length;
+
+                //Set the subphase constraints
+                if (SubRoughCB.Checked == true)
+                {
+                    ReflCalc.UL[0] = SubRough.ToDouble();
+                    ReflCalc.LL[0] = SubRough.ToDouble();
+                }
+                else if (ConstrForm.Initialized == false)
+                {
+                    ReflCalc.UL[0] = 10000;
+                    ReflCalc.LL[0] = -10000;
+                }
+                else
+                {
+                    ReflCalc.UL[0] = ConstrForm.SubRoughMax;
+                    ReflCalc.LL[0] = ConstrForm.SubRoughMin;
+                }
+
+                //Set the Normalization const
+                if (NormCB.Checked == true)
+                {
+                    ReflCalc.UL[ULLength - 1] = NormCorrectTB.ToDouble();
+                    ReflCalc.LL[ULLength - 1] = NormCorrectTB.ToDouble();
+                }
+                else if (ConstrForm.Initialized == false)
+                {
+                    ReflCalc.UL[ULLength - 1] = 10000;
+                    ReflCalc.LL[ULLength - 1] = -10000;
+                }
+                else
+                {
+                    ReflCalc.UL[ULLength - 1] = ConstrForm.NormMax;
+                    ReflCalc.LL[ULLength - 1] = ConstrForm.NormMin;
+                }
+
+                for (int i = 0; i < ReflCalc.BoxCount; i++)
+                {
+                    //Check for constraints
+                    if (ConstrForm.Initialized == true)
+                    {
+                        ReflCalc.UL[arrayconst * i + 1] = ConstrForm.ThickHighArray[i];
+                        ReflCalc.LL[arrayconst * i + 1] = ConstrForm.ThickLowArray[i];
+
+                        if (m_bUseSLD == false)
+                        {
+                            ReflCalc.UL[arrayconst * i + 2] = ConstrForm.RhoHighArray[i];
+                            ReflCalc.LL[arrayconst * i + 2] = ConstrForm.RhoLowArray[i];
+                        }
+                        else
+                        {
+                            if (ReflCalc.SubphaseSLD > 0)
+                            {
+                                ReflCalc.UL[arrayconst * i + 2] = ConstrForm.RhoHighArray[i] / ReflCalc.SubphaseSLD;
+                                ReflCalc.LL[arrayconst * i + 2] = ConstrForm.RhoLowArray[i] / ReflCalc.SubphaseSLD;
+                            }
+                            else
+                            {
+                                ReflCalc.LL[arrayconst * i + 2] = ConstrForm.RhoHighArray[i] / ReflCalc.SubphaseSLD;
+                                ReflCalc.UL[arrayconst * i + 2] = ConstrForm.RhoLowArray[i] / ReflCalc.SubphaseSLD;
+                            }
+                        }
+                        if (Holdsigma.Checked == false)
+                        {
+                            ReflCalc.UL[arrayconst * i + 3] = ConstrForm.SigmaHighArray[i];
+                            ReflCalc.LL[arrayconst * i + 3] = ConstrForm.SigmaLowArray[i];
+                        }
+                    }
+                    else
+                    {
+                        ReflCalc.UL[arrayconst * i + 2] = ReflCalc.UL[arrayconst * i + 1] = 10000;
+                        ReflCalc.LL[arrayconst * i + 2] = ReflCalc.LL[arrayconst * i + 1] = -10000;
+
+                        if (Holdsigma.Checked == false)
+                        {
+                            ReflCalc.UL[arrayconst * i + 3] = 10000;
+                            ReflCalc.LL[arrayconst * i + 3] = -10000;
+                        }
+                    }
+                    //Check for holds - holds take precedence over constraints
+                    if (HoldLengthArray[i].Checked == true)
+                    {
+                        ReflCalc.LL[arrayconst * i + 1] = ReflCalc.UL[arrayconst * i + 1] = LengthArray[i].ToDouble();
+                    }
+                    if (HoldRhoArray[i].Checked == true)
+                    {
+                        ReflCalc.LL[arrayconst * i + 2] = ReflCalc.UL[arrayconst * i + 2] = RhoArray[i].ToDouble();
+                    }
+                    if (HoldSigmaArray[i].Checked == true && Holdsigma.Checked == false)
+                    {
+                        ReflCalc.LL[arrayconst * i + 3] = ReflCalc.UL[arrayconst * i + 3] = SigmaArray[i].ToDouble();
+                    }
+                }
+            }
+            else
+            {
+                ReflCalc.UL = null;
+                ReflCalc.LL = null;
+            }
+        }
+
+      
         /// <summary>
         /// Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
         /// in number entry
@@ -1357,14 +687,5 @@ namespace StochasticModeling
 
         #endregion
 
-
-
-        private double GetSubSLD
-        {
-            get
-            {
-                return double.Parse(SubphaseSLD.Text);
-            }
-        }
     }
 }

@@ -262,17 +262,8 @@ namespace StochasticModeling
 
         private void button1_Click(object sender, EventArgs e)
         {
-
-            if(MessageBox.Show("Do you wish to fit with constraints?", "Constrain", MessageBoxButtons.YesNo) == DialogResult.Yes)
-            {
-                //ConstrainedReflmodeling Refl = new ConstrainedReflmodeling(SubRough.ToDouble(), LengthArray.ToArray(), RhoArray.ToArray(), SigmaArray.ToArray(), BoxCount.ToInt(), Holdsigma.Checked, SubphaseSLD.Text, SupSLDTB.Text);
-                //Refl.ShowDialog(this);
-            }
-            else
-            {
-                //Reflmodeling Refl = new Reflmodeling(SubRough.ToDouble(), LengthArray.ToArray(), RhoArray.ToArray(), SigmaArray.ToArray(), BoxCount.ToInt(), Holdsigma.Checked, SubphaseSLD.Text, SupSLDTB.Text);
-                //Refl.ShowDialog(this);
-            }
+            ConstrainedReflmodeling Refl = new ConstrainedReflmodeling(RhoCalc);
+            Refl.ShowDialog(this);
         }
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)

@@ -167,6 +167,6 @@ namespace StochasticModeling
         /// <param name="info"></param>
         /// <param name="infosize"></param>
         [DllImport("LevMardll.dll", EntryPoint = "StochFit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void ConstrainedStochFit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int paramsize, double[] info, int infosize, double[] ParamArray, double[] chisquarearray, ref int paramarraysize);
+        public static extern void ConstrainedStochFit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int paramsize, double[] info, double[] ParamArray, double[] chisquarearray, ref int paramarraysize);
     }
 }

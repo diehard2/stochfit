@@ -25,7 +25,7 @@ namespace StochasticModeling
         #region Variables
         protected bool m_bvalidfit = false;
         protected bool m_bUseSLD = false;
-        
+        private double m_zlength = 0;
         //Arrays
         protected List<double> _RhoArray;
         protected List<double> _LengthArray;
@@ -34,34 +34,90 @@ namespace StochasticModeling
         protected List<double> PreviousLengthArray;
         protected List<double> PreviousSigmaArray;
         protected double m_dPrevioussigma;
-        protected double[] covar;
+      
         protected double[] info;
         protected double oldnormfactor;
         protected bool initialized = false;
         protected double LeftOffset;
-        protected double NormalizationFactor;
+        private double _NormalizationFactor;
+
+        public double NormalizationFactor
+        {
+            get { return _NormalizationFactor; }
+            set { _NormalizationFactor = value; }
+        }
         protected double SubphaseSLDTB;
         protected double SuperSLDTB;
         protected double WavelengthTB;
-        protected double QSpreadTB;
+        private double _QSpreadTB;
+
+        public double QSpreadTB
+        {
+            get { return _QSpreadTB; }
+            set { _QSpreadTB = value; }
+        }
         protected double SubRoughTB;
         protected double ZOffsetTB;
         private double _HighQOffset;
         private double _LowQOffset;
 
-        
-        protected bool ImpNormCB;
-        protected double[] Qincrement;
+
+        private bool _ImpNormCB;
+
+        public bool ImpNormCB
+        {
+            get { return _ImpNormCB; }
+            set { _ImpNormCB = value; }
+        }
+
+        protected double[] _Qincrement;
         protected double[] QErrors;
-        protected double[] ReflectivityMap;
-        protected double[] Z;
-        protected double[] ElectronDensityArray;
-        protected double[] BoxElectronDensityArray;
+        private double[] _ReflectivityMap;
+
+        public double[] ReflectivityMap
+        {
+            get { return (double[])_ReflectivityMap.Clone(); }
+        }
+
+        private double[] _Z;
+
+        public double[] Z
+        {
+            get { return (double[])_Z.Clone(); }
+        }
+
+
+        private double[] _ElectronDensityArray;
+
+        public double[] ElectronDensityArray
+        {
+            get { return (double[])_ElectronDensityArray.Clone(); }
+        }
+
+        private double[] _BoxElectronDensityArray;
+
+        public double[] BoxElectronDensityArray
+        {
+            get { return (double[])_BoxElectronDensityArray.Clone(); }
+        }
+
         protected double[] RealReflErrors;
         protected double[] RealRefl;
         protected double[] RealRho;
-        protected double[] UL;
-        protected double[] LL;
+        private double[] _UL;
+
+        public double[] UL
+        {
+            get { return _UL; }
+            set { _UL = value; }
+        }
+        private double[] _LL;
+
+        public double[] LL
+        {
+            get { return _LL; }
+            set { _LL = value; }
+        }
 
         protected bool m_bmodelreset = false;
         protected BoxModelSettings InfoStruct;
@@ -71,7 +127,6 @@ namespace StochasticModeling
         protected double m_dZ_offset = 15;
         protected double m_dRoughness = 3;
         protected double[] m_dCovarArray;
-        //protected double m_dPrevioussigma;
         protected double m_dPreviouszoffset;
         protected double m_dChiSquare;
         private double m_dPreviousImpNorm;
@@ -99,12 +154,19 @@ namespace StochasticModeling
             PreviousLengthArray = new List<double>(6);
             PreviousSigmaArray = new List<double>(6);
 
-            if (Z != null)
+            if (ERho != null)
             {
                 RealRho = (double[])ERho.Clone();
-                ElectronDensityArray = new double[ERho.Length];
-                BoxElectronDensityArray = new double[ERho.Length];
-                this.Z = (double[])Z.Clone();
+                _ElectronDensityArray = new double[ERho.Length];
+                _BoxElectronDensityArray = new double[ERho.Length];
+                this._Z = (double[])Z.Clone();
+            }
+            else
+            {
+                _ElectronDensityArray = new double[500];
+                _BoxElectronDensityArray = new double[500];
+                _Z = new double[500];
+                MakeZ(true);
             }
         }
 
@@ -121,9 +183,9 @@ namespace StochasticModeling
 
             m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
             HoldsigmaCB = previousFitBase.HoldsigmaCB;
-            ImpNormCB = previousFitBase.ImpNormCB;
+            _ImpNormCB = previousFitBase._ImpNormCB;
             m_dImpNorm = previousFitBase.m_dImpNorm;
-            WavelengthTB = previousFitBase.WavelengthTB;
+            WavelengthTB = 1.24;
           
             
             info = new double[9];
@@ -134,76 +196,71 @@ namespace StochasticModeling
             PreviousSigmaArray = new List<double>(6);
 
             //Get our Q data into a useable form
-            Qincrement = ReflData.Instance.GetQData;
+            _Qincrement = ReflData.Instance.GetQData;
             RealRefl = ReflData.Instance.GetReflData;
             RealReflErrors = ReflData.Instance.GetRErrors;
             QErrors = ReflData.Instance.GetQErrors;
 
-            ReflectivityMap = new double[ReflData.Instance.GetNumberDataPoints];
+            _ReflectivityMap = new double[ReflData.Instance.GetNumberDataPoints];
 
             //Create Z
-            Z = new double[500];
-            MakeZ();
+            _Z = new double[500];
+            MakeZ(true);
 
-            ElectronDensityArray = new double[500];
-            BoxElectronDensityArray = new double[500];
+            _ElectronDensityArray = new double[500];
+            _BoxElectronDensityArray = new double[500];
 
             ZOffset = 25;
         }
 
-        private void MakeZ()
+        private void MakeZ(bool initialize)
         {
-             //Make the Z Arrays
-            double length = 0;
-
-            for (int k = 0; k < BoxCountTB; k++)
+            if (RealRho == null)
             {
-                length += _LengthArray[k];
-            }
-            for (int i = 0; i < 500; i++)
-            {
-                Z[i] = i * (50 + length) / 499.0;
-            }
+                //Make the Z thickness array
+                double templength = ZOffsetTB +35;
 
+                for (int k = 0; k < BoxCountTB; k++)
+                {
+                    templength += _LengthArray[k];
+                }
+
+                if (templength != m_zlength || initialize)
+                {
+                    m_zlength = templength;
+
+                    for (int i = 0; i < 500; i++)
+                    {
+                        _Z[i] = i * m_zlength / 499.0;
+                    }
+                }
+            }
         }
 
-        public abstract void StochFit();
+        public abstract string StochFit(double[] parampercs, int iterations);
                
         public virtual void UpdateProfile()
         {
            m_bvalidfit = false;
-
+           
            double[] parameters = null;
            double[] eparameters = null;
            
            MakeParameters(ref eparameters, true);
           
            InfoStruct = new BoxModelSettings();
-           SetInitStruct(ref InfoStruct, null, null, null);
+           SetInitStruct(ref InfoStruct, null);
 
-           Calculations.RhoGenerate(InfoStruct, eparameters, eparameters.Length, ElectronDensityArray, BoxElectronDensityArray);
-
-           InfoStruct.Dispose();
-           
-           
+           Calculations.RhoGenerate(InfoStruct, eparameters, eparameters.Length, _ElectronDensityArray, _BoxElectronDensityArray);
           
-           if (Qincrement != null)
+           if (_Qincrement != null)
            {
                MakeParameters(ref parameters, false);
-               Calculations.FastReflGenerate(InfoStruct, parameters, parameters.Length, ReflectivityMap);
-
-               //if (m_bmodelreset == true)
-               //{
-               //    ReflGraphing.Clear();
-               //    ReflGraphing.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
-               //    m_bmodelreset = false;
-               //}
-
-               ////Setup the graphs
-               //ReflGraphing.LoadfromArray("modelrefl", Qincrement, ReflectivityMap, System.Drawing.Color.Black, SymbolType.XCross, 4, true, string.Empty);
+               Calculations.FastReflGenerate(InfoStruct, parameters, parameters.Length, _ReflectivityMap);
            }
-           
-            Update(this, null);
+
+           InfoStruct.Dispose();
+           Update(this, null);
         }
 
        
@@ -259,16 +316,17 @@ namespace StochasticModeling
             }
 
             if (!IsED)
-                parameters[1 + BoxCountTB * arrayconst] = NormalizationFactor;
+                parameters[1 + BoxCountTB * arrayconst] = _NormalizationFactor;
         }
 
-        protected virtual void SetInitStruct(ref BoxModelSettings InitStruct, double[] parampercs, double[] UL, double[] LL)
+        protected virtual void SetInitStruct(ref BoxModelSettings InitStruct, double[] parampercs)
         {
             if (InitStruct.Q == IntPtr.Zero)
             {
                 InitStruct.SetArrays(ReflData.Instance.GetQData, ReflData.Instance.GetReflData, ReflData.Instance.GetRErrors,
                     ReflData.Instance.GetQErrors, parampercs, UL, LL);
             }
+
             InitStruct.Directory = ReflData.Instance.GetWorkingDirectory;
             InitStruct.Boxes = BoxCountTB;
 
@@ -280,14 +338,17 @@ namespace StochasticModeling
 
             InitStruct.OneSigma = HoldsigmaCB;
 
-            if (QSpreadTB != 0)
-                InitStruct.QSpread = QSpreadTB;
+            if (_QSpreadTB != 0)
+                InitStruct.QSpread = _QSpreadTB;
 
-            if (ImpNormCB == true)
-                InitStruct.ImpNorm = ImpNormCB;
-            
-            if(Z != null)
-                InitStruct.SetZ(Z, RealRho);
+            if (_ImpNormCB == true)
+                InitStruct.ImpNorm = _ImpNormCB;
+
+            if (_Z != null)
+            {
+                MakeZ(false);
+                InitStruct.SetZ(_Z, RealRho);
+            }
 
             InitStruct.WriteFiles = true;
 
@@ -515,7 +576,7 @@ namespace StochasticModeling
         {
             get
             {
-                return Z;
+                return _Z;
             }
         }
 
@@ -523,7 +584,7 @@ namespace StochasticModeling
         {
             get
             {
-                return ElectronDensityArray;
+                return _ElectronDensityArray;
             }
         }
 
@@ -531,7 +592,7 @@ namespace StochasticModeling
         {
             get
             {
-                return BoxElectronDensityArray;
+                return _BoxElectronDensityArray;
             }
         }
 

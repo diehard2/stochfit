@@ -131,9 +131,15 @@ namespace StochasticModeling
             loadingCircle2.SpokeThickness = 3;
 
             GreyFields();
-            ////Setup the callback if the graph updates the bounds
-            //ReflGraphing.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
+            ReflCalc.Update += new BoxReflFitBase.UpdateProfileHandler(ReflCalc_Update);
+            //Setup the callback if the graph updates the bounds
+            ReflGraphing.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
             //BackupArrays();
+        }
+
+        void ReflCalc_Update(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         private void MakeArrays()

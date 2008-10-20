@@ -636,9 +636,9 @@ namespace StochasticModeling
             this.RhoLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.RhoLabel.Location = new System.Drawing.Point(68, 16);
             this.RhoLabel.Name = "RhoLabel";
-            this.RhoLabel.Size = new System.Drawing.Size(96, 13);
+            this.RhoLabel.Size = new System.Drawing.Size(90, 13);
             this.RhoLabel.TabIndex = 8;
-            this.RhoLabel.Text = "Normalized Rho";
+            this.RhoLabel.Text = "Normalized ED";
             // 
             // label8
             // 
@@ -815,9 +815,9 @@ namespace StochasticModeling
             this.label14.Enabled = false;
             this.label14.Location = new System.Drawing.Point(19, 123);
             this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(97, 13);
+            this.label14.Size = new System.Drawing.Size(69, 13);
             this.label14.TabIndex = 23;
-            this.label14.Text = "Critical Edge Offset";
+            this.label14.Text = "Low Q Offset";
             // 
             // CritOffset
             // 
@@ -1222,7 +1222,6 @@ namespace StochasticModeling
         private System.Windows.Forms.Label label15;
         private System.Windows.Forms.TextBox chisquaretb;
         private System.Windows.Forms.TextBox SubRough;
-        private System.Windows.Forms.Label label14;
         private System.Windows.Forms.TextBox CritOffset;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.TextBox Rightoffset;
@@ -1269,5 +1268,6 @@ namespace StochasticModeling
         private ZedGraph.ZedGraphControl EDzedGraphControl1;
         private MRG.Controls.UI.LoadingCircle loadingCircle2;
         private System.Windows.Forms.GroupBox controlbox;
+        public System.Windows.Forms.Label label14;
     }
 }

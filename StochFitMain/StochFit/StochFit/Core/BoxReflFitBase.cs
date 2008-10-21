@@ -59,8 +59,10 @@ namespace StochasticModeling
         protected List<double> PreviousLengthArray;
         protected List<double> PreviousSigmaArray;
         protected double m_dPrevioussigma;
-      
-        protected double[] info;
+
+        private double[] _fitinfo;
+
+       
         protected double oldnormfactor;
         protected bool initialized = false;
         protected double LeftOffset;
@@ -113,7 +115,7 @@ namespace StochasticModeling
             _RhoArray = new List<double>(6);
             _LengthArray = new List<double>(6);
             _SigmaArray = new List<double>(6);
-            info = new double[9];
+            _fitinfo = new double[9];
 
             //Setup arrays to hold the old values
             PreviousRhoArray = new List<double>(6);
@@ -154,7 +156,7 @@ namespace StochasticModeling
             WavelengthTB = 1.24;
           
             
-            info = new double[9];
+            _fitinfo = new double[9];
 
             //Setup arrays to hold the old values
             PreviousRhoArray = new List<double>(6);
@@ -389,8 +391,8 @@ namespace StochasticModeling
                           (char)0x00B1 + " " + m_dCovarArray[3 * i + 3].ToString("#.### E-0") + Environment.NewLine);
                 }
 
-                output.Append(Environment.NewLine + "Levenberg-Marquadt output" + Environment.NewLine + "\tNumber of iterations : " + info[5].ToString() + Environment.NewLine);
-                    output.Append("Reason for termination: " + termreason((int)info[6]));
+                output.Append(Environment.NewLine + "Levenberg-Marquadt output" + Environment.NewLine + "\tNumber of iterations : " + _fitinfo[5].ToString() + Environment.NewLine);
+                    output.Append("Reason for termination: " + termreason((int)_fitinfo[6]));
                 return output.ToString();
             }
             else
@@ -589,6 +591,10 @@ namespace StochasticModeling
         {
             get { return _QSpreadTB; }
             set { _QSpreadTB = value; }
+        }
+        public double[] Fitinfo
+        {
+            get { return (double[])_fitinfo.Clone(); }
         }
     }
 }

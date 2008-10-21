@@ -260,148 +260,148 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 	vector<ParameterContainer> temp;
 	temp.reserve(6000);
 
-	omp_set_num_threads(1);//omp_get_num_procs());
+	omp_set_num_threads(omp_get_num_procs());
 
-#pragma omp parallel
-{
-	FastReflcalc locRefl;
-	locRefl.init(InitStruct);
-
-	//Initialize random number generator
-	int seed = time_seed();
-	CRandomMersenne randgen(time_seed()+omp_get_thread_num());
-
-	ParameterContainer localanswer;
-	double locparameters[20];
-    double locbestchisquare = bestchisquare;
-	double bestparam[20];
-	int vecsize = 1000;
-	int veccount = 0;
-	ParameterContainer* vec = (ParameterContainer*)malloc(vecsize*sizeof(ParameterContainer));
-	
-	double locinfo[9];
-
-	//Allocate workspace - these will be private to each thread
-
-	double* work, *covar;
-	work=(double*)malloc((LM_DIF_WORKSZ(paramsize, QSize)+paramsize*QSize)*sizeof(double));
-	covar=work+LM_DIF_WORKSZ(paramsize, QSize);
-
-
-	#pragma omp for schedule(runtime)
-	for(int i = 0; i < InitStruct->Iterations;i++) 
+	#pragma omp parallel
 	{
-		locparameters[0] = randgen.IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
-		for(int k = 0; k< InitStruct->Boxes; k++)
+		FastReflcalc locRefl;
+		locRefl.init(InitStruct);
+
+		//Initialize random number generator
+		int seed = time_seed();
+		CRandomMersenne randgen(time_seed()+omp_get_thread_num());
+
+		ParameterContainer localanswer;
+		double locparameters[20];
+		double locbestchisquare = bestchisquare;
+		double bestparam[20];
+		int vecsize = 1000;
+		int veccount = 0;
+		ParameterContainer* vec = (ParameterContainer*)malloc(vecsize*sizeof(ParameterContainer));
+		
+		double locinfo[9];
+
+		//Allocate workspace - these will be private to each thread
+
+		double* work, *covar;
+		work=(double*)malloc((LM_DIF_WORKSZ(paramsize, QSize)+paramsize*QSize)*sizeof(double));
+		covar=work+LM_DIF_WORKSZ(paramsize, QSize);
+
+
+		#pragma omp for schedule(runtime)
+		for(int i = 0; i < InitStruct->Iterations;i++) 
 		{
-			if(InitStruct->OneSigma == TRUE)
+			locparameters[0] = randgen.IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
+			for(int k = 0; k< InitStruct->Boxes; k++)
 			{
-				locparameters[2*k+1] = randgen.IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
-				locparameters[2*k+2] = randgen.IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
-			}
-			else
-			{
-				locparameters[3*k+1] = randgen.IRandom(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
-				locparameters[3*k+2] = randgen.IRandom(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
-				locparameters[3*k+3] = randgen.IRandom(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
-			}
-		}
-
-		locparameters[paramsize-1] = origguess[paramsize-1];
-		
-		
-		if(InitStruct->UL == NULL)
-			dlevmar_dif(locRefl.objective, locparameters, xvec,  paramsize, InitStruct->QPoints, 500, opts, locinfo, work,covar,(void*)(&locRefl)); 
-		else
-			dlevmar_bc_dif(locRefl.objective, locparameters, xvec, paramsize, InitStruct->QPoints, InitStruct->LL, InitStruct->UL,
-				500, opts, locinfo, work,covar,(void*)(&locRefl)); 
-		
-		localanswer.SetContainer(locparameters,covar,paramsize,InitStruct->OneSigma,locinfo[1], parampercs[6]);
-
-		if(locinfo[1] < bestchisquare && localanswer.IsReasonable() == true)
-		{
-			//Resize the private arrays if we need the space
-			if(veccount+2 == vecsize)
-			{
-						vecsize += 1000;
-						vec = (ParameterContainer*)realloc(vec,vecsize*sizeof(ParameterContainer));
-			}
-
-			bool unique = true;
-			int arraysize = veccount;
-
-			//Check if the answer already exists
-			for(int i = 0; i < arraysize; i++)
-			{
-				if(localanswer == vec[i])
+				if(InitStruct->OneSigma == TRUE)
 				{
-					unique = false; 
-					i = arraysize;
+					locparameters[2*k+1] = randgen.IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
+					locparameters[2*k+2] = randgen.IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
+				}
+				else
+				{
+					locparameters[3*k+1] = randgen.IRandom(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
+					locparameters[3*k+2] = randgen.IRandom(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
+					locparameters[3*k+3] = randgen.IRandom(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
 				}
 			}
-			//If the answer is unique add it to our set of answers
-			if(unique == true)
+
+			locparameters[paramsize-1] = origguess[paramsize-1];
+			
+			
+			if(InitStruct->UL == NULL)
+				dlevmar_dif(locRefl.objective, locparameters, xvec,  paramsize, InitStruct->QPoints, 500, opts, locinfo, work,covar,(void*)(&locRefl)); 
+			else
+				dlevmar_bc_dif(locRefl.objective, locparameters, xvec, paramsize, InitStruct->QPoints, InitStruct->LL, InitStruct->UL,
+					500, opts, locinfo, work,covar,(void*)(&locRefl)); 
+			
+			localanswer.SetContainer(locparameters,covar,paramsize,InitStruct->OneSigma,locinfo[1], parampercs[6]);
+
+			if(locinfo[1] < bestchisquare && localanswer.IsReasonable() == true)
 			{
-				vec[veccount] = localanswer;
-				veccount++;
+				//Resize the private arrays if we need the space
+				if(veccount+2 == vecsize)
+				{
+							vecsize += 1000;
+							vec = (ParameterContainer*)realloc(vec,vecsize*sizeof(ParameterContainer));
+				}
+
+				bool unique = true;
+				int arraysize = veccount;
+
+				//Check if the answer already exists
+				for(int i = 0; i < arraysize; i++)
+				{
+					if(localanswer == vec[i])
+					{
+						unique = false; 
+						i = arraysize;
+					}
+				}
+				//If the answer is unique add it to our set of answers
+				if(unique == true)
+				{
+					vec[veccount] = localanswer;
+					veccount++;
+				}
 			}
 		}
-	}
-	#pragma omp critical (AddVecs)
-	{
-		for(int i = 0; i < veccount; i++)
+		#pragma omp critical (AddVecs)
 		{
-			temp.push_back(vec[i]);
+			for(int i = 0; i < veccount; i++)
+			{
+				temp.push_back(vec[i]);
+			}
 		}
+		free(vec);
+		free(work);
 	}
-	free(vec);
-	free(work);
-}
+	//
+	delete[] xvec;
+	delete[] origguess;
 
-delete[] xvec;
-delete[] origguess;
+	//Sort the answers
+	//Get the total number of answers
+	temp.push_back(original);
 
-//Sort the answers
-//Get the total number of answers
-temp.push_back(original);
+	vector<ParameterContainer> allsolutions;
+	allsolutions.reserve(6000);
 
-vector<ParameterContainer> allsolutions;
-allsolutions.reserve(6000);
+	int tempsize = temp.size();
+	allsolutions.push_back(temp[0]);
 
-int tempsize = temp.size();
-allsolutions.push_back(temp[0]);
-
-for(int i = 1; i < tempsize; i++)
-{
-	int allsolutionssize = allsolutions.size();
-	for(int j = 0; j < allsolutionssize;j++)
-		{
-			if(temp[i] == allsolutions[j])
-			{
-				break;
-			}
-			if(j == allsolutionssize-1)
-			{
-				allsolutions.push_back(temp[i]);
-			}
-		}
-}
-
-if(allsolutions.size() > 0)
-{
-	sort(allsolutions.begin(), allsolutions.end());
-}
-
-for(int i = 0; i < allsolutions.size() && i < 1000 && allsolutions.size() > 0; i++)
-{
-	for(int j = 0; j < paramsize; j++)
+	for(int i = 1; i < tempsize; i++)
 	{
-		ParamArray[(i)*paramsize+j] = (allsolutions.at(i).GetParamArray())[j];
-		covararray[(i)*paramsize+j] = (allsolutions.at(i).GetCovarArray())[j];
+		int allsolutionssize = allsolutions.size();
+		for(int j = 0; j < allsolutionssize;j++)
+			{
+				if(temp[i] == allsolutions[j])
+				{
+					break;
+				}
+				if(j == allsolutionssize-1)
+				{
+					allsolutions.push_back(temp[i]);
+				}
+			}
 	}
-	chisquarearray[i] = (allsolutions.at(i).GetScore());
-}
-*paramarraysize = min(allsolutions.size(),999);
+
+	if(allsolutions.size() > 0)
+	{
+		sort(allsolutions.begin(), allsolutions.end());
+	}
+
+	for(int i = 0; i < allsolutions.size() && i < 1000 && allsolutions.size() > 0; i++)
+	{
+		for(int j = 0; j < paramsize; j++)
+		{
+			ParamArray[(i)*paramsize+j] = (allsolutions.at(i).GetParamArray())[j];
+			covararray[(i)*paramsize+j] = (allsolutions.at(i).GetCovarArray())[j];
+		}
+		chisquarearray[i] = (allsolutions.at(i).GetScore());
+	}
+	*paramarraysize = min(allsolutions.size(),999);
 }
 
 extern "C" LEVMARDLL_API void FastReflGenerate(BoxReflSettings* InitStruct, double parameters[], int parametersize, double Reflectivity[])

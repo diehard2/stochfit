@@ -153,8 +153,8 @@ namespace StochasticModeling
                 BoxLengthArray[i].Text = RhoCalc.LengthArray[i].ToString();
             }
 
-            m_gRhoGraphing.LoadfromArray("Model Dependent Fit", RhoCalc.Get_Z, RhoCalc.Get_Rho, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
-            m_gRhoGraphing.LoadfromArray("Model Dependent Box Fit", RhoCalc.Get_Z, RhoCalc.Get_BoxRho, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
+            m_gRhoGraphing.LoadfromArray("Model Dependent Fit", RhoCalc.Z, RhoCalc.ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
+            m_gRhoGraphing.LoadfromArray("Model Dependent Box Fit", RhoCalc.Z, RhoCalc.BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
 
             //Write graph to the master graph
             GraphCollection.Instance.RhoGraph = m_gRhoGraphing;

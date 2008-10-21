@@ -13,17 +13,42 @@ using ZedGraph;
 
 namespace StochasticModeling
 {
+    public class FitInformation
+    {
+        private double[] _EDP;
+        private double[] _BoxEDP;
+        private double[] _Z;
+        private double[] _Refl;
+
+        private List<double> _RhoArray;
+        private List<double> _LengthArray;
+        private List<double> _SigmaArray;
+
+        private double _SubRough;
+        private double _ChiSquare;
+        private double _NormalizationFactor;
+        private double[] _CovarArray;
+
+        public FitInformation(BoxReflFitBase CurrentFit)
+        {
+            _EDP = CurrentFit.ElectronDensityArray;
+            _BoxEDP = CurrentFit.BoxElectronDensityArray;
+            _Z = CurrentFit.Z;
+            _Refl = CurrentFit.ReflectivityMap;
+            _RhoArray = new List<double>(CurrentFit.RhoArray.ToArray());
+            _LengthArray = new List<double>(CurrentFit.LengthArray.ToArray());
+            _SigmaArray = new List<double>(CurrentFit.SigmaArray.ToArray());
+            _SubRough = CurrentFit.GetSubRoughness;
+            _ChiSquare = CurrentFit.ChiSquare;
+            _NormalizationFactor = CurrentFit.NormalizationFactor;
+            _CovarArray = CurrentFit.CovarArray;   
+        }
+
+    }
+
     public abstract class BoxReflFitBase 
     {
-        
-        /// <summary>
-        /// The culture is set to US for the purposes of inputting data to the numerical routines
-        /// </summary>
-        protected CultureInfo m_CI = new CultureInfo("en-US");
-
-
         #region Variables
-        protected bool m_bvalidfit = false;
         protected bool m_bUseSLD = false;
         private double m_zlength = 0;
         //Arrays
@@ -40,95 +65,38 @@ namespace StochasticModeling
         protected bool initialized = false;
         protected double LeftOffset;
         private double _NormalizationFactor;
-
-        public double NormalizationFactor
-        {
-            get { return _NormalizationFactor; }
-            set { _NormalizationFactor = value; }
-        }
         protected double SubphaseSLDTB;
         protected double SuperSLDTB;
         protected double WavelengthTB;
         private double _QSpreadTB;
-
-        public double QSpreadTB
-        {
-            get { return _QSpreadTB; }
-            set { _QSpreadTB = value; }
-        }
         protected double SubRoughTB;
         protected double ZOffsetTB;
         private double _HighQOffset;
         private double _LowQOffset;
-
-
         private bool _ImpNormCB;
-
-        public bool ImpNormCB
-        {
-            get { return _ImpNormCB; }
-            set { _ImpNormCB = value; }
-        }
-
-        protected double[] _Qincrement;
-        protected double[] QErrors;
         private double[] _ReflectivityMap;
-
-        public double[] ReflectivityMap
-        {
-            get { return (double[])_ReflectivityMap.Clone(); }
-        }
-
         private double[] _Z;
-
-        public double[] Z
-        {
-            get { return (double[])_Z.Clone(); }
-        }
-
-
         private double[] _ElectronDensityArray;
-
-        public double[] ElectronDensityArray
-        {
-            get { return (double[])_ElectronDensityArray.Clone(); }
-        }
-
         private double[] _BoxElectronDensityArray;
-
-        public double[] BoxElectronDensityArray
-        {
-            get { return (double[])_BoxElectronDensityArray.Clone(); }
-        }
-
-        protected double[] RealReflErrors;
-        protected double[] RealRefl;
-        protected double[] RealRho;
+        private double[] RealRho;
         private double[] _UL;
-
-        public double[] UL
-        {
-            get { return _UL; }
-            set { _UL = value; }
-        }
         private double[] _LL;
-
-        public double[] LL
-        {
-            get { return _LL; }
-            set { _LL = value; }
-        }
-
-        protected bool m_bmodelreset = false;
         protected BoxModelSettings InfoStruct;
-        protected Thread Stochthread;
         protected bool HoldsigmaCB;
         protected int BoxCountTB;
-        protected double m_dZ_offset = 15;
-        protected double m_dRoughness = 3;
         protected double[] m_dCovarArray;
+
+        public double[] CovarArray
+        {
+            get { return (double[]) m_dCovarArray.Clone(); }
+        }
         protected double m_dPreviouszoffset;
         protected double m_dChiSquare;
+
+        public double ChiSquare
+        {
+            get { return m_dChiSquare; }
+        }
         private double m_dPreviousImpNorm;
         private double m_dImpNorm;
 
@@ -141,8 +109,6 @@ namespace StochasticModeling
         public BoxReflFitBase(double[] Z, double[] ERho)
         {
             m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession;
-            
-
            
             _RhoArray = new List<double>(6);
             _LengthArray = new List<double>(6);
@@ -194,13 +160,6 @@ namespace StochasticModeling
             PreviousRhoArray = new List<double>(6);
             PreviousLengthArray = new List<double>(6);
             PreviousSigmaArray = new List<double>(6);
-
-            //Get our Q data into a useable form
-            _Qincrement = ReflData.Instance.GetQData;
-            RealRefl = ReflData.Instance.GetReflData;
-            RealReflErrors = ReflData.Instance.GetRErrors;
-            QErrors = ReflData.Instance.GetQErrors;
-
             _ReflectivityMap = new double[ReflData.Instance.GetNumberDataPoints];
 
             //Create Z
@@ -241,8 +200,6 @@ namespace StochasticModeling
                
         public virtual void UpdateProfile()
         {
-           m_bvalidfit = false;
-           
            double[] parameters = null;
            double[] eparameters = null;
            
@@ -253,7 +210,7 @@ namespace StochasticModeling
 
            Calculations.RhoGenerate(InfoStruct, eparameters, eparameters.Length, _ElectronDensityArray, _BoxElectronDensityArray);
           
-           if (_Qincrement != null)
+           if (ReflData.Instance.GetNumberDataPoints > 0)
            {
                MakeParameters(ref parameters, false);
                Calculations.FastReflGenerate(InfoStruct, parameters, parameters.Length, _ReflectivityMap);
@@ -572,28 +529,42 @@ namespace StochasticModeling
             }
         }
 
-        public double[] Get_Z
+        public bool ImpNormCB
         {
-            get
-            {
-                return _Z;
-            }
+            get { return _ImpNormCB; }
+            set { _ImpNormCB = value; }
         }
 
-        public double[] Get_Rho
+        public double[] ReflectivityMap
         {
-            get
-            {
-                return _ElectronDensityArray;
-            }
+            get { return (double[])_ReflectivityMap.Clone(); }
         }
 
-        public double[] Get_BoxRho
+        public double[] Z
         {
-            get
-            {
-                return _BoxElectronDensityArray;
-            }
+            get { return (double[])_Z.Clone(); }
+        }
+
+        public double[] ElectronDensityArray
+        {
+            get { return (double[])_ElectronDensityArray.Clone(); }
+        }
+
+        public double[] BoxElectronDensityArray
+        {
+            get { return (double[])_BoxElectronDensityArray.Clone(); }
+        }
+
+        public double[] UL
+        {
+            get { return _UL; }
+            set { _UL = value; }
+        }
+
+        public double[] LL
+        {
+            get { return _LL; }
+            set { _LL = value; }
         }
 
         public double HighQOffset
@@ -602,13 +573,23 @@ namespace StochasticModeling
             set { _HighQOffset = value; }
         }
 
-
         public double LowQOffset
         {
             get { return _LowQOffset; }
             set { _LowQOffset = value; }
         }
-            
+
+        public double NormalizationFactor
+        {
+            get { return _NormalizationFactor; }
+            set { _NormalizationFactor = value; }
+        }
+
+        public double QSpreadTB
+        {
+            get { return _QSpreadTB; }
+            set { _QSpreadTB = value; }
+        }
     }
 }
 

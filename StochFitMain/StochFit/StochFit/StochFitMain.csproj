@@ -32,7 +32,7 @@
     <RootNamespace>StochasticModeling</RootNamespace>
     <AssemblyName>StochFit</AssemblyName>
     <StartupObject>StochasticModeling.Program</StartupObject>
-    <ApplicationIcon>genf.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\genf.ico</ApplicationIcon>
     <ManifestCertificateThumbprint>0D65308C660F6602FA91ADC39D31F4DD67076BF9</ManifestCertificateThumbprint>
     <ManifestKeyFile>Genfit_TemporaryKey.pfx</ManifestKeyFile>
     <GenerateManifests>false</GenerateManifests>
@@ -134,17 +134,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AboutBox1.cs">
+    <Compile Include="Resources\AboutBox1.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="AboutBox1.designer.cs">
+    <Compile Include="Resources\AboutBox1.designer.cs">
       <DependentUpon>AboutBox1.cs</DependentUpon>
     </Compile>
-    <Compile Include="BoxReflFitBase.cs">
+    <Compile Include="Core\BoxReflFitBase.cs">
     </Compile>
-    <Compile Include="ReflFit.cs" />
-    <Compile Include="RhoFit.cs" />
-    <Compile Include="ExtensionMethods.cs" />
+    <Compile Include="Core\ReflFit.cs" />
+    <Compile Include="Core\RhoFit.cs" />
+    <Compile Include="Core\ExtensionMethods.cs" />
     <Compile Include="Graphing\GraphingBase.cs" />
     <Compile Include="Modeling\AnnealingParams.cs">
       <SubType>Form</SubType>
@@ -158,7 +158,7 @@
     <Compile Include="Modeling\StunAnnealingParams.Designer.cs">
       <DependentUpon>StunAnnealingParams.cs</DependentUpon>
     </Compile>
-    <Compile Include="ReflData.cs" />
+    <Compile Include="Core\ReflData.cs" />
     <Compile Include="Calculators\SLDCalculator.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -171,10 +171,10 @@
     <Compile Include="Calculators\SLDConverter.Designer.cs">
       <DependentUpon>SLDConverter.cs</DependentUpon>
     </Compile>
-    <Compile Include="StochFit.cs">
+    <Compile Include="Modeling\StochFit.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="StochFit.designer.cs">
+    <Compile Include="Modeling\StochFit.designer.cs">
       <DependentUpon>StochFit.cs</DependentUpon>
     </Compile>
     <Compile Include="Graphing\Graphing.cs" />
@@ -215,7 +215,7 @@
     <Compile Include="Modeling\StochOutputWindow.Designer.cs">
       <DependentUpon>StochOutputWindow.cs</DependentUpon>
     </Compile>
-    <Compile Include="Program.cs" />
+    <Compile Include="Modeling\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -228,25 +228,19 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Modeling\ReflModeling.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Modeling\ReflModeling.designer.cs">
-      <DependentUpon>ReflModeling.cs</DependentUpon>
-    </Compile>
     <Compile Include="Modeling\Rhomodeling.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Modeling\Rhomodeling.designer.cs">
       <DependentUpon>Rhomodeling.cs</DependentUpon>
     </Compile>
-    <Compile Include="ReportGenerator.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="InteropCalcs.cs">
+    <Compile Include="Core\ReportGenerator.cs" />
+    <Compile Include="Core\Settings.cs" />
+    <Compile Include="Core\InteropCalcs.cs">
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="AboutBox1.resx">
+    <EmbeddedResource Include="Resources\AboutBox1.resx">
       <DependentUpon>AboutBox1.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
@@ -266,7 +260,7 @@
       <SubType>Designer</SubType>
       <DependentUpon>SLDCalculator.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="StochFit.resx">
+    <EmbeddedResource Include="Modeling\StochFit.resx">
       <DependentUpon>StochFit.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
@@ -301,24 +295,20 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <CustomToolNamespace>ZedGraphSample</CustomToolNamespace>
     </EmbeddedResource>
-    <EmbeddedResource Include="Modeling\ReflModeling.resx">
-      <DependentUpon>ReflModeling.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="Modeling\Rhomodeling.resx">
       <DependentUpon>Rhomodeling.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-    <None Include="genf.ico" />
+    <None Include="Resources\app.config" />
+    <None Include="Resources\genf.ico" />
     <BaseApplicationManifest Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <Content Include="Todo.txt" />
+    <Content Include="Resources\Todo.txt" />
   </ItemGroup>
   <ItemGroup>
     <PublishFile Include="Todo.txt">

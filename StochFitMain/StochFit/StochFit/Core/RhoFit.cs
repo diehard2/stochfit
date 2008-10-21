@@ -34,8 +34,8 @@ namespace StochasticModeling
                     info.Add(String.Format("The SLD profile was fit with {0} roughness parameters\n", (BoxCountTB + 1)));
             }
 
-            info.Add(string.Format("Chi Square: " + m_dChiSquare + "\n"));
-            info.Add(string.Format("The subphase roughness was: {0:#.### E-0} " + (char)0x00B1 + " {1:#.### E-0}\n", SubRoughTB, m_dCovarArray[0]));
+            info.Add(string.Format("Chi Square: " + ChiSquare + "\n"));
+            info.Add(string.Format("The subphase roughness was: {0:#.### E-0} " + (char)0x00B1 + " {1:#.### E-0}\n", SubRoughTB, CovarArray[0]));
 
             int offset = 0;
 
@@ -45,17 +45,17 @@ namespace StochasticModeling
             for (int i = 0; i < BoxCountTB; i++)
             {
                 info.Add((i + 1).ToString());
-                info.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + m_dCovarArray[(2 + offset) * i + 1].ToString("#.### E-0"));
+                info.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[(2 + offset) * i + 1].ToString("#.### E-0"));
 
                 if (m_bUseSLD == false)
-                    info.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + m_dCovarArray[(2 + offset) * i + 2].ToString("#.### E-0"));
+                    info.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[(2 + offset) * i + 2].ToString("#.### E-0"));
                 else
-                    info.Add((RhoArray[i]).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (m_dCovarArray[(2 + offset) * i + 2]).ToString("#.### E-0"));
+                    info.Add((RhoArray[i]).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (CovarArray[(2 + offset) * i + 2]).ToString("#.### E-0"));
 
                 if (HoldsigmaCB)
-                    info.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + m_dCovarArray[0].ToString("#.### E-0"));
+                    info.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[0].ToString("#.### E-0"));
                 else
-                    info.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + m_dCovarArray[3 * i + 3].ToString("#.### E-0"));
+                    info.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[3 * i + 3].ToString("#.### E-0"));
             }
             g.SetRhoModelInfo = info;
         }
@@ -76,7 +76,7 @@ namespace StochasticModeling
             SetInitStruct(ref InfoStruct, null);
 
 
-            m_dChiSquare = Calculations.Rhofit(InfoStruct, parameters, m_dCovarArray, parameters.Length, info, info.Length);
+            m_dChiSquare = Calculations.Rhofit(InfoStruct, parameters, CovarArray, parameters.Length, info, info.Length);
 
             InfoStruct.Dispose();
 
@@ -108,13 +108,13 @@ namespace StochasticModeling
             UpdateProfile();
             SaveParamsForReport();
 
-            return m_dChiSquare.ToString("##.### E-0");
+            return ChiSquare.ToString("##.### E-0");
         }
 
         public string ErrorReport()
         {
            string zstring = "Z Offset = " + string.Format("{0:#.### E-0} ", ZOffsetTB) + " " +
-                    (char)0x00B1 + " " + m_dCovarArray[1].ToString("#.### E-0") + Environment.NewLine + Environment.NewLine;
+                    (char)0x00B1 + " " + CovarArray[1].ToString("#.### E-0") + Environment.NewLine + Environment.NewLine;
            return ErrorReport(zstring);
         }
 

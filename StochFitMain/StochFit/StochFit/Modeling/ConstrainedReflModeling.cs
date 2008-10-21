@@ -52,8 +52,7 @@ namespace StochasticModeling
         Graphing ReflGraphing;
         Graphing RhoGraphing;
         //Arrays
-       
-        bool initialized = false;
+        
         bool m_bUseSLD = false;
         List<TextBox> SigmaArray;
         List<TextBox> RhoArray;
@@ -66,7 +65,7 @@ namespace StochasticModeling
         bool m_bmodelreset = false;
       
        
-       Thread Stochthread;
+        Thread Stochthread;
 
         #endregion
 
@@ -126,11 +125,7 @@ namespace StochasticModeling
 
            
             RhoGraphing.Pane.XAxis.Scale.Min = 0;
-            RhoGraphing.Pane.XAxis.Scale.Max = ReflCalc.Get_Z[ReflCalc.Get_Z.Length - 1];
-
-            //Create the reflectivity density graph
-            initialized = true;
-            //UpdateProfile();
+            RhoGraphing.Pane.XAxis.Scale.Max = ReflCalc.Z[ReflCalc.Z.Length - 1];
 
             loadingCircle2.Visible = loadingCircle1.Visible = false;
             loadingCircle2.NumberSpoke = loadingCircle1.NumberSpoke = 25;
@@ -151,21 +146,21 @@ namespace StochasticModeling
 
         void ReflCalc_Update(object sender, EventArgs e)
         {
-           SubRough.Text = ReflCalc.GetSubRoughness.ToString() ;
-           NormCorrectTB.Text = ReflCalc.NormalizationFactor.ToString();
+           SubRough.ThreadSafeSetText(ReflCalc.GetSubRoughness.ToString()) ;
+           NormCorrectTB.ThreadSafeSetText(ReflCalc.NormalizationFactor.ToString());
 
             //Blank our Rho data from the previous iteration
 
             for (int i = 0; i < RhoArray.Count; i++)
             {
                 if(!m_bUseSLD)
-                    RhoArray[i].Text = ReflCalc.RhoArray[i].ToString();
+                    RhoArray[i].ThreadSafeSetText(ReflCalc.RhoArray[i].ToString());
                 else
-                    RhoArray[i].Text = (ReflCalc.RhoArray[i]/ReflCalc.SubphaseSLD).ToString();
+                    RhoArray[i].ThreadSafeSetText((ReflCalc.RhoArray[i]/ReflCalc.SubphaseSLD).ToString());
 
 
-                LengthArray[i].Text = ReflCalc.LengthArray[i].ToString();
-                SigmaArray[i].Text = ReflCalc.SigmaArray[i].ToString();
+                LengthArray[i].ThreadSafeSetText(ReflCalc.LengthArray[i].ToString());
+                SigmaArray[i].ThreadSafeSetText(ReflCalc.SigmaArray[i].ToString());
             }
             
 
@@ -186,15 +181,15 @@ namespace StochasticModeling
             RhoGraphing.LoadfromArray("Model Dependent Box Fit", ReflCalc.Z, ReflCalc.BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
 
             RhoGraphing.Pane.XAxis.Scale.Min = 0;
-            RhoGraphing.Pane.XAxis.Scale.Max = ReflCalc.Get_Z[ReflCalc.Get_Z.Length - 1];
+            RhoGraphing.Pane.XAxis.Scale.Max = ReflCalc.Z[ReflCalc.Z.Length - 1];
         }
         
         private void ChangeRoughnessArray()
         {
             if (Holdsigma.Checked)
             {
-                SubRough.Text = ReflCalc.GetSubRoughness.ToString();
-                SigmaArray.ForEach(p => p.Text = ReflCalc.GetSubRoughness.ToString());
+                SubRough.ThreadSafeSetText(ReflCalc.GetSubRoughness.ToString());
+                SigmaArray.ForEach(p => p.ThreadSafeSetText(ReflCalc.GetSubRoughness.ToString()));
             }
         }
 
@@ -298,8 +293,8 @@ namespace StochasticModeling
                 GreyFields();
                 ReflGraphing.SupSLD = SupSLDTB.ToDouble();
                 ReflGraphing.SubSLD = SubphaseSLD.ToDouble();
-                RhoGraphing.SubSLD = double.Parse(SubphaseSLD.Text);
-                RhoGraphing.SupSLD = double.Parse(SupSLDTB.Text);
+                RhoGraphing.SubSLD = SubphaseSLD.ToDouble();
+                RhoGraphing.SupSLD = SupSLDTB.ToDouble();
                 ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
                 ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
 
@@ -350,6 +345,7 @@ namespace StochasticModeling
             GraphCollection.Instance.ReflEGraph = RhoGraphing;
         }
        
+
         private void UndoFit_Click(object sender, EventArgs e)
         {
             ReflCalc.UndoFit();
@@ -385,77 +381,27 @@ namespace StochasticModeling
         
         }
 
+        //Needed if we update the chisquare from a thread (as in the stochastic fitting)
+        private void UpdateChiSquareTB(string chisquare)
+        {
+            chisquaretb.Text = chisquare;
+        }
+
+
         void Stoch()
         {
               double[] parampercs = new double[7];
-        
-              bool bfitting = false;
               StochFitUI UI = new StochFitUI();
 
               ReflCalc.ModelChooser = new ReflFit.StochasticModel(ModelChooserUI);
               if (UI.ShowDialog() == DialogResult.OK)
               {
                   UI.GetParamPercs(ref parampercs);
-                  chisquaretb.Text = ReflCalc.StochFit(parampercs, UI.IterationCount);
-        
-
-        //        
-        //    }
-
-        //    //Make sure parameters are reasonable
-        //    for (int i = 0; i < parameters.Length; i++)
-        //    {
-        //        if (parameters[i] * 0.3 < covar[i])
-        //        {
-        //            MessageBox.Show("The error in a fitting parameter is greater than 30% of the parameter value. Check the 'Fit details' button for more information");
-        //            break;
-        //        }
-        //    }
-
-        //    //Update paramters
-
-        //    if (bfitting == true)
-        //    {
-        //        //Update paramters
-        //            if (Holdsigma.Checked == true)
-        //            {
-        //                SubRough.Text = parameters[0].ToString();
-        //                for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-        //                {
-        //                    BoxLengthArray[i].Text = parameters[2 * i + 1].ToString();
-
-        //                    if(m_bUseSLD == false)
-        //                        BoxRhoArray[i].Text = parameters[2 * i + 2].ToString();
-        //                    else
-        //                        BoxRhoArray[i].Text = (string)(parameters[2 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
-
-        //                    BoxSigmaArray[i].Text = parameters[0].ToString();
-        //                }
-        //                NormCorrectTB.Text = parameters[1 + 2 * int.Parse(BoxCount.Text)].ToString();
-        //            }
-        //            else
-        //            {
-        //                SubRough.Text = parameters[0].ToString();
-
-        //                for (int i = 0; i < int.Parse(BoxCount.Text); i++)
-        //                {
-        //                    BoxLengthArray[i].Text = parameters[3 * i + 1].ToString();
-
-        //                    if(m_bUseSLD == false)
-        //                        BoxRhoArray[i].Text = parameters[3 * i + 2].ToString();
-        //                    else
-        //                        BoxRhoArray[i].Text = (string)(parameters[3 * i + 2] * double.Parse(SubphaseSLD.Text)).ToString();
-
-        //                    BoxSigmaArray[i].Text = parameters[3 * i + 3].ToString();
-        //                }
-        //                NormCorrectTB.Text = parameters[1 + 3 * int.Parse(BoxCount.Text)].ToString();
-        //            }
-
-               
-        //        this.Invoke(new UpdateProfilefromThread(this.UpdateProfile));
-        //        LevenbergFit_Click(null, null);
+                  string chi = ReflCalc.StochFit(parampercs, UI.IterationCount);
+                  this.Invoke(new MethodInvoker(delegate() { UpdateChiSquareTB(chi); }));
               }
-        //    //Restore window
+        
+              //Restore window
               this.Invoke((ThreadStart)delegate() { DisablePanel(false); }); 
         }
 

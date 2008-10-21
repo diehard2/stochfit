@@ -119,6 +119,7 @@ namespace StochasticModeling
             this.loadingCircle2 = new MRG.Controls.UI.LoadingCircle();
             this.EDzedGraphControl1 = new ZedGraph.ZedGraphControl();
             this.controlbox = new System.Windows.Forms.GroupBox();
+            this.SaveFitTB = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -148,7 +149,7 @@ namespace StochasticModeling
             // LevenbergFit
             // 
             this.LevenbergFit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.LevenbergFit.Location = new System.Drawing.Point(592, 356);
+            this.LevenbergFit.Location = new System.Drawing.Point(592, 402);
             this.LevenbergFit.Name = "LevenbergFit";
             this.LevenbergFit.Size = new System.Drawing.Size(108, 24);
             this.LevenbergFit.TabIndex = 2;
@@ -766,7 +767,7 @@ namespace StochasticModeling
             // UndoFit
             // 
             this.UndoFit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.UndoFit.Location = new System.Drawing.Point(592, 473);
+            this.UndoFit.Location = new System.Drawing.Point(592, 462);
             this.UndoFit.Name = "UndoFit";
             this.UndoFit.Size = new System.Drawing.Size(108, 24);
             this.UndoFit.TabIndex = 5;
@@ -778,19 +779,21 @@ namespace StochasticModeling
             // 
             this.label15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(589, 565);
+            this.label15.Font = new System.Drawing.Font("Symbol", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(2)));
+            this.label15.Location = new System.Drawing.Point(746, 560);
             this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(59, 13);
+            this.label15.Size = new System.Drawing.Size(26, 20);
             this.label15.TabIndex = 20;
-            this.label15.Text = "Chi Square";
+            this.label15.Text = "c2";
             // 
             // chisquaretb
             // 
             this.chisquaretb.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.chisquaretb.Enabled = false;
-            this.chisquaretb.Location = new System.Drawing.Point(592, 581);
+            this.chisquaretb.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chisquaretb.Location = new System.Drawing.Point(748, 583);
             this.chisquaretb.Name = "chisquaretb";
-            this.chisquaretb.Size = new System.Drawing.Size(93, 20);
+            this.chisquaretb.Size = new System.Drawing.Size(140, 35);
             this.chisquaretb.TabIndex = 19;
             this.chisquaretb.TabStop = false;
             this.chisquaretb.Text = "0";
@@ -857,7 +860,7 @@ namespace StochasticModeling
             // button1
             // 
             this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button1.Location = new System.Drawing.Point(592, 512);
+            this.button1.Location = new System.Drawing.Point(592, 492);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(108, 24);
             this.button1.TabIndex = 6;
@@ -868,7 +871,7 @@ namespace StochasticModeling
             // button2
             // 
             this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button2.Location = new System.Drawing.Point(592, 434);
+            this.button2.Location = new System.Drawing.Point(592, 432);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(108, 24);
             this.button2.TabIndex = 4;
@@ -879,7 +882,7 @@ namespace StochasticModeling
             // ConstraintsBT
             // 
             this.ConstraintsBT.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.ConstraintsBT.Location = new System.Drawing.Point(592, 395);
+            this.ConstraintsBT.Location = new System.Drawing.Point(592, 372);
             this.ConstraintsBT.Name = "ConstraintsBT";
             this.ConstraintsBT.Size = new System.Drawing.Size(108, 24);
             this.ConstraintsBT.TabIndex = 3;
@@ -1141,12 +1144,23 @@ namespace StochasticModeling
             this.controlbox.TabIndex = 0;
             this.controlbox.TabStop = false;
             // 
+            // SaveFitTB
+            // 
+            this.SaveFitTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.SaveFitTB.Location = new System.Drawing.Point(592, 526);
+            this.SaveFitTB.Name = "SaveFitTB";
+            this.SaveFitTB.Size = new System.Drawing.Size(108, 24);
+            this.SaveFitTB.TabIndex = 46;
+            this.SaveFitTB.Text = "Save Details";
+            this.SaveFitTB.UseVisualStyleBackColor = true;
+            // 
             // ConstrainedReflmodeling
             // 
             this.AcceptButton = this.LevenbergFit;
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(952, 674);
+            this.Controls.Add(this.SaveFitTB);
             this.Controls.Add(this.controlbox);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.ConstraintsBT);
@@ -1269,5 +1283,6 @@ namespace StochasticModeling
         private MRG.Controls.UI.LoadingCircle loadingCircle2;
         private System.Windows.Forms.GroupBox controlbox;
         public System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Button SaveFitTB;
     }
 }

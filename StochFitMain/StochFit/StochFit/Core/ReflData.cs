@@ -20,20 +20,18 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using System.Collections;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using System.Threading;
 
 namespace StochasticModeling
 {
-/// <summary>
-/// This class holds the reflectivity data loaded from the file. It is expected that the data be in the format of 
-/// Q, R, Variance in R, Variance in Q. It is implemented as a Singleton
-/// </summary>
+    /// <summary>
+    /// This class holds the reflectivity data loaded from the file. It is expected that the data be in the format of 
+    /// Q, R, Variance in R, Variance in Q. It is implemented as a Singleton
+    /// </summary>
     public sealed class ReflData:IComparer
     {
         /// <summary>

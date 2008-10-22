@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Windows.Forms;
 
 namespace StochasticModeling
@@ -29,6 +27,21 @@ namespace StochasticModeling
             else
             {
                 t.Text = text;
+            }
+        }
+
+        public static void ThreadSafeSetValue(this ProgressBar t, int value)
+        {
+            // InvokeRequired required compares the thread ID of the
+            // calling thread to the thread ID of the creating thread.
+            // If these threads are different, it returns true.
+            if (t.InvokeRequired)
+            {
+                t.Invoke(new MethodInvoker(delegate() { ThreadSafeSetValue(t, value); }));
+            }
+            else
+            {
+                t.Value = value;
             }
         }
     }

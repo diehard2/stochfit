@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using StochasticModeling.Settings;
 using System.Windows.Forms;
 
@@ -165,6 +163,10 @@ namespace StochasticModeling
             UpdateProfile();
             SaveParamsForReport();
 
+            //Update our save list
+            FitHolder.Add(CreateLightWeightClone());
+             
+
             //Make sure parameters are reasonable
             for (int i = 0; i < parameters.Length; i++)
             {
@@ -194,6 +196,37 @@ namespace StochasticModeling
             }
 
             return ErrorReport(output);
+        }
+
+        public override BoxReflFitBase CreateLightWeightClone()
+        {
+            ReflFit b = new ReflFit(this);
+            
+            b.m_dCovarArray = CovarArray;
+            b.QSpreadTB = QSpreadTB;
+            b.ImpNormCB = ImpNormCB;
+            b.NormalizationFactor = NormalizationFactor;
+            b.HighQOffset = HighQOffset;
+            b.LowQOffset = LowQOffset;
+            b.UpdateProfile();
+
+            return b as BoxReflFitBase;
+        }
+
+        public override void LoadLightWeightClone(BoxReflFitBase b)
+        {
+            _Z = b.Z;
+            _ElectronDensityArray = b.ElectronDensityArray;
+            _BoxElectronDensityArray = b.BoxElectronDensityArray;
+            _ReflectivityMap = b.ReflectivityMap;
+            NormalizationFactor = b.NormalizationFactor;
+            ImpNormCB = b.ImpNormCB;
+            SubphaseSLD = b.SubphaseSLD;
+            SuperphaseSLD = b.SuperphaseSLD;
+            QSpreadTB = b.QSpreadTB;
+            HighQOffset = b.HighQOffset;
+            LowQOffset = b.LowQOffset;
+            BoxCountTB = b.BoxCount;
         }
     }
 }

@@ -19,20 +19,9 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
-using System.Threading;
-using System.IO;
-using System.Collections;
-using System.Text.RegularExpressions;
-using StochasticModeling;
 using ZedGraph;
-using System.Runtime.InteropServices;
-using System.Globalization;
 
 namespace StochasticModeling.Modeling
 {

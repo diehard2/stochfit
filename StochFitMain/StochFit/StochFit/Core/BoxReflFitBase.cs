@@ -1,52 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Windows.Forms;
-using System.Runtime.InteropServices;
 using StochasticModeling.Settings;
-using System.Globalization;
-using System.Threading;
-using System.Drawing;
-using ZedGraph;
+
 
 #pragma warning disable 1591
 
 namespace StochasticModeling
 {
-    public class FitInformation
-    {
-        private double[] _EDP;
-        private double[] _BoxEDP;
-        private double[] _Z;
-        private double[] _Refl;
-
-        private List<double> _RhoArray;
-        private List<double> _LengthArray;
-        private List<double> _SigmaArray;
-
-        private double _SubRough;
-        private double _ChiSquare;
-        private double _NormalizationFactor;
-        private double[] _CovarArray;
-
-        public FitInformation(BoxReflFitBase CurrentFit)
-        {
-            _EDP = CurrentFit.ElectronDensityArray;
-            _BoxEDP = CurrentFit.BoxElectronDensityArray;
-            _Z = CurrentFit.Z;
-            _Refl = CurrentFit.ReflectivityMap;
-            _RhoArray = new List<double>(CurrentFit.RhoArray.ToArray());
-            _LengthArray = new List<double>(CurrentFit.LengthArray.ToArray());
-            _SigmaArray = new List<double>(CurrentFit.SigmaArray.ToArray());
-            _SubRough = CurrentFit.GetSubRoughness;
-            _ChiSquare = CurrentFit.ChiSquare;
-            _NormalizationFactor = CurrentFit.NormalizationFactor;
-            _CovarArray = CurrentFit.CovarArray;   
-        }
-
-    }
-
-    public abstract class BoxReflFitBase 
+    
+    public abstract class BoxReflFitBase
     {
         #region Variables
         protected bool m_bUseSLD = false;
@@ -58,6 +21,7 @@ namespace StochasticModeling
         protected List<double> PreviousRhoArray;
         protected List<double> PreviousLengthArray;
         protected List<double> PreviousSigmaArray;
+        protected List<BoxReflFitBase> FitHolder;
         protected double m_dPrevioussigma;
 
         private double[] _fitinfo;
@@ -76,11 +40,11 @@ namespace StochasticModeling
         private double _HighQOffset;
         private double _LowQOffset;
         private bool _ImpNormCB;
-        private double[] _ReflectivityMap;
-        private double[] _Z;
-        private double[] _ElectronDensityArray;
-        private double[] _BoxElectronDensityArray;
-        private double[] RealRho;
+        protected double[] _ReflectivityMap;
+        protected double[] _Z;
+        protected double[] _ElectronDensityArray;
+        protected double[] _BoxElectronDensityArray;
+        protected double[] RealRho;
         private double[] _UL;
         private double[] _LL;
         protected BoxModelSettings InfoStruct;
@@ -121,7 +85,7 @@ namespace StochasticModeling
             PreviousRhoArray = new List<double>(6);
             PreviousLengthArray = new List<double>(6);
             PreviousSigmaArray = new List<double>(6);
-
+            FitHolder = new List<BoxReflFitBase>(100);
             if (ERho != null)
             {
                 RealRho = (double[])ERho.Clone();
@@ -163,6 +127,7 @@ namespace StochasticModeling
             PreviousLengthArray = new List<double>(6);
             PreviousSigmaArray = new List<double>(6);
             _ReflectivityMap = new double[ReflData.Instance.GetNumberDataPoints];
+            FitHolder = new List<BoxReflFitBase>(100);
 
             //Create Z
             _Z = new double[500];
@@ -173,6 +138,10 @@ namespace StochasticModeling
 
             ZOffset = 25;
         }
+
+        public abstract BoxReflFitBase CreateLightWeightClone();
+
+        public abstract void LoadLightWeightClone(BoxReflFitBase b);
 
         private void MakeZ(bool initialize)
         {
@@ -219,7 +188,9 @@ namespace StochasticModeling
            }
 
            InfoStruct.Dispose();
-           Update(this, null);
+
+            if(Update != null)
+                Update(this, null);
         }
 
        
@@ -449,38 +420,20 @@ namespace StochasticModeling
 
         public bool IsOneSigma
         {
-            get
-            {
-                return HoldsigmaCB;
-            }
-            set
-            {
-                HoldsigmaCB = value;
-            }
+            get{return HoldsigmaCB;}
+            set{HoldsigmaCB = value;}
         }
 
         public double ZOffset
         {
-            get
-            {
-                return ZOffsetTB;
-            }
-            set
-            {
-                ZOffsetTB = value;
-            }
+            get{return ZOffsetTB;}
+            set{ZOffsetTB = value;}
         }
 
         public int BoxCount
         {
-            get
-            {
-                return BoxCountTB;
-            }
-            set
-            {
-                BoxCountTB = value;
-            }
+            get{return BoxCountTB;}
+            set{BoxCountTB = value;}
         }
 
         public double SubphaseSLD

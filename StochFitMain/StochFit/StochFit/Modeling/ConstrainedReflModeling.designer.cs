@@ -1151,7 +1151,7 @@ namespace StochasticModeling
             this.SaveFitTB.Name = "SaveFitTB";
             this.SaveFitTB.Size = new System.Drawing.Size(108, 24);
             this.SaveFitTB.TabIndex = 46;
-            this.SaveFitTB.Text = "Save Details";
+            this.SaveFitTB.Text = "Previous Fits";
             this.SaveFitTB.UseVisualStyleBackColor = true;
             // 
             // ConstrainedReflmodeling

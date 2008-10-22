@@ -18,14 +18,6 @@
  *
  */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows.Forms;
-using System.Collections;
-using System.IO;
-using System.Text.RegularExpressions;
-using System.Globalization;
 using StochasticModeling.Settings;
 using System.Runtime.InteropServices;
 

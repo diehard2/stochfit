@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using StochasticModeling.Settings;
 
 namespace StochasticModeling
@@ -124,6 +122,16 @@ namespace StochasticModeling
         }
 
         public override string StochFit(double[] parampercs, int iterations)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override BoxReflFitBase CreateLightWeightClone()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void LoadLightWeightClone(BoxReflFitBase b)
         {
             throw new NotImplementedException();
         }

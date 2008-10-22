@@ -20,12 +20,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Collections;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 using System.IO;
-using StochasticModeling;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 

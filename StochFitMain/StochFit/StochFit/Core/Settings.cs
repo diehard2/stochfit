@@ -19,15 +19,11 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using System.Runtime.Serialization;
-using System.Security.Permissions;
+
 
 #pragma warning disable 1591
 

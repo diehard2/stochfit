@@ -18,9 +18,6 @@
  *
  */
 
-using StochasticModeling;
-using ZedGraph;
-using System.Drawing;
 
 namespace StochasticModeling
 {

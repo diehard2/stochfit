@@ -18,14 +18,9 @@
  *
  */
 
-using System;
 using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using ZedGraph;
-using StochasticModeling;
-using System.Threading;
-using System.Globalization;
 
 namespace StochasticModeling
 {

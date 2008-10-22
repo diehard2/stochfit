@@ -20,17 +20,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using ZedGraph;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Collections;
-using StochasticModeling.Properties;
-using StochasticModeling;
 using System.Reflection;
 using System.Timers;
 using System.Diagnostics;
@@ -79,11 +74,6 @@ namespace StochasticModeling
         /// The culture is set to US for the purposes of inputting data to the numerical routines
         /// </summary>
         protected CultureInfo m_CI = new CultureInfo("en-US");
-
-        public delegate void UpdateGUI(string SALowest, string SATemp, string SAMode, int Iterations, string Itertime,
-            string ChiSquare,string FitScore);
-
-
 
         #endregion
 
@@ -620,34 +610,22 @@ namespace StochasticModeling
                 Calculations.SAparams(out lowestenergy, out temp, out mode);
 
                 span = DateTime.Now - previtertime;
+               
+                //Update the front end in a theadsafe manner
+                SAlowenergyTB.ThreadSafeSetText(lowestenergy.ToString("#.### E -000"));
+                SATempTB.ThreadSafeSetText(temp.ToString("#.### E -000"));
+                SAModeTB.ThreadSafeSetText("Annealing");
+                itertimetextbox.ThreadSafeSetText(((double)iterations / (double)span.TotalSeconds).ToString("#.#"));
+                ChiSquareTB.ThreadSafeSetText(chisquare.ToString("#.####E-000"));
+                FitScoreTB.ThreadSafeSetText(fitscore.ToString("#.####E-000"));
 
-                this.Invoke(new UpdateGUI(this.UpdateAll), new object[]{ lowestenergy.ToString("#.#### E-000"),temp.ToString("#.#### E-000"),
-                        "Annealing",iterations + previnstanceiter, ((double)iterations / (double)span.TotalSeconds).ToString("#.#"),
-                        chisquare.ToString("#.####E-000"),fitscore.ToString("#.####E-000")});
-            }
-        }
-
-        private void UpdateAll(string SALowest, string SATemp, string SAMode, int Iterations, string Itertime, string ChiSquare,
-            string FitScore)
-        {
-            //Update the front end
-            SAlowenergyTB.Text = SALowest;
-            SATempTB.Text = SATemp;
-            SAModeTB.Text = SAMode;
-            itertimetextbox.Text = Itertime;
-            ChiSquareTB.Text = ChiSquare;
-            FitScoreTB.Text = FitScore;
-
-            UpdateGraphs();
-            UpdateReportParameters();
-
-            //End the calculation if we have reached the maximum number of iterations
-            if (Iterations < progressBar1.Maximum)
-                progressBar1.Value = Iterations;
-            else
-            {
-                progressBar1.Value = Iterations;
-                Canceled();
+                UpdateGraphs();
+                UpdateReportParameters();
+                progressBar1.ThreadSafeSetValue(iterations);
+             
+                //End the calculation if we have reached the maximum number of iterations
+                if (iterations >= progressBar1.Maximum)
+                    Canceled();
             }
         }
 

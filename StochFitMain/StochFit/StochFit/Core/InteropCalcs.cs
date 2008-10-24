@@ -24,7 +24,7 @@ using System.Runtime.InteropServices;
 namespace StochasticModeling
 {
     /// <summary>
-    /// Base class for almost all of our forms that require numerical input
+    /// All interop calculations are accessed from this class as static mehtods
     /// </summary>
     public class Calculations
     {
@@ -109,7 +109,7 @@ namespace StochasticModeling
         /// <param name="parametersize"></param>
         /// <param name="ReflectivityMap"></param>
         [DllImport("LevMardll.dll", EntryPoint = "FastReflGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void FastReflGenerate(BoxModelSettings InitStruct, double[] parameters, int parametersize, double[] ReflectivityMap);
+        public static extern void FastReflGenerate([MarshalAs(UnmanagedType.LPStruct)]BoxModelSettings InitStruct, double[] parameters, int parametersize, double[] ReflectivityMap);
 
         /// <summary>
         /// Performs a Levenberg-Marquadt least squares fit of Reflectivity data
@@ -155,9 +155,11 @@ namespace StochasticModeling
         /// <param name="InitStruct"></param>
         /// <param name="parameters"></param>
         /// <param name="covar"></param>
-        /// <param name="covarsize"></param>
+        /// <param name="paramsize"></param>
         /// <param name="info"></param>
-        /// <param name="infosize"></param>
+        /// <param name="ParamArray"></param>
+        /// <param name="chisquarearray"></param>
+        /// <param name="paramarraysize"></param>
         [DllImport("LevMardll.dll", EntryPoint = "StochFit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         public static extern void ConstrainedStochFit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int paramsize, double[] info, double[] ParamArray, double[] chisquarearray, ref int paramarraysize);
     }

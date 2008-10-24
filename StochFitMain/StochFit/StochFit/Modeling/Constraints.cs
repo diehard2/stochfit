@@ -93,8 +93,8 @@ namespace StochasticModeling.Modeling
         /// Constructor
         /// </summary>
         /// <param name="boxcount">Number of boxes in the fit</param>
-        /// <param name="UseSLD">True if the SLD is used instead of ED</param>
-        public Constraints(int boxcount, bool UseSLD)
+        /// 
+        public Constraints(int boxcount)
         {
             InitializeComponent();
                        
@@ -182,10 +182,10 @@ namespace StochasticModeling.Modeling
             //Check if any of our fields are initialized
             int checkforinit = 0;
 
-            if (SubRoughMaxTB.Text != string.Empty || SubRoughMinTB.Text != string.Empty || NormMaxTB.Text != string.Empty || NormMinTB.Text != string.Empty)
+            if (SubRoughMaxTB.IsEmpty() || SubRoughMinTB.IsEmpty() || NormMaxTB.IsEmpty() || NormMinTB.IsEmpty())
                 checkforinit++;
 
-            Action<TextBox> f = p => { if (p.Text != string.Empty)checkforinit++; };
+            Action<TextBox> f = p => { if (p.IsEmpty())checkforinit++; };
             TBRhoHighArray.ForEach(f);
             TBRhoLowArray.ForEach(f);
             TBSigmaHighArray.ForEach(f);
@@ -199,30 +199,30 @@ namespace StochasticModeling.Modeling
             {
                 IsInitialized = true;
 
-                if (SubRoughMinTB.Text != string.Empty)
+                if (SubRoughMinTB.IsEmpty())
                     SubRoughMin = SubRoughMinTB.ToDouble();
-                if (SubRoughMaxTB.Text != string.Empty)
+                if (SubRoughMaxTB.IsEmpty())
                     SubRoughMax = SubRoughMaxTB.ToDouble();
 
-                if (NormMinTB.Text != string.Empty)
+                if (NormMinTB.IsEmpty())
                     NormMin = NormMinTB.ToDouble();
-                if (NormMaxTB.Text != string.Empty)
+                if (NormMaxTB.IsEmpty())
                     NormMax = NormMaxTB.ToDouble();
 
                 //Update parameters
                 for (int i = 0; i < m_iboxcount; i++)
                 {
-                    if (TBRhoHighArray[i].Text != string.Empty)
+                    if (TBRhoHighArray[i].IsEmpty())
                         RhoHighArray[i] = TBRhoHighArray[i].ToDouble();
-                    if (TBRhoLowArray[i].Text != string.Empty)
+                    if (TBRhoLowArray[i].IsEmpty())
                         RhoLowArray[i] = TBRhoLowArray[i].ToDouble();
-                    if (TBSigmaHighArray[i].Text != string.Empty)
+                    if (TBSigmaHighArray[i].IsEmpty())
                         SigmaHighArray[i] = TBSigmaHighArray[i].ToDouble();
-                    if (TBSigmaLowArray[i].Text != string.Empty)
+                    if (TBSigmaLowArray[i].IsEmpty())
                         SigmaLowArray[i] = TBSigmaLowArray[i].ToDouble();
-                    if (TBLengthHighArray[i].Text != string.Empty)
+                    if (TBLengthHighArray[i].IsEmpty())
                         ThickHighArray[i] = TBLengthHighArray[i].ToDouble();
-                    if (TBLengthLowArray[i].Text != string.Empty)
+                    if (TBLengthLowArray[i].IsEmpty())
                         ThickLowArray[i] = TBLengthLowArray[i].ToDouble();
                 }
             }
@@ -244,24 +244,18 @@ namespace StochasticModeling.Modeling
 
         public void ShowDialog(bool UseSLD)
         {
-            if (UseSLD == true)
-                Rholabel.Text = "SLD";
+            if (UseSLD) Rholabel.Text = "SLD";
+            
             ShowDialog();
         }
 
         private void ClearBoxes()
         {
-            SubRoughMaxTB.Text = string.Empty;
-            SubRoughMinTB.Text = string.Empty;
+            SubRoughMinTB.Text = SubRoughMaxTB.Text = string.Empty;
 
             for (int i = 0; i < m_iboxcount; i++)
             {
-                TBRhoHighArray[i].Text = string.Empty;
-                TBRhoLowArray[i].Text = string.Empty;
-                TBSigmaHighArray[i].Text = string.Empty;
-                TBSigmaLowArray[i].Text = string.Empty;
-                TBLengthHighArray[i].Text = string.Empty;
-                TBLengthLowArray[i].Text = string.Empty;
+               TBLengthLowArray[i].Text = TBLengthHighArray[i].Text = TBSigmaLowArray[i].Text = TBSigmaHighArray[i].Text = TBRhoLowArray[i].Text = TBRhoHighArray[i].Text = string.Empty;
             }
         }
 
@@ -285,7 +279,7 @@ namespace StochasticModeling.Modeling
             try
             {
                 base.OnValidating(e);
-                if(((TextBox)sender).Text != string.Empty)
+                if(((TextBox)sender).IsEmpty())
                     Double.Parse(((TextBox)sender).Text);
             }
             catch

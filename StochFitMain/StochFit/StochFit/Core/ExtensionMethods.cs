@@ -5,6 +5,7 @@ namespace StochasticModeling
 {
     static class ExtensionMethods
     {
+        #region TextBox extension methods
         public static double ToDouble(this TextBox t)
         {
             return Double.Parse(t.Text);
@@ -30,6 +31,18 @@ namespace StochasticModeling
             }
         }
 
+        /// <summary>
+        /// Returns true if the textbox is empty
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        public static bool IsEmpty(this TextBox t)
+        {
+            return t.Text == string.Empty;
+        } 
+        #endregion
+
+
         public static void ThreadSafeSetValue(this ProgressBar t, int value)
         {
             // InvokeRequired required compares the thread ID of the
@@ -44,5 +57,7 @@ namespace StochasticModeling
                 t.Value = value;
             }
         }
+
+       
     }
 }

@@ -134,6 +134,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\HelperFunctions.cs" />
     <Compile Include="Resources\AboutBox1.cs">
       <SubType>Form</SubType>
     </Compile>

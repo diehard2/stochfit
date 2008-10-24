@@ -22,6 +22,7 @@ using System;
 using System.Text;
 using System.Windows.Forms;
 using ZedGraph;
+using System.Collections.Generic;
 
 namespace StochasticModeling.Modeling
 {
@@ -58,7 +59,7 @@ namespace StochasticModeling.Modeling
         private bool m_bUseSLD = false;
         Graphing ReflGraphing;
         Graphing RhoGraphing;
-
+        List<ReflFit> ReflecivityList;
         /// <summary>
         /// Constructor
         /// </summary>
@@ -68,42 +69,46 @@ namespace StochasticModeling.Modeling
         /// <param name="paramsize">The element count of each parameter set contained in FullParameterArray </param>
         /// <param name="FullChisquareArray">The array of all chisquare valued for each fit</param>
         /// <param name="FullCovariance">The covariance matrix for each fit</param>
-        /// <param name="OneSigma">True if the fits were performed treating the system as an elastic sheet, false otherwise</param>
-        /// <param name="boxes">The number of boxes for the fit</param>
-        /// <param name="SubSLD">The substrate SLD</param>
-        /// <param name="SupSLD">The superphase SLD</param>
-        /// <param name="wavelength">The x-ray wavelength used</param>
-        /// <param name="QSpread">The percent error in Q used (if applicable)</param>
-        /// <param name="Impnorm">True if the fit was performed assuming an imperfect normalization, false otherwise</param>
-        public StochOutputWindow(double[] FullParameterArray, int ParameterArraysize, int paramsize, double[] FullChisquareArray, double[] FullCovariance, bool OneSigma, int boxes, double SubSLD, double SupSLD, double wavelength, double QSpread, bool Impnorm)
+        /// 
+        /// 
+        /// 
+        /// 
+        /// 
+        /// 
+        /// 
+        public StochOutputWindow(double[] FullParameterArray, int ParameterArraysize, int paramsize, double[] FullChisquareArray, double[] FullCovariance, ReflFit Refl)
         {
             InitializeComponent();
+
+            
             m_bUseSLD = Properties.Settings.Default.UseSLDSingleSession; 
-            ParameterArray = new double[ParameterArraysize][];
-            CovarArray = new double[ParameterArraysize][];
-            RhoArray = new double[ParameterArraysize][];
-            LengthArray = new double[ParameterArraysize][];
-            SigmaArray = new double[ParameterArraysize][];
-            SubRoughArray = new double[ParameterArraysize];
-            ChiSquareArray = new double[ParameterArraysize];
-            ModelInfoStringArray = new string[ParameterArraysize];
-            NewRParameter = new double[ParameterArraysize][];
-            NewEParameter = new double[ParameterArraysize][];
-            ReflectivityMap = new double[ParameterArraysize][];
-            ChiSquareArray = (double[])FullChisquareArray.Clone();
-            m_dSubSLD = SubSLD;
-            m_dSupSLD = SupSLD;
-            m_bonesigma = OneSigma;
-            m_iboxes = boxes;
-            m_bimpnorm = Impnorm;
-            selectedmodel = new double[paramsize];
-            selectedcovar = new double[paramsize];
+            //ParameterArray = new double[ParameterArraysize][];
+            //CovarArray = new double[ParameterArraysize][];
+            //RhoArray = new double[ParameterArraysize][];
+            //LengthArray = new double[ParameterArraysize][];
+            //SigmaArray = new double[ParameterArraysize][];
+            //SubRoughArray = new double[ParameterArraysize];
+            //ChiSquareArray = new double[ParameterArraysize];
+            //ModelInfoStringArray = new string[ParameterArraysize];
+            //NewRParameter = new double[ParameterArraysize][];
+            //NewEParameter = new double[ParameterArraysize][];
+            //ReflectivityMap = new double[ParameterArraysize][];
+            //ChiSquareArray = (double[])FullChisquareArray.Clone();
+            //m_dSubSLD = SubSLD;
+            //m_dSupSLD = SupSLD;
+            //m_bonesigma = OneSigma;
+            //m_iboxes = boxes;
+            //m_bimpnorm = Impnorm;
+            //selectedmodel = new double[paramsize];
+            //selectedcovar = new double[paramsize];
 
             //Fill the ParameterArray
             for (int i = 0; i < ParameterArraysize; i++)
             {
-                ParameterArray[i] = new double[paramsize];
-                CovarArray[i] = new double[paramsize];
+                ReflecivityList.Add(new ReflFit(Refl as BoxReflFitBase));
+                //ParameterArray[i] = new double[paramsize];
+                //CovarArray[i] = new double[paramsize];
+                ReflecivityList[i]
                 for (int j = 0; j < paramsize; j++)
                 {
                     ParameterArray[i][j] = FullParameterArray[i * paramsize + j];

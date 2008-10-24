@@ -20,22 +20,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using ZedGraph;
-using System.Collections;
-using System.IO;
-using System.Text.RegularExpressions;
 using System.Threading;
-using System.Drawing.Imaging;
-using StochasticModeling;
-using System.Runtime.InteropServices;
 using StochasticModeling.Modeling;
-using System.Globalization;
 using StochasticModeling.Settings;
+using StochasticModeling.Core;
 
 #pragma warning disable 1591
 
@@ -135,7 +126,7 @@ namespace StochasticModeling
             loadingCircle2.SpokeThickness = loadingCircle1.SpokeThickness = 3;
 
             //Initialize constrain form
-            ConstrForm = new Constraints(6, m_bUseSLD);
+            ConstrForm = new Constraints(6);
             GreyFields();
             //Setup the callback if the graph updates the bounds
             ReflGraphing.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
@@ -367,8 +358,7 @@ namespace StochasticModeling
         private bool ModelChooserUI(double[] ParamArray, double[] ChiSquareArray, double[] CovarArray, int size, int paramcount, BoxModelSettings InfoStruct,
             ref double[] chosenparameters, ref double[] chosencovar, ref string chosenchisquare)
         {
-            StochOutputWindow outwin = new StochOutputWindow(ParamArray, size, paramcount, ChiSquareArray, CovarArray, Holdsigma.Checked, InfoStruct.Boxes,
-                InfoStruct.SubSLD, InfoStruct.SupSLD, InfoStruct.Wavelength, InfoStruct.QSpread, InfoStruct.ImpNorm);
+            StochOutputWindow outwin = new StochOutputWindow(ParamArray, size, paramcount, ChiSquareArray, CovarArray);
 
 
             if (outwin.ShowDialog() != DialogResult.Cancel)
@@ -562,16 +552,8 @@ namespace StochasticModeling
         /// <param name="e">return true if the number can be cast to a double or false if not</param>
         protected void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            try
-            {
-                base.OnValidating(e);
-                Double.Parse(((TextBox)sender).Text);
-            }
-            catch
-            {
-                MessageBox.Show("Error in input - A real number was expected");
-                e.Cancel = true;
-            }
+            base.OnValidating(e);
+            HelperFunctions.ValidateNumericalInput(sender, e);
         }
 
 
@@ -586,22 +568,19 @@ namespace StochasticModeling
             try
             {
                 base.OnValidating(e);
-                Convert.ToInt32(((TextBox)sender).Text);
-            }
-            catch
-            {
-                MessageBox.Show("Error in input - An integer was expected");
-                e.Cancel = true;
-            }
 
-            if (((TextBox)sender).Name == "BoxCount")
-            {
-                if (BoxCount.ToInt() > 6)
+                HelperFunctions.ValidateIntegerInput(sender, e);
+
+                if (((TextBox)sender).Name == "BoxCount")
                 {
-                    MessageBox.Show("Six is the maximum number of boxes");
-                    e.Cancel = true;
+                    if (BoxCount.ToInt() > 6)
+                    {
+                        MessageBox.Show("Six is the maximum number of boxes");
+                        e.Cancel = true;
+                    }
                 }
             }
+            catch { }
         }
 
         #region Offset functions

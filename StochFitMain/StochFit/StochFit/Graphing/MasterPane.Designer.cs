@@ -38,7 +38,7 @@ namespace StochasticModeling
             this.MasterGraph.AutoScroll = true;
             this.MasterGraph.AutoSize = true;
             this.MasterGraph.EditButtons = System.Windows.Forms.MouseButtons.Left;
-            this.MasterGraph.Location = new System.Drawing.Point(-16, -1);
+            this.MasterGraph.Location = new System.Drawing.Point(-25, -1);
             this.MasterGraph.Name = "MasterGraph";
             this.MasterGraph.PanModifierKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Shift | System.Windows.Forms.Keys.None)));
             this.MasterGraph.ScrollGrace = 0;

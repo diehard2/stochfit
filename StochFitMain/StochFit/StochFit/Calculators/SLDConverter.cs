@@ -14,11 +14,11 @@ namespace StochasticModeling
         {
             try
             {
-                if (XRSLD.Text != string.Empty || NSLD.Text != string.Empty)
+                if (XRSLD.IsEmpty() || NSLD.IsEmpty())
                 {
-                    if (XRSLD.Text != string.Empty)
+                    if (XRSLD.IsEmpty())
                         NSLD.Text = string.Format("{0}",(((double.Parse(XRSLD.Text) * double.Parse(BSUM.Text)) / (2.818 * double.Parse(ECount.Text)))));
-                    else if (NSLD.Text != string.Empty)
+                    else if (NSLD.IsEmpty())
                         XRSLD.Text = string.Format("{0}",(double.Parse(NSLD.Text) * 2.818 * double.Parse(ECount.Text)) / (double.Parse(BSUM.Text)));
                 }
                 else

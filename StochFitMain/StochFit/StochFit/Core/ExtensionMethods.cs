@@ -58,6 +58,21 @@ namespace StochasticModeling
             }
         }
 
+        public static void ThreadSafeChecked(this CheckBox t, bool check)
+        {
+            // InvokeRequired required compares the thread ID of the
+            // calling thread to the thread ID of the creating thread.
+            // If these threads are different, it returns true.
+            if (t.InvokeRequired)
+            {
+                t.Invoke(new MethodInvoker(delegate() { ThreadSafeChecked(t, check); }));
+            }
+            else
+            {
+                t.Checked = check;
+            }
+        }
+
        
     }
 }

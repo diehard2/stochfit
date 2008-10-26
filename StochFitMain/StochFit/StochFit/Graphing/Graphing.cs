@@ -682,7 +682,7 @@ namespace StochasticModeling
         }
 
         /// <summary>
-        /// Determines whether the main program is running. This class should not set this value
+        /// Determines whether the main program is running in order to provide the correct context menu. This class should not set this value
         /// </summary>
         public bool ProgramRunningState
         {
@@ -690,7 +690,7 @@ namespace StochasticModeling
             set { m_bRunning = value; }
         }
 
-        public bool IsNeutron
+        public bool UseSLD
         {
             get { return m_bUseSLD; }
             set { m_bUseSLD = value; }

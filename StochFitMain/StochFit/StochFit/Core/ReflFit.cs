@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using StochasticModeling.Settings;
 using System.Windows.Forms;
+using StochasticModeling.Core;
 
 namespace StochasticModeling
 {
-    class ReflFit:BoxReflFitBase
+    public class ReflFit:BoxReflFitBase
     {
-        public delegate bool StochasticModel(double[] ParamArray, double[] ChiSquareArray, double[] CovarArray, int size, int paramcount, BoxModelSettings InfoStruct,
-                ref double[] chosenparameters, ref double[] chosencovar, ref string chosenchisquare);
+        public delegate bool StochasticModel(double[] ParamArray, double[] ChiSquareArray, double[] CovarArray, int size, int paramcount, BoxModelSettings InfoStruct);
         
         public StochasticModel ModelChooser;
 
@@ -19,17 +19,15 @@ namespace StochasticModeling
         public override string StochFit(double[] parampercs, int iterations)
         {
             double[] parameters = null;
-            double[] covar = null;
             string chosenchisquare = string.Empty;
         
 
             MakeParameters(ref parameters, false);
 
-            covar = new double[parameters.Length];
             double[] ParamArray = new double[1000 * parameters.Length];
             double[] ChiSquareArray = new double[1000];
             double[] CovarArray = new double[1000 * parameters.Length];
-            int size = 0;
+            int Size = 0;
 
 
             InfoStruct = new BoxModelSettings();
@@ -37,17 +35,17 @@ namespace StochasticModeling
             InfoStruct.Iterations = iterations;
            
 
-            Calculations.ConstrainedStochFit(InfoStruct, parameters, CovarArray, covar.Length, new double[9], ParamArray, ChiSquareArray,ref size);
-
-            if (ModelChooser(ParamArray, ChiSquareArray, CovarArray, size, parameters.Length, InfoStruct, ref parameters, ref covar, ref chosenchisquare))
-            {
-                BackupArrays();
-                CovarArray = covar;
-                UpdatefromParameterArray(parameters);
-                InfoStruct.Dispose();
-                return chosenchisquare;
-            }
+            Calculations.ConstrainedStochFit(InfoStruct, parameters, CovarArray, parameters.Length, new double[9], ParamArray, ChiSquareArray,ref Size);
             
+            if (ModelChooser != null)
+            {
+                if (ModelChooser(ParamArray, ChiSquareArray, CovarArray, Size, parameters.Length, InfoStruct))
+                {
+                    BackupArrays();
+                }
+            }
+
+            UpdateProfile();
             InfoStruct.Dispose();
             return ChiSquare.ToString("##.### E-0");
         }
@@ -57,54 +55,45 @@ namespace StochasticModeling
 
             ReportGenerator g = ReportGenerator.Instance;
             g.ClearReflModelInfo();
+            int arrayconst = 2;
 
             List<string> ginfo = new List<string>();
 
             if (HoldsigmaCB)
                 ginfo.Add("The reflectivity curve was fit with a single roughness parameter\n");
             else
+            {
                 ginfo.Add(String.Format("The reflectivity curve was fit with {0} roughness parameters\n", BoxCountTB + 1));
+                arrayconst = 3;
+            }
 
-            ginfo.Add(string.Format("Percent Error in Q: " + QSpreadTB + "\n"));
-            ginfo.Add(string.Format("Normalization Factor: " + NormalizationFactor + "\n"));
-            ginfo.Add(string.Format("Critical Edge Offset: " + LowQOffset  + "\n"));
-            ginfo.Add(string.Format("High Q Offset: " + HighQOffset + "\n"));
-            ginfo.Add(string.Format("Superphase SLD: " + SubphaseSLDTB + "\n"));
-            ginfo.Add(string.Format("Subphase SLD: " + SubphaseSLD + "\n"));
-            ginfo.Add(string.Format("Wavelength: " + WavelengthTB + "\n"));
-            ginfo.Add(string.Format("Chi Square for reflectivity fit: " + ChiSquare.ToString() + "\n"));
+            ginfo.Add("Percent Error in Q: " + QSpreadTB.ToString() + "\n");
+            ginfo.Add("Normalization Factor: " + NormalizationFactor.ToString() + "\n");
+            ginfo.Add("Low Q Offset: " + LowQOffset.ToString()  + "\n");
+            ginfo.Add("High Q Offset: " + HighQOffset.ToString() + "\n");
+            ginfo.Add("Superphase SLD: " + SubphaseSLDTB.ToString() + "\n");
+            ginfo.Add("Subphase SLD: " + SubphaseSLD.ToString() + "\n");
+            ginfo.Add("Wavelength: " + WavelengthTB.ToString() + "\n");
+            ginfo.Add("Chi Square for reflectivity fit: " + ChiSquare.ToString() + "\n");
             ginfo.Add(string.Format("The subphase roughness was: {0:#.### E-0} " + (char)0x00B1 + " {1:#.### E-0}\n", SubRoughTB, CovarArray[0]));
 
-            if (HoldsigmaCB == true)
+         
+            for (int i = 0; i < BoxCountTB; i++)
             {
-                for (int i = 0; i < BoxCountTB; i++)
-                {
-                    ginfo.Add((i + 1).ToString());
-                    ginfo.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[2 * i + 1].ToString("#.### E-0"));
+                ginfo.Add((i + 1).ToString());
+                ginfo.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[arrayconst * i + 1].ToString("#.### E-0"));
 
-                    if (m_bUseSLD == false)
-                        ginfo.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[2 * i + 2].ToString("#.### E-0"));
-                    else
-                        ginfo.Add((RhoArray[i] * SubphaseSLDTB).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (CovarArray[2 * i + 2] * SubphaseSLDTB).ToString("#.### E-0"));
+                if (m_bUseSLD == false)
+                    ginfo.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[arrayconst * i + 2].ToString("#.### E-0"));
+                else
+                    ginfo.Add((RhoArray[i] * SubphaseSLDTB).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (CovarArray[arrayconst * i + 2] * SubphaseSLDTB).ToString("#.### E-0"));
 
+                if (HoldsigmaCB)
                     ginfo.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[0].ToString("#.### E-0"));
-                }
+                else
+                    ginfo.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[arrayconst * i + 3].ToString("#.### E-0"));
             }
-            else
-            {
-                for (int i = 0; i < BoxCount; i++)
-                {
-                    ginfo.Add((i + 1).ToString());
-                    ginfo.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[3 * i + 1].ToString("#.### E-0"));
-
-                    if (m_bUseSLD == false)
-                        ginfo.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[3 * i + 2].ToString("#.### E-0"));
-                    else
-                        ginfo.Add((RhoArray[i] * SubphaseSLDTB).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (CovarArray[3 * i + 2] * SubphaseSLDTB).ToString("#.### E-0"));
-
-                    ginfo.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[3 * i + 3].ToString("#.### E-0"));
-                }
-            }
+           
             g.SetReflModelInfo = ginfo;
         }
 
@@ -123,14 +112,39 @@ namespace StochasticModeling
             SetInitStruct(ref InfoStruct, null);
 
 
-            m_dChiSquare = Calculations.FastReflfit(InfoStruct, parameters, CovarArray, parameters.Length, info, info.Length);
+            Calculations.FastReflfit(InfoStruct, parameters, CovarArray, parameters.Length, info, info.Length);
 
             InfoStruct.Dispose();
 
-            return UpdatefromParameterArray(parameters);
+            UpdatefromParameterArray(parameters);
+            UpdateFit(parameters);
+           
+
+            return MakeChiSquare();
         }
 
-        private string UpdatefromParameterArray(double[] parameters)
+        private void UpdateFit(double[] parameters)
+        {
+            //Display the fit
+            UpdateProfile();
+            SaveParamsForReport();
+
+            //Update our save list
+            FitHolder.Add(CreateLightWeightClone());
+
+
+            //Make sure parameters are reasonable
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                if (parameters[i] * 0.3 < CovarArray[i])
+                {
+                    MessageBox.Show("The error in a fitting parameter is greater than 30% of the parameter value. Check the 'Fit details' button for more information");
+                    break;
+                }
+            }
+        }
+
+        public override void UpdatefromParameterArray(double[] parameters)
         {
             int arrayconst;
 
@@ -158,26 +172,6 @@ namespace StochasticModeling
             }
 
             NormalizationFactor = parameters[parameters.Length - 1];
-
-            //Display the fit
-            UpdateProfile();
-            SaveParamsForReport();
-
-            //Update our save list
-            FitHolder.Add(CreateLightWeightClone());
-             
-
-            //Make sure parameters are reasonable
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                if (parameters[i] * 0.3 < CovarArray[i])
-                {
-                    MessageBox.Show("The error in a fitting parameter is greater than 30% of the parameter value. Check the 'Fit details' button for more information");
-                    break;
-                }
-            }
-
-            return ChiSquare.ToString("##.### E-0");
         }
 
         public override void UpdateBoundsArrays(double[] UL, double[] LL)
@@ -185,7 +179,7 @@ namespace StochasticModeling
             throw new NotImplementedException();
         }
 
-        public string ErrorReport()
+        public override string ErrorReport()
         {
             string output = string.Empty;
 
@@ -208,6 +202,8 @@ namespace StochasticModeling
             b.NormalizationFactor = NormalizationFactor;
             b.HighQOffset = HighQOffset;
             b.LowQOffset = LowQOffset;
+            b.CovarArray = (double[])CovarArray.Clone();
+            b.m_dChiSquare = m_dChiSquare;
             b.UpdateProfile();
 
             return b as BoxReflFitBase;
@@ -227,6 +223,44 @@ namespace StochasticModeling
             HighQOffset = b.HighQOffset;
             LowQOffset = b.LowQOffset;
             BoxCountTB = b.BoxCount;
+            IsOneSigma = b.IsOneSigma;
+            _RhoArray = new List<double>(b.RhoArray.ToArray());
+            _LengthArray = new List<double>(b.LengthArray.ToArray());
+            _SigmaArray = new List<double>(b.SigmaArray.ToArray());
+            m_dCovarArray = b.CovarArray;
+            m_dChiSquare = b.ChiSquare;
+            SubRoughTB = b.GetSubRoughness;
+        }
+
+
+        public override Type GetType()
+        {
+            return typeof(ReflFit);
+        }
+
+        public override string MakeChiSquare()
+        {
+            ChiSquare = HelperFunctions.FitnessScore(RealRho, ElectronDensityArray, 0, 0, ParamSize());
+            return ChiSquare.ToString("##.### E-0");
+        }
+
+
+
+        public override string MakeFitnessScore()
+        {
+            FitnessScore = HelperFunctions.FitnessScore(ReflData.Instance.GetReflData, ReflectivityMap, HighQOffset, LowQOffset, ParamSize());
+            return FitnessScore.ToString("##.### E-0");
+        }
+
+        private int ParamSize()
+        {
+            int paramsize = 0;
+            if (HoldsigmaCB)
+                paramsize = BoxCountTB * 2 + 2;
+            else
+                paramsize = BoxCountTB * 3 + 2;
+
+            return paramsize;
         }
     }
 }

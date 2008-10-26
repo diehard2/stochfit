@@ -26,7 +26,13 @@ namespace StochasticModeling
 
         private double[] _fitinfo;
 
-       
+        private double _FitnessScore;
+
+        protected double FitnessScore
+        {
+            get { return _FitnessScore; }
+            set { _FitnessScore = value; }
+        }
         protected double oldnormfactor;
         protected bool initialized = false;
         protected double LeftOffset;
@@ -37,8 +43,8 @@ namespace StochasticModeling
         private double _QSpreadTB;
         protected double SubRoughTB;
         protected double ZOffsetTB;
-        private double _HighQOffset;
-        private double _LowQOffset;
+        private int _HighQOffset;
+        private int _LowQOffset;
         private bool _ImpNormCB;
         protected double[] _ReflectivityMap;
         protected double[] _Z;
@@ -55,6 +61,7 @@ namespace StochasticModeling
         public double[] CovarArray
         {
             get { return (double[]) m_dCovarArray.Clone(); }
+            set { m_dCovarArray = (double[])value.Clone(); }
         }
         protected double m_dPreviouszoffset;
         protected double m_dChiSquare;
@@ -62,6 +69,7 @@ namespace StochasticModeling
         public double ChiSquare
         {
             get { return m_dChiSquare; }
+            set { m_dChiSquare = value; }
         }
         private double m_dPreviousImpNorm;
         private double m_dImpNorm;
@@ -102,13 +110,14 @@ namespace StochasticModeling
             }
         }
 
+        public abstract Type GetType();
 
         public BoxReflFitBase(BoxReflFitBase previousFitBase)
         {
             _RhoArray = new List<double>(previousFitBase._RhoArray.ToArray());
             _LengthArray = new List<double>(previousFitBase._LengthArray.ToArray());
             _SigmaArray = new List<double>(previousFitBase._SigmaArray.ToArray());
-
+            BoxCountTB = previousFitBase.BoxCountTB;
             SubRoughTB = previousFitBase.SubRoughTB;
             SubphaseSLD = previousFitBase.SubphaseSLD;
             SuperphaseSLD = previousFitBase.SuperphaseSLD;
@@ -168,6 +177,9 @@ namespace StochasticModeling
         }
 
         public abstract string StochFit(double[] parampercs, int iterations);
+        public abstract string MakeChiSquare();
+        public abstract string MakeFitnessScore();
+
                
         public virtual void UpdateProfile()
         {
@@ -181,7 +193,7 @@ namespace StochasticModeling
 
            Calculations.RhoGenerate(InfoStruct, eparameters, eparameters.Length, _ElectronDensityArray, _BoxElectronDensityArray);
           
-           if (ReflData.Instance.GetNumberDataPoints > 0)
+           if (_ReflectivityMap != null)
            {
                MakeParameters(ref parameters, false);
                Calculations.FastReflGenerate(InfoStruct, parameters, parameters.Length, _ReflectivityMap);
@@ -322,7 +334,10 @@ namespace StochasticModeling
         }
 
         public abstract void UpdateBoundsArrays(double[] UL, double[] LL);
-       
+
+        public abstract string ErrorReport();
+
+        public abstract void UpdatefromParameterArray(double[] paramarray);
 
         protected string ErrorReport(string OptionalString)
         {
@@ -522,13 +537,13 @@ namespace StochasticModeling
             set { _LL = value; }
         }
 
-        public double HighQOffset
+        public int HighQOffset
         {
             get { return _HighQOffset; }
             set { _HighQOffset = value; }
         }
 
-        public double LowQOffset
+        public int LowQOffset
         {
             get { return _LowQOffset; }
             set { _LowQOffset = value; }

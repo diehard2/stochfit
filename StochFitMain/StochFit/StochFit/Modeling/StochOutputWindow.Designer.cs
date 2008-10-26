@@ -44,7 +44,7 @@ namespace StochasticModeling.Modeling
             this.RhoGraph.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.RhoGraph.AutoSize = true;
             this.RhoGraph.EditButtons = System.Windows.Forms.MouseButtons.Left;
-            this.RhoGraph.Location = new System.Drawing.Point(526, 12);
+            this.RhoGraph.Location = new System.Drawing.Point(576, 17);
             this.RhoGraph.Name = "RhoGraph";
             this.RhoGraph.PanModifierKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Shift | System.Windows.Forms.Keys.None)));
             this.RhoGraph.ScrollGrace = 0;
@@ -62,7 +62,7 @@ namespace StochasticModeling.Modeling
             this.ReflGraph.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.ReflGraph.AutoSize = true;
             this.ReflGraph.EditButtons = System.Windows.Forms.MouseButtons.Left;
-            this.ReflGraph.Location = new System.Drawing.Point(526, 325);
+            this.ReflGraph.Location = new System.Drawing.Point(576, 330);
             this.ReflGraph.Name = "ReflGraph";
             this.ReflGraph.PanModifierKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Shift | System.Windows.Forms.Keys.None)));
             this.ReflGraph.ScrollGrace = 0;
@@ -78,13 +78,13 @@ namespace StochasticModeling.Modeling
             // ParametersTB
             // 
             this.ParametersTB.BackColor = System.Drawing.SystemColors.Window;
-            this.ParametersTB.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ParametersTB.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ParametersTB.ForeColor = System.Drawing.Color.Black;
             this.ParametersTB.Location = new System.Drawing.Point(253, 41);
             this.ParametersTB.Multiline = true;
             this.ParametersTB.Name = "ParametersTB";
             this.ParametersTB.ReadOnly = true;
-            this.ParametersTB.Size = new System.Drawing.Size(228, 444);
+            this.ParametersTB.Size = new System.Drawing.Size(264, 444);
             this.ParametersTB.TabIndex = 1;
             // 
             // label1
@@ -119,12 +119,12 @@ namespace StochasticModeling.Modeling
             // 
             // ModelLB
             // 
-            this.ModelLB.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ModelLB.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ModelLB.FormattingEnabled = true;
-            this.ModelLB.ItemHeight = 20;
+            this.ModelLB.ItemHeight = 16;
             this.ModelLB.Location = new System.Drawing.Point(6, 41);
             this.ModelLB.Name = "ModelLB";
-            this.ModelLB.Size = new System.Drawing.Size(219, 444);
+            this.ModelLB.Size = new System.Drawing.Size(219, 436);
             this.ModelLB.TabIndex = 0;
             this.ModelLB.SelectedIndexChanged += new System.EventHandler(this.OnModelIndexChange);
             // 

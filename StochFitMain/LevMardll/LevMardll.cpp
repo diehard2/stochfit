@@ -46,7 +46,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     return TRUE;
 }
 
-extern "C" LEVMARDLL_API double Rhofit(BoxReflSettings* InitStruct, double parameters[], double covariance[], int parametersize, double info[], int infosize)
+extern "C" LEVMARDLL_API void Rhofit(BoxReflSettings* InitStruct, double parameters[], double covariance[], int parametersize, double info[], int infosize)
 {
 	USES_CONVERSION;
 
@@ -54,7 +54,6 @@ extern "C" LEVMARDLL_API double Rhofit(BoxReflSettings* InitStruct, double param
 	double opts[LM_OPTS_SZ];
 	double* xvec = new double[InitStruct->ZLength] ;
 	double *work, *covar;
-	int ret;
 
 	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20;
 	opts[4]=-LM_DIFF_DELTA; // relevant only if the finite difference jacobian version is used 
@@ -69,18 +68,8 @@ extern "C" LEVMARDLL_API double Rhofit(BoxReflSettings* InitStruct, double param
 	work=new double[((LM_DIF_WORKSZ(parametersize, InitStruct->ZLength)+parametersize*InitStruct->ZLength))];
 	covar=work+LM_DIF_WORKSZ(parametersize, InitStruct->ZLength);
 
-	ret = dlevmar_dif(Rho.objective, parameters, xvec,  parametersize,InitStruct->ZLength, 1000, opts, info, work, covar,(void*)(&Rho)); 
+	dlevmar_dif(Rho.objective, parameters, xvec,  parametersize,InitStruct->ZLength, 1000, opts, info, work, covar,(void*)(&Rho)); 
 	
-	//Calculate the current density
-	Rho.mkdensity(parameters,parametersize);
-	Rho.mkdensityboxmodel(parameters,parametersize);
-
-	//Calculate ChiSquare
-	for(int i = 0; i< InitStruct->ZLength;i++)
-	{
-		if(InitStruct->MIEDP[i] > 0.0)
-			ChiSquare += (InitStruct->MIEDP[i]-Rho.nk[i])*(InitStruct->MIEDP[i]-Rho.nk[i])/InitStruct->MIEDP[i];
-	}
 
 	//Calculate the standard deviations in the parameters
 	for(int i = 0; i< parametersize;i++)
@@ -88,13 +77,8 @@ extern "C" LEVMARDLL_API double Rhofit(BoxReflSettings* InitStruct, double param
 		covariance[i] = sqrt(covar[i*(parametersize+1)]);
 	}
 	
-	//Make output files
-	Rho.writefiles(string(W2A(InitStruct->Directory) + string("\\rhofit.dat")).c_str());
-	
 	delete xvec;
 	delete work;
-
-	return ChiSquare;
 }
 
 extern "C" LEVMARDLL_API void RhoGenerate(BoxReflSettings* InitStruct, double parameters[], int paramsize, double ED[], double BoxED[])
@@ -112,7 +96,7 @@ extern "C" LEVMARDLL_API void RhoGenerate(BoxReflSettings* InitStruct, double pa
 }
 
 
-extern "C" LEVMARDLL_API double FastReflfit(BoxReflSettings* InitStruct, double params[], double covariance[], int paramsize, 
+extern "C" LEVMARDLL_API void FastReflfit(BoxReflSettings* InitStruct, double params[], double covariance[], int paramsize, 
 			double info[], int infosize)
 {
 	USES_CONVERSION;
@@ -144,72 +128,15 @@ extern "C" LEVMARDLL_API double FastReflfit(BoxReflSettings* InitStruct, double 
 	if(InitStruct->UL == NULL)
 		dlevmar_dif(Refl.objective,params, xvec, paramsize,InitStruct->QPoints, 1000, opts, info, work, covar,(void*)(&Refl)); 
 	else
-		dlevmar_bc_dif(Refl.objective, params, xvec,  paramsize,InitStruct->QPoints, 
-			InitStruct->LL,InitStruct->UL,1000, opts, info, work, covar,(void*)(&Refl)); 
-	
-	
-	Refl.myrfdispatch();
-
-   	
-	for(int i = 0; i< InitStruct->QPoints;i++)
-	{
-		calcholder = (InitStruct->Refl[i]-Refl.reflpt[i]);
-		ChiSquare += calcholder*calcholder/InitStruct->ReflError[i];
-	}
-	ChiSquare /= InitStruct->QPoints-paramsize;
+		dlevmar_bc_dif(Refl.objective, params, xvec,  paramsize,InitStruct->QPoints, InitStruct->LL,InitStruct->UL,1000, opts, info, work, covar,(void*)(&Refl)); 
 	
 	for(int i = 0; i< paramsize;i++)
 	{
 		covariance[i] = sqrt(covar[i*(paramsize+1)]);
 	}
 
-	Qc = Refl.CalcQc(InitStruct->SubSLD);
-
-	if(InitStruct->WriteFiles == TRUE)
-	{
-		double ZInc[500];
-		double nk[500];
-		double nkb[500];
-		double length = 50;
-
-		//Calculate the length
-		for(int i = 1; i <= Refl.boxnumber; i++)
-		{
-			length += Refl.LengthArray[i];
-		}
-		for(int i = 0; i<500; i++)
-		{
-			ZInc[i] = i*length/500.0;
-		}
-
-		Refl.Rhocalculate(30,ZInc,Refl.LengthArray,Refl.RhoArray,Refl.SigmaArray,nk,nkb,500);
-		
-		
-		
-		//Make output files
-
-		std::ofstream outrhofile(string(W2A(InitStruct->Directory) + string("\\reflrhofit.dat")).c_str());
-		for(int i = 0; i<500;i++)
-		{
-			outrhofile<<ZInc[i] << ' ' << nk[i]/nk[499] << ' ' << nkb[i]/nkb[499] << std::endl;
-		}
-		outrhofile.close();
-		
-		
-		std::ofstream outreflfile(string(W2A(InitStruct->Directory) + string("\\reflfile.dat")).c_str());
-		for(int i = 0; i<InitStruct->QPoints;i++)
-		{
-			outreflfile << InitStruct->Q[i] << ' ' << Refl.reflpt[i] << ' ' << InitStruct->Q[i]/Qc << ' ' <<
-				Refl.reflpt[i]/Refl.CalcFresnelPoint(InitStruct->Q[i],Qc)<<std::endl;
-		}
-		outreflfile.close();
-	}
-
-
 	delete[] xvec;
 	delete[] work;
-
-	return ChiSquare;
 }
 
 

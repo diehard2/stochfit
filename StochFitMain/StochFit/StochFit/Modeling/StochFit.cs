@@ -198,7 +198,7 @@ namespace StochasticModeling
                             {
                                 LoadZ(tempfile);
                                 rhographobject.SubSLD = double.Parse(SubSLDTB.Text);
-                                rhographobject.IsNeutron = UseSLDToolStripMenuItem.Checked;
+                                rhographobject.UseSLD = UseSLDToolStripMenuItem.Checked;
 
                                 if (UseSLDToolStripMenuItem.Checked == true)
                                 {
@@ -909,7 +909,7 @@ namespace StochasticModeling
         {
             MenuItem_Check(sender, e);
 
-            rhographobject.IsNeutron = UseSLDToolStripMenuItem.Checked;
+            rhographobject.UseSLD = UseSLDToolStripMenuItem.Checked;
             rhographobject.SubSLD = double.Parse(SubSLDTB.Text);
             ReportGenerator.Instance.UseSLD = UseSLDToolStripMenuItem.Checked;
 

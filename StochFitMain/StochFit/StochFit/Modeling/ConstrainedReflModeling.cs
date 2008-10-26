@@ -42,21 +42,22 @@ namespace StochasticModeling
         ReflFit ReflCalc;
         Graphing ReflGraphing;
         Graphing RhoGraphing;
-        //Arrays
-        
-        bool m_bUseSLD = false;
+       
         List<TextBox> SigmaArray;
         List<TextBox> RhoArray;
         List<TextBox> LengthArray;
         List<CheckBox> HoldSigmaArray;
         List<CheckBox> HoldRhoArray;
         List<CheckBox> HoldLengthArray;
-       
+        
         Constraints ConstrForm;
+
         bool m_bmodelreset = false;
+        bool m_bUseSLD = false;
+        bool m_isupdating = false;
       
-       
         Thread Stochthread;
+        StochOutputWindow ErrorWindow;
 
         #endregion
 
@@ -106,7 +107,7 @@ namespace StochasticModeling
             //Set up ED Graph
             RhoGraphing = new Graphing(string.Empty);
             RhoGraphing.SubSLD = SubphaseSLD.ToDouble();
-            RhoGraphing.IsNeutron = m_bUseSLD;
+            RhoGraphing.UseSLD = m_bUseSLD;
             RhoGraphing.SetGraphType(false, false);
             
             if (m_bUseSLD == false)
@@ -128,20 +129,32 @@ namespace StochasticModeling
             //Initialize constrain form
             ConstrForm = new Constraints(6);
             GreyFields();
+
             //Setup the callback if the graph updates the bounds
             ReflGraphing.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
            
+            //Setup the callback to update the frontend with new information
             ReflCalc.Update += new BoxReflFitBase.UpdateProfileHandler(ReflCalc_Update);
             MakeReflectivity();
         }
 
+        /// <summary>
+        /// This routine updates our frontend. All updates are performed in a threadsafe manner, as the
+        /// stochastic methods can take place on a separate thread
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         void ReflCalc_Update(object sender, EventArgs e)
         {
+           m_isupdating = true;
+           
            SubRough.ThreadSafeSetText(ReflCalc.GetSubRoughness.ToString()) ;
            NormCorrectTB.ThreadSafeSetText(ReflCalc.NormalizationFactor.ToString());
-
+           Holdsigma.ThreadSafeChecked(ReflCalc.IsOneSigma);
+           BoxCount.ThreadSafeSetText(ReflCalc.BoxCount.ToString());
+           ImpNormCB.ThreadSafeChecked(ReflCalc.ImpNormCB);
+            
             //Blank our Rho data from the previous iteration
-
             for (int i = 0; i < RhoArray.Count; i++)
             {
                 if(!m_bUseSLD)
@@ -149,15 +162,12 @@ namespace StochasticModeling
                 else
                     RhoArray[i].ThreadSafeSetText((ReflCalc.RhoArray[i]/ReflCalc.SubphaseSLD).ToString());
 
-
                 LengthArray[i].ThreadSafeSetText(ReflCalc.LengthArray[i].ToString());
                 SigmaArray[i].ThreadSafeSetText(ReflCalc.SigmaArray[i].ToString());
             }
-            
 
             if (Holdsigma.Checked)
                 ChangeRoughnessArray();
-
 
             if (m_bmodelreset)
             {
@@ -166,13 +176,18 @@ namespace StochasticModeling
                 m_bmodelreset = false;
             }
 
-            //Setup graphs
-            ReflGraphing.LoadfromArray("modelrefl", ReflData.Instance.GetQData , ReflCalc.ReflectivityMap, System.Drawing.Color.Black, SymbolType.XCross, 4, true, string.Empty);
+            GreyFields();
+            //Update graphs
+            RhoGraphing.Pane.XAxis.Scale.Min = 0;
+            RhoGraphing.Pane.XAxis.Scale.Max = ReflCalc.Z[ReflCalc.Z.Length - 1];
+
+            ReflGraphing.LoadfromArray("modelrefl", ReflData.Instance.GetQData, ReflCalc.ReflectivityMap, System.Drawing.Color.Black, SymbolType.XCross, 4, true, string.Empty);
             RhoGraphing.LoadfromArray("Model Dependent Fit", ReflCalc.Z, ReflCalc.ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
             RhoGraphing.LoadfromArray("Model Dependent Box Fit", ReflCalc.Z, ReflCalc.BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
 
-            RhoGraphing.Pane.XAxis.Scale.Min = 0;
-            RhoGraphing.Pane.XAxis.Scale.Max = ReflCalc.Z[ReflCalc.Z.Length - 1];
+            chisquaretb.ThreadSafeSetText(ReflCalc.ChiSquare.ToString());
+
+            m_isupdating = false;
         }
         
         private void ChangeRoughnessArray()
@@ -195,8 +210,8 @@ namespace StochasticModeling
                 ReflCalc.BoxCount = BoxCount.ToInt();
                 ReflCalc.SubphaseSLD = SubphaseSLD.ToDouble();
                 ReflCalc.SuperphaseSLD = SupSLDTB.ToDouble();
-                ReflCalc.HighQOffset = Rightoffset.ToDouble();
-                ReflCalc.LowQOffset = CritOffset.ToDouble();
+                ReflCalc.HighQOffset = Rightoffset.ToInt();
+                ReflCalc.LowQOffset = CritOffset.ToInt();
                 ReflCalc.NormalizationFactor = NormCorrectTB.ToDouble();
                 ReflCalc.ImpNormCB = ImpNormCB.Checked;
                 ReflCalc.QSpreadTB = QSpreadTB.ToDouble();
@@ -211,8 +226,6 @@ namespace StochasticModeling
 
                 if (Holdsigma.Checked)
                     ChangeRoughnessArray();
-
-                GreyFields();
 
                 ReflCalc.UpdateProfile();
             }
@@ -281,15 +294,15 @@ namespace StochasticModeling
         {
             try
             {
-                GreyFields();
-                ReflGraphing.SupSLD = SupSLDTB.ToDouble();
-                ReflGraphing.SubSLD = SubphaseSLD.ToDouble();
-                RhoGraphing.SubSLD = SubphaseSLD.ToDouble();
-                RhoGraphing.SupSLD = SupSLDTB.ToDouble();
-                ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
-                ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
+                if (m_isupdating == false)
+                {
+                    RhoGraphing.SupSLD = ReflGraphing.SupSLD = SupSLDTB.ToDouble();
+                    RhoGraphing.SubSLD = ReflGraphing.SubSLD = SubphaseSLD.ToDouble();
+                    ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
+                    ReflGraphing.SetGraphType(Properties.Settings.Default.ForceRQ4, DBFCB.Checked);
 
-                MakeReflectivity();
+                    MakeReflectivity();
+                }
             }
             catch { }
         }
@@ -320,8 +333,11 @@ namespace StochasticModeling
         {
             try
             {
-                m_bmodelreset = true;
-                Variable_Changed(sender, e);
+                if (m_isupdating == false)
+                {
+                    m_bmodelreset = true;
+                    Variable_Changed(sender, e);
+                }
             }
             catch { }
         }
@@ -330,6 +346,13 @@ namespace StochasticModeling
         {
             GetConstraints();
             chisquaretb.Text = ReflCalc.DataFit();
+
+            if (ErrorWindow == null)
+            {
+                ErrorWindow = new StochOutputWindow();
+            }
+
+            ErrorWindow.AddModel(ReflCalc);
 
             //Add the graph to the master graph
             GraphCollection.Instance.ReflGraph = ReflGraphing;
@@ -355,28 +378,20 @@ namespace StochasticModeling
             lo.ShowDialog();
         }
 
-        private bool ModelChooserUI(double[] ParamArray, double[] ChiSquareArray, double[] CovarArray, int size, int paramcount, BoxModelSettings InfoStruct,
-            ref double[] chosenparameters, ref double[] chosencovar, ref string chosenchisquare)
+        private bool ModelChooserUI(double[] ParamArray, double[] ChiSquareArray, double[] CovarArray, int size, int paramcount, BoxModelSettings InfoStruct)
         {
-            StochOutputWindow outwin = new StochOutputWindow(ParamArray, size, paramcount, ChiSquareArray, CovarArray);
+            StochOutputWindow outwin = new StochOutputWindow(ParamArray, size, paramcount, ChiSquareArray, CovarArray, ReflCalc);
 
 
             if (outwin.ShowDialog() != DialogResult.Cancel)
             {
-                chosenchisquare = outwin.GetParameters(out chosenparameters, out chosencovar);
+                outwin.GetParameters(ReflCalc);
                 return true;
             }
             else
                 return false;
         
         }
-
-        //Needed if we update the chisquare from a thread (as in the stochastic fitting)
-        private void UpdateChiSquareTB(string chisquare)
-        {
-            chisquaretb.Text = chisquare;
-        }
-
 
         void Stoch()
         {
@@ -387,8 +402,7 @@ namespace StochasticModeling
               if (UI.ShowDialog() == DialogResult.OK)
               {
                   UI.GetParamPercs(ref parampercs);
-                  string chi = ReflCalc.StochFit(parampercs, UI.IterationCount);
-                  this.Invoke(new MethodInvoker(delegate() { UpdateChiSquareTB(chi); }));
+                  chisquaretb.ThreadSafeSetText(ReflCalc.StochFit(parampercs, UI.IterationCount));
               }
         
               //Restore window
@@ -401,7 +415,6 @@ namespace StochasticModeling
         {
             Stochthread = new Thread(delegate() { Stoch(); });
             Stochthread.Start();
-          
             DisablePanel(true);
         }
 
@@ -409,7 +422,7 @@ namespace StochasticModeling
         {
             tabControl1.SelectedIndex = 0;
             controlbox.Enabled = button1.Enabled = UndoFit.Enabled = button2.Enabled = LevenbergFit.Enabled = 
-             ConstraintsBT.Enabled = groupBox1.Enabled = tabControl1.Enabled = !onoff;
+            ConstraintsBT.Enabled = groupBox1.Enabled = tabControl1.Enabled = !onoff;
             loadingCircle1.Active = loadingCircle1.Visible = onoff;
         }
         
@@ -611,6 +624,25 @@ namespace StochasticModeling
         }
 
         #endregion
+
+        private void SaveFitTB_Click(object sender, EventArgs e)
+        {
+            if (ErrorWindow != null)
+            {
+                if (ErrorWindow.ShowDialog() == DialogResult.OK)
+                {
+                    ErrorWindow.GetParameters(ReflCalc);
+                }
+
+                ReflCalc.UpdateProfile();
+               
+            }
+            else
+            {
+                MessageBox.Show("No fitting has been performed");
+            }
+                
+        }
 
     }
 }

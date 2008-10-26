@@ -120,6 +120,8 @@ namespace StochasticModeling
             this.EDzedGraphControl1 = new ZedGraph.ZedGraphControl();
             this.controlbox = new System.Windows.Forms.GroupBox();
             this.SaveFitTB = new System.Windows.Forms.Button();
+            this.label10 = new System.Windows.Forms.Label();
+            this.textBox1 = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -780,7 +782,7 @@ namespace StochasticModeling
             this.label15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label15.AutoSize = true;
             this.label15.Font = new System.Drawing.Font("Symbol", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(2)));
-            this.label15.Location = new System.Drawing.Point(746, 560);
+            this.label15.Location = new System.Drawing.Point(746, 545);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(26, 20);
             this.label15.TabIndex = 20;
@@ -789,10 +791,10 @@ namespace StochasticModeling
             // chisquaretb
             // 
             this.chisquaretb.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.chisquaretb.Enabled = false;
             this.chisquaretb.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chisquaretb.Location = new System.Drawing.Point(748, 583);
+            this.chisquaretb.Location = new System.Drawing.Point(748, 568);
             this.chisquaretb.Name = "chisquaretb";
+            this.chisquaretb.ReadOnly = true;
             this.chisquaretb.Size = new System.Drawing.Size(140, 35);
             this.chisquaretb.TabIndex = 19;
             this.chisquaretb.TabStop = false;
@@ -1153,6 +1155,31 @@ namespace StochasticModeling
             this.SaveFitTB.TabIndex = 46;
             this.SaveFitTB.Text = "Previous Fits";
             this.SaveFitTB.UseVisualStyleBackColor = true;
+            this.SaveFitTB.Click += new System.EventHandler(this.SaveFitTB_Click);
+            // 
+            // label10
+            // 
+            this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.Location = new System.Drawing.Point(748, 610);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(107, 20);
+            this.label10.TabIndex = 48;
+            this.label10.Text = "Fitness Score";
+            // 
+            // textBox1
+            // 
+            this.textBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox1.Location = new System.Drawing.Point(750, 633);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.ReadOnly = true;
+            this.textBox1.Size = new System.Drawing.Size(140, 35);
+            this.textBox1.TabIndex = 47;
+            this.textBox1.TabStop = false;
+            this.textBox1.Text = "0";
+            this.textBox1.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // ConstrainedReflmodeling
             // 
@@ -1160,6 +1187,8 @@ namespace StochasticModeling
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(952, 674);
+            this.Controls.Add(this.label10);
+            this.Controls.Add(this.textBox1);
             this.Controls.Add(this.SaveFitTB);
             this.Controls.Add(this.controlbox);
             this.Controls.Add(this.tabControl1);
@@ -1284,5 +1313,7 @@ namespace StochasticModeling
         private System.Windows.Forms.GroupBox controlbox;
         public System.Windows.Forms.Label label14;
         private System.Windows.Forms.Button SaveFitTB;
+        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.TextBox textBox1;
     }
 }

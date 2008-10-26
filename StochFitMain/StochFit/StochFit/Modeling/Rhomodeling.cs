@@ -33,10 +33,9 @@ namespace StochasticModeling
     {
         #region Variables
 
-
-        List<TextBox> BoxSigmaArray;
-        List<TextBox> BoxLengthArray;
-        List<TextBox> BoxRhoArray;
+        private List<TextBox> BoxSigmaArray;
+        private List<TextBox> BoxLengthArray;
+        private List<TextBox> BoxRhoArray;
 
         private RhoFit RhoCalc;
         private Graphing m_gRhoGraphing;
@@ -53,10 +52,8 @@ namespace StochasticModeling
         /// <param name="subsld">The subphase SLD</param>
         /// <param name="supsld">The superphase SLD</param>
         public Rhomodeling(double[] Z, double[] ERho, double roughness, string SupOffset, string subsld, string supsld)
-           // base(roughness, 
         {
             InitializeComponent();
-            bool SetupWithSLD = Properties.Settings.Default.UseSLDSingleSession;
             RhoCalc = new RhoFit(Z, ERho);
 
             BoxSigmaArray = new List<TextBox>(6);
@@ -79,7 +76,7 @@ namespace StochasticModeling
             SupSLDTB.Text = supsld;
 
             //Set default array values
-            if (SetupWithSLD == false)
+            if (Properties.Settings.Default.UseSLDSingleSession == false)
                 Rho2.Text = Rho1.Text = (1.1).ToString();
             else
                 Rho2.Text = Rho1.Text = (1.3*double.Parse(subsld)).ToString();
@@ -97,9 +94,9 @@ namespace StochasticModeling
              //Setup the Graph
              m_gRhoGraphing = new Graphing(string.Empty);
              m_gRhoGraphing.SubSLD = double.Parse(subsld);
-             m_gRhoGraphing.IsNeutron = SetupWithSLD;
+             m_gRhoGraphing.UseSLD = Properties.Settings.Default.UseSLDSingleSession;
 
-             if (SetupWithSLD == false)
+             if (Properties.Settings.Default.UseSLDSingleSession == false)
              {
                  m_gRhoGraphing.CreateGraph(RhoGraph, "Electron Density Profile", "Z", "Normalized Electron Density", AxisType.Linear);
                  RhoLabel.Text = "Normalized Rho";
@@ -130,13 +127,16 @@ namespace StochasticModeling
             Zoffset.Text = RhoCalc.ZOffset.ToString();
             SubRough.Text = RhoCalc.GetSubRoughness.ToString();
             
-            //Blank our Rho data from the previous iteration
+            //Update our Rho data from the previous iteration
             for (int i = 0; i < BoxRhoArray.Count; i++)
             {
                 BoxRhoArray[i].Text = RhoCalc.RhoArray[i].ToString();
                 BoxSigmaArray[i].Text = RhoCalc.SigmaArray[i].ToString();
                 BoxLengthArray[i].Text = RhoCalc.LengthArray[i].ToString();
             }
+
+            chisquaretb.ThreadSafeSetText(RhoCalc.MakeChiSquare().ToString());
+            FitnessScoreTB.ThreadSafeSetText(RhoCalc.MakeFitnessScore().ToString());
 
             m_gRhoGraphing.LoadfromArray("Model Dependent Fit", RhoCalc.Z, RhoCalc.ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
             m_gRhoGraphing.LoadfromArray("Model Dependent Box Fit", RhoCalc.Z, RhoCalc.BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
@@ -181,7 +181,6 @@ namespace StochasticModeling
             }
         }
 
-
         private void MakeED()
         {
             //Fill Rho array
@@ -206,6 +205,8 @@ namespace StochasticModeling
                 if (Holdsigma.Checked)
                     ChangeRoughnessArray();
 
+                GreyFields();
+
                 RhoCalc.UpdateProfile();
             }
             catch (Exception ex)
@@ -214,12 +215,9 @@ namespace StochasticModeling
             }
         }
 
-    
-
      
         private void Field_Validated (object sender, EventArgs e)
         {
-            GreyFields();
             MakeED();
         }
 

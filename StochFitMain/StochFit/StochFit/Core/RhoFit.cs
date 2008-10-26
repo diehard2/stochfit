@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using StochasticModeling.Settings;
+using StochasticModeling.Core;
 
 namespace StochasticModeling
 {
@@ -73,9 +74,8 @@ namespace StochasticModeling
             InfoStruct = new BoxModelSettings();
             SetInitStruct(ref InfoStruct, null);
 
-
-            m_dChiSquare = Calculations.Rhofit(InfoStruct, parameters, CovarArray, parameters.Length, info, info.Length);
-
+            Calculations.Rhofit(InfoStruct, parameters, CovarArray, parameters.Length, info, info.Length);
+           
             InfoStruct.Dispose();
 
             SubRoughTB = parameters[0];
@@ -106,13 +106,19 @@ namespace StochasticModeling
             UpdateProfile();
             SaveParamsForReport();
 
-            return ChiSquare.ToString("##.### E-0");
+            return MakeChiSquare();
         }
 
-        public string ErrorReport()
+
+
+        public override string ErrorReport()
         {
-           string zstring = "Z Offset = " + string.Format("{0:#.### E-0} ", ZOffsetTB) + " " +
-                    (char)0x00B1 + " " + CovarArray[1].ToString("#.### E-0") + Environment.NewLine + Environment.NewLine;
+            string zstring = string.Empty;
+            if (m_dCovarArray != null)
+            {
+                zstring = "Z Offset = " + string.Format("{0:#.### E-0} ", ZOffsetTB) + " " +
+                    (char)0x00B1 + " " + m_dCovarArray[1].ToString("#.### E-0") + Environment.NewLine + Environment.NewLine;
+            }
            return ErrorReport(zstring);
         }
 
@@ -134,6 +140,42 @@ namespace StochasticModeling
         public override void LoadLightWeightClone(BoxReflFitBase b)
         {
             throw new NotImplementedException();
+        }
+
+
+        public override Type GetType()
+        {
+            return typeof(RhoFit);
+        }
+
+        public override void UpdatefromParameterArray(double[] paramarray)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override string MakeChiSquare()
+        {
+            ChiSquare = HelperFunctions.FitnessScore(RealRho, ElectronDensityArray, 0, 0, ParamSize());
+            return ChiSquare.ToString("##.### E-0");
+        }
+
+
+
+        public override string MakeFitnessScore()
+        {
+            FitnessScore = HelperFunctions.FitnessScore(RealRho, ElectronDensityArray, 0, 0, ParamSize());
+            return FitnessScore.ToString("##.### E-0");
+        }
+
+        private int ParamSize()
+        {
+            int paramsize = 0;
+            if (HoldsigmaCB)
+                paramsize = BoxCountTB * 2 + 2;
+            else
+                paramsize = BoxCountTB * 3 + 2;
+
+            return paramsize;
         }
     }
 }

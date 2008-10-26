@@ -153,10 +153,9 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
   
   reflinst->myrfdispatch();
   
-  for(int i = 0; i < n; ++i)
+  memset(x, 0, n*sizeof(double));
+  for(int i = reflinst->m_icritqoffset; i < n - reflinst->m_ihighqoffset; i++)
   {
-    if( i >= reflinst->m_icritqoffset && i <= n-reflinst->m_ihighqoffset)
-	 {
 		x[i] = (log(reflinst->reflpt[i])-log(reflinst->Realrefl[i]));
 
 		//Sometimes we get NAN. We make that solution unpalatable until I can find a workaround
@@ -164,11 +163,6 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
 		{
 			x[i] = 1e6;
 		}
-	}
-	 else
-	 {
-		 x[i] = 0;
-	 }
   }
 }
 

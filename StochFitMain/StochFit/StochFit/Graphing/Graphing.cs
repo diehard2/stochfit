@@ -291,8 +291,9 @@ namespace StochasticModeling
                     else
                         Pane.XAxis.Scale.Max = RealReflData[RealReflData.Count - 1].X + .05;
 
+                    Pane.XAxis.Scale.Min = 0.0;
                     SetAxisTitles("Q", "Intensity");
-
+                   
                     AddCurvetoGraph(RealReflData, RealReflErrors, name, color, symbol, symbolsize, "realdatafile");
                 }
                 else
@@ -339,7 +340,6 @@ namespace StochasticModeling
                 if (highqindex < ReflData.Instance.GetNumberDataPoints || lowqindex > 0)
                 {
                     SetBounds();
-
                 }
                 else
                 {

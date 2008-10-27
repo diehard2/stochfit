@@ -38,7 +38,7 @@ namespace StochasticModeling
             this.MasterGraph.AutoScroll = true;
             this.MasterGraph.AutoSize = true;
             this.MasterGraph.EditButtons = System.Windows.Forms.MouseButtons.Left;
-            this.MasterGraph.Location = new System.Drawing.Point(-14, -1);
+            this.MasterGraph.Location = new System.Drawing.Point(-17, -2);
             this.MasterGraph.Name = "MasterGraph";
             this.MasterGraph.PanModifierKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Shift | System.Windows.Forms.Keys.None)));
             this.MasterGraph.ScrollGrace = 0;
@@ -48,7 +48,7 @@ namespace StochasticModeling
             this.MasterGraph.ScrollMinX = 0;
             this.MasterGraph.ScrollMinY = 0;
             this.MasterGraph.ScrollMinY2 = 0;
-            this.MasterGraph.Size = new System.Drawing.Size(967, 1082);
+            this.MasterGraph.Size = new System.Drawing.Size(998, 1080);
             this.MasterGraph.TabIndex = 2;
             // 
             // MasterPaneForm
@@ -56,7 +56,7 @@ namespace StochasticModeling
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoScroll = true;
-            this.ClientSize = new System.Drawing.Size(950, 592);
+            this.ClientSize = new System.Drawing.Size(967, 592);
             this.Controls.Add(this.MasterGraph);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
             this.MaximizeBox = false;

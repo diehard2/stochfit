@@ -335,6 +335,7 @@ namespace StochasticModeling
                     GraphCollection.Instance.RhoGraph = m_gRhoGraphing;
                     RhoCalc.SaveParamsForReport();
                     m_bfitsaved = true;
+                    m_bfitperformed = true;
                 }
                
             }
@@ -345,7 +346,11 @@ namespace StochasticModeling
         private void button2_Click(object sender, EventArgs e)
         {
             RhoCalc.ClearReports();
-            GraphCollection.Instance.RhoGraph = null;
+            GraphCollection.Instance.RhoGraph.Hide = true;
+
+            m_bfitsaved = false;
+            m_bfitperformed = false;
+
         }
       
     }

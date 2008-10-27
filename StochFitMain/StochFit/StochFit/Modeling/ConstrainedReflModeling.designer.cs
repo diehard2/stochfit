@@ -1161,7 +1161,7 @@ namespace StochasticModeling
             this.SaveFitTB.TabIndex = 46;
             this.SaveFitTB.Text = "Previous Fits";
             this.SaveFitTB.UseVisualStyleBackColor = true;
-            this.SaveFitTB.Click += new System.EventHandler(this.SaveFitTB_Click);
+            this.SaveFitTB.Click += new System.EventHandler(this.PreviousFitListTB_Click);
             // 
             // label10
             // 

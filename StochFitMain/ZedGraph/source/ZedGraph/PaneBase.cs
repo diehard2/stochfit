@@ -962,7 +962,7 @@ namespace ZedGraph
 				IntPtr hdc = g.GetHdc();
 				Stream stream = new MemoryStream();
 				Metafile metafile = new Metafile( stream, hdc, _rect,
-							MetafileFrameUnit.Pixel, EmfType.EmfPlusOnly );
+							MetafileFrameUnit.GdiCompatible, EmfType.EmfPlusOnly );
 				g.ReleaseHdc( hdc );
 
 				using ( Graphics metafileGraphics = Graphics.FromImage( metafile ) )
@@ -1015,7 +1015,7 @@ namespace ZedGraph
 				IntPtr hdc = g.GetHdc();
 				Stream stream = new MemoryStream();
 				Metafile metafile = new Metafile( stream, hdc, this._rect,
-							MetafileFrameUnit.Pixel, EmfType.EmfPlusOnly );
+                            MetafileFrameUnit.GdiCompatible, EmfType.EmfPlusOnly);
 
 				using ( Graphics metafileGraphics = Graphics.FromImage( metafile ) )
 				{

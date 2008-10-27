@@ -304,34 +304,57 @@ namespace StochasticModeling
        
         public void UndoFit()
         {
-            for (int i = 0; i < PreviousRhoArray.Count; i++)
+            if (PreviousRhoArray.Count > 0)
             {
-                RhoArray[i] = PreviousRhoArray[i];
-                SigmaArray[i] = PreviousSigmaArray[i];
-                LengthArray[i] = PreviousLengthArray[i];
+                for (int i = 0; i < PreviousRhoArray.Count; i++)
+                {
+                    RhoArray[i] = PreviousRhoArray[i];
+                    SigmaArray[i] = PreviousSigmaArray[i];
+                    LengthArray[i] = PreviousLengthArray[i];
+                }
+                SubRoughTB = m_dPrevioussigma;
+                ZOffsetTB = m_dPreviouszoffset;
+                m_dImpNorm = m_dPreviousImpNorm;
+
+                m_dCovarArray = null;
+
+                UpdateProfile();
             }
-            SubRoughTB = m_dPrevioussigma;
-            ZOffsetTB = m_dPreviouszoffset;
-            m_dImpNorm = m_dPreviousImpNorm;
+        }
 
-            m_dCovarArray = null;
+        protected bool CheckforParameterChange
+        {
+            get
+            {
+                bool change = false;
+                if (PreviousRhoArray.Count > 0)
+                {
+                    if(!((m_dPreviousImpNorm == m_dImpNorm) && (m_dPrevioussigma == SubRoughTB) && (m_dPreviouszoffset == ZOffsetTB)))
+                        change = true;
+                    for (int i = 0; i < PreviousRhoArray.Count; i++)
+                    {
+                        if (!((_RhoArray[i] == PreviousRhoArray[i]) && (_SigmaArray[i] == PreviousSigmaArray[i]) && (_LengthArray[i] == PreviousLengthArray[i])))
+                            change = true;
+                    }
 
-            UpdateProfile();
+                }
+                return change;
+            }
         }
 
         protected void BackupArrays()
         {
-            PreviousRhoArray.Clear();
-            PreviousSigmaArray.Clear();
-            PreviousLengthArray.Clear();
+                PreviousRhoArray.Clear();
+                PreviousSigmaArray.Clear();
+                PreviousLengthArray.Clear();
 
-            _RhoArray.ForEach(p => PreviousRhoArray.Add(p));
-            _SigmaArray.ForEach(p => PreviousSigmaArray.Add(p));
-            _LengthArray.ForEach(p => PreviousLengthArray.Add(p));
-            
-            m_dPrevioussigma = SubRoughTB;
-            m_dPreviouszoffset = ZOffsetTB;
-            m_dPreviousImpNorm = m_dImpNorm;
+                _RhoArray.ForEach(p => PreviousRhoArray.Add(p));
+                _SigmaArray.ForEach(p => PreviousSigmaArray.Add(p));
+                _LengthArray.ForEach(p => PreviousLengthArray.Add(p));
+
+                m_dPrevioussigma = SubRoughTB;
+                m_dPreviouszoffset = ZOffsetTB;
+                m_dPreviousImpNorm = m_dImpNorm;
         }
 
         public abstract void UpdateBoundsArrays(double[] UL, double[] LL);

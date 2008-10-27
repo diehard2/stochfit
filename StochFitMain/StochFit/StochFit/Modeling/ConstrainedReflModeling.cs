@@ -373,8 +373,8 @@ namespace StochasticModeling
         {
             if (m_bfitperformed && !m_bfitsaved)
             {
-                if (MessageBox.Show("A fit has been performed but not saved, would you like to save the fit", "Save", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                    SaveFitTB_Click(null, null);
+                if (MessageBox.Show("A fit has been performed but not saved, would you like to save the fit?", "Save", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    SaveBT_Click(null, null);
 
             }
         }
@@ -634,7 +634,7 @@ namespace StochasticModeling
 
         #endregion
 
-        private void SaveFitTB_Click(object sender, EventArgs e)
+        private void PreviousFitListTB_Click(object sender, EventArgs e)
         {
             if (ErrorWindow != null)
             {

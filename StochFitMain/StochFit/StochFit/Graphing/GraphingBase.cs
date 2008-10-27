@@ -248,10 +248,9 @@ namespace StochasticModeling
                 if (GraphCurveList[i].IsLine == true)
                 {
                     ((LineItem)(Pane.CurveList[i])).Color = Color.Black;//((LineItem)(graph.myPane.CurveList[i])).Color;
-
                     ((LineItem)(Pane.CurveList[i])).Symbol.Type = SymbolType.None;
-                    ((LineItem)(Pane.CurveList[i])).Line.IsAntiAlias = ((LineItem)(graph.GraphCurveList[i])).Line.IsAntiAlias;
                     ((LineItem)(Pane.CurveList[i])).Line.Style = (DashStyle)i;
+                    ((LineItem)(Pane.CurveList[i])).Line.IsAntiAlias = ((LineItem)(graph.GraphCurveList[i])).Line.IsAntiAlias;
                 }
             }
 
@@ -299,9 +298,6 @@ namespace StochasticModeling
                     GraphCurveList[i].Label.Text = " ";
                     GraphCurveList[i].Label.FontSpec = new FontSpec("Garamond", (float)12.0, Color.Transparent,false,false,false);
                     GraphCurveList[i].Label.FontSpec.Border.IsVisible = false;
-
-                    if (((LineItem)GraphCurveList[i]).Line.Style != 0)
-                        ((LineItem)GraphCurveList[i]).Line.Width += 1;
                 }
             }
         }
@@ -427,9 +423,9 @@ namespace StochasticModeling
                 // Use the HDash symbol so that the error bars look like I-beams
 
                 myECurve.Bar.Symbol.Type = SymbolType.HDash;
-                myECurve.Bar.Symbol.Border.Width = .1f;
+               /// myECurve.Bar.Symbol.Border.Width = .1f;
                 myECurve.Bar.Symbol.IsVisible = true;
-                myECurve.Bar.Symbol.Size = 1;
+                myECurve.Bar.Symbol.Size = 2;
             }
 
             AxisChange();

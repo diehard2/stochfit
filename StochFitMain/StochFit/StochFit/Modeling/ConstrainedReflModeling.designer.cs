@@ -121,7 +121,7 @@ namespace StochasticModeling
             this.controlbox = new System.Windows.Forms.GroupBox();
             this.SaveFitTB = new System.Windows.Forms.Button();
             this.label10 = new System.Windows.Forms.Label();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.FitnessScoreTB = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -151,7 +151,7 @@ namespace StochasticModeling
             // LevenbergFit
             // 
             this.LevenbergFit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.LevenbergFit.Location = new System.Drawing.Point(592, 402);
+            this.LevenbergFit.Location = new System.Drawing.Point(592, 372);
             this.LevenbergFit.Name = "LevenbergFit";
             this.LevenbergFit.Size = new System.Drawing.Size(108, 24);
             this.LevenbergFit.TabIndex = 2;
@@ -711,7 +711,7 @@ namespace StochasticModeling
             // 
             this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(746, 353);
+            this.pictureBox1.Location = new System.Drawing.Point(768, 353);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(172, 183);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -782,7 +782,7 @@ namespace StochasticModeling
             this.label15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label15.AutoSize = true;
             this.label15.Font = new System.Drawing.Font("Symbol", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(2)));
-            this.label15.Location = new System.Drawing.Point(746, 545);
+            this.label15.Location = new System.Drawing.Point(774, 545);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(26, 20);
             this.label15.TabIndex = 20;
@@ -791,11 +791,11 @@ namespace StochasticModeling
             // chisquaretb
             // 
             this.chisquaretb.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.chisquaretb.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chisquaretb.Location = new System.Drawing.Point(748, 568);
+            this.chisquaretb.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chisquaretb.Location = new System.Drawing.Point(776, 568);
             this.chisquaretb.Name = "chisquaretb";
             this.chisquaretb.ReadOnly = true;
-            this.chisquaretb.Size = new System.Drawing.Size(140, 35);
+            this.chisquaretb.Size = new System.Drawing.Size(140, 29);
             this.chisquaretb.TabIndex = 19;
             this.chisquaretb.TabStop = false;
             this.chisquaretb.Text = "0";
@@ -873,7 +873,7 @@ namespace StochasticModeling
             // button2
             // 
             this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button2.Location = new System.Drawing.Point(592, 432);
+            this.button2.Location = new System.Drawing.Point(592, 402);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(108, 24);
             this.button2.TabIndex = 4;
@@ -884,7 +884,7 @@ namespace StochasticModeling
             // ConstraintsBT
             // 
             this.ConstraintsBT.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.ConstraintsBT.Location = new System.Drawing.Point(592, 372);
+            this.ConstraintsBT.Location = new System.Drawing.Point(592, 432);
             this.ConstraintsBT.Name = "ConstraintsBT";
             this.ConstraintsBT.Size = new System.Drawing.Size(108, 24);
             this.ConstraintsBT.TabIndex = 3;
@@ -1162,24 +1162,24 @@ namespace StochasticModeling
             this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.Location = new System.Drawing.Point(748, 610);
+            this.label10.Location = new System.Drawing.Point(776, 610);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(107, 20);
             this.label10.TabIndex = 48;
             this.label10.Text = "Fitness Score";
             // 
-            // textBox1
+            // FitnessScoreTB
             // 
-            this.textBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox1.Location = new System.Drawing.Point(750, 633);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.ReadOnly = true;
-            this.textBox1.Size = new System.Drawing.Size(140, 35);
-            this.textBox1.TabIndex = 47;
-            this.textBox1.TabStop = false;
-            this.textBox1.Text = "0";
-            this.textBox1.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.FitnessScoreTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.FitnessScoreTB.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.FitnessScoreTB.Location = new System.Drawing.Point(778, 633);
+            this.FitnessScoreTB.Name = "FitnessScoreTB";
+            this.FitnessScoreTB.ReadOnly = true;
+            this.FitnessScoreTB.Size = new System.Drawing.Size(140, 29);
+            this.FitnessScoreTB.TabIndex = 47;
+            this.FitnessScoreTB.TabStop = false;
+            this.FitnessScoreTB.Text = "0";
+            this.FitnessScoreTB.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // ConstrainedReflmodeling
             // 
@@ -1188,7 +1188,7 @@ namespace StochasticModeling
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(952, 674);
             this.Controls.Add(this.label10);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.FitnessScoreTB);
             this.Controls.Add(this.SaveFitTB);
             this.Controls.Add(this.controlbox);
             this.Controls.Add(this.tabControl1);
@@ -1314,6 +1314,6 @@ namespace StochasticModeling
         public System.Windows.Forms.Label label14;
         private System.Windows.Forms.Button SaveFitTB;
         private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox FitnessScoreTB;
     }
 }

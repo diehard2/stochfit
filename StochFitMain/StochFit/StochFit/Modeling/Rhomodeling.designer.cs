@@ -540,11 +540,11 @@ namespace StochasticModeling
             // chisquaretb
             // 
             this.chisquaretb.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.chisquaretb.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chisquaretb.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.chisquaretb.Location = new System.Drawing.Point(560, 506);
             this.chisquaretb.Name = "chisquaretb";
             this.chisquaretb.ReadOnly = true;
-            this.chisquaretb.Size = new System.Drawing.Size(121, 35);
+            this.chisquaretb.Size = new System.Drawing.Size(121, 29);
             this.chisquaretb.TabIndex = 19;
             this.chisquaretb.Text = "0";
             this.chisquaretb.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -647,11 +647,11 @@ namespace StochasticModeling
             // FitnessScoreTB
             // 
             this.FitnessScoreTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.FitnessScoreTB.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.FitnessScoreTB.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FitnessScoreTB.Location = new System.Drawing.Point(560, 570);
             this.FitnessScoreTB.Name = "FitnessScoreTB";
             this.FitnessScoreTB.ReadOnly = true;
-            this.FitnessScoreTB.Size = new System.Drawing.Size(121, 35);
+            this.FitnessScoreTB.Size = new System.Drawing.Size(121, 29);
             this.FitnessScoreTB.TabIndex = 25;
             this.FitnessScoreTB.Text = "0";
             this.FitnessScoreTB.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;

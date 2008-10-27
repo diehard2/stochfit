@@ -185,7 +185,8 @@ namespace StochasticModeling
             RhoGraphing.LoadfromArray("Model Dependent Fit", ReflCalc.Z, ReflCalc.ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
             RhoGraphing.LoadfromArray("Model Dependent Box Fit", ReflCalc.Z, ReflCalc.BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
 
-            chisquaretb.ThreadSafeSetText(ReflCalc.ChiSquare.ToString());
+            chisquaretb.ThreadSafeSetText(ReflCalc.MakeChiSquare().ToString());
+            FitnessScoreTB.ThreadSafeSetText(ReflCalc.MakeFitnessScore().ToString());
 
             m_isupdating = false;
         }
@@ -345,12 +346,12 @@ namespace StochasticModeling
         private void LevenbergFit_Click(object sender, EventArgs e)
         {
             GetConstraints();
-            chisquaretb.Text = ReflCalc.DataFit();
-
+            
             if (ErrorWindow == null)
             {
                 ErrorWindow = new StochOutputWindow();
             }
+            ReflCalc.DataFit();
 
             ErrorWindow.AddModel(ReflCalc);
 

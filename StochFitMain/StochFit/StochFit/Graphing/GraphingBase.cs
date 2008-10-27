@@ -32,110 +32,6 @@ using System.Collections.Generic;
 
 namespace StochasticModeling
 {
-
-    //This class is necessary until Zedgraph cleans up bugs in current versions. Last working version is 4.1.1
-    public class ClipboardMetafileHelper
-    {
-        [DllImport("user32.dll")]
-        static extern bool OpenClipboard(IntPtr hWndNewOwner);
-        [DllImport("user32.dll")]
-        static extern bool EmptyClipboard();
-        [DllImport("user32.dll")]
-        static extern IntPtr SetClipboardData(uint uFormat, IntPtr hMem);
-        [DllImport("user32.dll")]
-        static extern bool CloseClipboard();
-        [DllImport("gdi32.dll")]
-        static extern IntPtr CopyEnhMetaFile(IntPtr hemfSrc, StringBuilder hNULL);
-        [DllImport("gdi32.dll")]
-        static extern bool DeleteEnhMetaFile(IntPtr hemf);
-
-        static public bool SaveEnhMetafileToFile(Metafile mf)
-        {
-            if (mf == null)
-                return false;
-
-            bool bResult = false;
-            IntPtr hEMF;
-            hEMF = mf.GetHenhmetafile(); // invalidates mf
-
-            if (!hEMF.Equals(new IntPtr(0)))
-            {
-                SaveFileDialog sfd = new SaveFileDialog();
-                sfd.Filter = "Extended Metafile (*.emf)|*.emf";
-                sfd.DefaultExt = ".emf";
-                if (sfd.ShowDialog() == DialogResult.OK)
-                {
-                    StringBuilder temp = new StringBuilder(sfd.FileName);
-                    CopyEnhMetaFile(hEMF, temp);
-                }
-                DeleteEnhMetaFile(hEMF);
-            }
-            return bResult;
-        }
-        // Metafile mf is set to a state that is not valid inside this function.
-        static public bool PutEnhMetafileOnClipboard(Metafile mf)
-        {
-
-            if (mf == null)
-                return false;
-
-            bool bResult = false;
-            IntPtr hEMF, hEMF2;
-
-            hEMF = mf.GetHenhmetafile(); // invalidates mf
-            if (!hEMF.Equals(new IntPtr(0)))
-            {
-                hEMF2 = CopyEnhMetaFile(hEMF, null);
-                if (!hEMF2.Equals(new IntPtr(0)))
-                {
-                    if (OpenClipboard(IntPtr.Zero))
-                    {
-                        if (EmptyClipboard())
-                        {
-                            IntPtr hRes = SetClipboardData(14 /*CF_ENHMETAFILE*/, hEMF2);
-                            bResult = hRes.Equals(hEMF2);
-                            CloseClipboard();
-                        }
-                    }
-                }
-                DeleteEnhMetaFile(hEMF);
-            }
-            return bResult;
-        }
-
-        static public Metafile GetMetafile(bool copylocal, bool masterpane, ZedGraphControl zg, PointF MousePos)
-        {
-            try
-            {
-                Graphics g = zg.CreateGraphics();
-                IntPtr hdc = g.GetHdc();
-                Metafile metaFile = new Metafile(hdc, EmfType.EmfPlusOnly);
-                g.ReleaseHdc(hdc);
-                g.Dispose();
-
-                Graphics gMeta = Graphics.FromImage(metaFile);
-
-                if (masterpane == true)
-                    if (copylocal)
-                        zg.MasterPane.FindPane(MousePos).Draw(gMeta);
-                    else
-                        zg.MasterPane.Draw(gMeta);
-                else
-                    zg.GraphPane.Draw(gMeta);
-
-                gMeta.Dispose();
-
-                return metaFile;
-            }
-            catch
-            {
-                MessageBox.Show("Could not capture image. Please place the cursor over a graph.");
-                return null;
-            }
-        }
-    }
-
-
 /// <summary>
 /// Base class for using the ZedGraph graphing control for a scatter plot. While this class can be extended, it also
 /// functions
@@ -688,22 +584,22 @@ namespace StochasticModeling
 
         public void CopyMetatoClip(object sender, System.EventArgs e)
         {
-            ClipboardMetafileHelper.PutEnhMetafileOnClipboard(ClipboardMetafileHelper.GetMetafile(false, true, m_cZG, m_cMousePos));
+            ZGControl.CopyEmf(false);
         }
 
         public void CopyLocalGraph(object sender, System.EventArgs e)
         {
-            ClipboardMetafileHelper.PutEnhMetafileOnClipboard(ClipboardMetafileHelper.GetMetafile(true, true, m_cZG, m_cMousePos));
+            ZGControl.CopyEmf(false, m_cMousePos);
         }
 
         public void SaveLocalEMFFile(object sender, System.EventArgs e)
         {
-            ClipboardMetafileHelper.SaveEnhMetafileToFile(ClipboardMetafileHelper.GetMetafile(true, true, m_cZG, m_cMousePos));
+            ZGControl.SaveAsEmf((PointF?)m_cMousePos);
         }
 
         public void SaveEMFFile(object sender, System.EventArgs e)
         {
-            ClipboardMetafileHelper.SaveEnhMetafileToFile(ClipboardMetafileHelper.GetMetafile(false, true, m_cZG, m_cMousePos));
+            ZGControl.SaveAsEmf(m_cMousePos);
         }
     }
 }

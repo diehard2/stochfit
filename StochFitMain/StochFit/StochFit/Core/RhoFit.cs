@@ -12,7 +12,6 @@ namespace StochasticModeling
 
         protected override void SaveParamsForReport()
         {
-       
             ReportGenerator g = ReportGenerator.Instance;
             g.ClearRhoModelInfo();
 
@@ -62,8 +61,6 @@ namespace StochasticModeling
         public override string DataFit()
         {
             BackupArrays();
-
-            double[] info = new double[9];
             double[] parameters = null;
             int arrayconst;
 
@@ -74,7 +71,7 @@ namespace StochasticModeling
             InfoStruct = new BoxModelSettings();
             SetInitStruct(ref InfoStruct, null);
 
-            Calculations.Rhofit(InfoStruct, parameters, CovarArray, parameters.Length, info, info.Length);
+            Calculations.Rhofit(InfoStruct, parameters, m_dCovarArray, parameters.Length, _fitinfo);
            
             InfoStruct.Dispose();
 
@@ -108,8 +105,6 @@ namespace StochasticModeling
 
             return MakeChiSquare();
         }
-
-
 
         public override string ErrorReport()
         {
@@ -155,15 +150,13 @@ namespace StochasticModeling
 
         public override string MakeChiSquare()
         {
-            ChiSquare = HelperFunctions.FitnessScore(RealRho, ElectronDensityArray, 0, 0, ParamSize());
+            ChiSquare = HelperFunctions.MakeChiSquare(RealRho, ElectronDensityArray,null, 0, 0, ParamSize());
             return ChiSquare.ToString("##.### E-0");
         }
 
-
-
         public override string MakeFitnessScore()
         {
-            FitnessScore = HelperFunctions.FitnessScore(RealRho, ElectronDensityArray, 0, 0, ParamSize());
+            FitnessScore = HelperFunctions.EDFitnessScore(RealRho, ElectronDensityArray, 0, 0, ParamSize());
             return FitnessScore.ToString("##.### E-0");
         }
 
@@ -176,6 +169,11 @@ namespace StochasticModeling
                 paramsize = BoxCountTB * 3 + 2;
 
             return paramsize;
+        }
+
+        public override void WriteFiles(System.IO.FileInfo path)
+        {
+            throw new NotImplementedException();
         }
     }
 }

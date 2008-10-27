@@ -121,7 +121,7 @@ namespace StochasticModeling
         /// <param name="info"></param>
         /// <param name="infosize"></param>
         [DllImport("LevMardll.dll", EntryPoint = "FastReflfit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void FastReflfit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int covarsize, double[] info, int infosize);
+        public static extern void FastReflfit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int covarsize, double[] info);
 
         /// <summary>
         /// Generates a smoothed and box electron density profile
@@ -144,7 +144,7 @@ namespace StochasticModeling
         /// <param name="info"></param>
         /// <param name="infosize"></param>
         [DllImport("LevMardll.dll", EntryPoint = "Rhofit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void Rhofit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int covarsize, double[] info, int infosize);
+        public static extern void Rhofit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int covarsize, double[] info);
 
         /// <summary>
         /// Performs a stochastic search of the parameter space using a constrained Levenberg-Marquadt least squares 

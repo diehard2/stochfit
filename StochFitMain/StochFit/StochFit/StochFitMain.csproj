@@ -128,10 +128,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="ZedGraph, Version=5.1.4.31904, Culture=neutral, PublicKeyToken=02a83cbd123fcd60, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\ZedGraph.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\HelperFunctions.cs" />
@@ -356,4 +352,10 @@ copy ..\..\bin\dlls\libguide40.dll $(OutDir)
 copy ..\..\bin\dlls\genf.ico $(OutDir)
 copy ..\..\bin\dlls\levmarmkl.dll $(OutDir)</PostBuildEvent>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\ZedGraph\source\ZedGraph.csproj">
+      <Project>{2541686B-1673-43BF-AF89-3163945DB009}</Project>
+      <Name>ZedGraph</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

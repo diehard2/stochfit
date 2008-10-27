@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using StochasticModeling.Settings;
+using System.IO;
 
 
 #pragma warning disable 1591
@@ -24,7 +25,7 @@ namespace StochasticModeling
         protected List<BoxReflFitBase> FitHolder;
         protected double m_dPrevioussigma;
 
-        private double[] _fitinfo;
+        protected double[] _fitinfo;
 
         private double _FitnessScore;
 
@@ -111,6 +112,7 @@ namespace StochasticModeling
         }
 
         public abstract Type GetType();
+        public abstract void WriteFiles(FileInfo path);
 
         public BoxReflFitBase(BoxReflFitBase previousFitBase)
         {
@@ -405,7 +407,7 @@ namespace StochasticModeling
                 case 6:
                     return "Stopped by small error - OK";
                 default:
-                    return "Uknown reason for termination";
+                    return "Uknown";
             }
         }
 

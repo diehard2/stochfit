@@ -42,17 +42,13 @@ namespace StochasticModeling.Core
 
             if (errors == null)
             {
-                errors = new double[data.Length];
-
-                for (int i = 0; i < data.Length; i++)
-                {
-                    errors[i] = 1.0;
-                }
+                errors = data;
             }
 
             for (int i = lowqoffset; i < data.Length - highqoffset; i++)
             {
-                chi = (data[i] - fit[i]) * (data[i] - fit[i]) / errors[i];
+                if(errors[i] > 0)
+                    chi += (data[i] - fit[i]) * (data[i] - fit[i]) / (errors[i]*errors[i]);
             }
 
             chi /= (data.Length - highqoffset - lowqoffset - parameters);
@@ -60,12 +56,23 @@ namespace StochasticModeling.Core
             return chi;
         }
 
-        public static double FitnessScore(double[] data, double[] fit, int highqoffset, int lowqoffset, int parameters)
+        public static double EDFitnessScore(double[] data, double[] fit, int highqoffset, int lowqoffset, int parameters)
         {
             double fitness = 0;
             for (int i = lowqoffset; i < data.Length - highqoffset; i++)
             {
-                fitness = (Math.Log(data[i]) - Math.Log(fit[i])) * (Math.Log(data[i]) - Math.Log(fit[i]));
+                fitness += (data[i] - fit[i]) * (data[i] - fit[i]);
+            }
+
+            return fitness;
+        }
+
+        public static double ReflFitnessScore(double[] data, double[] fit, int highqoffset, int lowqoffset, int parameters)
+        {
+            double fitness = 0;
+            for (int i = lowqoffset; i < data.Length - highqoffset; i++)
+            {
+                fitness += Math.Pow((Math.Log(data[i]) - Math.Log(fit[i])), 2.0);
             }
 
             return fitness;

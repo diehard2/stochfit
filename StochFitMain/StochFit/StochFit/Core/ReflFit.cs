@@ -100,8 +100,6 @@ namespace StochasticModeling
         public override string DataFit()
         {
             BackupArrays();
-
-            double[] info = new double[9];
             double[] parameters = null;
            
             MakeParameters(ref parameters, false);
@@ -112,7 +110,7 @@ namespace StochasticModeling
             SetInitStruct(ref InfoStruct, null);
 
 
-            Calculations.FastReflfit(InfoStruct, parameters, CovarArray, parameters.Length, info, info.Length);
+            Calculations.FastReflfit(InfoStruct, parameters, m_dCovarArray, parameters.Length, _fitinfo);
 
             InfoStruct.Dispose();
 
@@ -227,6 +225,7 @@ namespace StochasticModeling
             _RhoArray = new List<double>(b.RhoArray.ToArray());
             _LengthArray = new List<double>(b.LengthArray.ToArray());
             _SigmaArray = new List<double>(b.SigmaArray.ToArray());
+            _fitinfo = (double[])((ReflFit)b)._fitinfo.Clone();
             m_dCovarArray = b.CovarArray;
             m_dChiSquare = b.ChiSquare;
             SubRoughTB = b.GetSubRoughness;
@@ -240,27 +239,38 @@ namespace StochasticModeling
 
         public override string MakeChiSquare()
         {
-            ChiSquare = HelperFunctions.FitnessScore(RealRho, ElectronDensityArray, 0, 0, ParamSize());
-            return ChiSquare.ToString("##.### E-0");
+            ChiSquare = HelperFunctions.MakeChiSquare(ReflData.Instance.GetReflData, ReflectivityMap, ReflData.Instance.GetRErrors,
+                HighQOffset, LowQOffset, ParamSize());
+            return ChiSquare.ToString("#.### E-0");
         }
 
 
 
         public override string MakeFitnessScore()
         {
-            FitnessScore = HelperFunctions.FitnessScore(ReflData.Instance.GetReflData, ReflectivityMap, HighQOffset, LowQOffset, ParamSize());
-            return FitnessScore.ToString("##.### E-0");
+            FitnessScore = HelperFunctions.ReflFitnessScore(ReflData.Instance.GetReflData, ReflectivityMap, HighQOffset, LowQOffset, ParamSize());
+            return FitnessScore.ToString("#.### E-0");
         }
 
         private int ParamSize()
         {
             int paramsize = 0;
+            int paramcount = 1;
+
+            if (!ImpNormCB)
+                paramcount = 2;
+
             if (HoldsigmaCB)
-                paramsize = BoxCountTB * 2 + 2;
+                paramsize = BoxCountTB * 2 + paramcount;
             else
-                paramsize = BoxCountTB * 3 + 2;
+                paramsize = BoxCountTB * 3 + paramcount;
 
             return paramsize;
+        }
+
+        public override void WriteFiles(System.IO.FileInfo path)
+        {
+            throw new NotImplementedException();
         }
     }
 }

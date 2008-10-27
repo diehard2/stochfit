@@ -46,7 +46,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     return TRUE;
 }
 
-extern "C" LEVMARDLL_API void Rhofit(BoxReflSettings* InitStruct, double parameters[], double covariance[], int parametersize, double info[], int infosize)
+extern "C" LEVMARDLL_API void Rhofit(BoxReflSettings* InitStruct, double parameters[], double covariance[], int parametersize, double info[])
 {
 	USES_CONVERSION;
 
@@ -96,8 +96,7 @@ extern "C" LEVMARDLL_API void RhoGenerate(BoxReflSettings* InitStruct, double pa
 }
 
 
-extern "C" LEVMARDLL_API void FastReflfit(BoxReflSettings* InitStruct, double params[], double covariance[], int paramsize, 
-			double info[], int infosize)
+extern "C" LEVMARDLL_API void FastReflfit(BoxReflSettings* InitStruct, double params[], double covariance[], int paramsize, double info[])
 {
 	USES_CONVERSION;
 
@@ -123,7 +122,6 @@ extern "C" LEVMARDLL_API void FastReflfit(BoxReflSettings* InitStruct, double pa
 	
 	work=new double[((LM_DIF_WORKSZ(paramsize, InitStruct->QPoints)+paramsize*InitStruct->QPoints))];
 	covar=work+LM_DIF_WORKSZ(paramsize, InitStruct->QPoints);
-	//Refl.SetOffsets(0,0);
 
 	if(InitStruct->UL == NULL)
 		dlevmar_dif(Refl.objective,params, xvec, paramsize,InitStruct->QPoints, 1000, opts, info, work, covar,(void*)(&Refl)); 

@@ -413,7 +413,7 @@ double CReflCalc::Objective(CEDP* EDP)
 	
 
 
-	//Calculate the Chi Square of R/Rf(reduced with no parameters)
+	//Calculate the Chi Square (reduced with no parameters)
 	for(int i= 0; i< counter; i++)
 	{
 		calcholder1 = (yi[i]-reflpt[i]);

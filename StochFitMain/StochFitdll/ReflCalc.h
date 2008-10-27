@@ -25,9 +25,24 @@
 class CReflCalc {
 private:
 
+	//Variables
+	double totalsize;
+    double lambda,k0;
+	BOOL m_bforcenorm;
+	BOOL m_bImpNorm;
+	int m_iuseableprocessors;
+	double m_dwaveconstant;
+	MyComplex* m_ckk;
+	double* m_dkk;
+	MyComplex* m_cak;
+	MyComplex* m_crj;
+	double* m_drj;
+	MyComplex* m_cRj;
+
 	double *tsinsquaredthetai,*sinsquaredthetai,*qspreadsinsquaredthetai,*qspreadreflpt,*qspreadsinthetai;
 
 
+	//Functions
 	void impnorm(double* refl, int datapoints, bool isimprefl);
 	void MyTransparentRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
 	void QsmearRf(double* qspreadreflpt, double* reflpt, int datapoints);
@@ -42,33 +57,15 @@ private:
 public:
 
 	//Variables
-
+	double m_dChiSquare;
+	double m_dgoodnessoffit;
 	float m_dQSpread;
-	
-	double m_dwaveconstant;
 	float m_dnormfactor;
 
 	//read from file
     double *xi,*yi,*eyi,*exi,*sinthetai,*reflpt,*dataout,*tsinthetai,*qarray;
     int m_idatapoints, tarraysize;
-
-
-	double totalsize;
-
-    double lambda,k0;
-    double m_dChiSquare;
-	double m_dgoodnessoffit;
-	BOOL m_bforcenorm;
-	BOOL m_bImpNorm;
-	int m_iuseableprocessors;
-
-	MyComplex* m_ckk;
-	double* m_dkk;
-	MyComplex* m_cak;
-	MyComplex* m_crj;
-	double* m_drj;
-	MyComplex* m_cRj;
-
+	
 	//Member functions
 	CReflCalc();
 	~CReflCalc();
@@ -79,6 +76,8 @@ public:
 	void SetupRef(ReflSettings* InitStruct);
 	double Objective(CEDP* EDP);
     void ParamsRF(CEDP* EDP, wstring reflfile);
+
+	//Get/Let Functions
 	double GetWaveConstant();
     
 	int objectivefunction;

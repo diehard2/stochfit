@@ -254,11 +254,14 @@ namespace StochasticModeling
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
-            if (m_bfitperformed && !m_bfitsaved)
+            if (Properties.Settings.Default.DisableSavePrompt == false)
             {
-                if (MessageBox.Show("A fit has been performed but not saved, would you like to save the fit","Save", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                    SaveFitTB_Click(null, null);
+                if (m_bfitperformed && !m_bfitsaved)
+                {
+                    if (MessageBox.Show("A fit has been performed but not saved, would you like to save the fit", "Save", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                        SaveFitTB_Click(null, null);
 
+                }
             }
         }
 

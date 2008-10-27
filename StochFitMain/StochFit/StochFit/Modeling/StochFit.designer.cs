@@ -130,6 +130,7 @@ namespace StochasticModeling
             this.SAModeTB = new System.Windows.Forms.TextBox();
             this.label17 = new System.Windows.Forms.Label();
             this.FitScoreTB = new System.Windows.Forms.TextBox();
+            this.SaveReminderCTB = new System.Windows.Forms.ToolStripMenuItem();
             this.ParametersBox.SuspendLayout();
             this.MiscParametersBox.SuspendLayout();
             this.FittingParamBox.SuspendLayout();
@@ -856,8 +857,7 @@ namespace StochasticModeling
             "Log(R) Cost Function",
             "Inverse Cost Function",
             "Log(R) Cost Function with errors",
-            "Inverse Cost Function with errors",
-            "R/Rf Chi Square"});
+            "Inverse Cost Function with errors"});
             this.objectiveCB.Name = "objectiveCB";
             this.objectiveCB.Size = new System.Drawing.Size(200, 23);
             // 
@@ -929,7 +929,8 @@ namespace StochasticModeling
             this.errorsAreInVarianceToolStripMenuItem,
             this.forceRQ4GraphingToolStripMenuItem,
             this.UseSLDToolStripMenuItem,
-            this.debugToolStripMenuItem});
+            this.debugToolStripMenuItem,
+            this.SaveReminderCTB});
             this.miscellaneousOptionsToolStripMenuItem.Name = "miscellaneousOptionsToolStripMenuItem";
             this.miscellaneousOptionsToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.miscellaneousOptionsToolStripMenuItem.Text = "Miscellaneous Options";
@@ -937,28 +938,28 @@ namespace StochasticModeling
             // errorsAreInVarianceToolStripMenuItem
             // 
             this.errorsAreInVarianceToolStripMenuItem.Name = "errorsAreInVarianceToolStripMenuItem";
-            this.errorsAreInVarianceToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.errorsAreInVarianceToolStripMenuItem.Size = new System.Drawing.Size(198, 22);
             this.errorsAreInVarianceToolStripMenuItem.Text = "Errors are in Variance";
             this.errorsAreInVarianceToolStripMenuItem.Click += new System.EventHandler(this.errorsAreInVarianceToolStripMenuItem_Click);
             // 
             // forceRQ4GraphingToolStripMenuItem
             // 
             this.forceRQ4GraphingToolStripMenuItem.Name = "forceRQ4GraphingToolStripMenuItem";
-            this.forceRQ4GraphingToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.forceRQ4GraphingToolStripMenuItem.Size = new System.Drawing.Size(198, 22);
             this.forceRQ4GraphingToolStripMenuItem.Text = "Force RQ^4 graphing";
             this.forceRQ4GraphingToolStripMenuItem.Click += new System.EventHandler(this.forceRQ4GraphingToolStripMenuItem_Click);
             // 
             // UseSLDToolStripMenuItem
             // 
             this.UseSLDToolStripMenuItem.Name = "UseSLDToolStripMenuItem";
-            this.UseSLDToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.UseSLDToolStripMenuItem.Size = new System.Drawing.Size(198, 22);
             this.UseSLDToolStripMenuItem.Text = "Use SLD";
             this.UseSLDToolStripMenuItem.Click += new System.EventHandler(this.neutronDataToolStripMenuItem_Click);
             // 
             // debugToolStripMenuItem
             // 
             this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
-            this.debugToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.debugToolStripMenuItem.Size = new System.Drawing.Size(198, 22);
             this.debugToolStripMenuItem.Text = "Debug";
             this.debugToolStripMenuItem.Click += new System.EventHandler(this.debugToolStripMenuItem_Click);
             // 
@@ -1143,6 +1144,13 @@ namespace StochasticModeling
             this.FitScoreTB.TabStop = false;
             this.FitScoreTB.Text = "0";
             // 
+            // SaveReminderCTB
+            // 
+            this.SaveReminderCTB.Name = "SaveReminderCTB";
+            this.SaveReminderCTB.Size = new System.Drawing.Size(198, 22);
+            this.SaveReminderCTB.Text = "Turn off Save Reminder";
+            this.SaveReminderCTB.Click += new System.EventHandler(this.DisableSavePrompt);
+            // 
             // Stochfit
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -1297,6 +1305,7 @@ namespace StochasticModeling
         private System.Windows.Forms.ToolStripTextBox SigmaSearchTB;
         private System.Windows.Forms.ToolStripTextBox AbsorptionSearchTB;
         private System.Windows.Forms.ToolStripTextBox NormSearchTB;
+        private System.Windows.Forms.ToolStripMenuItem SaveReminderCTB;
 	}
 }
 

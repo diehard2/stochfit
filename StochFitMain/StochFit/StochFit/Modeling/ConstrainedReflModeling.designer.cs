@@ -122,12 +122,12 @@ namespace StochasticModeling
             this.loadingCircle2 = new MRG.Controls.UI.LoadingCircle();
             this.EDzedGraphControl1 = new ZedGraph.ZedGraphControl();
             this.controlbox = new System.Windows.Forms.GroupBox();
-            this.SaveFitTB = new System.Windows.Forms.Button();
+            this.PrevFitTB = new System.Windows.Forms.Button();
             this.label10 = new System.Windows.Forms.Label();
             this.FitnessScoreTB = new System.Windows.Forms.TextBox();
             this.SaveBT = new System.Windows.Forms.Button();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-            this.button3 = new System.Windows.Forms.Button();
+            this.ClearReportBT = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -1152,16 +1152,16 @@ namespace StochasticModeling
             this.controlbox.TabIndex = 0;
             this.controlbox.TabStop = false;
             // 
-            // SaveFitTB
+            // PrevFitTB
             // 
-            this.SaveFitTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.SaveFitTB.Location = new System.Drawing.Point(592, 526);
-            this.SaveFitTB.Name = "SaveFitTB";
-            this.SaveFitTB.Size = new System.Drawing.Size(108, 24);
-            this.SaveFitTB.TabIndex = 46;
-            this.SaveFitTB.Text = "Previous Fits";
-            this.SaveFitTB.UseVisualStyleBackColor = true;
-            this.SaveFitTB.Click += new System.EventHandler(this.PreviousFitListTB_Click);
+            this.PrevFitTB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.PrevFitTB.Location = new System.Drawing.Point(592, 526);
+            this.PrevFitTB.Name = "PrevFitTB";
+            this.PrevFitTB.Size = new System.Drawing.Size(108, 24);
+            this.PrevFitTB.TabIndex = 46;
+            this.PrevFitTB.Text = "Previous Fits";
+            this.PrevFitTB.UseVisualStyleBackColor = true;
+            this.PrevFitTB.Click += new System.EventHandler(this.PreviousFitListTB_Click);
             // 
             // label10
             // 
@@ -1198,16 +1198,16 @@ namespace StochasticModeling
             this.SaveBT.UseVisualStyleBackColor = true;
             this.SaveBT.Click += new System.EventHandler(this.SaveBT_Click);
             // 
-            // button3
+            // ClearReportBT
             // 
-            this.button3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button3.Location = new System.Drawing.Point(592, 588);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(108, 24);
-            this.button3.TabIndex = 50;
-            this.button3.Text = "Clear Report";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click_1);
+            this.ClearReportBT.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.ClearReportBT.Location = new System.Drawing.Point(592, 588);
+            this.ClearReportBT.Name = "ClearReportBT";
+            this.ClearReportBT.Size = new System.Drawing.Size(108, 24);
+            this.ClearReportBT.TabIndex = 50;
+            this.ClearReportBT.Text = "Clear Report";
+            this.ClearReportBT.UseVisualStyleBackColor = true;
+            this.ClearReportBT.Click += new System.EventHandler(this.button3_Click_1);
             // 
             // ConstrainedReflmodeling
             // 
@@ -1215,11 +1215,11 @@ namespace StochasticModeling
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(952, 674);
-            this.Controls.Add(this.button3);
+            this.Controls.Add(this.ClearReportBT);
             this.Controls.Add(this.SaveBT);
             this.Controls.Add(this.label10);
             this.Controls.Add(this.FitnessScoreTB);
-            this.Controls.Add(this.SaveFitTB);
+            this.Controls.Add(this.PrevFitTB);
             this.Controls.Add(this.controlbox);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.ConstraintsBT);
@@ -1342,11 +1342,11 @@ namespace StochasticModeling
         private MRG.Controls.UI.LoadingCircle loadingCircle2;
         private System.Windows.Forms.GroupBox controlbox;
         public System.Windows.Forms.Label label14;
-        private System.Windows.Forms.Button SaveFitTB;
+        private System.Windows.Forms.Button PrevFitTB;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.TextBox FitnessScoreTB;
         private System.Windows.Forms.Button SaveBT;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button ClearReportBT;
     }
 }

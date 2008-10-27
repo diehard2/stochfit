@@ -357,14 +357,17 @@ double SimAnneal::TakeStep(ParamVector* params)
 		{
 			params->setroughness(random(params->getroughness()*(1+roughmult*mc_stepsize),params->getroughness()*(1-roughmult*mc_stepsize)));
 		}
-		else if(perc > m_isigmasearch && perc <= m_isigmasearch + m_inormsearch)
+		else if(perc > m_isigmasearch && perc <= m_isigmasearch + m_iabssearch)
 		{
 			params->setSurfAbs(random(params->getSurfAbs()*(1.0+mc_stepsize),params->getSurfAbs()*(1.0-mc_stepsize)));
 		}
 		else
 		{
 			params->setImpNorm(random(params->getImpNorm()*(1.0+mc_stepsize),params->getImpNorm()*(1.0-mc_stepsize)));
+			//We have to update the reflectivity generator with the normalization factor, the EDP has no concept of this
+			multi->m_dnormfactor = params->getImpNorm();
 		}
+		
 		
 		m_cEDP->GenerateEDP(params);
 		return multi->Objective(m_cEDP);

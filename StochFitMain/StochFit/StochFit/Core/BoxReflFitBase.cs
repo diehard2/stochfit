@@ -61,7 +61,15 @@ namespace StochasticModeling
 
         public double[] CovarArray
         {
-            get { return (double[]) m_dCovarArray.Clone(); }
+            get
+            {
+                if (m_dCovarArray != null)
+                {
+                    return (double[])m_dCovarArray.Clone();
+                }
+                else
+                    return null;
+            }
             set { m_dCovarArray = (double[])value.Clone(); }
         }
         protected double m_dPreviouszoffset;

@@ -49,7 +49,7 @@ namespace StochasticModeling.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1.6.1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1.7.0")]
         public string ResumeBreakingVersion {
             get {
                 return ((string)(this["ResumeBreakingVersion"]));
@@ -65,6 +65,18 @@ namespace StochasticModeling.Properties {
             }
             set {
                 this["UseSLDSingleSession"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DisableSavePrompt {
+            get {
+                return ((bool)(this["DisableSavePrompt"]));
+            }
+            set {
+                this["DisableSavePrompt"] = value;
             }
         }
     }

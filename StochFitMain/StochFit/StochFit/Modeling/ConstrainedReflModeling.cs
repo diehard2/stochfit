@@ -138,6 +138,7 @@ namespace StochasticModeling
            
             //Setup the callback to update the frontend with new information
             ReflCalc.Update += new BoxReflFitBase.UpdateProfileHandler(ReflCalc_Update);
+            ReflCalc_Update(null, null);
             MakeReflectivity();
         }
 
@@ -371,11 +372,14 @@ namespace StochasticModeling
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
-            if (m_bfitperformed && !m_bfitsaved)
+            if (Properties.Settings.Default.DisableSavePrompt == false)
             {
-                if (MessageBox.Show("A fit has been performed but not saved, would you like to save the fit?", "Save", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                    SaveBT_Click(null, null);
+                if (m_bfitperformed && !m_bfitsaved)
+                {
+                    if (MessageBox.Show("A fit has been performed but not saved, would you like to save the fit?", "Save", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                        SaveBT_Click(null, null);
 
+                }
             }
         }
 
@@ -430,8 +434,8 @@ namespace StochasticModeling
         private void DisablePanel(bool onoff)
         {
             tabControl1.SelectedIndex = 0;
-            controlbox.Enabled = button1.Enabled = UndoFit.Enabled = button2.Enabled = LevenbergFit.Enabled = 
-            ConstraintsBT.Enabled = groupBox1.Enabled = tabControl1.Enabled = !onoff;
+            controlbox.Enabled = button1.Enabled = UndoFit.Enabled = button2.Enabled = LevenbergFit.Enabled = ClearReportBT.Enabled =
+            PrevFitTB.Enabled = SaveBT.Enabled = ConstraintsBT.Enabled = groupBox1.Enabled = tabControl1.Enabled = !onoff;
             loadingCircle1.Active = loadingCircle1.Visible = onoff;
         }
         

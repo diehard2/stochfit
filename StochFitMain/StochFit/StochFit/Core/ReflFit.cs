@@ -40,11 +40,14 @@ namespace StochasticModeling
 
             Calculations.ConstrainedStochFit(InfoStruct, parameters, CovarArray, parameters.Length, new double[9], ParamArray, ChiSquareArray,ref Size);
             
+            //Not ideal, will always back up regardless of whether the new model is accepted or not
+            BackupArrays();
+
             if (ModelChooser != null)
             {
                 if (ModelChooser(ParamArray, ChiSquareArray, CovarArray, Size, parameters.Length, InfoStruct))
                 {
-                    BackupArrays();
+                    
                 }
             }
 
@@ -203,7 +206,6 @@ namespace StochasticModeling
             b.NormalizationFactor = NormalizationFactor;
             b.HighQOffset = HighQOffset;
             b.LowQOffset = LowQOffset;
-            b.CovarArray = (double[])CovarArray.Clone();
             b.m_dChiSquare = m_dChiSquare;
             b.UpdateProfile();
 

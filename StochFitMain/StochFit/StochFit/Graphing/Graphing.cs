@@ -325,7 +325,9 @@ namespace StochasticModeling
                         SetAxisTitles("Q/Qc", "Intensity / Fresnel");
                     else
                         SetAxisTitles("Q", "Intensity (RQ^4)");
-
+                    
+                    Pane.XAxis.Scale.Min = 0.0;
+                    
                     AddCurvetoGraph(locRefl, locReflerror, name, color, symbol, symbolsize, "realdatafile");
                 }
                 

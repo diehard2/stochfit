@@ -92,6 +92,7 @@ namespace StochasticModeling
             //Set properties that persist
             Properties.Settings.Default.UseSLDSingleSession = UseSLDToolStripMenuItem.Checked = Properties.Settings.Default.UseSLD;
             forceRQ4GraphingToolStripMenuItem.Checked = Properties.Settings.Default.ForceRQ4;
+            SaveReminderCTB.Checked = Properties.Settings.Default.DisableSavePrompt;
 
             InfoStruct = new ModelSettings();
             //Object for thread synchronization
@@ -1056,6 +1057,13 @@ namespace StochasticModeling
          {
              ((ToolStripMenuItem)sender).Checked = !((ToolStripMenuItem)sender).Checked;
          }
+
+        private void DisableSavePrompt(object sender, EventArgs e)
+        {
+            MenuItem_Check(sender, e);
+            Properties.Settings.Default.DisableSavePrompt = SaveReminderCTB.Checked;
+            Properties.Settings.Default.Save();
+        }
     
        
         

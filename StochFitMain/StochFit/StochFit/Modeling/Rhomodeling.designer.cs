@@ -81,6 +81,8 @@ namespace StochasticModeling
             this.SaveFitTB = new System.Windows.Forms.Button();
             this.label15 = new System.Windows.Forms.Label();
             this.FitnessScoreTB = new System.Windows.Forms.TextBox();
+            this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+            this.button2 = new System.Windows.Forms.Button();
             this.ParameterGB.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -541,7 +543,7 @@ namespace StochasticModeling
             // 
             this.chisquaretb.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.chisquaretb.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chisquaretb.Location = new System.Drawing.Point(560, 506);
+            this.chisquaretb.Location = new System.Drawing.Point(560, 511);
             this.chisquaretb.Name = "chisquaretb";
             this.chisquaretb.ReadOnly = true;
             this.chisquaretb.Size = new System.Drawing.Size(121, 29);
@@ -617,7 +619,7 @@ namespace StochasticModeling
             this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Symbol", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(2)));
-            this.label10.Location = new System.Drawing.Point(563, 483);
+            this.label10.Location = new System.Drawing.Point(563, 488);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(26, 20);
             this.label10.TabIndex = 23;
@@ -632,6 +634,7 @@ namespace StochasticModeling
             this.SaveFitTB.TabIndex = 24;
             this.SaveFitTB.Text = "Save Fit";
             this.SaveFitTB.UseVisualStyleBackColor = true;
+            this.SaveFitTB.Click += new System.EventHandler(this.SaveFitTB_Click);
             // 
             // label15
             // 
@@ -656,12 +659,24 @@ namespace StochasticModeling
             this.FitnessScoreTB.Text = "0";
             this.FitnessScoreTB.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
+            // button2
+            // 
+            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button2.Location = new System.Drawing.Point(579, 457);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(108, 24);
+            this.button2.TabIndex = 27;
+            this.button2.Text = "Clear Report";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
             // Rhomodeling
             // 
             this.AcceptButton = this.LevenbergFit;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(693, 619);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.label15);
             this.Controls.Add(this.FitnessScoreTB);
             this.Controls.Add(this.SaveFitTB);
@@ -752,5 +767,7 @@ namespace StochasticModeling
         private System.Windows.Forms.Button SaveFitTB;
         private System.Windows.Forms.Label label15;
         private System.Windows.Forms.TextBox FitnessScoreTB;
+        private System.Windows.Forms.SaveFileDialog saveFileDialog1;
+        private System.Windows.Forms.Button button2;
     }
 }

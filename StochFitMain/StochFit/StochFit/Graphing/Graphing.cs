@@ -27,6 +27,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Globalization;
 using System.Collections.Generic;
+using StochasticModeling.Core;
 
 namespace StochasticModeling
 {
@@ -228,13 +229,16 @@ namespace StochasticModeling
             Invalidate();
         }
 
-      /// <summary>
-      /// Load the data in the singleton <seealso cref="ReflData"/> to the graph
-      /// </summary>
-      /// <param name="name">A unique name for the data</param>
-      /// <param name="color">The color of the data line</param>
-      /// <param name="symbol">Symbol Shape</param>
-      /// <param name="symbolsize">Size of the symbol</param>
+
+        /// <summary>
+        /// Load the data in the singleton <seealso cref="ReflData"/> to the graph
+        /// </summary>
+        /// <param name="name">A unique name for the data</param>
+        /// <param name="color">The color of the data line</param>
+        /// <param name="symbol">Symbol Shape</param>
+        /// <param name="symbolsize">Size of the symbol</param>
+        /// <param name="XData">Q Data Points in A^-1</param>
+        /// <param name="YData">Reflectivity data in intensity</param>
         public void LoadDatawithErrorstoGraph(string name, Color color, SymbolType symbol,int symbolsize, double[] XData, double[] YData)
         {
             try
@@ -243,7 +247,7 @@ namespace StochasticModeling
                 m_bdatafile = true;
                 m_bnegativeerrorval = false;
 
-                double Qc = CalcQc(m_dSubSLD, m_dSupSLD);
+                double Qc = HelperFunctions.CalcQc(m_dSubSLD, m_dSupSLD);
 
                 if (Qc < .005 && m_bDBF)
                 {
@@ -297,7 +301,7 @@ namespace StochasticModeling
                     {
                         if (m_bDBF)
                         {
-                            double fresnelpt = CalcFresnelPoint(RealReflData[i].X, Qc);
+                            double fresnelpt = HelperFunctions.CalcFresnelPoint(RealReflData[i].X, Qc);
 
                             locRefl.Add(RealReflData[i].X / Qc, RealReflData[i].Y / fresnelpt);
                             locReflerror.Add(RealReflErrors[i].X / Qc, RealReflErrors[i].Y / fresnelpt, RealReflErrors[i].Z / fresnelpt);
@@ -359,7 +363,7 @@ namespace StochasticModeling
                 if (datafile != string.Empty)
                 {
                     PointPairList list = new PointPairList();
-                    double Qc = CalcQc(m_dSubSLD, m_dSupSLD);
+                    double Qc = HelperFunctions.CalcQc(m_dSubSLD, m_dSupSLD);
                     using (StreamReader sr = new StreamReader(datafile))
                     {
                         String dataline;
@@ -383,7 +387,7 @@ namespace StochasticModeling
 
                             if (m_bDBF == true)
                             {
-                                Refl = Double.Parse(datastring[1], CI_US) / CalcFresnelPoint(Q, Qc);
+                                Refl = Double.Parse(datastring[1], CI_US) / HelperFunctions.CalcFresnelPoint(Q, Qc);
                                 Q = Q / Qc;
                             }
                             else if (m_bisQfour == true)
@@ -415,7 +419,7 @@ namespace StochasticModeling
         {
             RemoveGraphfromArray(name);
 
-            double Qc = CalcQc(m_dSubSLD, m_dSupSLD);
+            double Qc = HelperFunctions.CalcQc(m_dSubSLD, m_dSupSLD);
             
             if (Qc < .005 && m_bDBF)
             {
@@ -429,7 +433,7 @@ namespace StochasticModeling
                 
                 for (int i = 0; i < X.Length; i++)
                 {
-                   list.Add(X[i] / Qc, Y[i] / CalcFresnelPoint(X[i], Qc));
+                    list.Add(X[i] / Qc, Y[i] / HelperFunctions.CalcFresnelPoint(X[i], Qc));
                     
                 }
             }
@@ -457,14 +461,14 @@ namespace StochasticModeling
 
         protected override void GetPointList(double[] X, double[] Y, ref PointPairList List)
         {
-            double Qc = CalcQc(m_dSubSLD, m_dSupSLD);
+            double Qc = HelperFunctions.CalcQc(m_dSubSLD, m_dSupSLD);
 
             for (int i = 0; i < X.Length; i++)
             {
                 if (m_bDBF)
                 {
                     if (Qc > .005)
-                        List.Add(X[i] / Qc, Y[i] / CalcFresnelPoint(X[i], Qc));
+                        List.Add(X[i] / Qc, Y[i] / HelperFunctions.CalcFresnelPoint(X[i], Qc));
                     else
                         List.Add(X[i], Y[i] * Math.Pow(X[i], 4.0));
                 }
@@ -474,39 +478,7 @@ namespace StochasticModeling
         }
 
         
-        //Anyone can use the next two fucntions from anywhere. These should perhaps be moved
-
-        /// <summary>
-        /// Calculate the critical Q for a system
-        /// </summary>
-        /// <param name="dSLD">Substrate SLD</param>
-        /// <param name="SupSLD">Superphase SLD</param>
-        /// <param name="lambda">X-ray wavelength</param>
-        /// <returns>Critical Q</returns>
-        static public double CalcQc(double dSLD, double SupSLD)
-        {
-            if (dSLD - SupSLD > 0)
-                return 4 * Math.Sqrt((Math.PI * (dSLD - SupSLD) * 1e-6));
-            else
-                return 0;
-        }
-
-        /// <summary>
-        /// Calculates the value of a Fresnel curve at a given Q and Qc
-        /// </summary>
-        /// <param name="Q">Q value</param>
-        /// <param name="Qc">Critical Q for the system</param>
-        /// <returns>Fresnel reflectivity point</returns>
-        static public double CalcFresnelPoint(double Q, double Qc)
-        {
-            if (Q <= Qc)
-                return 1;
-            else
-            {
-                double term1 = Math.Sqrt(1 - Math.Pow((Qc / Q), 2.0));
-                return Math.Pow((1.0 - term1) / (1.0 + term1), 2.0);
-            }
-        }
+        
 
         private void SelectLowQPoint(object sender, System.EventArgs e)
         {
@@ -661,13 +633,7 @@ namespace StochasticModeling
         /// </summary>
         public bool DivbyFresnel
         {
-            get
-            {
-                if (m_bisQfour || m_bDBF)
-                    return true;
-                else
-                    return false;
-            }
+            get { return m_bisQfour || m_bDBF; }
         }
 
         /// <summary>
@@ -675,10 +641,7 @@ namespace StochasticModeling
         /// </summary>
         public bool DataFileLoaded
         {
-            get
-            {
-                return m_bdatafile;
-            }
+            get{return m_bdatafile;}
         }
 
         /// <summary>

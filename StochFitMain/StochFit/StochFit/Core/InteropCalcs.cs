@@ -119,7 +119,6 @@ namespace StochasticModeling
         /// <param name="covar"></param>
         /// <param name="covarsize"></param>
         /// <param name="info"></param>
-        /// <param name="infosize"></param>
         [DllImport("LevMardll.dll", EntryPoint = "FastReflfit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         public static extern void FastReflfit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int covarsize, double[] info);
 
@@ -142,7 +141,6 @@ namespace StochasticModeling
         /// <param name="covar"></param>
         /// <param name="covarsize"></param>
         /// <param name="info"></param>
-        /// <param name="infosize"></param>
         [DllImport("LevMardll.dll", EntryPoint = "Rhofit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         public static extern void Rhofit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int covarsize, double[] info);
 

@@ -111,7 +111,6 @@ namespace StochasticModeling
             }
         }
 
-        public abstract Type GetType();
         public abstract void WriteFiles(FileInfo path);
 
         public BoxReflFitBase(BoxReflFitBase previousFitBase)
@@ -298,8 +297,8 @@ namespace StochasticModeling
 
         }
 
-        protected abstract void SaveParamsForReport();
-       
+        public abstract void SaveParamsForReport();
+        public abstract void ClearReports();
 
         public abstract string DataFit();
        

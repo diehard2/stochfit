@@ -27,6 +27,7 @@ using System.Threading;
 using StochasticModeling.Modeling;
 using StochasticModeling.Settings;
 using StochasticModeling.Core;
+using System.IO;
 
 #pragma warning disable 1591
 
@@ -55,6 +56,8 @@ namespace StochasticModeling
         bool m_bmodelreset = false;
         bool m_bUseSLD = false;
         bool m_isupdating = false;
+        bool m_bfitperformed = false;
+        bool m_bfitsaved = false;
       
         Thread Stochthread;
         StochOutputWindow ErrorWindow;
@@ -351,13 +354,13 @@ namespace StochasticModeling
             {
                 ErrorWindow = new StochOutputWindow();
             }
+
             ReflCalc.DataFit();
 
             ErrorWindow.AddModel(ReflCalc);
 
-            //Add the graph to the master graph
-            GraphCollection.Instance.ReflGraph = ReflGraphing;
-            GraphCollection.Instance.ReflEGraph = RhoGraphing;
+            m_bfitperformed = true;
+          
         }
        
 
@@ -368,8 +371,12 @@ namespace StochasticModeling
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
-            GraphCollection.Instance.ReflGraph = ReflGraphing;
-            GraphCollection.Instance.ReflEGraph = RhoGraphing;
+            if (m_bfitperformed && !m_bfitsaved)
+            {
+                if (MessageBox.Show("A fit has been performed but not saved, would you like to save the fit", "Save", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    SaveFitTB_Click(null, null);
+
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -404,6 +411,7 @@ namespace StochasticModeling
               {
                   UI.GetParamPercs(ref parampercs);
                   chisquaretb.ThreadSafeSetText(ReflCalc.StochFit(parampercs, UI.IterationCount));
+                  m_bfitperformed = true;
               }
         
               //Restore window
@@ -643,6 +651,39 @@ namespace StochasticModeling
                 MessageBox.Show("No fitting has been performed");
             }
                 
+        }
+
+        private void SaveBT_Click(object sender, EventArgs e)
+        {
+            if (m_bfitperformed && !m_bfitsaved)
+            {
+                saveFileDialog1.Filter = "Data File | .dat";
+                saveFileDialog1.AddExtension = true;
+               
+                if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+                {
+                    ReflCalc.WriteFiles(new FileInfo(saveFileDialog1.FileName));
+                    //Add the graph to the master graph
+
+                    GraphCollection.Instance.ReflGraph = ReflGraphing;
+                    GraphCollection.Instance.ReflEGraph = RhoGraphing;
+                    ReflCalc.SaveParamsForReport();
+
+                    m_bfitsaved = true;
+                }
+            }
+           
+        }
+
+        private void button3_Click_1(object sender, EventArgs e)
+        {
+            ReflCalc.ClearReports();
+            GraphCollection.Instance.ReflGraph.Hide = true;
+            GraphCollection.Instance.ReflEGraph.Hide = true;
+
+            m_bfitsaved = false;
+            m_bfitperformed = false;
+
         }
 
     }

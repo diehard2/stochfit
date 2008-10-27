@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using StochasticModeling.Settings;
 using System.Windows.Forms;
 using StochasticModeling.Core;
+using System.IO;
+
+#pragma warning disable 1591
 
 namespace StochasticModeling
 {
@@ -50,7 +53,7 @@ namespace StochasticModeling
             return ChiSquare.ToString("##.### E-0");
         }
 
-        protected override void SaveParamsForReport()
+        public override void SaveParamsForReport()
         {
 
             ReportGenerator g = ReportGenerator.Instance;
@@ -125,7 +128,7 @@ namespace StochasticModeling
         {
             //Display the fit
             UpdateProfile();
-            SaveParamsForReport();
+            
 
             //Update our save list
             FitHolder.Add(CreateLightWeightClone());
@@ -232,11 +235,6 @@ namespace StochasticModeling
         }
 
 
-        public override Type GetType()
-        {
-            return typeof(ReflFit);
-        }
-
         public override string MakeChiSquare()
         {
             ChiSquare = HelperFunctions.MakeChiSquare(ReflData.Instance.GetReflData, ReflectivityMap, ReflData.Instance.GetRErrors,
@@ -270,7 +268,44 @@ namespace StochasticModeling
 
         public override void WriteFiles(System.IO.FileInfo path)
         {
-            throw new NotImplementedException();
+            string EDFile = path.FullName.TrimEnd(path.Extension.ToCharArray()) + "MDEDP" + path.Extension;
+            string ReflFile = path.FullName.TrimEnd(path.Extension.ToCharArray()) + "MIRefl" + path.Extension;;
+            
+            using (StreamWriter file = new StreamWriter(EDFile))
+            {
+                file.WriteLine("Z \t ED \t BoxED");
+
+                for (int i = 0; i < _Z.Length; i++)
+                {
+                    file.WriteLine(_Z[i] + "\t" + _ElectronDensityArray[i] + "\t" + BoxElectronDensityArray[i]);
+                }
+            }
+
+
+            using (StreamWriter file = new StreamWriter(ReflFile))
+            {
+                double[] Q = ReflData.Instance.GetQData;
+                double[] R = ReflData.Instance.GetReflData;
+                double[] eR = ReflData.Instance.GetRErrors;
+                double Qc = HelperFunctions.CalcQc(SubphaseSLD, SuperphaseSLD);
+                int datapoints = ReflData.Instance.GetNumberDataPoints;
+                double[] FresnelCurve = new double[datapoints];
+                HelperFunctions.MakeFresnelCurve(FresnelCurve, Q, datapoints, SubphaseSLD, SuperphaseSLD);
+
+                //Write out a header
+                file.WriteLine("Q \t R \t eR \t R/Fresnel \t eR/Fresnel \t Rfit \t Rfit/Fresnel");
+
+                for (int i = 0; i < ReflData.Instance.GetNumberDataPoints; i++)
+                {
+                    file.WriteLine(Q[i] + "\t" + R[i] + "\t" + eR[i] + "\t" + R[i]/FresnelCurve[i] + "\t" +
+                        eR[i]/FresnelCurve[i] + "\t" + _ReflectivityMap[i] + "\t" + _ReflectivityMap[i]/FresnelCurve[i]);
+                }
+            }
+        }
+
+        public override void ClearReports()
+        {
+            ReportGenerator.Instance.ClearReflModelInfo();
         }
     }
 }

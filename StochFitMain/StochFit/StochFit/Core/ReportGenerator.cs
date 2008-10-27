@@ -26,6 +26,9 @@ using System.IO;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 
+
+#pragma warning disable 1591
+
 namespace StochasticModeling
 {
     /// <summary>

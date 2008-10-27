@@ -44,6 +44,13 @@ namespace StochasticModeling
         protected PointF m_cMousePos = PointF.Empty;
         private bool m_bThisisadeepcopy = false;
         private string m_sGraphname;
+        private bool m_bHide = false;
+
+        public bool Hide
+        {
+            get { return m_bHide; }
+            set { m_bHide = value; }
+        }
 
         public GraphingBase(string name)
         {
@@ -81,15 +88,6 @@ namespace StochasticModeling
             m_cMyPane = m_cZG.GraphPane;
         }
 
-        
-        //public void SetSize(Rectangle rect)
-        //{
-        //    //Resizing of these controls can be difficult. It is better to handle it from the GUI side
-        //    // zg.Location = new Point( 10, 10 );
-        //    //// Leave a small margin around the outside of the control
-        //    // zg.Size = new Size(rect.Width - 300, rect.Height - 300);
-        //}
-
         public void AddMenuItem(ContextMenuStrip menustrip, string name, string tag, string text, EventHandler handler)
         {
             ToolStripMenuItem item = new ToolStripMenuItem();
@@ -126,157 +124,79 @@ namespace StochasticModeling
             m_cMyPane.YAxis.Title.FontSpec.Size = AxisFontSize;
         }
 
-
-
         #region Get/Set Base Class Variables
 
         public Size GraphSize
         {
-            set
-            {
-                m_cZG.ClientSize = value;
-            }
-            get
-            {
-                return m_cZG.ClientSize;
-            }
+            set{m_cZG.ClientSize = value;}
+            get{return m_cZG.ClientSize;}
         }
 
         public bool LegendState
         {
-            get
-            {
-                return m_cMyPane.Legend.IsVisible;
-            }
-            set
-            {
-                m_cMyPane.Legend.IsVisible = value;
-            }
+            get{return m_cMyPane.Legend.IsVisible;}
+            set{m_cMyPane.Legend.IsVisible = value;}
         }
 
         public bool TitleState
         {
-            get
-            {
-                return m_cMyPane.Title.IsVisible;
-            }
-            set
-            {
-                m_cMyPane.Title.IsVisible = value;
-            }
+            get{return m_cMyPane.Title.IsVisible;}
+            set{m_cMyPane.Title.IsVisible = value;}
         }
 
         public Color ChartFill
         {
-            get
-            {
-                return m_cMyPane.Chart.Fill.Color;
-
-            }
-            set
-            {
-                m_cMyPane.Chart.Fill.Color = value;
-            }
+            get{return m_cMyPane.Chart.Fill.Color;}
+            set{m_cMyPane.Chart.Fill.Color = value;}
         }
 
         public Color PaneFill
         {
-            get
-            {
-
-                return m_cMyPane.Fill.Color;
-            }
-            set
-            {
-                m_cMyPane.Fill.Color = value;
-
-            }
+            get{return m_cMyPane.Fill.Color; }
+            set{m_cMyPane.Fill.Color = value;}
         }
 
         public bool BorderState
         {
-            get
-            {
-                return m_cMyPane.Border.IsVisible;
-            }
-            set
-            {
-                m_cMyPane.Border.IsVisible = value;
-            }
+            get{return m_cMyPane.Border.IsVisible;}
+            set{m_cMyPane.Border.IsVisible = value;}
         }
 
         public string GraphName
         {
-            get
-            {
-                return m_sGraphname;
-            }
+            get{return m_sGraphname;}
         }
 
         public string Title
         {
-            get
-            {
-                return m_cMyPane.Title.Text;
-            }
-            set
-            {
-                m_cMyPane.Title.Text = value;
-            }
+            get{return m_cMyPane.Title.Text;}
+            set{m_cMyPane.Title.Text = value;}
         }
 
         public GraphPane Pane
         {
-            get
-            {
-                return m_cMyPane;
-            }
+            get{return m_cMyPane;}
         }
 
         protected ZedGraphControl ZGControl
         {
-            get
-            {
-                return m_cZG;
-            }
+            get{return m_cZG;}
         }
 
         public MasterPane GraphMasterPane
         {
-            get
-            {
-                return m_cZG.MasterPane;
-            }
+            get{return m_cZG.MasterPane;}
         }
 
         public PointF MousePosition
         {
-            set
-            {
-                m_cMousePos = value;
-            }
-            get
-            {
-                return m_cMousePos;
-            }
+            set{m_cMousePos = value;}
+            get{return m_cMousePos;}
         }
 
         public CurveList GraphCurveList
         {
-            get
-            {
-                return m_cMyPane.CurveList;
-            }
-        }
-
-        public void SetAxisTitles(string xaxis, string yaxis)
-        {
-            if (xaxis != string.Empty)
-                m_cMyPane.XAxis.Title.Text = xaxis;
-            if (yaxis != string.Empty)
-                m_cMyPane.YAxis.Title.Text = yaxis;
-
-            AxisChange();
+            get{return m_cMyPane.CurveList;}
         }
 
         public bool IsDeepCopyFull
@@ -292,18 +212,21 @@ namespace StochasticModeling
 
         public bool IsThisaDeepCopy
         {
-            get
-            {
-                return m_bThisisadeepcopy;
-            }
-            set
-            {
-                m_bThisisadeepcopy = value;
-            }
+            get{return m_bThisisadeepcopy;}
+            set{m_bThisisadeepcopy = value;}
         }
 
         #endregion
 
+        public void SetAxisTitles(string xaxis, string yaxis)
+        {
+            if (xaxis != string.Empty)
+                m_cMyPane.XAxis.Title.Text = xaxis;
+            if (yaxis != string.Empty)
+                m_cMyPane.YAxis.Title.Text = yaxis;
+
+            AxisChange();
+        }
 
         public virtual void DeepCopy(GraphingBase graph)
         {
@@ -391,30 +314,18 @@ namespace StochasticModeling
 
         public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, bool isSmoothed, string tag)
         {
-            PointPairList list = new PointPairList();
-            for (int i = 0; i < X.Length; i++)
-            {
-                    list.Add(X[i] , Y[i]);
-            }
-            
+            PointPairList list = new PointPairList(X, Y);
             AddCurvetoGraph(list, name, color, symbol, symbolsize, isSmoothed, tag);
             m_alDatainGraph.Add(name);
         }
 
         public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, DashStyle style, bool isSmoothed, string tag)
         {
-            PointPairList list = new PointPairList();
-            for (int i = 0; i < X.Length; i++)
-            {
-                list.Add(X[i], Y[i]);
-            }
-
+            PointPairList list = new PointPairList(X, Y);
             AddCurvetoGraph(list, name, color, symbol, symbolsize, style, isSmoothed,tag);
             m_alDatainGraph.Add(name);
 
         }
-
-      
 
         public Bitmap GetImage()
         {
@@ -428,18 +339,8 @@ namespace StochasticModeling
         {
             if (m_cMyPane != null)
             {
-                while (m_cMyPane.CurveList.Count != 0)
-                {
-                    CurveItem curve = m_cMyPane.CurveList[0] as CurveItem;
-
-                    if (curve == null)
-                        return;
-
-                    m_cMyPane.CurveList.Remove(curve);
-                }
-
-                m_cMyPane.CurveList.TrimExcess();
-
+                m_cMyPane.CurveList.Clear();
+               
                 if (m_alDatainGraph != null)
                 {
                     m_alDatainGraph.Clear();
@@ -459,33 +360,14 @@ namespace StochasticModeling
             m_cZG.Invalidate();
         }
         
-        public bool DataLoadedtoGraph(string filename)
-        {
-            for (int i = 0; i < m_alDatainGraph.Count; i++)
-            {
-                if (filename == m_alDatainGraph[i])
-                    return true;
-
-            }
-
-            return false;
-        }
-
-
         protected virtual void GetPointList(double[] X, double[] Y, ref PointPairList List)
         {
-            for (int i = 0; i < X.Length; i++)
-            {
-                List.Add(X[i], Y[i]);
-            }
+            List = new PointPairList(X, Y);
         }
 
         protected virtual void GetPointList(List<double> X, List<double> Y, ref PointPairList List) 
         {
-            for (int i = 0; i < X.Count; i++)
-            {
-                List.Add(X[i], Y[i]);
-            }
+            List = new PointPairList(X.ToArray(), Y.ToArray());
         }
 
         protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, bool isSmoothed,string tag)
@@ -556,29 +438,13 @@ namespace StochasticModeling
 
         public void RemoveGraphfromArray(string name)
         {
-            int index = -1;
-            
-            for (int i = 0; i < m_alDatainGraph.Count; i++)
+            int indexer;
+            indexer = m_alDatainGraph.FindIndex(p => p == name);
+
+            if (indexer >= 0)
             {
-                if (name == m_alDatainGraph[i])
-                {
-                    index = i;
-                    break;
-                }
-            }
-
-            if (index < 0)
-                return;
-            else
-            {
-                CurveItem curve = m_cMyPane.CurveList[index] as CurveItem;
-
-                if (curve == null)
-                    return;
-
-                m_alDatainGraph.RemoveAt(index);
-                m_cMyPane.CurveList.Remove(curve);
-                m_cMyPane.CurveList.TrimExcess();
+                m_cMyPane.CurveList.RemoveAt(indexer);
+                m_alDatainGraph.RemoveAt(indexer);
             }
         }
 

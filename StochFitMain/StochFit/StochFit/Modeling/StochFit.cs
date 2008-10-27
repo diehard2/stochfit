@@ -33,6 +33,9 @@ using StochasticModeling.Modeling;
 using System.Globalization;
 using StochasticModeling.Settings;
 
+
+#pragma warning disable 1591
+
 namespace StochasticModeling
 {
     /// <summary>

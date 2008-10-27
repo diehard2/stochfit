@@ -1,8 +1,11 @@
 using System;
 using System.Windows.Forms;
 
+#pragma warning disable 1591
+
 namespace StochasticModeling
 {
+
     public partial class SLDConverter : Form
     {
         public SLDConverter()

@@ -77,5 +77,48 @@ namespace StochasticModeling.Core
 
             return fitness;
         }
+
+        /// <summary>
+        /// Calculate the critical Q for a system
+        /// </summary>
+        /// <param name="dSLD">Substrate SLD</param>
+        /// <param name="SupSLD">Superphase SLD</param>
+        /// <param name="lambda">X-ray wavelength</param>
+        /// <returns>Critical Q</returns>
+        static public double CalcQc(double dSLD, double SupSLD)
+        {
+            if (dSLD - SupSLD > 0)
+                return 4 * Math.Sqrt((Math.PI * (dSLD - SupSLD) * 1e-6));
+            else
+                return 0;
+        }
+
+        /// <summary>
+        /// Calculates the value of a Fresnel curve at a given Q and Qc
+        /// </summary>
+        /// <param name="Q">Q value</param>
+        /// <param name="Qc">Critical Q for the system</param>
+        /// <returns>Fresnel reflectivity point</returns>
+        static public double CalcFresnelPoint(double Q, double Qc)
+        {
+            if (Q <= Qc)
+                return 1;
+            else
+            {
+                double term1 = Math.Sqrt(1 - Math.Pow((Qc / Q), 2.0));
+                return Math.Pow((1.0 - term1) / (1.0 + term1), 2.0);
+            }
+        }
+
+        internal static void MakeFresnelCurve(double[] FresnelCurve, double[] Q, int datapoints, double SubphaseSLD, double SuperphaseSLD)
+        {
+            
+            double Qc = CalcQc(SubphaseSLD, SuperphaseSLD);
+
+            for (int i = 0; i < datapoints; i++)
+            {
+                FresnelCurve[i] = CalcFresnelPoint(Q[i], Qc);
+            }
+        }
     }
 }

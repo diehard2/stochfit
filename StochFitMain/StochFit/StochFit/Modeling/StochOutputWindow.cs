@@ -24,10 +24,14 @@ using System.Windows.Forms;
 using ZedGraph;
 using System.Collections.Generic;
 
+#pragma warning disable 1591
+
 namespace StochasticModeling.Modeling
 {
 
-    /// Displays the fits collected from the stochastic parameter space search
+
+    /// <summary>
+    /// Displays a collection of fits
     /// </summary>
     public partial class StochOutputWindow : Form
     {

@@ -54,32 +54,32 @@ namespace StochasticModeling
             m_gMyMaster.GraphMasterPane.InnerPaneGap = 10;
            
             // Add the new GraphPane to the MasterPane
-            if (GraphCollection.Instance.MainReflGraph.IsDeepCopyFull == true)
+            if (GraphCollection.Instance.MainReflGraph.IsDeepCopyFull == true && GraphCollection.Instance.MainReflGraph.Hide == false)
             {
                 GraphCollection.Instance.SetGraphUpdateLock = true;
                 m_gMyMaster.GraphMasterPane.Add(GraphCollection.Instance.MainReflGraph.Pane);
                 m_bAtleastonegraph = true;
             }
 
-            if (GraphCollection.Instance.MainRhoGraph.IsDeepCopyFull == true)
+            if (GraphCollection.Instance.MainRhoGraph.IsDeepCopyFull == true && GraphCollection.Instance.MainRhoGraph.Hide == false)
             {
                 GraphCollection.Instance.SetGraphUpdateLock = true;
                 m_gMyMaster.GraphMasterPane.Add(GraphCollection.Instance.MainRhoGraph.Pane);
                 m_bAtleastonegraph = true;
             }
 
-            if (GraphCollection.Instance.RhoGraph.IsDeepCopyFull == true)
+            if (GraphCollection.Instance.RhoGraph.IsDeepCopyFull == true && GraphCollection.Instance.RhoGraph.Hide == false)
             {
                 m_gMyMaster.GraphMasterPane.Add(GraphCollection.Instance.RhoGraph.Pane);
                 m_bAtleastonegraph = true;
             }
 
-            if (GraphCollection.Instance.ReflGraph.IsDeepCopyFull == true)
+            if (GraphCollection.Instance.ReflGraph.IsDeepCopyFull == true && GraphCollection.Instance.ReflGraph.Hide == false)
             {
                 m_gMyMaster.GraphMasterPane.Add(GraphCollection.Instance.ReflGraph.Pane);
                 m_bAtleastonegraph = true;
             }
-            if (GraphCollection.Instance.ReflEGraph.IsDeepCopyFull == true)
+            if (GraphCollection.Instance.ReflEGraph.IsDeepCopyFull == true && GraphCollection.Instance.ReflEGraph.Hide == false)
             {
                 m_gMyMaster.GraphMasterPane.Add(GraphCollection.Instance.ReflEGraph.Pane);
                 m_bAtleastonegraph = true;

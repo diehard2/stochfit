@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using ZedGraph;
+using System.IO;
 
 
 namespace StochasticModeling
@@ -36,6 +37,8 @@ namespace StochasticModeling
         private List<TextBox> BoxSigmaArray;
         private List<TextBox> BoxLengthArray;
         private List<TextBox> BoxRhoArray;
+        private bool m_bfitperformed = false;
+        private bool m_bfitsaved = false;
 
         private RhoFit RhoCalc;
         private Graphing m_gRhoGraphing;
@@ -141,8 +144,7 @@ namespace StochasticModeling
             m_gRhoGraphing.LoadfromArray("Model Dependent Fit", RhoCalc.Z, RhoCalc.ElectronDensityArray, System.Drawing.Color.Turquoise, SymbolType.None, 0, true, string.Empty);
             m_gRhoGraphing.LoadfromArray("Model Dependent Box Fit", RhoCalc.Z, RhoCalc.BoxElectronDensityArray, System.Drawing.Color.Red, SymbolType.None, 0, false, string.Empty);
 
-            //Write graph to the master graph
-            GraphCollection.Instance.RhoGraph = m_gRhoGraphing;
+           
         }
 
         /// <summary>
@@ -226,6 +228,7 @@ namespace StochasticModeling
         private void LevenbergFit_Click(object sender, EventArgs e)
         {
             RhoCalc.DataFit();
+            m_bfitperformed = true;
         }
 
         
@@ -251,8 +254,12 @@ namespace StochasticModeling
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
-            if (m_gRhoGraphing != null && Report_btn.Enabled == true)
-                GraphCollection.Instance.RhoGraph = m_gRhoGraphing;
+            if (m_bfitperformed && !m_bfitsaved)
+            {
+                if (MessageBox.Show("A fit has been performed but not saved, would you like to save the fit","Save", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    SaveFitTB_Click(null, null);
+
+            }
         }
 
         private void GreyFields()
@@ -313,6 +320,32 @@ namespace StochasticModeling
                 MessageBox.Show("Error in input - An integer was expected");
                 e.Cancel = true;
             }
+        }
+
+        private void SaveFitTB_Click(object sender, EventArgs e)
+        {
+            if (m_bfitperformed && !m_bfitsaved)
+            {
+                saveFileDialog1.Filter = "Data File | .dat";
+                saveFileDialog1.AddExtension = true;
+                if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+                {
+                    RhoCalc.WriteFiles(new FileInfo(saveFileDialog1.FileName));
+                    //Write graph to the master graph
+                    GraphCollection.Instance.RhoGraph = m_gRhoGraphing;
+                    RhoCalc.SaveParamsForReport();
+                    m_bfitsaved = true;
+                }
+               
+            }
+            else
+                MessageBox.Show("No Fit has been performed");
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            RhoCalc.ClearReports();
+            GraphCollection.Instance.RhoGraph = null;
         }
       
     }

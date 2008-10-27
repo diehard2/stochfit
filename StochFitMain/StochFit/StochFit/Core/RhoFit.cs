@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using StochasticModeling.Settings;
 using StochasticModeling.Core;
+using System.IO;
+
+#pragma warning disable 1591
 
 namespace StochasticModeling
 {
@@ -10,7 +13,7 @@ namespace StochasticModeling
         public RhoFit(double[] Z, double[] ERho): base(Z, ERho)
         { }
 
-        protected override void SaveParamsForReport()
+        public override void SaveParamsForReport()
         {
             ReportGenerator g = ReportGenerator.Instance;
             g.ClearRhoModelInfo();
@@ -101,7 +104,7 @@ namespace StochasticModeling
 
             //Display the fit
             UpdateProfile();
-            SaveParamsForReport();
+           
 
             return MakeChiSquare();
         }
@@ -138,11 +141,6 @@ namespace StochasticModeling
         }
 
 
-        public override Type GetType()
-        {
-            return typeof(RhoFit);
-        }
-
         public override void UpdatefromParameterArray(double[] paramarray)
         {
             throw new NotImplementedException();
@@ -173,7 +171,19 @@ namespace StochasticModeling
 
         public override void WriteFiles(System.IO.FileInfo path)
         {
-            throw new NotImplementedException();
+            using (StreamWriter file = new StreamWriter(path.FullName))
+            {
+                file.WriteLine("Z \t ED \t BoxED");
+                for (int i = 0; i < _Z.Length; i++)
+                {
+                    file.WriteLine(_Z[i] + "\t" + _ElectronDensityArray[i] + "\t" + BoxElectronDensityArray[i]);
+                }
+            }
+        }
+
+        public override void ClearReports()
+        {
+            ReportGenerator.Instance.ClearRhoModelInfo();
         }
     }
 }

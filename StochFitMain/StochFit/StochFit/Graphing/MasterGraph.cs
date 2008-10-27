@@ -84,6 +84,7 @@ namespace StochasticModeling
             {
                 if (m_bgraphlock == false)
                 {
+                    m_gMainReflectivityFit.Hide = false;
                     m_gMainReflectivityFit.AlterGraph(value);
                 }
             }
@@ -102,6 +103,7 @@ namespace StochasticModeling
             {
                 if (m_bgraphlock == false)
                 {
+                    m_gMainRhoFit.Hide = false;
                     m_gMainRhoFit.AlterGraph(value);
                 }
             }
@@ -118,6 +120,7 @@ namespace StochasticModeling
             }
             set
             {
+                m_gRhoFit.Hide = false;
                 m_gRhoFit.AlterGraph(value);
             }
         }
@@ -133,6 +136,7 @@ namespace StochasticModeling
             }
             set
             {
+                m_gReflFit.Hide = false;
                 m_gReflFit.AlterGraph(value);
             }
         }
@@ -148,6 +152,7 @@ namespace StochasticModeling
             }
             set
             {
+                m_gReflEFit.Hide = false;
                 m_gReflEFit.AlterGraph(value);
             }
         }

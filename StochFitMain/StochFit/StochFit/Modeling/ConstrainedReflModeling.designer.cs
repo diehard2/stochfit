@@ -1,5 +1,8 @@
 namespace StochasticModeling
 {
+
+    #pragma warning disable 1591
+
     partial class ConstrainedReflmodeling
     {
         /// <summary>
@@ -122,6 +125,9 @@ namespace StochasticModeling
             this.SaveFitTB = new System.Windows.Forms.Button();
             this.label10 = new System.Windows.Forms.Label();
             this.FitnessScoreTB = new System.Windows.Forms.TextBox();
+            this.SaveBT = new System.Windows.Forms.Button();
+            this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+            this.button3 = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -1181,12 +1187,36 @@ namespace StochasticModeling
             this.FitnessScoreTB.Text = "0";
             this.FitnessScoreTB.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
+            // SaveBT
+            // 
+            this.SaveBT.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.SaveBT.Location = new System.Drawing.Point(592, 558);
+            this.SaveBT.Name = "SaveBT";
+            this.SaveBT.Size = new System.Drawing.Size(108, 24);
+            this.SaveBT.TabIndex = 49;
+            this.SaveBT.Text = "Save";
+            this.SaveBT.UseVisualStyleBackColor = true;
+            this.SaveBT.Click += new System.EventHandler(this.SaveBT_Click);
+            // 
+            // button3
+            // 
+            this.button3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button3.Location = new System.Drawing.Point(592, 588);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(108, 24);
+            this.button3.TabIndex = 50;
+            this.button3.Text = "Clear Report";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click_1);
+            // 
             // ConstrainedReflmodeling
             // 
             this.AcceptButton = this.LevenbergFit;
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(952, 674);
+            this.Controls.Add(this.button3);
+            this.Controls.Add(this.SaveBT);
             this.Controls.Add(this.label10);
             this.Controls.Add(this.FitnessScoreTB);
             this.Controls.Add(this.SaveFitTB);
@@ -1315,5 +1345,8 @@ namespace StochasticModeling
         private System.Windows.Forms.Button SaveFitTB;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.TextBox FitnessScoreTB;
+        private System.Windows.Forms.Button SaveBT;
+        private System.Windows.Forms.SaveFileDialog saveFileDialog1;
+        private System.Windows.Forms.Button button3;
     }
 }

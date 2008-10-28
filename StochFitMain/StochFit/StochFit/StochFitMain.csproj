@@ -82,7 +82,8 @@
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>..\..\Documentation\Code Documentation\StochFit.XML</DocumentationFile>
+    <DocumentationFile>..\..\bin\Documentation\Code Documentation\StochFit.XML</DocumentationFile>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'GIXOS|AnyCPU' ">
     <OutputPath>..\..\bin\GIXOS\</OutputPath>

@@ -619,20 +619,20 @@ namespace StochasticModeling
 
         private void HQoffsetTB_Validated(object sender, EventArgs e)
         {
-            ReflGraphing.GetHighQOffset = int.Parse(Rightoffset.Text);
+            ReflGraphing.GetHighQOffset = Rightoffset.ToInt();
             ReflGraphing.SetBounds();
         }
 
 
         private void LowQ_TextChanged(object sender, EventArgs e)
         {
-            ReflGraphing.GetLowQOffset = int.Parse(CritOffset.Text);
+            ReflGraphing.GetLowQOffset = CritOffset.ToInt();
             ReflGraphing.SetBounds();
         }
 
         private void HQ_TextChanged(object sender, EventArgs e)
         {
-            ReflGraphing.GetHighQOffset = ReflData.Instance.GetNumberDataPoints - int.Parse(Rightoffset.Text);
+            ReflGraphing.GetHighQOffset = ReflData.Instance.GetNumberDataPoints - Rightoffset.ToInt();
             ReflGraphing.SetBounds();
         }
 

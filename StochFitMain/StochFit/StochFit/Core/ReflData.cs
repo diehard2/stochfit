@@ -207,6 +207,9 @@ namespace StochasticModeling
             if (filename == string.Empty || !File.Exists(filename))
                 return false;
 
+            //Clear the Qerr array, as it won't be reset if a previous model had error in Q and this data does not
+            qerrors = null;
+
             FileInfo info = new FileInfo(filename);
 
             direc = info.DirectoryName;
@@ -216,7 +219,7 @@ namespace StochasticModeling
             string dataline;
             List<string> datastring = new List<string>();
             Regex r = new Regex(@"\s");
-            bool haveQdata = false;
+            haveQerr = false;
 
             try
             {
@@ -238,7 +241,7 @@ namespace StochasticModeling
                             }
 
                             if (temp.Length == 4)
-                                haveQdata = true;
+                                haveQerr = true;
 
                             if (Double.Parse(datastring[1], m_CI) > 0.0 && Double.Parse(datastring[2], m_CI) >= 0.0)
                                 lines++;
@@ -253,7 +256,7 @@ namespace StochasticModeling
 
                 for(int i = 0; i < lines; i++)
                 {
-                    if (haveQdata == true)
+                    if (haveQerr)
                         refldata[i] = new double[4];
                     else
                         refldata[i] = new double[3];
@@ -350,6 +353,13 @@ namespace StochasticModeling
         }
         catch
         {
+            //Blank our data if we fail for some reason and let the user know there is a problem with the file
+            qerrors = null;
+            rerrors = null;
+            qdata = null;
+            refldata = null;
+            refldataarray = null;
+            MessageBox.Show("The data file could not be loaded");
             return false;
         }
        }

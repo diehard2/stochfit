@@ -432,11 +432,9 @@ namespace StochasticModeling
             PointPairList list = new PointPairList();
             if (m_bDBF)
             {
-                
                 for (int i = 0; i < X.Length; i++)
                 {
                     list.Add(X[i] / Qc, Y[i] / HelperFunctions.CalcFresnelPoint(X[i], Qc));
-                    
                 }
             }
             else if (m_bisQfour)
@@ -479,16 +477,13 @@ namespace StochasticModeling
             }
         }
 
-        
-        
-
         private void SelectLowQPoint(object sender, System.EventArgs e)
         {
             CurveItem curve;
             int nearest;
             
             Pane.FindNearestPoint(MousePosition, out curve, out nearest);
-
+           
             if (curve.NPts > ReflData.Instance.GetNumberDataPoints)
             {
                 MessageBox.Show("You have attempted to selecte points on the wrong cuve. Please zoom in and try again");
@@ -501,27 +496,21 @@ namespace StochasticModeling
                 return;
             }
 
-                lowqindex = nearest;
+            lowqindex = nearest;
                 
-                SetBounds();
-                OnChanged(this, null);
+            SetBounds();
+            OnChanged(this, null);
         }
 
 
 
         private void ClearQOffsets(object sender, System.EventArgs e)
         {
-            int i = 0;
-            for (i = 0; i < Pane.CurveList.Count; i++)
-            {
-
-                if ((string)Pane.CurveList[i].Tag == "realdatafile")
-                    break;
-            }
+            CurveItem curve = Pane.CurveList.Find(p => (string)p.Tag == "realdatafile");
 
 
-            for (int k = 0; k < Pane.CurveList[i].NPts; k++)
-                Pane.CurveList[i][k].Z = 0.0;
+            for (int k = 0; k < curve.NPts; k++)
+                curve[k].Z = 0.0;
 
             highqindex = ReflData.Instance.GetNumberDataPoints;
             lowqindex = 0;
@@ -562,28 +551,21 @@ namespace StochasticModeling
             if ((highqindex > 0 || lowqindex > 0) && Pane.CurveList.Count > 0)
             {
 
-                int i = 0;
-                for (i = 0; i < Pane.CurveList.Count; i++)
-                {
-
-                    if ((string)Pane.CurveList[i].Tag == "realdatafile")
-                        break;
-                }
-
-
-                for (int k = 0; k < Pane.CurveList[i].NPts; k++)
-                    Pane.CurveList[i][k].Z = 0.0;
+                CurveItem curve = Pane.CurveList.Find(p => (string)p.Tag == "realdatafile");
+               
+                for (int k = 0; k < curve.NPts; k++)
+                    curve[k].Z = 0.0;
 
                 if (highqindex > 0)
                 {
-                    for (int k = highqindex; k < Pane.CurveList[i].NPts; k++)
-                        Pane.CurveList[i][k].Z = 1.0;
+                    for (int k = highqindex; k < curve.NPts; k++)
+                        curve[k].Z = 1.0;
                 }
 
                 if (lowqindex > 0)
                 {
-                    for (int k = 0; k <= lowqindex; k++)
-                        Pane.CurveList[i][k].Z = 1.0;
+                    for (int k = 0; k < lowqindex; k++)
+                        curve[k].Z = 1.0;
                 }
 
                 Invalidate();

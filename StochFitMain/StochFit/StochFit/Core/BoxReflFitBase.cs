@@ -365,7 +365,7 @@ namespace StochasticModeling
                 m_dPreviousImpNorm = m_dImpNorm;
         }
 
-        public abstract void UpdateBoundsArrays(double[] UL, double[] LL);
+       
 
         public abstract string ErrorReport();
 

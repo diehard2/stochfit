@@ -178,11 +178,6 @@ namespace StochasticModeling
             NormalizationFactor = parameters[parameters.Length - 1];
         }
 
-        public override void UpdateBoundsArrays(double[] UL, double[] LL)
-        {
-            throw new NotImplementedException();
-        }
-
         public override string ErrorReport()
         {
             string output = string.Empty;

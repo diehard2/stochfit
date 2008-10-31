@@ -286,6 +286,8 @@ namespace StochasticModeling
                 if (m_bDBF == false && m_bisQfour == false)
                 {
                     //Set the Q scale
+                    if(!m_biszoomed)
+
                     if (RealReflData[RealReflData.Count - 1].X > 1.0)
                         Pane.XAxis.Scale.Max = RealReflData[RealReflData.Count - 1].X + 5;
                     else
@@ -381,7 +383,7 @@ namespace StochasticModeling
 
                             for (int i = 0; i < temp.Length; i++)
                             {
-                                if (temp[i] != "")
+                                if (temp[i] != string.Empty)
                                     datastring.Add(temp[i]);
                             }
 
@@ -452,29 +454,10 @@ namespace StochasticModeling
                         list.Add(X[i], Y[i]);
                     else
                         list.Add(X[i], Y[i] * m_dSubSLD);
-
                 }
             }
             AddCurvetoGraph(list, name, color, symbol,symbolsize, isSmoothed, string.Empty);
             m_alDatainGraph.Add(name);
-        }
-
-        protected override void GetPointList(double[] X, double[] Y, ref PointPairList List)
-        {
-            double Qc = HelperFunctions.CalcQc(m_dSubSLD, m_dSupSLD);
-
-            for (int i = 0; i < X.Length; i++)
-            {
-                if (m_bDBF)
-                {
-                    if (Qc > .005)
-                        List.Add(X[i] / Qc, Y[i] / HelperFunctions.CalcFresnelPoint(X[i], Qc));
-                    else
-                        List.Add(X[i], Y[i] * Math.Pow(X[i], 4.0));
-                }
-                else
-                    List.Add(X[i], Y[i]);
-            }
         }
 
         private void SelectLowQPoint(object sender, System.EventArgs e)
@@ -482,11 +465,11 @@ namespace StochasticModeling
             CurveItem curve;
             int nearest;
             
-            Pane.FindNearestPoint(MousePosition, out curve, out nearest);
+            Pane.FindNearestPoint(MousePosition, Pane.CurveList[0], out curve, out nearest);
            
             if (curve.NPts > ReflData.Instance.GetNumberDataPoints)
             {
-                MessageBox.Show("You have attempted to selecte points on the wrong cuve. Please zoom in and try again");
+                MessageBox.Show("You have attempted to select points on the wrong cuve. Please zoom in and try again");
                 return;
             }
 
@@ -502,15 +485,13 @@ namespace StochasticModeling
             OnChanged(this, null);
         }
 
-
-
         private void ClearQOffsets(object sender, System.EventArgs e)
         {
             CurveItem curve = Pane.CurveList.Find(p => (string)p.Tag == "realdatafile");
 
-
             for (int k = 0; k < curve.NPts; k++)
                 curve[k].Z = 0.0;
+
 
             highqindex = ReflData.Instance.GetNumberDataPoints;
             lowqindex = 0;
@@ -524,7 +505,7 @@ namespace StochasticModeling
             CurveItem curve;
             int nearest;
 
-            Pane.FindNearestPoint(MousePosition, out curve, out nearest);
+            Pane.FindNearestPoint(MousePosition, Pane.CurveList[0], out curve, out nearest);
 
             if (curve.NPts > ReflData.Instance.GetNumberDataPoints)
             {
@@ -543,7 +524,6 @@ namespace StochasticModeling
             SetBounds();
 
             OnChanged(this, null);
-            
         }
 
         public void SetBounds()
@@ -577,10 +557,8 @@ namespace StochasticModeling
         /// </summary>
         public int GetHighQOffset
         {
-            get
-            { return highqindex; }
-            set
-            { highqindex = value;}
+            get{ return highqindex; }
+            set{ highqindex = value;}
         }
 
         /// <summary>
@@ -588,10 +566,8 @@ namespace StochasticModeling
         /// </summary>
         public int GetLowQOffset
         {
-            get
-            { return lowqindex;}
-            set
-            { lowqindex = value;}
+            get{ return lowqindex;}
+            set{ lowqindex = value;}
         }
 
         /// <summary>
@@ -610,14 +586,6 @@ namespace StochasticModeling
         {
             get { return m_dSupSLD; }
             set { m_dSupSLD = value; }
-        }
-
-        /// <summary>
-        /// Get/Set whether the graph should be divided by Fresnel
-        /// </summary>
-        public bool DivbyFresnel
-        {
-            get { return m_bisQfour || m_bDBF; }
         }
 
         /// <summary>
@@ -645,13 +613,7 @@ namespace StochasticModeling
 
         public bool HasCurve
         {
-            get
-            {
-                if (Pane.CurveList.Count > 0)
-                    return true;
-                else
-                    return false;
-            }
+            get{return Pane.CurveList.Count > 0;}
         }
         /// <summary>
         /// Communicate with the graphing class. This will let us know if we've changed boundaries
@@ -669,10 +631,11 @@ namespace StochasticModeling
         /// </summary>
         internal void ClearCurves()
         {
-            for (int i = 0; i < m_alDatainGraph.Count; i++)
+            
+            foreach(string p in m_alDatainGraph)
             {
-                if ((string)m_alDatainGraph[i] != m_sfilename)
-                    RemoveGraphfromArray((string)m_alDatainGraph[i]);
+                if (p != m_sfilename)
+                    RemoveGraphfromArray(p);
             }
 
         }

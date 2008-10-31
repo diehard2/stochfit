@@ -120,11 +120,6 @@ namespace StochasticModeling
            return ErrorReport(zstring);
         }
 
-        public override void UpdateBoundsArrays(double[] UL, double[] LL)
-        {
-            throw new NotImplementedException();
-        }
-
         public override string StochFit(double[] parampercs, int iterations)
         {
             throw new NotImplementedException();

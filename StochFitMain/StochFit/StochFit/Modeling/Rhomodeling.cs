@@ -223,15 +223,11 @@ namespace StochasticModeling
             MakeED();
         }
 
-       
-
         private void LevenbergFit_Click(object sender, EventArgs e)
         {
             RhoCalc.DataFit();
             m_bfitperformed = true;
         }
-
-        
 
         private void UndoFit_Click(object sender, EventArgs e)
         {
@@ -260,7 +256,6 @@ namespace StochasticModeling
                 {
                     if (MessageBox.Show("A fit has been performed but not saved, would you like to save the fit", "Save", MessageBoxButtons.YesNo) == DialogResult.Yes)
                         SaveFitTB_Click(null, null);
-
                 }
             }
         }
@@ -272,14 +267,12 @@ namespace StochasticModeling
             {
                 if (i < BoxCount.ToInt())
                 {
-                    BoxLengthArray[i].Enabled = true;
-                    BoxRhoArray[i].Enabled = true;
+                    BoxRhoArray[i].Enabled = BoxLengthArray[i].Enabled = true;
                     BoxSigmaArray[i].Enabled = !Holdsigma.Checked;
                 }
                 else
                 {
-                    BoxLengthArray[i].Enabled = false;
-                    BoxRhoArray[i].Enabled = false;
+                    BoxRhoArray[i].Enabled = BoxLengthArray[i].Enabled = false;
                     BoxSigmaArray[i].Enabled = false;
                 }
             }
@@ -340,7 +333,6 @@ namespace StochasticModeling
                     m_bfitsaved = true;
                     m_bfitperformed = true;
                 }
-               
             }
             else
                 MessageBox.Show("No Fit has been performed");

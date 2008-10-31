@@ -150,6 +150,8 @@ namespace StochasticModeling
         /// <param name="e"></param>
         void ReflCalc_Update(object sender, EventArgs e)
         {
+           //Necessary due to the possibility of updating from a separate thread (such as stochastic fitting). Otherwise, events are fired which reset some of the values
+           //below. A lock isn't necessary this isn't necessarilly a race condition
            m_isupdating = true;
            
            SubRough.ThreadSafeSetText(ReflCalc.GetSubRoughness.ToString()) ;

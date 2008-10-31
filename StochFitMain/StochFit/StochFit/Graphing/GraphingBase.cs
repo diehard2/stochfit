@@ -46,18 +46,6 @@ namespace StochasticModeling
         private string m_sGraphname;
         private bool m_bHide = false;
 
-        public bool Hide
-        {
-            get { return m_bHide; }
-            set { m_bHide = value; }
-        }
-
-        public GraphingBase(string name)
-        {
-            m_alDatainGraph = new List<string>();
-            m_sGraphname = name;
-        }
-
         public virtual void CreateGraph(ZedGraphControl zgc, string Title, string XAxis, string YAxis, AxisType blog)
         {
             m_cZG = zgc;
@@ -72,8 +60,7 @@ namespace StochasticModeling
             m_cMyPane.YAxis.MinorTic.Color = Color.Transparent;
 
             // Fill the axis background with a color gradient
-            m_cMyPane.Chart.Fill = new Fill(Color.White,
-            Color.LightGoldenrodYellow, 45.0F);
+            m_cMyPane.Chart.Fill = new Fill(Color.White,Color.LightGoldenrodYellow, 45.0F);
         }
 
        
@@ -122,6 +109,16 @@ namespace StochasticModeling
             m_cMyPane.YAxis.Title.FontSpec.IsBold = m_cMyPane.XAxis.Title.FontSpec.IsBold = false;
             m_cMyPane.YAxis.Title.FontSpec.Family = Font;
             m_cMyPane.YAxis.Title.FontSpec.Size = AxisFontSize;
+        }
+
+        public void SetAxisTitles(string xaxis, string yaxis)
+        {
+            if (xaxis != string.Empty)
+                m_cMyPane.XAxis.Title.Text = xaxis;
+            if (yaxis != string.Empty)
+                m_cMyPane.YAxis.Title.Text = yaxis;
+
+            AxisChange();
         }
 
         #region Get/Set Base Class Variables
@@ -216,17 +213,21 @@ namespace StochasticModeling
             set{m_bThisisadeepcopy = value;}
         }
 
+        public bool Hide
+        {
+            get { return m_bHide; }
+            set { m_bHide = value; }
+        }
+
+        public GraphingBase(string name)
+        {
+            m_alDatainGraph = new List<string>();
+            m_sGraphname = name;
+        }
+
         #endregion
 
-        public void SetAxisTitles(string xaxis, string yaxis)
-        {
-            if (xaxis != string.Empty)
-                m_cMyPane.XAxis.Title.Text = xaxis;
-            if (yaxis != string.Empty)
-                m_cMyPane.YAxis.Title.Text = yaxis;
-
-            AxisChange();
-        }
+       
 
         public virtual void DeepCopy(GraphingBase graph)
         {
@@ -242,15 +243,16 @@ namespace StochasticModeling
             SetAllFonts(graph.Pane.Title.FontSpec.Family, (int)graph.Pane.Title.FontSpec.Size, (int)graph.Pane.XAxis.Title.FontSpec.Size);
             SetAxisTitles(graph.Pane.XAxis.Title.Text, graph.Pane.YAxis.Title.Text);
             Pane.CurveList = graph.Pane.CurveList.Clone();
-            
-            for (int i = 0; i < Pane.CurveList.Count; i++)
+
+            int i = 0;
+            foreach (CurveItem c in Pane.CurveList)
             {
-                if (GraphCurveList[i].IsLine == true)
+                if (c.IsLine == true)
                 {
-                    ((LineItem)(Pane.CurveList[i])).Color = Color.Black;//((LineItem)(graph.myPane.CurveList[i])).Color;
-                    ((LineItem)(Pane.CurveList[i])).Symbol.Type = SymbolType.None;
-                    ((LineItem)(Pane.CurveList[i])).Line.Style = (DashStyle)i;
-                    ((LineItem)(Pane.CurveList[i])).Line.IsAntiAlias = ((LineItem)(graph.GraphCurveList[i])).Line.IsAntiAlias;
+                    (c as LineItem).Color = Color.Black;
+                    (c as LineItem).Symbol.Type = SymbolType.None;
+                    (c as LineItem).Line.Style = (DashStyle)i;
+                    (c as LineItem).Line.IsAntiAlias = ((LineItem)(graph.GraphCurveList[i])).Line.IsAntiAlias;
                 }
             }
 
@@ -290,22 +292,16 @@ namespace StochasticModeling
             Pane.XAxis.Scale.FontSpec.Size = 18;
             Pane.YAxis.Scale.FontSpec.Size = 18;
 
-            for (int i = 0; i < GraphCurveList.Count; i++)
+            foreach(CurveItem c in GraphCurveList)
             {
-                if (GraphCurveList[i].IsLine == true)
+                if (c.IsLine == true)
                 {
                     //This is needed, or else the top numbers of the graph are cut off.
-                    GraphCurveList[i].Label.Text = " ";
-                    GraphCurveList[i].Label.FontSpec = new FontSpec("Garamond", (float)12.0, Color.Transparent,false,false,false);
-                    GraphCurveList[i].Label.FontSpec.Border.IsVisible = false;
+                    c.Label.Text = " ";
+                    c.Label.FontSpec = new FontSpec("Garamond", (float)12.0, Color.Transparent,false,false,false);
+                    c.Label.FontSpec.Border.IsVisible = false;
                 }
             }
-        }
-
-        public void Copy(GraphingBase graph)
-        {
-            m_cMyPane = graph.m_cMyPane.Clone();
-            m_bThisisadeepcopy = false;
         }
 
         public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, bool isSmoothed, string tag)
@@ -313,14 +309,6 @@ namespace StochasticModeling
             PointPairList list = new PointPairList(X, Y);
             AddCurvetoGraph(list, name, color, symbol, symbolsize, isSmoothed, tag);
             m_alDatainGraph.Add(name);
-        }
-
-        public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, DashStyle style, bool isSmoothed, string tag)
-        {
-            PointPairList list = new PointPairList(X, Y);
-            AddCurvetoGraph(list, name, color, symbol, symbolsize, style, isSmoothed,tag);
-            m_alDatainGraph.Add(name);
-
         }
 
         public Bitmap GetImage()
@@ -355,17 +343,7 @@ namespace StochasticModeling
         {
             m_cZG.Invalidate();
         }
-        
-        protected virtual void GetPointList(double[] X, double[] Y, ref PointPairList List)
-        {
-            List = new PointPairList(X, Y);
-        }
-
-        protected virtual void GetPointList(List<double> X, List<double> Y, ref PointPairList List) 
-        {
-            List = new PointPairList(X.ToArray(), Y.ToArray());
-        }
-
+    
         protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, bool isSmoothed,string tag)
         {
             LineItem myCurve = m_cMyPane.AddCurve(DataName, list, linecolor, type);

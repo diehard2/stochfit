@@ -111,6 +111,7 @@ namespace StochasticModeling
             this.forceRQ4GraphingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.UseSLDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.SaveReminderCTB = new System.Windows.Forms.ToolStripMenuItem();
             this.viewMasterGraphToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.generateReportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.calculatorsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -130,7 +131,6 @@ namespace StochasticModeling
             this.SAModeTB = new System.Windows.Forms.TextBox();
             this.label17 = new System.Windows.Forms.Label();
             this.FitScoreTB = new System.Windows.Forms.TextBox();
-            this.SaveReminderCTB = new System.Windows.Forms.ToolStripMenuItem();
             this.ParametersBox.SuspendLayout();
             this.MiscParametersBox.SuspendLayout();
             this.FittingParamBox.SuspendLayout();
@@ -874,8 +874,7 @@ namespace StochasticModeling
             this.AlgorithmCB.Items.AddRange(new object[] {
             "Greedy Search",
             "Simulated Annealing",
-            "Stochastic Tunneling",
-            "ASA Annealing"});
+            "Stochastic Tunneling"});
             this.AlgorithmCB.Name = "AlgorithmCB";
             this.AlgorithmCB.Size = new System.Drawing.Size(200, 23);
             this.AlgorithmCB.DropDownClosed += new System.EventHandler(this.AlgorithmCB_DropDownClosed);
@@ -963,6 +962,13 @@ namespace StochasticModeling
             this.debugToolStripMenuItem.Text = "Debug";
             this.debugToolStripMenuItem.Click += new System.EventHandler(this.debugToolStripMenuItem_Click);
             // 
+            // SaveReminderCTB
+            // 
+            this.SaveReminderCTB.Name = "SaveReminderCTB";
+            this.SaveReminderCTB.Size = new System.Drawing.Size(198, 22);
+            this.SaveReminderCTB.Text = "Turn off Save Reminder";
+            this.SaveReminderCTB.Click += new System.EventHandler(this.DisableSavePrompt);
+            // 
             // viewMasterGraphToolStripMenuItem
             // 
             this.viewMasterGraphToolStripMenuItem.Name = "viewMasterGraphToolStripMenuItem";
@@ -989,14 +995,14 @@ namespace StochasticModeling
             // sLDCalculatorToolStripMenuItem
             // 
             this.sLDCalculatorToolStripMenuItem.Name = "sLDCalculatorToolStripMenuItem";
-            this.sLDCalculatorToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.sLDCalculatorToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.sLDCalculatorToolStripMenuItem.Text = "SLD Calculator";
             this.sLDCalculatorToolStripMenuItem.Click += new System.EventHandler(this.sLDCalculatorToolStripMenuItem_Click);
             // 
             // sLDConverterToolStripMenuItem
             // 
             this.sLDConverterToolStripMenuItem.Name = "sLDConverterToolStripMenuItem";
-            this.sLDConverterToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.sLDConverterToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.sLDConverterToolStripMenuItem.Text = "SLD Converter";
             this.sLDConverterToolStripMenuItem.Click += new System.EventHandler(this.sLDConverterToolStripMenuItem_Click);
             // 
@@ -1143,13 +1149,6 @@ namespace StochasticModeling
             this.FitScoreTB.TabIndex = 35;
             this.FitScoreTB.TabStop = false;
             this.FitScoreTB.Text = "0";
-            // 
-            // SaveReminderCTB
-            // 
-            this.SaveReminderCTB.Name = "SaveReminderCTB";
-            this.SaveReminderCTB.Size = new System.Drawing.Size(198, 22);
-            this.SaveReminderCTB.Text = "Turn off Save Reminder";
-            this.SaveReminderCTB.Click += new System.EventHandler(this.DisableSavePrompt);
             // 
             // Stochfit
             // 

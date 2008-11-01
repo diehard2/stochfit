@@ -296,11 +296,7 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 		//Make the roughness correction term (Nevot-Croce)
 		for(int i = 0; i< nlminone; i++)
 		{
-		#ifdef GIXOS
-			Qj[i]=1;
-		#else
 			Qj[i] = compexp(sigmacalc[i]*kk[i]*kk[i+1]);
-		#endif
 		}
 		
 		//Make the Fresnel coefficients
@@ -342,12 +338,7 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 		#pragma ivdep
 		for(int i = 0; i< nlminone; i++)
 		{
-			#ifdef GIXOS
-				dQj[i]=1;
-			#else
-				dQj[i] = exp(sigmacalc[i]*dkk[i]*dkk[i+1]);
-			#endif
-			
+			dQj[i] = exp(sigmacalc[i]*dkk[i]*dkk[i+1]);
 		}
 		
 		//Make the Fresnel coefficients
@@ -439,11 +430,7 @@ void FastReflcalc::Rhocalculate(double Zoffset,double* ZIncrement, double* Lengt
 		
 		for (int i = 0; i <= boxnumber; i++)
         {
-		#ifdef GIXOS
-			summ += (rhoarray[i] / 2.0) * (1.0 + erf((ZIncrement[j] - distarray[i]-Zoffset) / (1e-20 * sqrt2)));
-		#else
 			summ += (rhoarray[i] / 2.0) * (1.0 + erf((ZIncrement[j] - distarray[i]-Zoffset) / (rougharray[i] * sqrt2)));
-		#endif
 		}	
 	
 		for (int i = 0; i <= boxnumber; i++)

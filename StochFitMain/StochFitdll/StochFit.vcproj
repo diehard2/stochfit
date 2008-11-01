@@ -64,7 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmmdd.lib libguide40.lib atls.lib ../bin/dlls/ASAlibD.lib"
+				AdditionalDependencies="libmmdd.lib libguide40.lib atls.lib"
 				OutputFile="..\bin\Debug\StochFitDll.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -157,7 +157,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmmd.lib libguide40.lib atls.lib ../bin/dlls/ASAlib.lib"
+				AdditionalDependencies="libmmd.lib libguide40.lib atls.lib"
 				OutputFile="..\bin\Release\StochFitDll.dll"
 				LinkIncremental="1"
 				IgnoreDefaultLibraryNames=""
@@ -282,10 +282,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\ASA.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\CEDP.cpp"
 				>
 			</File>
@@ -319,10 +315,6 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath=".\ASA.h"
-				>
-			</File>
 			<File
 				RelativePath=".\CEDP.h"
 				>

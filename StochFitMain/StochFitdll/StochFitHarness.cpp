@@ -208,11 +208,7 @@ int StochFit::Cancel()
 
 void StochFit::InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA)
 {
-	if(InitStruct->Algorithm == 3)
-		SA->Initialize(InitStruct->Debug, true, m_Directory);
-	else
-		SA->Initialize(InitStruct->Debug, false, m_Directory);
-
+	SA->Initialize(InitStruct->Debug, m_Directory);
 	SA->Initialize_Subsytem(InitStruct);
 }
 

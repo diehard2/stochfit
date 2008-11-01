@@ -129,11 +129,7 @@ void RhoCalc::Rhocalculate(double SubRough, double Zoffset)
 		#pragma ivdep
 		for (int i = 0; i <= boxnumber; i++)
         {
-			#ifdef GIXOS
-				summ += (rhoarray[i] / 2.0) * (1.0 + erf((ZIncrement[j] - distarray[i]-Zoffset) / (1e-16 * sqrt2)));
-			#else
-				summ += (rhoarray[i]) * (1.0 + erf((ZIncrement[j] - distarray[i]-Zoffset) / (rougharray[i])));
-			#endif	
+			summ += (rhoarray[i]) * (1.0 + erf((ZIncrement[j] - distarray[i]-Zoffset) / (rougharray[i])));
 		}	
 	
 		if(SubRough != 1e-16)

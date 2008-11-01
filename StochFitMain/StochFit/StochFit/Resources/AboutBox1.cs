@@ -53,7 +53,6 @@ namespace StochasticModeling
             descript += "itextsharp (http://sourceforge.net/projects/itextsharp) - PDF authoring library" + Environment.NewLine;
             descript += "ZedGraph (http://sourceforge.net/projects/zedgraph) - Graphing library" + Environment.NewLine;
             descript += "LoadingCircle(http://www.codeproject.com/cs/miscctrl/mrg_loadingcircle.asp)" + Environment.NewLine;
-            descript += Environment.NewLine + "This product includes software developed by Lester Ingber and other contributors." + Environment.NewLine;
 
             return descript;
         }

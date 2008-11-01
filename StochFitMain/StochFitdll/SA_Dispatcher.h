@@ -23,22 +23,20 @@
 #include "ParamVector.h"
 #include "SimulatedAnnealing.h"
 #include "CEDP.h"
-#include "ASA.h"
+
 
 
 class SA_Dispatcher
 {
 private:
-	bool m_bUseASA;
 
 	SimAnneal* m_cSA;
-	ASA* m_cASA;
 
 public: 
 	SA_Dispatcher();
 	~SA_Dispatcher();
 
-	void Initialize(bool debug, bool ASAonoff, std::wstring directory);
+	void Initialize(bool debug, std::wstring directory);
 	void Initialize_Subsytem(ReflSettings* InitStruct);
 	void InitializeParameters(ReflSettings* InitStruct, ParamVector* params, CReflCalc* m_cRefl, CEDP* EDP);
 	bool Iteration(ParamVector* params);
@@ -49,7 +47,4 @@ public:
 	double Get_AveragefSTUN();
 	void Set_AveragefSTUN(double fSTUN);
 	bool CheckForFailure();
-
-
-
 };

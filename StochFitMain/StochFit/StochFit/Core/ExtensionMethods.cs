@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace StochasticModeling
 {
@@ -16,6 +17,19 @@ namespace StochasticModeling
             return Int32.Parse(t.Text);
         }
 
+        /// <summary>
+        /// Returns true if the textbox is empty
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        public static bool IsEmpty(this TextBox t)
+        {
+            return t.Text == string.Empty;
+        } 
+        #endregion
+
+        #region GUI ThreadSafety Functions
+
         public static void ThreadSafeSetText(this TextBox t, string text)
         {
             // InvokeRequired required compares the thread ID of the
@@ -30,18 +44,6 @@ namespace StochasticModeling
                 t.Text = text;
             }
         }
-
-        /// <summary>
-        /// Returns true if the textbox is empty
-        /// </summary>
-        /// <param name="t"></param>
-        /// <returns></returns>
-        public static bool IsEmpty(this TextBox t)
-        {
-            return t.Text == string.Empty;
-        } 
-        #endregion
-
 
         public static void ThreadSafeSetValue(this ProgressBar t, int value)
         {
@@ -71,8 +73,37 @@ namespace StochasticModeling
             {
                 t.Checked = check;
             }
+        } 
+        #endregion
+      
+        #region ForEach extensions
+
+        public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
+        {
+            foreach (T element in source)
+            {
+                action(element);
+            }
         }
 
-       
+        public static IEnumerable<T> LINQForEach<T>(this IEnumerable<T> source, Action<T> action)
+        {
+            foreach (T element in source)
+            {
+                action(element);
+                yield return element;
+            }
+        }
+
+        public static IEnumerable<T> IndexedForEach<T>(this IEnumerable<T> source, Action<T, int> action)
+        {
+            int i = 0;
+            foreach (T element in source)
+            {
+                action(element, i);
+                yield return element;
+            }
+        } 
+        #endregion
     }
 }

@@ -125,7 +125,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/QaxWTPS /Qansi-alias  /Qprefetch "
-				Optimization="3"
+				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="false"
 				FavorSizeOrSpeed="1"
@@ -157,7 +157,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmmd.lib libguide40.lib atls.lib"
+				AdditionalDependencies="libmmd.lib atls.lib"
 				OutputFile="..\bin\Release\StochFitDll.dll"
 				LinkIncremental="1"
 				IgnoreDefaultLibraryNames=""

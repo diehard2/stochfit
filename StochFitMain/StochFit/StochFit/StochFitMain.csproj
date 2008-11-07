@@ -350,7 +350,6 @@
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>copy ..\..\bin\dlls\libmmd.dll  $(OutDir)
-copy ..\..\bin\dlls\libguide40.dll $(OutDir)
 copy ..\..\bin\dlls\genf.ico $(OutDir)
 copy ..\..\bin\dlls\levmarmkl.dll $(OutDir)</PostBuildEvent>
   </PropertyGroup>

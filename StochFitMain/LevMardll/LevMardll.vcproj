@@ -154,11 +154,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmmd.lib levmarmkl.lib libguide40.lib"
+				AdditionalDependencies="libmmd.lib levmarmkl.lib"
 				OutputFile="..\bin\Release\LevmarDLL.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\bin\dlls\"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

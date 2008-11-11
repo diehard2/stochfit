@@ -14,7 +14,6 @@
 				ProfileDirectory="../bin/dlls"/>
 			<Tool
 				Name="CppCmplrTool"
-				Optimization="1000"
 				GlobalOptimizations="true"
 				InterproceduralOptimization="2"
 				FlushDenormalResultsToZero="true"

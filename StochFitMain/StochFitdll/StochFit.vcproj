@@ -125,7 +125,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/QaxWTPS /Qansi-alias  /Qprefetch "
-				Optimization="2"
+				Optimization="3"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="false"
 				FavorSizeOrSpeed="1"
@@ -144,7 +144,7 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="0"
+				DebugInformationFormat="4"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -161,8 +161,8 @@
 				OutputFile="..\bin\Release\StochFitDll.dll"
 				LinkIncremental="1"
 				IgnoreDefaultLibraryNames=""
-				GenerateDebugInformation="false"
-				ProgramDatabaseFile="$(OutDir)/Genfit.pdb"
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile="../bin/Debug/StochFit.pdb"
 				SubSystem="2"
 				ImportLibrary="$(OutDir)/StochFit.lib"
 				TargetMachine="1"

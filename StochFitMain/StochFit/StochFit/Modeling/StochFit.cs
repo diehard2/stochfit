@@ -72,6 +72,7 @@ namespace StochasticModeling
         int m_iSTUNdeciter = 200000;
         double m_dSTUNgammadec = 0.85;
         bool m_bmodelreset = false;
+        bool m_bloadfromcommandline = false;
         int previnstanceiter = 0;
         /// <summary>
         /// The culture is set to US for the purposes of inputting data to the numerical routines
@@ -84,7 +85,7 @@ namespace StochasticModeling
         /// <summary>
         /// Default constructor
         /// </summary>
-        public Stochfit()
+        public Stochfit(string[] args)
         {
 
             InitializeComponent();
@@ -119,14 +120,25 @@ namespace StochasticModeling
 
             ImpNormCB_CheckedChanged(null, null);
             UseAbsCB_CheckedChanged(null, null);
-        }
 
-        private void Form1_Load(object sender, EventArgs e)
-        {
             //Setup the graphs
             reflgraphobject.CreateGraph(ReflGraph, "Model Independent Reflectivity Fit", "Q", "Intensity", AxisType.Log);
             rhographobject.CreateGraph(RhoGraph, "Model Independent Electron Density Fit", "Z",
                 "Normalized Electron Density", AxisType.Linear);
+
+
+            if (args.Length > 0)
+            {
+                m_bloadfromcommandline = true;
+                origreflfilename = args[0];
+                LoadDataFile(args[0]);
+                IterationsTB.Text = args[1];
+            }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+          
 
             reflgraphobject.SetAllFonts("Garamond", 20, 18);
             rhographobject.SetGraphType(false, false);
@@ -144,6 +156,11 @@ namespace StochasticModeling
 
             //Setup the callback if the graph updates the bounds
             reflgraphobject.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
+
+            if (m_bloadfromcommandline)
+            {
+                Startbutton_Click(null, null);
+            }
         }
 
         public void DisableInterface(bool onoff)
@@ -153,24 +170,11 @@ namespace StochasticModeling
             
         }
 
-        private void LoadFile_Click(object sender, EventArgs e)
+        private void LoadDataFile(string origreflfilename)
         {
             try
             {
-                reflgraphobject.Clear();
-                rhographobject.Clear();
-
-                openFileDialog1.Title = "Select a File";
-                openFileDialog1.Filter = "DataFiles|*.txt";
-                openFileDialog1.FileName = string.Empty;
-
-                if (openFileDialog1.ShowDialog() != DialogResult.Cancel)
-                    origreflfilename = openFileDialog1.FileName;
-                else
-                    origreflfilename = string.Empty;
-
-                if (origreflfilename != string.Empty)
-                {
+            
                     if (!ReflData.Instance.SetReflData(origreflfilename, !errorsAreInVarianceToolStripMenuItem.Checked))
                     {
                         throw new Exception("Could not load file");
@@ -185,7 +189,7 @@ namespace StochasticModeling
                     reflgraphobject.GetLowQOffset = 0;
                     reflgraphobject.SetGraphType(forceRQ4GraphingToolStripMenuItem.Checked, fresnelcb.Checked);
                     //Load the modeled files if they are available
-                    if (File.Exists(settingsfile))
+                    if (File.Exists(settingsfile) && !m_bloadfromcommandline)
                     {
                         if (MessageBox.Show("Do you want to load the previous run?", "Resume?", MessageBoxButtons.YesNo) == DialogResult.Yes)
                         {
@@ -291,7 +295,7 @@ namespace StochasticModeling
 
                     if (UseAbsCB.Checked == false)
                         SubAbs.Enabled =  SupAbsTB.Enabled = SurfAbs.Enabled = false;
-                }
+               
             }
             catch(Exception ex)
             {
@@ -300,6 +304,26 @@ namespace StochasticModeling
                 DisableInterface(true);
                 MessageBox.Show(ex.Message);
             }
+
+
+        }
+
+        private void LoadFile_Click(object sender, EventArgs e)
+        {
+                reflgraphobject.Clear();
+                rhographobject.Clear();
+
+                openFileDialog1.Title = "Select a File";
+                openFileDialog1.Filter = "DataFiles|*.txt";
+                openFileDialog1.FileName = string.Empty;
+
+                if (openFileDialog1.ShowDialog() != DialogResult.Cancel)
+                    origreflfilename = openFileDialog1.FileName;
+                else
+                    origreflfilename = string.Empty;
+
+                if(origreflfilename != string.Empty)
+                    LoadDataFile(origreflfilename);
         }
 
         private void LoadZ(string filename)
@@ -492,7 +516,7 @@ namespace StochasticModeling
             if (double.Parse(Rholipid.Text) == 0)
                 Rholipid.Text = "0.1";
 
-            SetProgressBar(IterationsTB.ToInt(), 0, -1);
+            SetProgressBar(IterationsTB.ToInt()-1, 0, 0);
 
             int iterations = IterationsTB.ToInt();
             if (progressBar1.Value > 0 && progressBar1.Value < iterations)
@@ -560,6 +584,9 @@ namespace StochasticModeling
             reflgraphobject.ProgramRunningState = false;
 
             WriteSettings();
+
+            if (m_bloadfromcommandline)
+                this.Close();
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)

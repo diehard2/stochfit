@@ -215,7 +215,7 @@ void StochFit::InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA)
 int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)
 {
 	//Sleep while we are generating our output data
-	if(m_icurrentiteration != m_itotaliterations)
+	if(m_icurrentiteration != m_itotaliterations-1)
 	{
 		m_bupdated = TRUE;
 
@@ -224,7 +224,10 @@ int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, dou
 			Sleep(100);
 		}
 	}
-
+	else
+	{
+		m_bupdated = FALSE;
+	}
 	//We only have one thread, and we're controlling access to it, so no need for fancy synchronization here
 
 	for(int i = 0; i < m_irhocount; i++)

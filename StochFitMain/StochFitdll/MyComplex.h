@@ -26,7 +26,7 @@ namespace MyComplexNumber{
 
 	//Complex Class definition
 
-	__declspec(align(16))struct MyComplex
+	__declspec(align(16)) struct MyComplex
 	{
 	  public:
 		double re;
@@ -131,19 +131,21 @@ namespace MyComplexNumber{
 		//Use the half angle relation to calculate the square root. Prevents buffer
 		//over/under flows. Don't change this code. This problem actually occurs
 		double mag, theta, sqrtholder;
-
+		MyComplex holder;
 		if(comp.im != 0.0)
 		{
 			mag = sqrt(comp.re*comp.re+comp.im*comp.im);
 			theta = atan2(comp.im,(comp.re+mag));
 			sqrtholder = sqrt(mag);
-			return MyComplex(sqrtholder*cos(theta),sqrtholder*sin(theta));
+			holder = MyComplex(sqrtholder*cos(theta),sqrtholder*sin(theta));
 		}
+		else if(comp.re < 0.0)
+			holder = MyComplex(0.0, sqrtf(abs(comp.re)));
+		else 
+			holder =  MyComplex(sqrt(comp.re),0.0);
 		
-		if(comp.re < 0.0)
-			return MyComplex(0.0, sqrtf(abs(comp.re)));
-
-		return MyComplex(sqrt(comp.re),0.0);
+		
+		return holder;
 	};
 
 	inline double compabs(const MyComplex& comp)

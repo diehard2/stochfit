@@ -307,6 +307,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <None Include="VTune\StochFitMain.vpj" />
     <Content Include="Resources\Todo.txt" />
   </ItemGroup>
   <ItemGroup>

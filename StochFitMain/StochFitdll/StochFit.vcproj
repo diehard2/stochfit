@@ -47,7 +47,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				StructMemberAlignment="5"
-				OpenMP="false"
+				OpenMP="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -64,7 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libmmdd.lib libguide40.lib atls.lib"
+				AdditionalDependencies="libmmdd.lib atls.lib"
 				OutputFile="..\bin\Debug\StochFitDll.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -144,7 +144,7 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -162,7 +162,7 @@
 				LinkIncremental="1"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="../bin/Debug/StochFit.pdb"
+				ProgramDatabaseFile="../bin/Release/StochFitDll.pdb"
 				SubSystem="2"
 				ImportLibrary="$(OutDir)/StochFit.lib"
 				TargetMachine="1"
@@ -286,6 +286,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CObjectiveFunc.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ParamVector.cpp"
 				>
 			</File>
@@ -317,6 +321,10 @@
 			>
 			<File
 				RelativePath=".\CEDP.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CObjectiveFunc.h"
 				>
 			</File>
 			<File

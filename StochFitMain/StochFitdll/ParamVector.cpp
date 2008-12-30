@@ -21,9 +21,12 @@
 #include "stdafx.h"
 #include "ParamVector.h"
 
-ParamVector::ParamVector(ReflSettings* InitStruct):m_bfixroughness(false),
+ParamVector::ParamVector():m_bfixroughness(false),
 m_busesurfabs(false), m_bfiximpnorm(false), m_bXROnly(false), m_binitialized(false), m_isurfabs_index(-1), m_iimpnorm_index(-1),
 m_iroughness_index(-1)
+{}
+
+void ParamVector::Initialize(ReflSettings* InitStruct)
 {
 	m_binitialized = true;
 	m_busesurfabs = InitStruct->UseSurfAbs;
@@ -80,12 +83,10 @@ m_iroughness_index(-1)
 
 	for(int i = 0 ; i < InitStruct->Boxes; i++)
 		SetMutatableParameter(i,1.0);
+
 }
 
-ParamVector::ParamVector():m_bfixroughness(false),m_busesurfabs(false), m_bfiximpnorm(false), m_bXROnly(false), m_binitialized(false)
-{
-	m_binitialized = false;
-}
+
 
 void ParamVector::SetBounds(float lowrough, float highrough, float highimp, float highabs)
 {

@@ -200,12 +200,12 @@ namespace StochasticModeling
            InfoStruct = new BoxModelSettings();
            SetInitStruct(ref InfoStruct, null);
 
-           Calculations.RhoGenerate(InfoStruct, eparameters, eparameters.Length, _ElectronDensityArray, _BoxElectronDensityArray);
+           NativeMethods.RhoGenerate(InfoStruct, eparameters, eparameters.Length, _ElectronDensityArray, _BoxElectronDensityArray);
           
            if (_ReflectivityMap != null)
            {
                MakeParameters(ref parameters, false);
-               Calculations.FastReflGenerate(InfoStruct, parameters, parameters.Length, _ReflectivityMap);
+               NativeMethods.FastReflGenerate(InfoStruct, parameters, parameters.Length, _ReflectivityMap);
            }
 
            InfoStruct.Dispose();

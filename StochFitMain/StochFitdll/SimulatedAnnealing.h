@@ -28,9 +28,6 @@ class SimAnneal
 	private:
 
 		//Variables
-		ParamVector temp_params;
-		CReflCalc* multi;
-
 		int m_iIteration;
 		int m_iPlattime;
 		long double m_dTemp;
@@ -67,16 +64,16 @@ class SimAnneal
 		int m_iabssearch;
 		int m_inormsearch;
 		int m_ialgorithm;
-		double m_dState1, m_dState2;
+		double m_dState1;
 		double TakeStep(ParamVector* params);
-		CEDP* m_cEDP;
 	
 public:
-	SimAnneal(bool debug, std::wstring directory);
+		typedef double (SimAnneal::*func)(double*);
+		
+		SimAnneal();
 		~SimAnneal();
 		void Initialize(ReflSettings* InitStruct);
 		bool Iteration(ParamVector* params);
-		void InitializeParameters(ReflSettings* InitStruct, ParamVector* params, CReflCalc* m_cRefl, CEDP* EDP);
 		bool EvaluateGreedy(double bestval, double curval);
 		bool EvaluateSA(double bestval, double curval);
 		bool EvaluateSTUN(long double bestval,long double curval);
@@ -87,6 +84,7 @@ public:
 		bool IsIterMinimum();
 		double m_daveragefstun;
 		long double m_dbestsolution;
+		void SetOjbectiveFunc(func objective);
 
 
 };

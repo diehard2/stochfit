@@ -40,11 +40,11 @@ namespace StochasticModeling.Settings
         #region Variables
 
         public string Directory;
-        [XmlIgnoreAttribute] public IntPtr Q;
-        [XmlIgnoreAttribute] public IntPtr Refl;
-        [XmlIgnoreAttribute] public IntPtr ReflError;
-        [XmlIgnoreAttribute] public IntPtr QError;
-        [XmlIgnoreAttribute] public int QPoints;
+        [XmlIgnoreAttribute] internal IntPtr Q;
+        [XmlIgnoreAttribute] internal IntPtr Refl;
+        [XmlIgnoreAttribute] internal IntPtr ReflError;
+        [XmlIgnoreAttribute] internal IntPtr QError;
+        [XmlIgnoreAttribute] internal int QPoints;
         /// <summary>
         /// Subphase SLD
         /// </summary>
@@ -253,13 +253,13 @@ namespace StochasticModeling.Settings
         #region Variables
 
         public string Directory;
-        public IntPtr Q = IntPtr.Zero;
-        public IntPtr Refl = IntPtr.Zero;
-        public IntPtr ReflError = IntPtr.Zero;
-        public IntPtr QError = IntPtr.Zero;
-        public IntPtr UL = IntPtr.Zero;
-        public IntPtr LL = IntPtr.Zero;
-        public IntPtr ParamPercs = IntPtr.Zero;
+        internal IntPtr Q = IntPtr.Zero;
+        internal IntPtr Refl = IntPtr.Zero;
+        internal IntPtr ReflError = IntPtr.Zero;
+        internal IntPtr QError = IntPtr.Zero;
+        internal IntPtr UL = IntPtr.Zero;
+        internal IntPtr LL = IntPtr.Zero;
+        internal IntPtr ParamPercs = IntPtr.Zero;
         public int QPoints;
         public bool OneSigma;
         public bool WriteFiles;
@@ -278,8 +278,8 @@ namespace StochasticModeling.Settings
         public int Iterations;
 
         //EDP Specific Settings
-        public IntPtr MIEDP = IntPtr.Zero;
-        public IntPtr ZIncrement = IntPtr.Zero;
+        internal IntPtr MIEDP = IntPtr.Zero;
+        internal IntPtr ZIncrement = IntPtr.Zero;
         public int ZLength;
  
          [XmlIgnoreAttribute]

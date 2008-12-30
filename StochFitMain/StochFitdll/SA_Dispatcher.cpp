@@ -25,29 +25,26 @@ SA_Dispatcher::SA_Dispatcher()
 {
 }
 
-void SA_Dispatcher::Initialize(bool debug, wstring directory)
+void SA_Dispatcher::Initialize(ReflSettings* InitStruct)
 {
-		m_cSA = new SimAnneal(debug, directory);
+		m_cSA.Initialize(InitStruct);
+		m_cEDP.Init(InitStruct);
+		m_cRefl.Init(InitStruct);
+		m_cObjective.Initialize(InitStruct);
+		m_cParams.Initialize(InitStruct);
 }
 
 SA_Dispatcher::~SA_Dispatcher()
 {
-		delete m_cSA;
-}
-
-void SA_Dispatcher::Initialize_Subsytem(ReflSettings* InitStruct)
-{
-		m_cSA->Initialize(InitStruct);
-}
-
-void SA_Dispatcher::InitializeParameters(ReflSettings* InitStruct, ParamVector *params, CReflCalc *m_cRefl, CEDP* m_cEDP)
-{
-		m_cSA->InitializeParameters(InitStruct, params, m_cRefl, m_cEDP);
+	
 }
 
 bool SA_Dispatcher::Iteration(ParamVector *params)
 {
-		return m_cSA->Iteration(params);
+	    m_cSA.TakeStep(params);
+		m_cEDP.GenerateEDP(params);
+		m_cObjective.GetFunction(m_cRefl.MakeReflectivity(params));
+		return m_cSA.Iteration(params);
 }
 
 bool SA_Dispatcher::CheckForFailure()
@@ -58,31 +55,31 @@ bool SA_Dispatcher::CheckForFailure()
 
 double SA_Dispatcher::Get_Temp()
 {
-		return m_cSA->GetTemp();
+		return m_cSA.GetTemp();
 }
 
 void SA_Dispatcher::Set_Temp(double Temp)
 {
-		m_cSA->SetTemp(Temp);
+		m_cSA.SetTemp(Temp);
 }
 
 double SA_Dispatcher::Get_LowestEnergy()
 {
-		return m_cSA->GetLowestEnergy();
+		return m_cSA.GetLowestEnergy();
 }
 
 bool SA_Dispatcher::Get_IsIterMinimum()
 {
-		return m_cSA->IsIterMinimum();
+		return m_cSA.IsIterMinimum();
 }
 
 double SA_Dispatcher::Get_AveragefSTUN()
 {
-		return m_cSA->m_daveragefstun;
+		return m_cSA.m_daveragefstun;
 }
 	
 void SA_Dispatcher::Set_AveragefSTUN(double fSTUN)
 {
-		m_cSA->m_daveragefstun = fSTUN;
+		m_cSA.m_daveragefstun = fSTUN;
 }
 

@@ -88,7 +88,7 @@ namespace StochasticModeling.Modeling
         /// </summary>
         /// <param name="sender">A textbox is expected as input</param>
         /// <param name="e">return true if the number can be cast to a double or false if not</param>
-        protected void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
+        private void ValidateNumericalInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
             try
             {
@@ -108,7 +108,7 @@ namespace StochasticModeling.Modeling
         /// </summary>
         /// <param name="sender">A textbox is expected as input</param>
         /// <param name="e">return true if the number can be cast to an integer or false if not</param>
-        protected void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
+        private void ValidateIntegerInput(object sender, System.ComponentModel.CancelEventArgs e)
         {
             try
             {

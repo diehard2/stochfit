@@ -32,7 +32,7 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	m_bwarmedup = false;
 	m_ipriority = 2;
 	
-	 m_Directory = InitStruct->Directory;
+	m_Directory = InitStruct->Directory;
 	
     fnpop = InitStruct->Directory + wstring(L"\\pop.dat");
     fnrf = InitStruct->Directory + wstring(L"\\rf.dat");
@@ -40,7 +40,7 @@ StochFit::StochFit(ReflSettings* InitStruct)
 
 	m_SA = new SA_Dispatcher();
 	
-	InitializeSA(InitStruct, m_SA);
+	
 	Initialize(InitStruct);
 }
 
@@ -65,6 +65,8 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 	 //////////////////////////////////////////////////////////
 	 /******** Setup Variables and ReflectivityClass ********/
 	 ////////////////////////////////////////////////////////
+
+	m_SA->Initialize(InitStruct);
 
 	m_cRefl.Init(InitStruct);
 	m_cEDP.Init(InitStruct);
@@ -94,10 +96,7 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 	// Update the constraints on the params
 	params->UpdateBoundaries(NULL,NULL);
 
-	m_SA->InitializeParameters(InitStruct, params, &m_cRefl, &m_cEDP);
 	
-	if(m_SA->CheckForFailure() == true)
-		MessageBox(NULL, L"Catastrophic error in SA - please contact the author", NULL,NULL);
 }
 
 int StochFit::Processing()
@@ -114,8 +113,8 @@ int StochFit::Processing()
 		
 			if(accepted || isteps == 0)
 			{
-				m_dChiSquare = m_cRefl.m_dChiSquare;
-				m_dGoodnessOfFit = m_cRefl.m_dgoodnessoffit;
+			/*	m_dChiSquare = m_cRefl.m_dChiSquare;
+				m_dGoodnessOfFit = m_cRefl.m_dgoodnessoffit;*/
 			}
 		    UpdateFits(isteps);
 
@@ -142,8 +141,8 @@ void StochFit::UpdateFits(int currentiteration)
 		{
 			//Check to see if we're updating
 			m_cEDP.GenerateEDP(params);
-			m_cEDP.WriteOutputFile(fnrho);
-			m_cRefl.ParamsRF(&m_cEDP, fnrf);
+		//	m_cEDP.WriteOutputFile(fnrho);
+		//	m_cRefl.ParamsRF(&m_cEDP, fnrf);
 			m_dRoughness = params->getroughness();
 			
 
@@ -206,11 +205,6 @@ int StochFit::Cancel()
 	return 0;
 }
 
-void StochFit::InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA)
-{
-	SA->Initialize(InitStruct->Debug, m_Directory);
-	SA->Initialize_Subsytem(InitStruct);
-}
 
 int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)
 {

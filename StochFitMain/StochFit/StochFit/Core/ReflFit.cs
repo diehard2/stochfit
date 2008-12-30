@@ -38,7 +38,7 @@ namespace StochasticModeling
             InfoStruct.Iterations = iterations;
            
 
-            Calculations.ConstrainedStochFit(InfoStruct, parameters, CovarArray, parameters.Length, new double[9], ParamArray, ChiSquareArray,ref Size);
+            NativeMethods.ConstrainedStochFit(InfoStruct, parameters, CovarArray, parameters.Length, new double[9], ParamArray, ChiSquareArray,ref Size);
             
             //Not ideal, will always back up regardless of whether the new model is accepted or not
             BackupArrays();
@@ -116,7 +116,7 @@ namespace StochasticModeling
             SetInitStruct(ref InfoStruct, null);
 
 
-            Calculations.FastReflfit(InfoStruct, parameters, m_dCovarArray, parameters.Length, _fitinfo);
+            NativeMethods.FastReflfit(InfoStruct, parameters, m_dCovarArray, parameters.Length, _fitinfo);
 
             InfoStruct.Dispose();
 

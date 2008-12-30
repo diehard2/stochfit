@@ -23,6 +23,7 @@
 #include "ParamVector.h"
 #include "SimulatedAnnealing.h"
 #include "CEDP.h"
+#include "CObjective.h"
 
 
 
@@ -30,15 +31,17 @@ class SA_Dispatcher
 {
 private:
 
-	SimAnneal* m_cSA;
+	SimAnneal m_cSA;
+    CReflCalc m_cRefl;
+	CEDP m_cEDP;
+	ParameterContainer m_cParams;
+	CObjective m_cObjective;
 
 public: 
 	SA_Dispatcher();
 	~SA_Dispatcher();
 
-	void Initialize(bool debug, std::wstring directory);
-	void Initialize_Subsytem(ReflSettings* InitStruct);
-	void InitializeParameters(ReflSettings* InitStruct, ParamVector* params, CReflCalc* m_cRefl, CEDP* EDP);
+	void Initialize(ReflSettings* InitStruct);
 	bool Iteration(ParamVector* params);
 	double Get_Temp();
 	void Set_Temp(double Temp);

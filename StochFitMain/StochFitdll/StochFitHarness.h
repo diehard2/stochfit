@@ -33,7 +33,7 @@ class StochFit
 		int Cancel();
 		int Priority(int priority);
 		int GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
-		void InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA);
+		
 		void GetArraySizes(int* RhoSize, int* ReflSize);
 		bool GetWarmedUp();
 		

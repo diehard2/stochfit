@@ -5,6 +5,11 @@ CEDP::~CEDP()
 {
 	_mm_free(m_EDP);
 	_mm_free(m_DEDP);
+	_mm_free(m_fEDSpacingArray);
+	_mm_free(m_fDistArray);
+	_mm_free(m_fRhoArray);
+	_mm_free(m_fImagRhoArray);
+	_mm_free(m_fZ);
 }
 
 void CEDP::Init(ReflSettings* InitStruct)
@@ -41,7 +46,7 @@ void CEDP::Init(ReflSettings* InitStruct)
     m_EDP = (MyComplex*)_mm_malloc(sizeof(MyComplex)*m_iLayers,64);
     m_DEDP = (MyComplex*)_mm_malloc(sizeof(MyComplex)*m_iLayers,64);
 	m_fEDSpacingArray = (float*)_mm_malloc(m_iLayers*sizeof(float),64);
-
+	m_fZ = (float*)_mm_malloc(sizeof(float)*m_iLayers);
 	//Create scratch arrays for the electron density calculation
 	m_fDistArray = (float*)_mm_malloc((InitStruct->Boxes+2)*sizeof(float),64);
 	m_fRhoArray = (float*)_mm_malloc((InitStruct->Boxes+2)*sizeof(float),64);
@@ -50,6 +55,7 @@ void CEDP::Init(ReflSettings* InitStruct)
 
 	for(int i = 0; i < m_iLayers; i++)
 	{
+		m_fZ[i] = i*m_dDz0;
 		m_fEDSpacingArray[i] = i*m_dDz0-InitStruct->Leftoffset;
 	}
 
@@ -184,25 +190,6 @@ void CEDP::MakeEDP(ParamVector* g)
 	}
 }
 
-void CEDP::WriteOutputFile(wstring filename)
-{
-	double z = 0;
-	ofstream rhoout(filename.c_str());
-
-	for(int j = 0; j < m_iLayers; j++)
-	{
-		rhoout << z << ' ' << m_EDP[j].re/m_EDP[m_iLayers-1].re << ' ' ;
-		
-		if(m_bUseSurfAbs == TRUE)
-			rhoout << m_EDP[j].im/m_EDP[m_iLayers-1].im;
-		
-		rhoout << endl;
-
-		z += m_dDz0;
-	}
-	
-	rhoout.close();
-}
 
 double CEDP::Get_LayerThickness()
 {
@@ -238,3 +225,45 @@ void CEDP::Set_FilmAbs(float abs)
 {
 	m_dBeta = abs*m_dWaveConstant;
 }
+
+//Check to see if there is any negative electron density for the XR case, false if there is neg ED
+bool CEDP::CheckForNegDensity()
+{
+	int EDPoints = m_iLayers;
+	
+	#pragma ivdep
+	for(int i = 0; i < EDPoints; i++)
+	{
+		if(m_EDP[i].re < 0)
+			return false;
+	}
+
+	return true;
+}
+
+void WriteOutputFile(string filename)
+{
+	ofstream rhoout(filename.c_str());
+
+	for(int j = 0; j < m_iLayers; j++)
+	{
+		rhoout << m_fZ[j] << ' ' << m_EDP[j].re/m_EDP[m_iLayers-1].re << ' ' ;
+		
+		if(m_bUseSurfAbs == TRUE)
+			rhoout << m_EDP[j].im/m_EDP[m_iLayers-1].im;
+		
+		rhoout << endl;
+	}
+	
+	rhoout.close();
+}
+
+void CEDP::GetData(double* Z, double* EDP)
+{
+	memcpy(Z,m_fZ, sizeof(double)*m_iLayers);
+
+	for(int i = 0; i < m_iLayers; i++)
+	{
+		EDP[i] = m_EDP[i];
+	}
+} 

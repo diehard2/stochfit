@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace StochasticModeling.Properties {
+namespace StochasticModeling.Core {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

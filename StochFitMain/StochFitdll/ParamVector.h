@@ -43,8 +43,8 @@ class ParamVector
 		void SetBounds(float lowrough, float highrough, float highimp, float highabs);
 
 	public:
-		ParamVector(ReflSettings* InitStruct);
 		ParamVector();
+		void Initialize(ReflSettings* InitStruct);
 		int RealparamsSize();
 		int GetInitializationLength();
 		int ParamCount();

@@ -528,9 +528,9 @@ namespace StochasticModeling
             
             GetReflSettings(ref InfoStruct);
 
-            Calculations.Init(InfoStruct);
-            Calculations.Start(iterations);
-            Calculations.GenPriority(Priority.SelectedIndex);
+            NativeMethods.Init(InfoStruct);
+            NativeMethods.Start(iterations);
+            NativeMethods.GenPriority(Priority.SelectedIndex);
 
             myTimer = new System.Timers.Timer();
             myTimer.Elapsed += new ElapsedEventHandler(OnUpdateTimer);
@@ -570,7 +570,7 @@ namespace StochasticModeling
         private void Canceled()
         {
             myTimer.Stop();
-            Calculations.CancelFit();
+            NativeMethods.CancelFit();
 
             DisableInterface(false);
             Cancelbutton.Enabled = false;
@@ -595,7 +595,7 @@ namespace StochasticModeling
             {
                 if (MessageBox.Show("Verify fitting cancellation", "Cancelling", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    Calculations.CancelFit();
+                    NativeMethods.CancelFit();
                     Thread.Sleep(700);
                 }
                 else
@@ -612,12 +612,12 @@ namespace StochasticModeling
             {
                 int Zlength, Qlength;
 
-                while (Calculations.WarmedUp() == false)
+                while (NativeMethods.WarmedUp() == false)
                 {
                     Thread.Sleep(100);
                 }
 
-                Calculations.ArraySizes(out Zlength, out Qlength);
+                NativeMethods.ArraySizes(out Zlength, out Qlength);
 
                 Z = new double[Zlength];
                 Rho = new double[Zlength];
@@ -637,8 +637,9 @@ namespace StochasticModeling
                 bool isfinished;
 
                 // Get the progress of the iterations
-                int iterations = Calculations.GetData(Z, Rho, Q, Refl, out m_droughness, out chisquare, out fitscore, out isfinished);
-                Calculations.SAparams(out lowestenergy, out temp, out mode);
+                int iterations = NativeMethods.GetData(Z, Rho, Q, Refl, out m_droughness, out chisquare, out fitscore, out isfinished);
+               
+                NativeMethods.SAparams(out lowestenergy, out temp, out mode);
 
                 span = DateTime.Now - previtertime;
                
@@ -880,7 +881,7 @@ namespace StochasticModeling
         private void Priority_SelectedIndexChanged(object sender, EventArgs e)
         {
             //The highest two priorities were... problematic
-            Calculations.GenPriority(Priority.SelectedIndex);
+            NativeMethods.GenPriority(Priority.SelectedIndex);
         }
 
         private void fresnelcb_CheckedChanged(object sender, EventArgs e)
@@ -1080,7 +1081,7 @@ namespace StochasticModeling
         /// </summary>
         /// <param name="sender">Expects a ToolStripMenuItem</param>
         /// <param name="e"></param>
-        protected void MenuItem_Check(object sender, EventArgs e)
+        internal protected void MenuItem_Check(object sender, EventArgs e)
          {
              ((ToolStripMenuItem)sender).Checked = !((ToolStripMenuItem)sender).Checked;
          }

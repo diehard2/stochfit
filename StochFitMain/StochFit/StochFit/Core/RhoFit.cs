@@ -74,7 +74,7 @@ namespace StochasticModeling
             InfoStruct = new BoxModelSettings();
             SetInitStruct(ref InfoStruct, null);
 
-            Calculations.Rhofit(InfoStruct, parameters, m_dCovarArray, parameters.Length, _fitinfo);
+            NativeMethods.Rhofit(InfoStruct, parameters, m_dCovarArray, parameters.Length, _fitinfo);
            
             InfoStruct.Dispose();
 

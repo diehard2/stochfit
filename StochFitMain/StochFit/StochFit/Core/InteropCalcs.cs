@@ -26,15 +26,16 @@ namespace StochasticModeling
     /// <summary>
     /// All interop calculations are accessed from this class as static mehtods
     /// </summary>
-    public class Calculations
+    internal class NativeMethods
     {
-
+        private NativeMethods()
+        { }
         /// <summary>
         /// Initialize the model independent fitting procedures. This must be called before any other model independent routines
         /// </summary>
         /// <param name="settings">Struct of type <see cref="ModelSettings"/> containing all parameters</param>
         [DllImport("stochfitdll.dll", EntryPoint = "Init", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void Init([MarshalAs(UnmanagedType.LPStruct)] ModelSettings settings);
+        internal static extern void Init([MarshalAs(UnmanagedType.LPStruct)] ModelSettings settings);
 
         /// <summary>
         /// Sets the windows priority of the model independent algorithm thread
@@ -42,7 +43,7 @@ namespace StochasticModeling
         /// <param name="priority">Integer corresponding to priority. 0 = Idle, 1 = Below Idle, 2 = Normal</param>
         /// <returns></returns>
         [DllImport("stochfitdll.dll", EntryPoint = "GenPriority", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void GenPriority(int priority);
+        internal static extern void GenPriority(int priority);
 
         /// <summary>
         /// Starts the model idependent fitting process 
@@ -50,14 +51,14 @@ namespace StochasticModeling
         /// <param name="iterations">Number of iterations to run the model independent fit</param>
         /// <returns></returns>
         [DllImport("stochfitdll.dll", EntryPoint = "Start", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void Start(int iterations);
+        internal static extern void Start(int iterations);
 
         /// <summary>
         /// Cancel the model independent fit
         /// </summary>
         /// <returns></returns>
         [DllImport("stochfitdll.dll", EntryPoint = "Cancel", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void CancelFit();
+        internal static extern void CancelFit();
 
         /// <summary>
         /// Retrieves the data from the model independent algorithm
@@ -72,7 +73,7 @@ namespace StochasticModeling
         /// <param name="isfinished">True if the specified number of iterations has been reached, false otherwise</param>
         /// <returns>Number of completed iterations</returns>
         [DllImport("stochfitdll.dll", EntryPoint = "GetData", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern int GetData(double[] ZRange, double[] Rho, double[] QRange, double[] Refl, out double roughness, out double chisquare, out double goodnessoffit, out bool isfinished);
+        internal static extern int GetData(double[] ZRange, double[] Rho, double[] QRange, double[] Refl, out double roughness, out double chisquare, out double goodnessoffit, out bool isfinished);
 
 
         /// <summary>
@@ -81,14 +82,14 @@ namespace StochasticModeling
         /// <param name="RhoSize">Size of the Electron Density Array</param>
         /// <param name="Reflsize">Size of the Reflectivity Array</param>
         [DllImport("stochfitdll.dll", EntryPoint = "ArraySizes", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void ArraySizes(out int RhoSize, out int Reflsize);
+        internal static extern void ArraySizes(out int RhoSize, out int Reflsize);
 
         /// <summary>
         /// Return true if the numerical routines are ready to return data, false otherwise
         /// </summary>
         /// <returns></returns>
         [DllImport("stochfitdll.dll", EntryPoint = "WarmedUp", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern bool WarmedUp();
+        internal static extern bool WarmedUp();
 
         /// <summary>
         /// Retrieves the current values for the simulated annealing parameters
@@ -97,7 +98,7 @@ namespace StochasticModeling
         /// <param name="temp">The current annealing temperature</param>
         /// <param name="mode">Not used</param>
         [DllImport("stochfitdll.dll", EntryPoint = "SAparams", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void SAparams(out double lowestenergy, out double temp, out int mode);
+        internal static extern void SAparams(out double lowestenergy, out double temp, out int mode);
 
 
 
@@ -109,7 +110,7 @@ namespace StochasticModeling
         /// <param name="parametersize"></param>
         /// <param name="ReflectivityMap"></param>
         [DllImport("LevMardll.dll", EntryPoint = "FastReflGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void FastReflGenerate([MarshalAs(UnmanagedType.LPStruct)]BoxModelSettings InitStruct, double[] parameters, int parametersize, double[] ReflectivityMap);
+        internal static extern void FastReflGenerate([MarshalAs(UnmanagedType.LPStruct)]BoxModelSettings InitStruct, double[] parameters, int parametersize, double[] ReflectivityMap);
 
         /// <summary>
         /// Performs a Levenberg-Marquadt least squares fit of Reflectivity data
@@ -131,7 +132,7 @@ namespace StochasticModeling
         /// <param name="ED"></param>
         /// <param name="BoxED"></param>
         [DllImport("LevMardll.dll", EntryPoint = "RhoGenerate", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void RhoGenerate([MarshalAs(UnmanagedType.LPStruct)]BoxModelSettings InitStruct, double[] parameters, int parametersize, double[] ED, double[] BoxED);
+        internal static extern void RhoGenerate([MarshalAs(UnmanagedType.LPStruct)]BoxModelSettings InitStruct, double[] parameters, int parametersize, double[] ED, double[] BoxED);
 
         /// <summary>
         ///  Fits an electron density profile to the electron density profile generated by the model independent fit
@@ -142,7 +143,7 @@ namespace StochasticModeling
         /// <param name="covarsize"></param>
         /// <param name="info"></param>
         [DllImport("LevMardll.dll", EntryPoint = "Rhofit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void Rhofit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int covarsize, double[] info);
+        internal static extern void Rhofit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int covarsize, double[] info);
 
         /// <summary>
         /// Performs a stochastic search of the parameter space using a constrained Levenberg-Marquadt least squares 
@@ -157,6 +158,6 @@ namespace StochasticModeling
         /// <param name="chisquarearray"></param>
         /// <param name="paramarraysize"></param>
         [DllImport("LevMardll.dll", EntryPoint = "StochFit", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        public static extern void ConstrainedStochFit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int paramsize, double[] info, double[] ParamArray, double[] chisquarearray, ref int paramarraysize);
+        internal static extern void ConstrainedStochFit([MarshalAs(UnmanagedType.LPStruct)] BoxModelSettings InitStruct, double[] parameters, double[] covar, int paramsize, double[] info, double[] ParamArray, double[] chisquarearray, ref int paramarraysize);
     }
 }

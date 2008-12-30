@@ -39,46 +39,44 @@ private:
 	double* m_drj;
 	MyComplex* m_cRj;
 
-	double *tsinsquaredthetai,*sinsquaredthetai,*qspreadsinsquaredthetai,*qspreadreflpt,*qspreadsinthetai;
-
-
+	double *sinsquaredthetai,*qspreadsinsquaredthetai,*qspreadreflpt;
+	static const double smear[];
+	static const double smearweight[];
+	
 	//Functions
-	void impnorm(double* refl, int datapoints, bool isimprefl);
-	void MyTransparentRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
+	void impnorm(double* refl, const int datapoints, bool isimprefl);
+	void MyTransparentRF(double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
 	void QsmearRf(double* qspreadreflpt, double* reflpt, int datapoints);
-	void MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
-	bool CheckDensity(CEDP* EDP);
+	void MyRF(double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
 	void GetOffSets(int& HighOffset, int& LowOffset, MyComplex* EDP, int EDPoints);
 	void InitializeScratchArrays(int EDPoints);
- 
+	void SetupRef(ReflSettings* InitStruct);
 
-	bool m_bXRonly;
 	BOOL m_bReflInitialized;
+	int m_idatapoints;
+
 public:
 
 	//Variables
-	double m_dChiSquare;
-	double m_dgoodnessoffit;
 	float m_dQSpread;
 	float m_dnormfactor;
 
 	//read from file
-    double *xi,*yi,*eyi,*exi,*sinthetai,*reflpt,*dataout,*tsinthetai,*qarray;
-    int m_idatapoints, tarraysize;
+    double *xi,*exi,*reflpt,*dataout;
+
 	
 	//Member functions
 	CReflCalc();
 	~CReflCalc();
-	int GetDataCount();
-
+	
 	
     void Init(ReflSettings* InitStruct);
-	void SetupRef(ReflSettings* InitStruct);
-	double Objective(CEDP* EDP);
-    void ParamsRF(CEDP* EDP, wstring reflfile);
-
+	void MakeReflectivity(CEDP* EDP);
+   
 	//Get/Let Functions
 	double GetWaveConstant();
-    
-	int objectivefunction;
+	int GetDataCount();
+	void GetData(double* Q, double* Refl);
+	void WriteOutputFile(string filename);
+
 };

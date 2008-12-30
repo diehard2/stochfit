@@ -22,12 +22,14 @@
 #include "SimulatedAnnealing.h"
 #include <iomanip>
 
-SimAnneal::SimAnneal(bool debug, wstring directory): m_bisiterminimum(false), m_dTemp(-1.0),
-	m_ipoorsolutionacc(0),m_inumberpoorsol(0),m_daverageSTUNval(0), m_sdirectory(directory), m_bdebugging(debug)
+SimAnneal::SimAnneal(): m_bisiterminimum(false), m_dTemp(-1.0),
+	m_ipoorsolutionacc(0),m_inumberpoorsol(0),m_daverageSTUNval(0)
 {}
 
 void SimAnneal::Initialize(ReflSettings* InitStruct)
 {
+	m_sdirectory = InitStruct->Directory;
+	m_bdebugging = InitStruct->Debug;
 	m_iPlattime = InitStruct->Platiter;
 	m_daveragefstun = InitStruct->Inittemp;
 
@@ -39,6 +41,7 @@ void SimAnneal::Initialize(ReflSettings* InitStruct)
 			m_dTemp = 10;
 	}
 
+	//SA Parameters
 	m_iIteration = 0;
 	m_iTime = 0;
 	m_dgamma = InitStruct->Gamma;
@@ -48,6 +51,13 @@ void SimAnneal::Initialize(ReflSettings* InitStruct)
 	m_iSTUNfunc = InitStruct->STUNfunc;
 	m_iSTUNdec = InitStruct->STUNdeciter;
 	m_dgammadec = InitStruct->Gammadec;
+
+	//Pertubation parameters
+	mc_stepsize = InitStruct->Paramtemp;
+	m_isigmasearch = InitStruct->Sigmasearch;
+	m_inormsearch = InitStruct->NormalizationSearchPerc;
+	m_iabssearch = InitStruct->AbsorptionSearchPerc;
+	m_ialgorithm = InitStruct->Algorithm;
 
 	if(m_bdebugging)
 	{
@@ -68,20 +78,6 @@ SimAnneal::~SimAnneal()
 	}
 }
 
-void SimAnneal::InitializeParameters(ReflSettings* InitStruct, ParamVector* params, CReflCalc* m_cRefl, CEDP* EDP)
-{
-	temp_params = *params;
-	mc_stepsize = InitStruct->Paramtemp;
-	multi = m_cRefl;
-	m_cEDP = EDP;
-	m_isigmasearch = InitStruct->Sigmasearch;
-	m_inormsearch = InitStruct->NormalizationSearchPerc;
-	m_iabssearch = InitStruct->AbsorptionSearchPerc;
-	m_ialgorithm = InitStruct->Algorithm;
-	
-	m_cEDP->GenerateEDP(params);
-	m_dbestsolution = m_dState1 = m_cRefl->Objective(m_cEDP);
-}
 
 bool SimAnneal::EvaluateGreedy(double bestval, double curval)
 {
@@ -301,31 +297,31 @@ double SimAnneal::GetLowestEnergy()
 	return m_dbestsolution;
 }
 
-bool SimAnneal::Iteration(ParamVector* params)
+bool SimAnneal::Iteration(double score)
 {
 	bool accepted = false;
 	m_bisiterminimum = false;
 	
 	temp_params = *params;
-	m_dState2 = TakeStep(&temp_params);
+	
 
 	//Don't allow for negative ED in XR case
-	if(m_dState2 == -1)
+	if(score == -1)
 		return false;
 
 	if(m_ialgorithm == 0)
 	{
-		accepted = EvaluateGreedy(m_dState1,m_dState2);
+		accepted = EvaluateGreedy(m_dState1,score);
 	}
 	else if (m_ialgorithm == 1)
-		accepted = EvaluateSA(m_dState1, m_dState2);
+		accepted = EvaluateSA(m_dState1, score);
 	else
-		accepted = EvaluateSTUN(m_dState1, m_dState2);
+		accepted = EvaluateSTUN(m_dState1, score);
 
 	if(accepted)
 	{
 		*params = temp_params;
-		m_dState1 = m_dState2;
+		m_dState1 = score;
 
 		if(m_dState1 == m_dbestsolution)
 			m_bisiterminimum = true;

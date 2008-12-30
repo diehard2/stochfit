@@ -2,13 +2,14 @@
 
 #include "ParamVector.h"
 
-class CEDP {
+class CEDP 
+{
 private:
 	float* m_fDistArray;
 	float* m_fRhoArray;
 	float* m_fImagRhoArray;
 	float* m_fEDSpacingArray;
-	
+	double* m_fZ;
 	double m_dRho;
 	double m_dLambda;
     double m_dDz0;
@@ -36,8 +37,8 @@ public:
 	double Get_Dz();
 	float Get_WaveConstant();
 	void Set_FilmAbs(float absorption);
-	void WriteOutputFile(wstring filename);
-
+	bool CheckForNegDensity();
+	void GetData(double* Z, double* EDP);
 	MyComplex* m_EDP;
 	MyComplex* m_DEDP;
 };

@@ -1,0 +1,24 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{EAF909A5-FA59-4C3D-9431-0FCC20D5BCF9}") = "MIRefl", "MIRefl.icproj", "{DF8BAC8C-FF03-4BE3-8BE1-603DA6044832}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DF8BAC8C-FF03-4BE3-8BE1-603DA6044832}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DF8BAC8C-FF03-4BE3-8BE1-603DA6044832}.Debug|Win32.Build.0 = Debug|Win32
+		{DF8BAC8C-FF03-4BE3-8BE1-603DA6044832}.Release|Win32.ActiveCfg = Release|Win32
+		{DF8BAC8C-FF03-4BE3-8BE1-603DA6044832}.Release|Win32.Build.0 = Release|Win32
+		{D1D2A628-FC27-4DEF-9E8E-78EAE1F01C4D}.Release|Win32.Build.0 = Release|Win32
+		{D1D2A628-FC27-4DEF-9E8E-78EAE1F01C4D}.Release|Win32.ActiveCfg = Release|Win32
+		{D1D2A628-FC27-4DEF-9E8E-78EAE1F01C4D}.Debug|Win32.Build.0 = Debug|Win32
+		{D1D2A628-FC27-4DEF-9E8E-78EAE1F01C4D}.Debug|Win32.ActiveCfg = Debug|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

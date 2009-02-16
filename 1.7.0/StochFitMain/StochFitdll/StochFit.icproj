@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Intel C++ Project"
+	Version="11.0"
+	Name="StochFitdll"
+	ProjectGUID="{0500C168-FD63-4DFE-8D66-C449E4D9E19B}"
+	VCNestedProjectGUID="{8FEF7E88-7B8D-44E8-BBE6-9ECB9DE5B5B1}"
+	VCNestedProjectFileName="StochFit.vcproj">
+	<Configurations>
+		<Configuration
+			Name="Release|Win32">
+			<Tool
+				Name="GeneralTool"
+				ProfileDirectory="../bin/dlls"/>
+			<Tool
+				Name="CppCmplrTool"
+				GlobalOptimizations="true"
+				InterproceduralOptimization="2"
+				FlushDenormalResultsToZero="true"
+				UseProcessorExtensions="0"
+				Parallelization="true"/>
+		</Configuration>
+		<Configuration
+			Name="GIXOS|Win32">
+			<Tool
+				Name="GeneralTool"
+				ProfileDirectory="../bin/dlls"/>
+			<Tool
+				Name="CppCmplrTool"
+				Optimization="1000"
+				GlobalOptimizations="true"
+				FlushDenormalResultsToZero="true"
+				Parallelization="true"/>
+		</Configuration>
+	</Configurations>
+	<Files/>
+</VisualStudioProject>

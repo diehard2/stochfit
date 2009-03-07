@@ -29,6 +29,7 @@ class ParameterContainer
 		double m_dcovararray[40];
 		bool m_bonesigma;
 		double m_dcutoff;
+		double m_dinfo[9];
 
 	public:
 
@@ -39,18 +40,18 @@ class ParameterContainer
 			m_dcutoff = -1.0;
 		}
 
-		ParameterContainer(double* params, double* covararray, int paramlength, bool onesigma, double score, double cutoff)
+		ParameterContainer(double* params, double* covararray, int paramlength, bool onesigma, double* info, double cutoff)
 		{
 			
 			m_iparamlength = paramlength;
-			m_dscore = score;
+			m_dscore = info[1];
 			m_bonesigma = onesigma;
 			m_dcutoff = cutoff;
 
 			if(m_iparamlength > 0)
 			{
 				memcpy(m_dparamarray, params, m_iparamlength*sizeof(double));
-			
+			    memcpy(m_dinfo, info, 9 * sizeof(double));
 				//Calculate the standard deviations in the parameters
 				for(int i = 0; i< paramlength;i++)
 				{
@@ -76,19 +77,21 @@ class ParameterContainer
 			{
 				memcpy(m_dparamarray, p.m_dparamarray, sizeof(double)*p.m_iparamlength);
 				memcpy(m_dcovararray, p.m_dcovararray, sizeof(double)*p.m_iparamlength);
+				memcpy(m_dinfo, p.m_dinfo, sizeof(double)*9);
 			}
         };
 
-		void SetContainer(double* params, double* covararray, int paramlength, bool onesigma, double score, double cutoff)
+		void SetContainer(double* params, double* covararray, int paramlength, bool onesigma, double* info, double cutoff)
 		{
 			m_iparamlength = paramlength;
-			m_dscore = score;
+			m_dscore = info[1];
 			m_bonesigma = onesigma;
 			m_dcutoff = cutoff;
 
 			if(m_iparamlength > 0)
 			{
 				memcpy(m_dparamarray, params, paramlength*sizeof(double));
+				memcpy(m_dinfo, info, 9 * sizeof(double));
 				//Calculate the standard deviations in the parameters
 				for(int i = 0; i< paramlength;i++)
 				{
@@ -118,6 +121,11 @@ class ParameterContainer
 			return m_dcovararray;
 		};
 
+		double* GetInfoArray()
+		{
+			return m_dinfo;
+		}
+
 		bool operator<(const ParameterContainer &param) 
 		{ 
 			return this->m_dscore < param.m_dscore; 
@@ -132,6 +140,7 @@ class ParameterContainer
 			{
 				memcpy(m_dparamarray, param.m_dparamarray, m_iparamlength*sizeof(double));
 				memcpy(m_dcovararray, param.m_dcovararray, m_iparamlength*sizeof(double));
+				memcpy(m_dinfo, param.m_dinfo, sizeof(double)*9);
 			}
 			
 			return *this;

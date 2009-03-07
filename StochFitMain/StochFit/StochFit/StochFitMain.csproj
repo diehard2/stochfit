@@ -132,6 +132,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\HelperFunctions.cs" />
+    <Compile Include="Core\Settings.Designer.cs">
+      <DependentUpon>Settings.cs</DependentUpon>
+    </Compile>
     <Compile Include="Resources\AboutBox1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -221,11 +224,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
     <Compile Include="Modeling\Rhomodeling.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -236,6 +234,7 @@
     <Compile Include="Core\Settings.cs" />
     <Compile Include="Core\InteropCalcs.cs">
     </Compile>
+    <Compile Include="Properties\Settings.Designer.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\AboutBox1.resx">
@@ -303,10 +302,7 @@
     <None Include="Resources\app.config" />
     <None Include="Resources\genf.ico" />
     <BaseApplicationManifest Include="Properties\app.manifest" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
+    <None Include="Properties\Settings.settings" />
     <None Include="VTune\StochFitMain.vpj" />
     <Content Include="Resources\Todo.txt" />
   </ItemGroup>

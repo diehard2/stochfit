@@ -594,7 +594,8 @@ namespace StochasticModeling
         }
         public double[] Fitinfo
         {
-            get { return (double[])_fitinfo.Clone(); }
+            get { return _fitinfo; }
+            set { _fitinfo = value; }
         }
     }
 }

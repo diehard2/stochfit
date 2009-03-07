@@ -23,7 +23,7 @@
 #include "ParamVector.h"
 #include "SimulatedAnnealing.h"
 #include "CEDP.h"
-#include "CObjective.h"
+#include "CObjectiveFunc.h"
 
 
 
@@ -34,7 +34,7 @@ private:
 	SimAnneal m_cSA;
     CReflCalc m_cRefl;
 	CEDP m_cEDP;
-	ParameterContainer m_cParams;
+	ParamVector m_cParams;
 	CObjective m_cObjective;
 
 public: 

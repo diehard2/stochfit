@@ -46,7 +46,7 @@ void CEDP::Init(ReflSettings* InitStruct)
     m_EDP = (MyComplex*)_mm_malloc(sizeof(MyComplex)*m_iLayers,64);
     m_DEDP = (MyComplex*)_mm_malloc(sizeof(MyComplex)*m_iLayers,64);
 	m_fEDSpacingArray = (float*)_mm_malloc(m_iLayers*sizeof(float),64);
-	m_fZ = (float*)_mm_malloc(sizeof(float)*m_iLayers);
+	m_fZ = (float*)_mm_malloc(sizeof(float)*m_iLayers,64);
 	//Create scratch arrays for the electron density calculation
 	m_fDistArray = (float*)_mm_malloc((InitStruct->Boxes+2)*sizeof(float),64);
 	m_fRhoArray = (float*)_mm_malloc((InitStruct->Boxes+2)*sizeof(float),64);
@@ -241,7 +241,7 @@ bool CEDP::CheckForNegDensity()
 	return true;
 }
 
-void WriteOutputFile(string filename)
+void CEDP::WriteOutputFile(string filename)
 {
 	ofstream rhoout(filename.c_str());
 
@@ -264,6 +264,6 @@ void CEDP::GetData(double* Z, double* EDP)
 
 	for(int i = 0; i < m_iLayers; i++)
 	{
-		EDP[i] = m_EDP[i];
+		EDP[i] = m_EDP[i].re;
 	}
 } 

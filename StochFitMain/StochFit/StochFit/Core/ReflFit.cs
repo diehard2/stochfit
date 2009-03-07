@@ -11,7 +11,7 @@ namespace StochasticModeling
 {
     public class ReflFit:BoxReflFitBase
     {
-        public delegate bool StochasticModel(double[] ParamArray, double[] ChiSquareArray, double[] CovarArray, int size, int paramcount, BoxModelSettings InfoStruct);
+        public delegate bool StochasticModel(double[] ParamArray, double[] ChiSquareArray, double[] CovarArray, double[] info, int size, int paramcount, BoxModelSettings InfoStruct);
         
         public StochasticModel ModelChooser;
 
@@ -30,6 +30,7 @@ namespace StochasticModeling
             double[] ParamArray = new double[1000 * parameters.Length];
             double[] ChiSquareArray = new double[1000];
             double[] CovarArray = new double[1000 * parameters.Length];
+            double[] locinfo = new double[9 * 1000];
             int Size = 0;
 
 
@@ -38,14 +39,14 @@ namespace StochasticModeling
             InfoStruct.Iterations = iterations;
            
 
-            NativeMethods.ConstrainedStochFit(InfoStruct, parameters, CovarArray, parameters.Length, new double[9], ParamArray, ChiSquareArray,ref Size);
+            NativeMethods.ConstrainedStochFit(InfoStruct, parameters, CovarArray, parameters.Length, locinfo, ParamArray, ChiSquareArray,ref Size);
             
             //Not ideal, will always back up regardless of whether the new model is accepted or not
             BackupArrays();
 
             if (ModelChooser != null)
             {
-                if (ModelChooser(ParamArray, ChiSquareArray, CovarArray, Size, parameters.Length, InfoStruct))
+                if (ModelChooser(ParamArray, ChiSquareArray, CovarArray, locinfo, Size, parameters.Length, InfoStruct))
                 {
                     
                 }

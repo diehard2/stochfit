@@ -175,11 +175,13 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 	{
 		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]))*(log(Refl.reflpt[i])-log(Reflectivity[i]));
 	}
-
+	
+	double tempinfoarray[9];
+	tempinfoarray[1] = bestchisquare;
 	double* tempcovararray = new double[paramsize*paramsize];
 	memset(tempcovararray,0.0, sizeof(double)*paramsize*paramsize);
 	ParameterContainer original(parameters, tempcovararray, paramsize,InitStruct->OneSigma,
-		bestchisquare, parampercs[6]);
+		tempinfoarray, parampercs[6]);
 	delete[] tempcovararray;
 
 	vector<ParameterContainer> temp;
@@ -241,7 +243,7 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 				dlevmar_bc_dif(locRefl.objective, locparameters, xvec, paramsize, InitStruct->QPoints, InitStruct->LL, InitStruct->UL,
 					500, opts, locinfo, work,covar,(void*)(&locRefl)); 
 			
-			localanswer.SetContainer(locparameters,covar,paramsize,InitStruct->OneSigma,locinfo[1], parampercs[6]);
+			localanswer.SetContainer(locparameters,covar,paramsize,InitStruct->OneSigma,locinfo, parampercs[6]);
 
 			if(locinfo[1] < bestchisquare && localanswer.IsReasonable() == true)
 			{
@@ -324,6 +326,10 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 			ParamArray[(i)*paramsize+j] = (allsolutions.at(i).GetParamArray())[j];
 			covararray[(i)*paramsize+j] = (allsolutions.at(i).GetCovarArray())[j];
 		}
+
+		memcpy(info, allsolutions.at(i).GetInfoArray(), 9* sizeof(double));
+		info += 9;
+
 		chisquarearray[i] = (allsolutions.at(i).GetScore());
 	}
 	*paramarraysize = min(allsolutions.size(),999);

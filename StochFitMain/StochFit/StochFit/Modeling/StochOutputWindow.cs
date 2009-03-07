@@ -50,7 +50,7 @@ namespace StochasticModeling.Modeling
         /// <param name="FullChisquareArray"></param>
         /// <param name="FullCovariance"></param>
         /// <param name="Refl"></param>
-        public StochOutputWindow(double[] FullParameterArray, int ParameterArraysize, int paramsize, double[] FullChisquareArray, double[] FullCovariance, BoxReflFitBase Refl)
+        public StochOutputWindow(double[] FullParameterArray, int ParameterArraysize, int paramsize, double[] FullChisquareArray, double[] FullCovariance, double[] info, BoxReflFitBase Refl)
         {
             InitializeComponent();
             ReflectivityList = new List<BoxReflFitBase>(100);
@@ -58,7 +58,7 @@ namespace StochasticModeling.Modeling
             //Fill the ParameterArray
             double[] param = new double[paramsize];
             double[] covar = new double[paramsize];
-
+            double[] locinfo = new double[9];
             for (int i = 0; i < ParameterArraysize; i++)
             {
                 ReflectivityList.Add(Refl.CreateLightWeightClone());
@@ -69,8 +69,14 @@ namespace StochasticModeling.Modeling
                     covar[j] = FullCovariance[i * paramsize + j];
                 }
 
+                for(int k = 0; k < 9; k++)
+                {
+                    locinfo[k] = info[i * 9 + k];
+                }
+
                 ReflectivityList[i].UpdatefromParameterArray(param);
                 ReflectivityList[i].CovarArray = covar;
+                ReflectivityList[i].Fitinfo = locinfo;
                 ReflectivityList[i].ChiSquare = FullChisquareArray[i];
 
             }

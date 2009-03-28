@@ -149,6 +149,7 @@ Section "MainSection" SEC01
   ${EndIf}
 
   File "Bin\Release\genf.ico"
+  File "Bin\dlls\libiomp5md.dll"
   File "Bin\Release\itextsharp.dll"
   File "Bin\Release\LevmarDLL.dll"
   File "Bin\Release\levmarmkl.dll"
@@ -219,6 +220,7 @@ Section Uninstall
   Delete "$INSTDIR\LevmarDLL.dll"
   Delete "$INSTDIR\itextsharp.dll"
   Delete "$INSTDIR\genf.ico"
+  Delete "Bin\Release\libiomp5md.dll"
   Delete "$SMPROGRAMS\${PRODUCT_NAME} ${PRODUCT_VERSION}\Uninstall.lnk"
   Delete "$DESKTOP\StochFit ${PRODUCT_VERSION}.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME} ${PRODUCT_VERSION}\StochFit ${PRODUCT_VERSION}.lnk"

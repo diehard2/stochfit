@@ -39,23 +39,17 @@ class StochFit
 		
 		
 		
-		SA_Dispatcher* m_SA;
-		bool m_bwarmedup;
+		SA_Dispatcher m_SA;
+		
 
 	private:
 		int Processing();
 		void LoadFromFile(wstring File = wstring(L""));
 		static DWORD WINAPI InterThread(LPVOID lParam);
 		void WritetoFile(const wchar_t* filename);
-		void UpdateFits(int currentiteration);
+		//void UpdateFits(int currentiteration);
 	    void Initialize(ReflSettings* InitStruct);
-	
-
-		double* Zinc;
-		double* Qinc;
-		double* Rho;
-		double* Refl;
-
+		HANDLE m_hStochMutex;
 		HANDLE m_hThread;
 		HANDLE mutex;
 		BOOL m_bupdated;
@@ -77,7 +71,8 @@ class StochFit
 		int m_irhocount;
 		int m_irefldatacount;
 		int m_isearchalgorithm;
-		CReflCalc m_cRefl;
-		CEDP m_cEDP;
-		ParamVector* params;
+		bool m_bwarmedup;
+		CReflCalc m_cDispRefl;
+		CEDP m_EDP;
+		ParamVector params;
 };

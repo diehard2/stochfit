@@ -65,7 +65,7 @@ class SimAnneal
 		int m_inormsearch;
 		int m_ialgorithm;
 		double m_dState1;
-		double TakeStep(ParamVector* params);
+		
 	
 public:
 		typedef double (SimAnneal::*func)(double*);
@@ -73,7 +73,7 @@ public:
 		SimAnneal();
 		~SimAnneal();
 		void Initialize(ReflSettings* InitStruct);
-		bool Iteration(ParamVector* params);
+		bool Iteration(double score);
 		bool EvaluateGreedy(double bestval, double curval);
 		bool EvaluateSA(double bestval, double curval);
 		bool EvaluateSTUN(long double bestval,long double curval);
@@ -85,6 +85,7 @@ public:
 		double m_daveragefstun;
 		long double m_dbestsolution;
 		void SetOjbectiveFunc(func objective);
+		void TakeStep(ParamVector* params);
 
 
 };

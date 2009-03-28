@@ -41,10 +41,35 @@ SA_Dispatcher::~SA_Dispatcher()
 
 bool SA_Dispatcher::Iteration(ParamVector *params)
 {
+		ParamVector OldParams = *params;
 	    m_cSA.TakeStep(params);
+		//We have to update the reflectivity generator with the normalization factor, the EDP has no concept of this
+		m_cRefl.m_dnormfactor = params->getImpNorm();
 		m_cEDP.GenerateEDP(params);
-		m_cObjective.GetFunction(m_cRefl.MakeReflectivity(params));
-		return m_cSA.Iteration(params);
+		m_cRefl.MakeReflectivity(&m_cEDP);
+		
+		m_dObjectiveScore = m_cObjective.GetFunction(m_cRefl.GetReflData());
+		m_dChiSquare = m_cObjective.ChiSquare(m_cRefl.GetReflData());
+		
+		if(m_cSA.Iteration(m_dObjectiveScore))
+		{
+			return true;
+		}
+		else
+		{
+			*params = OldParams;
+			return false;
+		}
+}
+
+double SA_Dispatcher::Get_ChiSquare()
+{
+	return m_dChiSquare > 0.0 ? m_dChiSquare : -1.0;
+}
+
+double SA_Dispatcher::Get_ObjectiveScore()
+{
+	return m_dObjectiveScore > 0.0 ? m_dObjectiveScore : -1.0;
 }
 
 bool SA_Dispatcher::CheckForFailure()
@@ -83,3 +108,12 @@ void SA_Dispatcher::Set_AveragefSTUN(double fSTUN)
 		m_cSA.m_daveragefstun = fSTUN;
 }
 
+CEDP* SA_Dispatcher::GetEDP()
+{
+	return &m_cEDP;
+}
+
+void SA_Dispatcher::GetReflData(double* Q, double* Refl)
+{
+	m_cRefl.GetData(Q, Refl);
+}

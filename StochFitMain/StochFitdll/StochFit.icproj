@@ -16,9 +16,10 @@
 				Name="CppCmplrTool"
 				GlobalOptimizations="true"
 				InterproceduralOptimization="2"
+				FloatingPointModel="1000"
 				FlushDenormalResultsToZero="true"
-				GenerateAlternateCodePaths="5"
-				Parallelization="true"/>
+				GenerateAlternateCodePaths="0"
+				ProfileGuidedOptimization="3"/>
 		</Configuration>
 		<Configuration
 			Name="GIXOS|Win32">

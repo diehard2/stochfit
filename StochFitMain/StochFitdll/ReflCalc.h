@@ -30,6 +30,7 @@ private:
     double lambda,k0;
 	BOOL m_bforcenorm;
 	BOOL m_bImpNorm;
+	float m_dQSpread;
 	int m_iuseableprocessors;
 	double m_dwaveconstant;
 	MyComplex* m_ckk;
@@ -45,6 +46,7 @@ private:
 	
 	//Functions
 	void impnorm(double* refl, const int datapoints, bool isimprefl);
+	void MyFullRF(double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
 	void MyTransparentRF(double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
 	void QsmearRf(double* qspreadreflpt, double* reflpt, int datapoints);
 	void MyRF(double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
@@ -58,11 +60,11 @@ private:
 public:
 
 	//Variables
-	float m_dQSpread;
+
 	float m_dnormfactor;
 
 	//read from file
-    double *xi,*exi,*reflpt,*dataout;
+    double *xi,*exi,*reflpt;
 
 	
 	//Member functions
@@ -72,11 +74,13 @@ public:
 	
     void Init(ReflSettings* InitStruct);
 	void MakeReflectivity(CEDP* EDP);
-   
+
 	//Get/Let Functions
 	double GetWaveConstant();
 	int GetDataCount();
 	void GetData(double* Q, double* Refl);
-	void WriteOutputFile(string filename);
+	double* GetReflData();
+	void WriteOutputFile(wstring filename);
+	bool HasQError();
 
 };

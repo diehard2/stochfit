@@ -31,7 +31,6 @@ CReflCalc::~CReflCalc()
 {
 		_mm_free(xi);
 		_mm_free(reflpt);
-		_mm_free(dataout);
 		_mm_free(sinsquaredthetai);
 		_mm_free(m_ckk);
 		_mm_free(m_dkk);
@@ -98,68 +97,26 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 		if(InitStruct->QError != NULL)
 			exi[i] = InitStruct->QError[i+InitStruct->CritEdgeOffset];
 		
-		sinsquaredthetai[i] = pow(InitStruct->Q[i+InitStruct->CritEdgeOffset]*lambda/(4*M_PI), 2.0);
+		sinsquaredthetai[i] = pow(InitStruct->Q[i+InitStruct->CritEdgeOffset]*lambda/(4.0*M_PI), 2.0);
 	}
 
-	if(InitStruct->QError != NULL)
-	{
-		
 
-	}
-	else
-	{
-
-
-	}
 	//Calculate the qspread sinthetai's for resolution smearing - the first case deals with user supplied errors, the second
 	//handles a constant error in q
-	///*if(InitStruct->QError != NULL)
-	//{
-	//	double holder = lambda/(4.0*M_PI);
-	//	float qholder;
-	//	float qerrorholder;
-	//	for(int i = 0; i < m_idatapoints; i++)
-	//	{
-	//		qholder = InitStruct->Q[i];
-	//		qerrorholder = InitStruct->QError[i];
+	for(int i = 0; i < m_idatapoints; i++)
+	{
+		float lambdaconstant = lambda/(4.0*M_PI);
+		float Q = InitStruct->Q[i + InitStruct->CritEdgeOffset];
+		float qerrorholder = InitStruct->QError != NULL ? InitStruct->QError[i + InitStruct->CritEdgeOffset]: m_dQSpread*Q;
 
-	//		qspreadsinthetai[13*i] = sinthetai[i];
-	//		qspreadsinthetai[13*i+1] = holder*(qholder+1.2*qerrorholder);
-	//		qspreadsintheta		i[13*i+2] = holder*(qholder-1.2*qerrorholder);
-	//		qspreadsinthetai[13*i+3] = holder*(qholder+1.0*qerrorholder);
-	//		qspreadsinthetai[13*i+4] = holder*(qholder-1.0*qerrorholder);
-	//		qspreadsinthetai[13*i+5] = holder*(qholder+0.8*qerrorholder);
-	//		qspreadsinthetai[13*i+6] = holder*(qholder-0.8*qerrorholder);
-	//		qspreadsinthetai[13*i+7] = holder*(qholder+0.6*qerrorholder);
-	//		qspreadsinthetai[13*i+8] = holder*(qholder-0.6*qerrorholder);
-	//		qspreadsinthetai[13*i+9] = holder*(qholder+0.4*qerrorholder);
-	//		qspreadsinthetai[13*i+10] = holder*(qholder-0.4*qerrorholder);
-	//		qspreadsinthetai[13*i+11] = holder*(qholder+0.2*qerrorholder);
-	//		qspreadsinthetai[13*i+12] = holder*(qholder-0.2*qerrorholder);
-
-	//		if(qspreadsinthetai[13*i+1] < 0.0)
-	//			MessageBox(NULL, L"Error in QSpread please contact the author - the program will now crash :(", NULL,NULL);
-	//	}
-	//}
-	//else
-	//{
-	//	for(int i = 0; i < m_idatapoints; i++)
-	//	{
-	//		qspreadsinthetai[13*i] = sinthetai[i];
-	//		qspreadsinthetai[13*i+1] = sinthetai[i]*(1+1.2*m_dQSpread);
-	//		qspreadsinthetai[13*i+2] = sinthetai[i]*(1-1.2*m_dQSpread);
-	//		qspreadsinthetai[13*i+3] = sinthetai[i]*(1+1.0*m_dQSpread);	
-	//		qspreadsinthetai[13*i+4] = sinthetai[i]*(1-1.0*m_dQSpread);
-	//		qspreadsinthetai[13*i+5] = sinthetai[i]*(1+0.8*m_dQSpread);
-	//		qspreadsinthetai[13*i+6] = sinthetai[i]*(1-0.8*m_dQSpread);
-	//		qspreadsinthetai[13*i+7] = sinthetai[i]*(1+0.6*m_dQSpread);
-	//		qspreadsinthetai[13*i+8] = sinthetai[i]*(1-0.6*m_dQSpread);
-	//		qspreadsinthetai[13*i+9] = sinthetai[i]*(1+0.4*m_dQSpread);
-	//		qspreadsinthetai[13*i+10] = sinthetai[i]*(1-0.4*m_dQSpread);
-	//		qspreadsinthetai[13*i+11] = sinthetai[i]*(1+0.2*m_dQSpread);
-	//		qspreadsinthetai[13*i+12] = sinthetai[i]*(1-0.2*m_dQSpread);
-	//	}
-	//}*/
+		qspreadsinsquaredthetai[13*i] = pow(lambdaconstant*Q, 2.0f);
+		
+		for(int j = 1; j < 13; j += 2)
+		{
+			qspreadsinsquaredthetai[13*i+j] = pow(lambdaconstant*(Q + smear[(j-1)/2] * qerrorholder), 2.0);
+			qspreadsinsquaredthetai[13*i+j+1] = pow(lambdaconstant*(Q - smear[(j-1)/2] * qerrorholder), 2.0);
+		}
+	}
 }
 
 void CReflCalc::MakeReflectivity(CEDP* EDP)
@@ -173,7 +130,7 @@ void CReflCalc::MakeReflectivity(CEDP* EDP)
 	}
 	else
 	{
-		if(EDP->Get_UseABS())
+		if(EDP->Get_UseABS() == FALSE)
 			MyTransparentRF(qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
 		else
 			MyRF(qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
@@ -215,7 +172,7 @@ void CReflCalc::impnorm(double* refl, int datapoints, bool isimprefl)
 
 void CReflCalc::MyRF(double* sinsquaredtheta, int datapoints,  double* refl, CEDP* EDP)
 {
-	MyComplex* DEDP = EDP->m_DEDP;
+	MyComplex* DEDP = EDP->GetDoubledEDP();
 	int EDPoints = EDP->Get_EDPPointCount();
 
 	if(m_bReflInitialized == FALSE)
@@ -224,7 +181,7 @@ void CReflCalc::MyRF(double* sinsquaredtheta, int datapoints,  double* refl, CED
 	}
 
 	//Calculate some complex constants to keep them out of the loop
-	MyComplex  lengthmultiplier = -2.0*MyComplex (0.0,1.0)*EDP->Get_Dz() ;
+	MyComplex  lengthmultiplier = -2.0 * MyComplex(0.0,1.0) * EDP->Get_LayerThickness() ;
 	MyComplex  indexsup = 1.0 - DEDP[0]/2.0;
 	MyComplex  indexsupsquared = indexsup * indexsup;
 	MyComplex  zero;
@@ -345,9 +302,9 @@ void CReflCalc::MyRF(double* sinsquaredtheta, int datapoints,  double* refl, CED
 	}
 }
 
-void CReflCalc::MyTransparentRF(double* sinsquaredtheta, int datapoints,double* refl, CEDP* EDP)
+void CReflCalc::MyFullRF(double* sinsquaredtheta, int datapoints,  double* refl, CEDP* EDP)
 {
-	MyComplex* DEDP = EDP->m_DEDP;
+	MyComplex* DEDP = EDP->GetDoubledEDP();
 	int EDPoints = EDP->Get_EDPPointCount();
 
 	if(m_bReflInitialized == FALSE)
@@ -356,9 +313,88 @@ void CReflCalc::MyTransparentRF(double* sinsquaredtheta, int datapoints,double* 
 	}
 
 	//Calculate some complex constants to keep them out of the loop
-	MyComplex  lengthmultiplier = -2.0f*MyComplex (0.0f,1.0f)*EDP->Get_Dz();
+	MyComplex  lengthmultiplier = -2.0 * MyComplex(0.0,1.0) * EDP->Get_LayerThickness() ;
 	MyComplex  indexsup = 1.0 - DEDP[0]/2.0;
 	MyComplex  indexsupsquared = indexsup * indexsup;
+	MyComplex  zero;
+
+
+	#pragma omp parallel
+	{
+		//Figure out the number of the thread we're currently in
+		int threadnum = omp_get_thread_num();
+		int arrayoffset = threadnum*EDPoints;
+
+		MyComplex * kk = m_ckk+arrayoffset;
+		MyComplex * ak = m_cak+arrayoffset;
+		MyComplex * rj= m_crj+arrayoffset;
+		MyComplex * Rj= m_cRj+arrayoffset;
+
+		
+		/********Boundary conditions********/
+		//No reflection in the last layer
+		Rj[EDPoints-1] = 0.0f;
+		//The first layer and the last layer are assumed to be infinite e^-(0+i*(layerlength)) = 1+e^(-inf*i*beta) = 1 + 0*i*beta
+		ak[EDPoints-1] = 1.0f;
+		ak[0] = 1.0f;
+		
+		//In order to vectorize loops, you cannot use global variables
+		int nlminone = EDPoints-1;
+		int numlay =  EDPoints;
+
+		#pragma omp for schedule(runtime)
+		for(int l = 0; l < datapoints;l++)
+		{
+			//The refractive index for air is 1, so there is no refractive index term for kk[0]
+			kk[0] = k0 * indexsup * sqrt(sinsquaredtheta[l]);
+
+			#pragma ivdep
+			for(int i = 1; i < numlay;i++)
+			{
+				kk[i] = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[i]+DEDP[0]);
+			}
+
+			//Make the phase factors ak -> ak[i] = compexp(-1.0*imaginary*kk[i]*dz0/2.0);
+			#pragma ivdep
+			for(int i = 1; i < numlay-1; i++)
+			{
+				ak[i] = compexp(lengthmultiplier*kk[i]);
+			}
+
+			//Make the Fresnel coefficients -> rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
+			#pragma ivdep
+			for(int i = 0; i < numlay-1;i++)
+			{
+				rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
+			}
+			
+			//Parratt recursion of the amplitude reflectivity
+			for(int i = EDPoints-2; i >= 0 ;i--)
+			{
+				Rj[i] = ak[i]*(Rj[i+1]+rj[i])/(Rj[i+1]*rj[i]+1.0);
+			}
+			
+			//The magnitude of the reflection at layer 0 is the measured reflectivity of the film
+			refl[l] = compabs(Rj[0])*compabs(Rj[0]);
+		}
+	}
+}
+
+void CReflCalc::MyTransparentRF(double* sinsquaredtheta, int datapoints,double* refl, CEDP* EDP)
+{
+	MyComplex* DEDP = EDP->GetDoubledEDP();
+	int EDPoints = EDP->Get_EDPPointCount();
+
+	if(m_bReflInitialized == FALSE)
+	{
+		InitializeScratchArrays(EDP->Get_EDPPointCount());
+	}
+
+	//Calculate some complex constants to keep them out of the loop
+	MyComplex  lengthmultiplier = -2.0f*MyComplex (0.0f,1.0f) * EDP->Get_LayerThickness();
+	MyComplex  indexsup = 1.0 - DEDP[0]/2.0;
+	MyComplex  indexsupsquared = indexsup * indexsup;
+	
 	int HighOffSet = EDPoints;
 	int LowOffset = 0;
 	int offset = datapoints;
@@ -383,14 +419,15 @@ void CReflCalc::MyTransparentRF(double* sinsquaredtheta, int datapoints,double* 
 			if(m_dQSpread == 0)
 				break;
 		}
-	
 	}
 
-	//In order to vectorize loops, you cannot use global variables
-	int EDPointsMinOne = EDPoints-1;
 
 	#pragma omp parallel
 	{
+		//In order to vectorize loops, you cannot use global variables
+		int EDPointsMinOne = EDPoints - 1;
+		int EDPointsMinTwo = EDPoints - 2;
+
 		//Figure out the number of the thread we're currently in
 		int threadnum = omp_get_thread_num();
 		int arrayoffset = threadnum*EDPoints;
@@ -406,10 +443,10 @@ void CReflCalc::MyTransparentRF(double* sinsquaredtheta, int datapoints,double* 
 
 		/********Boundary conditions********/
 		//No reflection in the last layer
-		Rj[EDPointsMinOne] = 0.0f;
+		Rj[EDPointsMinOne] = 0.0;
 		//The first layer and the last layer are assumed to be infinite
-		ak[EDPointsMinOne] = 1.0f;
-		ak[0] = 1.0f;
+		ak[EDPointsMinOne] = 1.0;
+		ak[0] = 1.0;
 		
 
 		#pragma omp for nowait schedule(guided)
@@ -421,6 +458,7 @@ void CReflCalc::MyTransparentRF(double* sinsquaredtheta, int datapoints,double* 
 
 			tempk1 = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[1]+DEDP[0]);
 			tempk2 = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[EDPointsMinOne]+DEDP[0]);
+	
 			//Workout the wavevector k -> kk[i] = k0 *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
@@ -464,19 +502,19 @@ void CReflCalc::MyTransparentRF(double* sinsquaredtheta, int datapoints,double* 
 			}
 
 			//Make the Fresnel coefficients -> rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
-			
 			#pragma ivdep
-			for(int i = 0; i < LowOffset;i++)
+			for(int i = 0; i <= LowOffset;i++)
 			{
 				rj[i] = zero;
 			}
-
+			
 			#pragma ivdep
 			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
 				rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
 			}
 			
+			//memcpy(&rj + HighOffSet, &zero, sizeof(MyComplex)*(EDPointsMinOne - HighOffSet -1));
 			#pragma ivdep
 			for(int i = HighOffSet; i < EDPointsMinOne; i++)
 			{
@@ -502,8 +540,8 @@ void CReflCalc::MyTransparentRF(double* sinsquaredtheta, int datapoints,double* 
 				//The refractive index for air is 1, so there is no refractive index term for kk[0]
 			dkk[0] = k0 * indexsup.re * sqrt(sinsquaredtheta[l]);
 
-			dtempk1 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-DEDP[1].re+DEDP[0].re);
-			dtempk2 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-DEDP[EDPointsMinOne].re+DEDP[0].re);
+			dtempk1 = k0 * sqrt(indexsupsquared.re*sinsquaredtheta[l]-DEDP[1].re+DEDP[0].re);
+			dtempk2 = k0 * sqrt(indexsupsquared.re*sinsquaredtheta[l]-DEDP[EDPointsMinOne].re+DEDP[0].re);
 			//Workout the wavevector k -> kk[i] = k0 *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
@@ -514,7 +552,7 @@ void CReflCalc::MyTransparentRF(double* sinsquaredtheta, int datapoints,double* 
 			#pragma ivdep
 			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
-				dkk[i] = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-DEDP[i].re+DEDP[0].re);
+				dkk[i] = k0 * sqrt(indexsupsquared.re*sinsquaredtheta[l]-DEDP[i].re+DEDP[0].re);
 			}
 
 			#pragma ivdep
@@ -594,31 +632,29 @@ void CReflCalc::InitializeScratchArrays(int EDPoints)
 	m_bReflInitialized = TRUE;
 }
 
+//Calculate the smeared gaussian of the reflectivity
 void CReflCalc::QsmearRf(double* qspreadreflpt, double* refl, int datapoints)
 {
 	float calcholder;
 	#pragma ivdep
 	for(int i = 0; i < datapoints; i++)
 	{
-		calcholder = 0.0f;
 		calcholder = qspreadreflpt[13*i];
-		calcholder += 0.056f*qspreadreflpt[13*i+1];
-		calcholder += 0.056f*qspreadreflpt[13*i+2];
-		calcholder += 0.135f*qspreadreflpt[13*i+3];
-		calcholder += 0.135f*qspreadreflpt[13*i+4];
-		calcholder += 0.278f*qspreadreflpt[13*i+5];
-		calcholder += 0.278f*qspreadreflpt[13*i+6];
-		calcholder += 0.487f*qspreadreflpt[13*i+7];
-		calcholder += 0.487f*qspreadreflpt[13*i+8];
-		calcholder += 0.726f*qspreadreflpt[13*i+9];
-		calcholder += 0.726f*qspreadreflpt[13*i+10];
-		calcholder += 0.923f*qspreadreflpt[13*i+11];
-		calcholder += 0.923f*qspreadreflpt[13*i+12];
 
+		for(int j= 1; j < 13; j += 2)
+		{
+			calcholder += smearweight[(j-1)/2]*qspreadreflpt[13*i+j];
+			calcholder += smearweight[(j-1)/2]*qspreadreflpt[13*i+j+1];
+		}
+		
 		refl[i] = calcholder/6.211f;
 	}
 }
 
+double* CReflCalc::GetReflData()
+{
+	return reflpt;
+}
 
 int CReflCalc::GetDataCount()
 {
@@ -650,7 +686,7 @@ void CReflCalc::GetOffSets(int& HighOffset, int& LowOffset, MyComplex* EDP, int 
 		}
 }
 
-void CReflCalc::WriteOutputFile(string filename)
+void CReflCalc::WriteOutputFile(wstring filename)
 {
 	ofstream reflout(filename.c_str());
 
@@ -668,3 +704,9 @@ void CReflCalc::GetData(double* Q, double* Refl)
 	memcpy(Refl,reflpt, sizeof(double)*m_idatapoints);
 	memcpy(Q, xi, sizeof(double)*m_idatapoints);
 } 
+
+bool CReflCalc::HasQError()
+{
+	return m_dQSpread != 0.0 || exi != NULL;
+
+}

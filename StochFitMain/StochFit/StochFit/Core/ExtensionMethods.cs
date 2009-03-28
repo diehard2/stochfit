@@ -105,5 +105,10 @@ namespace StochasticModeling
             }
         } 
         #endregion
+
+        public static T ReturnLastElement<T>(this T[] source)
+        {
+            return source[source.Length - 1];
+        }
     }
 }

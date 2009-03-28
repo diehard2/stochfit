@@ -23,6 +23,8 @@ using System.IO;
 using System.Xml.Serialization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Collections.Generic;
+
 
 
 #pragma warning disable 1591
@@ -40,11 +42,13 @@ namespace StochasticModeling.Settings
         #region Variables
 
         public string Directory;
-        [XmlIgnoreAttribute] internal IntPtr Q;
-        [XmlIgnoreAttribute] internal IntPtr Refl;
-        [XmlIgnoreAttribute] internal IntPtr ReflError;
-        [XmlIgnoreAttribute] internal IntPtr QError;
-        [XmlIgnoreAttribute] internal int QPoints;
+        [XmlIgnore] internal IntPtr Q;
+        [XmlIgnore] internal IntPtr DisplayQ;
+        [XmlIgnore] internal IntPtr Refl;
+        [XmlIgnore] internal IntPtr ReflError;
+        [XmlIgnore] internal IntPtr QError;
+        [XmlIgnore] internal int QPoints;
+        [XmlIgnore] internal int DispQPoints;
         /// <summary>
         /// Subphase SLD
         /// </summary>
@@ -185,10 +189,16 @@ namespace StochasticModeling.Settings
 
                 try
                 {
+                    //Get the display Q 
+                    var tempDispQ = MakeDisplayQ(iQ);
+
+
                     QPoints = iQ.Length;
+                    DispQPoints = tempDispQ.Length;
                     Q = Marshal.AllocHGlobal(size);
                     Refl = Marshal.AllocHGlobal(size);
                     ReflError = Marshal.AllocHGlobal(size);
+                    DisplayQ = Marshal.AllocHGlobal(Marshal.SizeOf(iQ[0]) * tempDispQ.Length);
 
                     if (iQerr != null)
                         QError = Marshal.AllocHGlobal(size);
@@ -198,6 +208,8 @@ namespace StochasticModeling.Settings
                     Marshal.Copy(iQ, 0, Q, iQ.Length);
                     Marshal.Copy(iR, 0, Refl, iR.Length);
                     Marshal.Copy(iRerr, 0, ReflError, iRerr.Length);
+                    Marshal.Copy(tempDispQ, 0, DisplayQ, tempDispQ.Length);
+
 
                     if (iQerr != null)
                         Marshal.Copy(iQerr, 0, QError, iQerr.Length);
@@ -208,6 +220,51 @@ namespace StochasticModeling.Settings
                 }
         }
         #endregion
+
+        
+        /// <summary>
+        /// Make a Q array based on the experimental data that will contain all of the experimental data points in a addition to a larger number that provide a finer
+        /// granularity in the plot.
+        /// </summary>
+        /// <param name="ExpQ"></param>
+        /// <returns></returns>
+        private double[] MakeDisplayQ(double[] ExpQ)
+        {
+            List<double> DispQ = new List<double>(200);
+            double dx = (ExpQ.ReturnLastElement() - ExpQ[0])/150;
+            int inc = 0;
+
+            for (double i = ExpQ[0]; i < ExpQ.ReturnLastElement() * 1.1; i += dx)
+            {
+                if (inc < ExpQ.Length)
+                {
+
+                    if (i == ExpQ[inc])
+                    {
+                        DispQ.Add(i);
+                        inc++;
+                    }
+                    else if (i < ExpQ[inc])
+                    {
+                        DispQ.Add(i);
+                    }
+                    else
+                    {
+                        DispQ.Add(ExpQ[inc]);
+                        inc++;
+                        i -= dx;
+                    }
+                }
+                else
+                {
+                    DispQ.Add(i);
+                }
+            }
+
+            return DispQ.ToArray();
+        }
+
+
 
         #region IDisposable Members
 
@@ -238,6 +295,7 @@ namespace StochasticModeling.Settings
                     Marshal.FreeHGlobal(Q);
                     Marshal.FreeHGlobal(Refl);
                     Marshal.FreeHGlobal(ReflError);
+                    Marshal.FreeHGlobal(DisplayQ);
 
                     if (QError != IntPtr.Zero)
                         Marshal.FreeHGlobal(QError);

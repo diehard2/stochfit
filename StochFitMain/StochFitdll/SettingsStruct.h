@@ -1,14 +1,20 @@
 #pragma once
 
+//This struct must be kept in exact agreement with the struct in the C# StochFit project. It is the main method
+//of communication between the GUI and the numeric routines
+
+
 #pragma pack(push, 8)
 struct ReflSettings
 {
 		LPCWSTR Directory;
         double* Q;
+		double* DisplayQ;
         double* Refl;
         double* ReflError;
         double* QError;
         int QPoints;
+		int DispQPoints;
         double SubSLD;
         double FilmSLD;
         double SupSLD;
@@ -53,6 +59,10 @@ struct ReflSettings
 		int IterationsCompleted;
 		double ChiSquare;
 		LPCWSTR Title;
+
+		BOOL IsNeutron;
+        LPCWSTR Version;
+        bool disposed;
 		
 };
 #pragma pack(pop)

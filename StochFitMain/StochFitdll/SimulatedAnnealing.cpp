@@ -23,7 +23,7 @@
 #include <iomanip>
 
 SimAnneal::SimAnneal(): m_bisiterminimum(false), m_dTemp(-1.0),
-	m_ipoorsolutionacc(0),m_inumberpoorsol(0),m_daverageSTUNval(0)
+	m_ipoorsolutionacc(0),m_inumberpoorsol(0),m_daverageSTUNval(0), m_dState1(-1.0)
 {}
 
 void SimAnneal::Initialize(ReflSettings* InitStruct)
@@ -78,7 +78,6 @@ SimAnneal::~SimAnneal()
 	}
 }
 
-
 bool SimAnneal::EvaluateGreedy(double bestval, double curval)
 {
 	if(curval < bestval)
@@ -88,7 +87,7 @@ bool SimAnneal::EvaluateGreedy(double bestval, double curval)
 	}
 	else
 		return false;
-}
+}            
 
 bool SimAnneal::EvaluateSA(double bestval, double curval)
 {
@@ -302,25 +301,32 @@ bool SimAnneal::Iteration(double score)
 	bool accepted = false;
 	m_bisiterminimum = false;
 	
-	temp_params = *params;
-	
 
 	//Don't allow for negative ED in XR case
-	if(score == -1)
+	if(score == -1.0)
 		return false;
+
+	if(m_dState1 == -1.0)
+	{
+		m_dState1 = score;
+		return true;
+	}
 
 	if(m_ialgorithm == 0)
 	{
 		accepted = EvaluateGreedy(m_dState1,score);
 	}
 	else if (m_ialgorithm == 1)
+	{
 		accepted = EvaluateSA(m_dState1, score);
+	}
 	else
+	{
 		accepted = EvaluateSTUN(m_dState1, score);
+	}
 
 	if(accepted)
 	{
-		*params = temp_params;
 		m_dState1 = score;
 
 		if(m_dState1 == m_dbestsolution)
@@ -334,7 +340,7 @@ bool SimAnneal::IsIterMinimum()
 	return m_bisiterminimum;
 }
 
-double SimAnneal::TakeStep(ParamVector* params)
+void SimAnneal::TakeStep(ParamVector* params)
 {
 		double roughmult = 5.0/3.0;
 		
@@ -360,11 +366,5 @@ double SimAnneal::TakeStep(ParamVector* params)
 		else
 		{
 			params->setImpNorm(random(params->getImpNorm()*(1.0+mc_stepsize),params->getImpNorm()*(1.0-mc_stepsize)));
-			//We have to update the reflectivity generator with the normalization factor, the EDP has no concept of this
-			multi->m_dnormfactor = params->getImpNorm();
 		}
-		
-		
-		m_cEDP->GenerateEDP(params);
-		return multi->Objective(m_cEDP);
 }

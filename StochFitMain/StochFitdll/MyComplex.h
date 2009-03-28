@@ -29,6 +29,7 @@ namespace MyComplexNumber{
 	__declspec(align(16)) struct MyComplex
 	{
 	  public:
+	    double complexholder[2];
 		double re;
 		double im;
 
@@ -70,9 +71,9 @@ namespace MyComplexNumber{
 
 		friend const MyComplex operator/(const MyComplex& lhs,const MyComplex& rhs)
 		{
-			double denom = rhs.re*rhs.re+rhs.im*rhs.im;
+			double denom = 1.0/(rhs.re*rhs.re+rhs.im*rhs.im);
 			
-			return MyComplex((lhs.re*rhs.re+lhs.im*rhs.im)/denom,(lhs.im*rhs.re-lhs.re*rhs.im)/denom);
+			return MyComplex((lhs.re*rhs.re+lhs.im*rhs.im)*denom,(lhs.im*rhs.re-lhs.re*rhs.im)*denom);
 		}
 
 		
@@ -88,18 +89,12 @@ namespace MyComplexNumber{
 
 		friend bool operator==(const MyComplex& lhs,const MyComplex& rhs)
 		{
-			if(lhs.re == rhs.re && lhs.im == rhs.im)
-				return true;
-
-			return false;
+			return (lhs.re == rhs.re && lhs.im == rhs.im);
 		}
 		
 		friend bool operator!=(const MyComplex& lhs,const MyComplex& rhs)
 		{
-			if(lhs.re == rhs.re && lhs.im == rhs.im)
-				return false;
-
-			return true;
+			return (lhs.re == rhs.re && lhs.im == rhs.im);
 		}
 	};
 
@@ -140,7 +135,7 @@ namespace MyComplexNumber{
 			holder = MyComplex(sqrtholder*cos(theta),sqrtholder*sin(theta));
 		}
 		else if(comp.re < 0.0)
-			holder = MyComplex(0.0, sqrtf(abs(comp.re)));
+			holder = MyComplex(0.0, sqrt(abs(comp.re)));
 		else 
 			holder =  MyComplex(sqrt(comp.re),0.0);
 		
@@ -151,7 +146,7 @@ namespace MyComplexNumber{
 	inline double compabs(const MyComplex& comp)
 	{
 		//While inefficient, this prevents buffer under/overflows - from Numerical Recipes in C++
-		double placeholder=0.0f;
+		double placeholder=0.0;
 		
 		if(comp.re >= comp.im)
 		{
@@ -160,30 +155,23 @@ namespace MyComplexNumber{
 				return fabs(comp.im);
 
 			placeholder = comp.im/comp.re;
-			double temp = fabs(comp.re)*sqrt(1.0f+placeholder*placeholder);
-		
-			return(temp);
+			return fabs(comp.re)*sqrt(1.0f+placeholder*placeholder);
 		}
 		else
 		{
-			
 			if(comp.im == 0.0)
 			{
-				return fabs(comp.re);
+				return abs(comp.re);
 			}
 
 			placeholder = comp.re/comp.im;
 
-			double temp = fabs(comp.im)*sqrt(1.0+placeholder*placeholder);
-			
-			
-			return (temp);
+			return abs(comp.im)*sqrt(1.0+placeholder*placeholder);
 		}
-		
 	};
 	
 	inline MyComplex cln(const MyComplex& comp)
 	{
-		return MyComplex(logf(compabs(comp)),comparg(comp));
+		return MyComplex(log(compabs(comp)),comparg(comp));
 	}
 }

@@ -2,7 +2,7 @@
 #include "CObjectiveFunc.h"
 
 
-CObjective::CObjective()
+CObjective::~CObjective()
 {
 	_mm_free(m_dData);
 	_mm_free(m_dDataError);
@@ -19,36 +19,21 @@ void CObjective::Initialize(ReflSettings* InitStruct)
 	memcpy(m_dDataError, (void*)(InitStruct->ReflError + InitStruct->CritEdgeOffset), sizeof(double)*m_iDataPoints);
 }
 
-//CObjective::func CObjective::GetFunction()
-//{
-//	switch(m_iFunction)
-//	{
-//	case 0:	
-//		return &LogLS;
-//	case 1:
-//		return &InverseLS;
-//	case 2:
-//		return &LogErrorLS;
-//	case 3:
-//		return &InverseErrorLS;
-//	default:
-//		return &LogLS;
-//	}
-//}
-double CObjective::GetFunction(double *func)
+
+double CObjective::GetFunction(double* generateddata)
 {
 	switch(m_iFunction)
 	{
 		case 0:	
-			return LogLS(func);
+			return LogLS(generateddata);
 		case 1:
-			return InverseLS(func);
+			return InverseLS(generateddata);
 		case 2:
-			return LogErrorLS(func);
+			return LogErrorLS(generateddata);
 		case 3:
-			return InverseErrorLS(func);
+			return InverseErrorLS(generateddata);
 		default:
-			return LogLS(func);
+			return LogLS(generateddata);
 	}
 
 }

@@ -33,32 +33,17 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	m_ipriority = 2;
 	
 	m_Directory = InitStruct->Directory;
-	
     fnpop = InitStruct->Directory + wstring(L"\\pop.dat");
     fnrf = InitStruct->Directory + wstring(L"\\rf.dat");
     fnrho = InitStruct->Directory + wstring(L"\\rho.dat");
 
-	m_SA = new SA_Dispatcher();
-	
-	
 	Initialize(InitStruct);
+	//Create our mutex
+	m_hStochMutex = CreateMutex(NULL, FALSE, L"StochMutex");
 }
 
 StochFit::~StochFit()
-{
-	if(Zinc != NULL)
-	{
-		delete params;
-		
-		if(m_SA != NULL)
-			delete m_SA;
-
-		delete[] Zinc;
-		delete[] Qinc;
-		delete[] Rho;
-		delete[] Refl;
-	}
-}
+{}
 	
 void StochFit::Initialize(ReflSettings* InitStruct)
 {
@@ -66,26 +51,26 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 	 /******** Setup Variables and ReflectivityClass ********/
 	 ////////////////////////////////////////////////////////
 
-	m_SA->Initialize(InitStruct);
-
-	m_cRefl.Init(InitStruct);
-	m_cEDP.Init(InitStruct);
-
-
-	//Setup the params - We start with a slightly roughened ED curve 
-	params = new ParamVector(InitStruct);
+	m_SA.Initialize(InitStruct);
+	params.Initialize(InitStruct);
  
+	//Blank the offsets for the DispArray and move the Display Q to Q
+	ReflSettings temp = *InitStruct;
+
+#ifdef CHECKREFLCALC
+	temp.Q = InitStruct->DisplayQ;
+	temp.QPoints = InitStruct->DispQPoints;
+#endif
+	temp.HighQOffset = 0;
+	temp.CritEdgeOffset = 0;
+	m_cDispRefl.Init(&temp);
+	m_EDP.Init(&temp);
 	 /////////////////////////////////////////////////////
      /******** Prepare Arrays for the Front End ********/
 	////////////////////////////////////////////////////
 
-	m_irhocount = m_cEDP.Get_EDPPointCount();
-	m_irefldatacount = m_cRefl.GetDataCount();
-
-	Zinc = new double[m_irhocount];
-	Qinc = new double[m_irefldatacount];
-	Rho = new double[m_irhocount];
-	Refl = new double[m_irefldatacount];
+	m_irhocount = m_SA.GetEDP()->Get_EDPPointCount();
+	m_irefldatacount = m_cDispRefl.GetDataCount();
 
 	//Let the frontend know that we've set up the arrays
 	m_bwarmedup = true;
@@ -94,9 +79,7 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 	LoadFromFile();
 
 	// Update the constraints on the params
-	params->UpdateBoundaries(NULL,NULL);
-
-	
+	params.UpdateBoundaries(NULL,NULL);
 }
 
 int StochFit::Processing()
@@ -109,71 +92,32 @@ int StochFit::Processing()
 	//Main loop
      for(int isteps=0;(isteps < m_itotaliterations) && (m_bthreadstop == false);isteps++)
 	 {
-			accepted = m_SA->Iteration(params);
+
+		 WaitForSingleObject(m_hStochMutex, INFINITE);
+		 accepted = m_SA.Iteration(&params);
 		
 			if(accepted || isteps == 0)
 			{
-			/*	m_dChiSquare = m_cRefl.m_dChiSquare;
-				m_dGoodnessOfFit = m_cRefl.m_dgoodnessoffit;*/
+				m_dChiSquare = m_SA.Get_ChiSquare();
+				m_dGoodnessOfFit = m_SA.Get_ObjectiveScore();
 			}
-		    UpdateFits(isteps);
-
+		    
 			//Write the population file every 5000 iterations
 			if((isteps+1)%5000 == 0 || m_bthreadstop == true || isteps == m_itotaliterations-1)
 			{
 				//Write out the population file for the best minimum found so far
-				if(m_isearchalgorithm != 0 && m_SA->Get_IsIterMinimum())
+				if(m_isearchalgorithm != 0 && m_SA.Get_IsIterMinimum())
 					WritetoFile(wstring(m_Directory + L"\\BestSASolution.txt").c_str());
 
 				WritetoFile( fnpop.c_str());
 			}
+
+			m_icurrentiteration = isteps;
+
+			ReleaseMutex(m_hStochMutex);
 	 }
 
-	//Update the arrays one last time
-	UpdateFits(m_icurrentiteration);
-
-	return 0;
-}
-
-void StochFit::UpdateFits(int currentiteration)
-{
-		if(m_bupdated == TRUE)
-		{
-			//Check to see if we're updating
-			m_cEDP.GenerateEDP(params);
-		//	m_cEDP.WriteOutputFile(fnrho);
-		//	m_cRefl.ParamsRF(&m_cEDP, fnrf);
-			m_dRoughness = params->getroughness();
-			
-
-			for(int i = 0; i<m_irhocount;i++)
-			{
-				Zinc[i] = i*m_cEDP.Get_Dz();
-				Rho[i] =  m_cEDP.m_EDP[i].re/m_cEDP.m_EDP[m_cEDP.Get_EDPPointCount()-1].re;
-			}
-			
-			for(int i = 0; i < m_irefldatacount;i++)
-			{
-				#ifndef CHECKREFLCALC
-					
-					if(m_cRefl.m_dQSpread > 0.0)
-					{				
-						Refl[i] = m_cRefl.reflpt[i];
-						Qinc[i] = m_cRefl.xi[i];
-					}
-					else
-					{
-						Refl[i] = m_cRefl.dataout[i];
-						Qinc[i] = m_cRefl.qarray[i];
-					}
-				#else
-					Qinc[i] = m_cRefl.xi[i];
-					Refl[i] = m_cRefl.reflpt[i];
-				#endif
-			}
-			m_bupdated = FALSE;
-		}
-		m_icurrentiteration = currentiteration;
+	 return 0;
 }
 
 DWORD WINAPI StochFit::InterThread(LPVOID lParam)
@@ -208,44 +152,34 @@ int StochFit::Cancel()
 
 int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)
 {
-	//Sleep while we are generating our output data
-	if(m_icurrentiteration != m_itotaliterations-1)
+	WaitForSingleObject(m_hStochMutex, INFINITE);
+
+	*roughness = params.getroughness();
+	*chisquare = m_SA.Get_ChiSquare();
+	*goodnessoffit = m_SA.Get_ObjectiveScore();
+	*isfinished = m_bthreadstop == true ? TRUE : FALSE;
+
+
+	for(int i = 0; i<m_irhocount;i++)
 	{
-		m_bupdated = TRUE;
-
-		while(m_bupdated == TRUE)
-		{
-			Sleep(100);
-		}
+		Z[i] = m_SA.GetEDP()->GetZ()[i];
+		RhoOut[i] =  m_SA.GetEDP()->GetDoubledEDP()[i].re/m_SA.GetEDP()->GetDoubledEDP()[m_SA.GetEDP()->Get_EDPPointCount()-1].re;
 	}
-	else
-	{
-		m_bupdated = FALSE;
-	}
-	//We only have one thread, and we're controlling access to it, so no need for fancy synchronization here
+	
+	m_EDP.GenerateEDP(&params);
+	m_cDispRefl.m_dnormfactor = params.getImpNorm();
+	m_cDispRefl.MakeReflectivity(&m_EDP);
+	m_cDispRefl.GetData(Q, ReflOut);
 
-	for(int i = 0; i < m_irhocount; i++)
-	{
-		Z[i] = Zinc[i];
-		RhoOut[i] = Rho[i];
-	}
+	
+	m_EDP.WriteOutputFile(fnrho);
+	m_cDispRefl.WriteOutputFile(fnrf);
 
-	for(int i = 0; i < m_irefldatacount; i++)
-	{
-		Q[i] = Qinc[i];
-		ReflOut[i] = Refl[i];
-	}
+	int tempiter = m_icurrentiteration;
 
-	*roughness = m_dRoughness;
-	*chisquare = m_dChiSquare;
-	*goodnessoffit = m_dGoodnessOfFit;
+	ReleaseMutex(m_hStochMutex);
 
-	if(m_bthreadstop == true)
-		*isfinished = TRUE;
-	else
-		*isfinished = FALSE;
-
-	return m_icurrentiteration;
+	return tempiter;
 }
 
 int StochFit::Priority(int priority)
@@ -281,12 +215,12 @@ void StochFit::WritetoFile(const wchar_t* filename)
 {
 	ofstream outfile;
 	outfile.open(fnpop.c_str());
-	outfile<< params->getroughness() <<' '<< m_cEDP.Get_FilmAbs()*params->getSurfAbs()/m_cEDP.Get_WaveConstant() <<
-		' '<< m_SA->Get_Temp() <<' '<< params->getImpNorm() << ' ' << m_SA->Get_AveragefSTUN() << endl;
+	outfile<< params.getroughness() <<' '<< m_SA.GetEDP()->Get_FilmAbs()*params.getSurfAbs()/ m_SA.GetEDP()->Get_WaveConstant() <<
+		' '<< m_SA.Get_Temp() <<' '<< params.getImpNorm() << ' ' << m_SA.Get_AveragefSTUN() << endl;
 
-	for(int i = 0; i < params->RealparamsSize(); i++)
+	for(int i = 0; i < params.RealparamsSize(); i++)
 	{
-		outfile<<params->GetRealparams(i)<< endl;
+		outfile<<params.GetRealparams(i)<< endl;
 	}
 
 	outfile.close();
@@ -294,7 +228,7 @@ void StochFit::WritetoFile(const wchar_t* filename)
 
 void StochFit::LoadFromFile(wstring file)
 {
-   ParamVector params1 = *params;
+   ParamVector params1 = params;
    ifstream infile;
    
    if(file == wstring(L""))
@@ -302,7 +236,7 @@ void StochFit::LoadFromFile(wstring file)
    else
 	 infile.open(file.c_str());
 
-   int size = params->RealparamsSize();
+   int size = params.RealparamsSize();
    int counter = 0;
    bool kk = true;
    double beta = 0;
@@ -355,11 +289,11 @@ void StochFit::LoadFromFile(wstring file)
     
     if(kk == true)
 	{
-		*params = params1;
-		m_cEDP.Set_FilmAbs(beta);
-		m_SA->Set_Temp(1.0/currenttemp);
-		params->setImpNorm(normfactor);
-		m_SA->Set_AveragefSTUN(avgfSTUN);
+		params = params1;
+		m_SA.GetEDP()->Set_FilmAbs(beta);
+		m_SA.Set_Temp(1.0/currenttemp);
+		params.setImpNorm(normfactor);
+		m_SA.Set_AveragefSTUN(avgfSTUN);
     }
 	infile.close();
 

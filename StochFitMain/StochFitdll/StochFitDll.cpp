@@ -111,8 +111,8 @@ extern "C" STOCHFIT_API void SAparams(double* lowestenergy, double* temp, int* m
 {
 		if(stochfit != NULL)
 		{
-			*temp = stochfit->m_SA->Get_Temp();
-			*lowestenergy = stochfit->m_SA->Get_LowestEnergy();
+			*temp = stochfit->m_SA.Get_Temp();
+			*lowestenergy = stochfit->m_SA.Get_LowestEnergy();
 
 			if(*temp < 1e-20)
 				*mode = -1;

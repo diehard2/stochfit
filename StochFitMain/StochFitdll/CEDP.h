@@ -17,7 +17,8 @@ private:
 	double m_dBeta_Sup;
 	double m_dBeta_Sub;
 	double m_dWaveConstant;
-
+	MyComplex* m_EDP;
+	MyComplex* m_DEDP;
 	int m_iLayers;
 	
 	BOOL m_bUseSurfAbs;
@@ -34,12 +35,12 @@ public:
 	int Get_EDPPointCount();
 	BOOL Get_UseABS();
 	float Get_FilmAbs();
-	double Get_Dz();
+	MyComplex* GetDoubledEDP();
+	float* GetZ();
 	float Get_WaveConstant();
 	void Set_FilmAbs(float absorption);
 	bool CheckForNegDensity();
 	void GetData(double* Z, double* EDP);
-	MyComplex* m_EDP;
-	MyComplex* m_DEDP;
-	void WriteOutputFile(string filename);
+
+	void WriteOutputFile(wstring filename);
 };

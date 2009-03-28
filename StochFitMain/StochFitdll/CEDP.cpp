@@ -206,11 +206,6 @@ BOOL CEDP::Get_UseABS()
 	return m_bUseSurfAbs;
 }
 
-double CEDP::Get_Dz()
-{
-	return m_dDz0;
-}
-
 float CEDP::Get_FilmAbs()
 {
 	return m_dBeta;
@@ -221,9 +216,9 @@ float CEDP::Get_WaveConstant()
 	return m_dWaveConstant;
 }
 
-void CEDP::Set_FilmAbs(float abs)
+void CEDP::Set_FilmAbs(float absorption)
 {
-	m_dBeta = abs*m_dWaveConstant;
+	m_dBeta = absorption*m_dWaveConstant;
 }
 
 //Check to see if there is any negative electron density for the XR case, false if there is neg ED
@@ -241,7 +236,7 @@ bool CEDP::CheckForNegDensity()
 	return true;
 }
 
-void CEDP::WriteOutputFile(string filename)
+void CEDP::WriteOutputFile(wstring filename)
 {
 	ofstream rhoout(filename.c_str());
 
@@ -267,3 +262,13 @@ void CEDP::GetData(double* Z, double* EDP)
 		EDP[i] = m_EDP[i].re;
 	}
 } 
+
+MyComplex* CEDP::GetDoubledEDP()
+{
+	return m_DEDP;
+}
+
+float* CEDP::GetZ()
+{
+	return m_fZ;
+}

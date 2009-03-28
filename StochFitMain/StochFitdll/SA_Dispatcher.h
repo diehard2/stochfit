@@ -36,7 +36,8 @@ private:
 	CEDP m_cEDP;
 	ParamVector m_cParams;
 	CObjective m_cObjective;
-
+	double m_dChiSquare;
+	double m_dObjectiveScore;
 public: 
 	SA_Dispatcher();
 	~SA_Dispatcher();
@@ -50,4 +51,8 @@ public:
 	double Get_AveragefSTUN();
 	void Set_AveragefSTUN(double fSTUN);
 	bool CheckForFailure();
+	double Get_ChiSquare();
+	double Get_ObjectiveScore();
+	CEDP* GetEDP();
+	void GetReflData(double* Q, double* Refl);
 };

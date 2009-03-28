@@ -40,7 +40,7 @@
 #include <xmmintrin.h>
 #include <mmintrin.h>
 #include "SettingsStruct.h"
-
+#include <memory.h>
 
 //Define CHECKREFLCALC to see how the actual reflectivity calculation is proceeding
 //#define CHECKREFLCALC
@@ -58,3 +58,5 @@ using namespace std;
 //Use the error function from libmmd.lib (Intel math library), can't use mathimf.h due to
 //compiler bug - hopefully this will be fixed...
 extern "C" float __declspec(dllimport) __cdecl erff(float __x);
+
+

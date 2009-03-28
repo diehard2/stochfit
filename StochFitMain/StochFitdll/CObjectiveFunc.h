@@ -15,7 +15,7 @@ private:
 public:
 	typedef double (CObjective::*func)(double*);
 
-	CObjective();
+	~CObjective();
 	void Initialize(ReflSettings* InitStruct);
 	double ChiSquare(double* Exp);
 	double GetFunction(double* func);

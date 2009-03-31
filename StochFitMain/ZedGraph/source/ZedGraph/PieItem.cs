@@ -694,7 +694,7 @@ namespace ZedGraph
 
 				//modify the rect to determine if any of the labels need to be wrapped....
 				//first see if there's any exploded slices and if so, what's the max displacement...
-				//also, might as well get all the display params we can
+				//also, might as well get all the display m_cParamVec we can
 				PieItem.CalculatePieChartParams( pane, ref maxDisplacement );
 
 				if ( maxDisplacement != 0 )			 //need new rectangle if any slice exploded	

@@ -23,17 +23,17 @@ struct ReflSettings
         double SubAbs;
         double SupAbs;
         double Wavelength;
-        BOOL UseSurfAbs;
+        bool UseSurfAbs;
         double Leftoffset;
         double QErr;
-        BOOL Forcenorm;
+        bool Forcenorm;
         double Forcesig;
-        BOOL Debug;
-        BOOL XRonly;
+        bool Debug;
+        bool XRonly;
         int Resolution;
         double Totallength;
         double FilmLength;
-        BOOL Impnorm;
+        bool Impnorm;
         int Objectivefunction;
 		double Paramtemp;
 
@@ -47,7 +47,7 @@ struct ReflSettings
 		double Slope;
 		double Gamma;
 		int STUNfunc;
-		BOOL Adaptive;
+		bool Adaptive;
 		int Tempiter;
 		int STUNdeciter;
 		double Gammadec;
@@ -60,9 +60,54 @@ struct ReflSettings
 		double ChiSquare;
 		LPCWSTR Title;
 
-		BOOL IsNeutron;
+		bool IsNeutron;
         LPCWSTR Version;
         bool disposed;
+
+		ReflSettings()
+		{
+			Directory = L"";
+			Q = NULL;
+			DisplayQ = NULL;
+			Refl = NULL;
+			ReflError = NULL;
+			QError = NULL;
+			QPoints = 0;
+			DispQPoints = 0;
+			SubSLD = 0.0;
+			FilmSLD = 0.0;
+			SupSLD = 0.0;
+			Boxes = 0;
+			FilmAbs = 0.0;
+			SubAbs = 0.0;
+			SupAbs = 0.0;
+			Wavelength = 0.0;
+			UseSurfAbs = false;
+			Leftoffset = 0;
+			QErr = 0.0;
+			Forcenorm = false;
+			Forcesig = false;
+			Debug = false;
+			XRonly = false;
+			Resolution = 0;
+			Totallength = 0.0;
+			FilmLength = 0.0;
+			Impnorm = false;
+			Objectivefunction = 0;
+			Paramtemp = 0.0;
+			CritEdgeOffset = 0;
+			HighQOffset = 0;
+			//Not used
+			Iterations = 0;
+			IterationsCompleted = 0;
+			ChiSquare = 0.0;
+			Title = L"";
+
+			IsNeutron = false;
+			Version = L"";
+			disposed = false;
+
+		}
 		
 };
 #pragma pack(pop)

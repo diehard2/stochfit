@@ -232,7 +232,7 @@ namespace StochasticModeling.Modeling
 
         private void Cancel_Click(object sender, EventArgs e)
         {
-            if (IsInitialized == true)
+            if (IsInitialized)
             {
                 if (MessageBox.Show("Do you want to discard your current constraints?", " ", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {

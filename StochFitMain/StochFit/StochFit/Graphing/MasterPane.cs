@@ -54,36 +54,38 @@ namespace StochasticModeling
             m_gMyMaster.GraphMasterPane.InnerPaneGap = 10;
            
             // Add the new GraphPane to the MasterPane
-            if (GraphCollection.Instance.MainReflGraph.IsDeepCopyFull == true && GraphCollection.Instance.MainReflGraph.Hide == false)
+            if (GraphCollection.Instance.MainReflGraph.IsDeepCopyFull && !GraphCollection.Instance.MainReflGraph.Hide)
             {
                 GraphCollection.Instance.SetGraphUpdateLock = true;
                 m_gMyMaster.GraphMasterPane.Add(GraphCollection.Instance.MainReflGraph.Pane);
                 m_bAtleastonegraph = true;
             }
 
-            if (GraphCollection.Instance.MainRhoGraph.IsDeepCopyFull == true && GraphCollection.Instance.MainRhoGraph.Hide == false)
+            if (GraphCollection.Instance.MainRhoGraph.IsDeepCopyFull && !GraphCollection.Instance.MainRhoGraph.Hide)
             {
                 GraphCollection.Instance.SetGraphUpdateLock = true;
                 m_gMyMaster.GraphMasterPane.Add(GraphCollection.Instance.MainRhoGraph.Pane);
                 m_bAtleastonegraph = true;
             }
 
-            if (GraphCollection.Instance.RhoGraph.IsDeepCopyFull == true && GraphCollection.Instance.RhoGraph.Hide == false)
+            if (GraphCollection.Instance.RhoGraph.IsDeepCopyFull && !GraphCollection.Instance.RhoGraph.Hide)
             {
                 m_gMyMaster.GraphMasterPane.Add(GraphCollection.Instance.RhoGraph.Pane);
                 m_bAtleastonegraph = true;
             }
 
-            if (GraphCollection.Instance.ReflGraph.IsDeepCopyFull == true && GraphCollection.Instance.ReflGraph.Hide == false)
+            if (GraphCollection.Instance.ReflGraph.IsDeepCopyFull && !GraphCollection.Instance.ReflGraph.Hide)
             {
                 m_gMyMaster.GraphMasterPane.Add(GraphCollection.Instance.ReflGraph.Pane);
                 m_bAtleastonegraph = true;
             }
-            if (GraphCollection.Instance.ReflEGraph.IsDeepCopyFull == true && GraphCollection.Instance.ReflEGraph.Hide == false)
+
+            if (GraphCollection.Instance.ReflEGraph.IsDeepCopyFull && !GraphCollection.Instance.ReflEGraph.Hide)
             {
                 m_gMyMaster.GraphMasterPane.Add(GraphCollection.Instance.ReflEGraph.Pane);
                 m_bAtleastonegraph = true;
             }
+
             //Align the graphs in a custom fashion. The default options don't maintain aspect ratio
             if (m_bAtleastonegraph)
             {

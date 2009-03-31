@@ -80,7 +80,7 @@ extern "C" STOCHFIT_API void Cancel()
 
 
 
-extern "C" STOCHFIT_API int GetData(double ZRange[],double Rho[],double QRange[], double Refl[] ,double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)
+extern "C" STOCHFIT_API int GetData(double ZRange[],double Rho[],double QRange[], double Refl[] ,double* roughness, double* chisquare, double* goodnessoffit, bool* isfinished)
 {
 	int iter = -1;
 	if(stochfit != NULL)

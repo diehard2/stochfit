@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <time.h>
+
 namespace Random{
 
 inline double uniform_deviate ( int seed )

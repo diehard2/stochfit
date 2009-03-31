@@ -84,6 +84,7 @@ namespace StochasticModeling.Settings
         /// <summary>
         /// True if absorptions are used, false otherwise
         /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
         public bool UseAbs;
         /// <summary>
         /// Superphase offset for the electron density profile
@@ -96,6 +97,7 @@ namespace StochasticModeling.Settings
         /// <summary>
         /// True if normalization is forced, false otherwise. This set the first point 
         /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
         public bool Forcenorm;
         /// <summary>
         /// Forces the sigma parameter to a user specified value. Sigma will not vary in this case. Useful for neutrons
@@ -104,14 +106,18 @@ namespace StochasticModeling.Settings
         /// <summary>
         /// Set to true to output debug files.
         /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
         public bool Debug;
         /// <summary>
         /// Heavily penalizes models with negative electron densities
         /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
         public bool ForceXR;
         public int Resolution;
         public double Totallength;
         public double Surflayerlength;
+        
+        [MarshalAs(UnmanagedType.I1)]
         public bool ImpNorm;
         public int FitFunc;
         public double ParamTemp;
@@ -126,6 +132,7 @@ namespace StochasticModeling.Settings
         public double AnnealSlope;
         public double AnnealGamma;
         public int STUNfunc;
+        [MarshalAs(UnmanagedType.I1)]
         public bool STUNAdaptive;
         public int STUNtempiter;
         public int STUNdeciter;
@@ -157,8 +164,8 @@ namespace StochasticModeling.Settings
         /// System description
         /// </summary>
         public string Title;
-        
 
+        [MarshalAs(UnmanagedType.I1)]
         public bool IsNeutron;
         public string Version = "0.0.0";
         [XmlIgnoreAttribute] private bool disposed = false;
@@ -319,14 +326,18 @@ namespace StochasticModeling.Settings
         internal IntPtr LL = IntPtr.Zero;
         internal IntPtr ParamPercs = IntPtr.Zero;
         public int QPoints;
+        [MarshalAs(UnmanagedType.I1)]
         public bool OneSigma;
+        [MarshalAs(UnmanagedType.I1)]
         public bool WriteFiles;
         public double SubSLD;
         public double SupSLD;
         public int Boxes;
         public double Wavelength;
         public double QSpread;
+        [MarshalAs(UnmanagedType.I1)]
         public bool Forcenorm;
+        [MarshalAs(UnmanagedType.I1)]
         public bool ImpNorm;
         public int FitFunc;
 
@@ -341,6 +352,7 @@ namespace StochasticModeling.Settings
         public int ZLength;
  
          [XmlIgnoreAttribute]
+        [MarshalAs(UnmanagedType.I1)]
         private bool disposed = false;
 
         #endregion

@@ -8,17 +8,16 @@ private:
 	int m_iFunction;
 	int m_iDataPoints;
 
-	double LogLS(double* Exp);
-	double LogErrorLS(double* Exp);
-	double InverseLS(double* Exp);
-	double InverseErrorLS(double* Exp);
+	double LogLS(const double* Exp);
+	double LogErrorLS(const double* Exp);
+	double InverseLS(const double* Exp);
+	double InverseErrorLS(const double* Exp);
 public:
-	typedef double (CObjective::*func)(double*);
 
 	~CObjective();
-	void Initialize(ReflSettings* InitStruct);
-	double ChiSquare(double* Exp);
-	double GetFunction(double* func);
+	void Initialize(const ReflSettings* InitStruct);
+	double ChiSquare(const double* Exp);
+	double CalculateFitScore(const double* func);
 
 
 };

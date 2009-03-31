@@ -196,7 +196,7 @@ namespace StochasticModeling
                             rhographobject.Clear();
                             reflgraphobject.Clear();
 
-                            if (LoadSettings() == false)
+                            if (!LoadSettings())
                                 return;
 
                                            
@@ -208,7 +208,7 @@ namespace StochasticModeling
                                 rhographobject.SubSLD = double.Parse(SubSLDTB.Text);
                                 rhographobject.UseSLD = UseSLDToolStripMenuItem.Checked;
 
-                                if (UseSLDToolStripMenuItem.Checked == true)
+                                if (UseSLDToolStripMenuItem.Checked)
                                 {
                                     rhographobject.SetAxisTitles("Z", "SLD");
                                     rhographobject.Title = "Model Independent SLD Fit";
@@ -293,9 +293,7 @@ namespace StochasticModeling
                     Cancelbutton.Enabled = false;
                     reflgraphobject.SetBounds();
 
-                    if (UseAbsCB.Checked == false)
-                        SubAbs.Enabled =  SupAbsTB.Enabled = SurfAbs.Enabled = false;
-               
+                    SubAbs.Enabled = SupAbsTB.Enabled = SurfAbs.Enabled = UseAbsCB.Checked;
             }
             catch(Exception ex)
             {
@@ -384,7 +382,7 @@ namespace StochasticModeling
             settings.Forcenorm = ForceNormCB.Checked;
             settings.Forcesig = Double.Parse(SigTSTB.Text);
 
-            if (int.Parse(SigTSTB.Text) == 0)
+            if (double.Parse(SigTSTB.Text) == 0)
                 settings.SigmaSearchPerc = int.Parse(SigmaSearchTB.Text);
             else
                 settings.SigmaSearchPerc = 0;
@@ -434,7 +432,7 @@ namespace StochasticModeling
         {
             MySettings PrevSettings = new MySettings();
 
-            if (PrevSettings.PopulateSettings(settingsfile) == true)
+            if (PrevSettings.PopulateSettings(settingsfile))
             {
                 Rholipid.Text = PrevSettings.Settings.SurflayerSLD.ToString();
                 layerlength.Text = PrevSettings.Settings.Surflayerlength.ToString();
@@ -591,7 +589,7 @@ namespace StochasticModeling
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (Cancelbutton.Enabled == true)
+            if (Cancelbutton.Enabled)
             {
                 if (MessageBox.Show("Verify fitting cancellation", "Cancelling", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
@@ -612,7 +610,7 @@ namespace StochasticModeling
             {
                 int Zlength, Qlength;
 
-                while (NativeMethods.WarmedUp() == false)
+                while (!NativeMethods.WarmedUp())
                 {
                     Thread.Sleep(100);
                 }
@@ -671,11 +669,11 @@ namespace StochasticModeling
 
                 Color color;
 
-                if (m_bmodelreset == true)
+                if (m_bmodelreset)
                 {
                     reflgraphobject.SetGraphType(forceRQ4GraphingToolStripMenuItem.Checked, fresnelcb.Checked);
 
-                    if (m_bmodelreset == true || reflgraphobject.DataFileLoaded == false)
+                    if (m_bmodelreset || !reflgraphobject.DataFileLoaded)
                     {
                         reflgraphobject.Clear();
                         reflgraphobject.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
@@ -745,24 +743,36 @@ namespace StochasticModeling
             g.SetMainInformation = (String.Format("Surface SLD: {0}\n", Rholipid.Text));
             g.SetMainInformation = (String.Format("Surface layer height: {0}\n", layerlength.Text));
 
-            if (UseAbsCB.Checked == true)
+            if (UseAbsCB.Checked)
+            {
                 g.SetMainInformation = String.Format("Surface layer absoption: {0}\n", SurfAbs.Text);
+            }
             else
+            {
                 g.SetMainInformation = "The surface layer was treated as transparent\n";
+            }
 
             g.SetMainInformation = (String.Format("Superphase SLD: {0}\n", SupSLDTB.Text));
 
-            if (UseAbsCB.Checked == true)
+            if (UseAbsCB.Checked)
+            {
                 g.SetMainInformation = String.Format("Superphase absorption: {0}\n", SupAbsTB.Text);
+            }
             else
+            {
                 g.SetMainInformation = "The superphase layer was treated as transparent\n";
+            }
 
             g.SetMainInformation = (String.Format("Subphase SLD: {0}\n", SubSLDTB.Text));
 
-            if (UseAbsCB.Checked == true)
+            if (UseAbsCB.Checked)
+            {
                 g.SetMainInformation = String.Format("Subphase absoption: {0}\n", SubAbs.Text);
+            }
             else
+            {
                 g.SetMainInformation = "The surface layer was treated as transparent\n";
+            }
 
             g.SetMainInformation = "\n";
             g.SetMainInformation = String.Format("Number of layers in the reflectivity: {0}\n", Boxlayers.Text);
@@ -774,9 +784,14 @@ namespace StochasticModeling
             g.SetMainInformation = String.Format("Percent error in Q: {0}\n", QErrTB.Text);
 
             if (ImpNormCB.Checked)
+            {
                 g.SetMainInformation = "The normalization constant was allowed to vary\n";
+            }
+
             if (ForceNormCB.Checked)
+            {
                 g.SetMainInformation = "Normalization of the curve was forced\n";
+            }
 
             g.SetMainInformation = String.Format("Fit Score for the reflectivity: {0}\n", FitScoreTB.Text);
             g.SetMainInformation = String.Format("Chi Square for the reflectivity: {0}\n", ChiSquareTB.Text);

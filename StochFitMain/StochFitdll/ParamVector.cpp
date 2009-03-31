@@ -26,7 +26,7 @@ m_busesurfabs(false), m_bfiximpnorm(false), m_bXROnly(false), m_binitialized(fal
 m_iroughness_index(-1)
 {}
 
-void ParamVector::Initialize(ReflSettings* InitStruct)
+void ParamVector::Initialize(const ReflSettings* InitStruct)
 {
 	m_binitialized = true;
 	m_busesurfabs = InitStruct->UseSurfAbs;
@@ -34,14 +34,14 @@ void ParamVector::Initialize(ReflSettings* InitStruct)
 	
 	length = m_dparameter_size = InitStruct->Boxes;
 	
-	if(m_busesurfabs == true)
+	if(m_busesurfabs)
 	{
 		m_busesurfabs = true;
 		m_isurfabs_index = m_dparameter_size;
 		m_dparameter_size++;
 	}
 
-	if(InitStruct->Impnorm == TRUE)
+	if(InitStruct->Impnorm)
 	{
 		m_bfiximpnorm = true;
 		m_iimpnorm_index = m_dparameter_size;
@@ -59,18 +59,10 @@ void ParamVector::Initialize(ReflSettings* InitStruct)
 		m_dparameter_size++;
 	}
 
-	data_params_low_val.resize(m_dparameter_size);
-	data_params_high_val.resize(m_dparameter_size);
+
 	data_params.resize(m_dparameter_size);
 
-	//Give default values to our parameters bounds. These will be updated later
-	for(int i = 0; i < m_dparameter_size; i++)
-	{
-		data_params_high_val.at(i) = 1000;
-		data_params_low_val.at(i) = -1000;
-	}
-
-    gnome.resize(length+2); //Add in 2 layers for superphase and subphase
+	gnome.resize(length+2); //Add in 2 layers for superphase and subphase
 	
 	setImpNorm(1.0);
 	setSurfAbs(1.0);
@@ -79,86 +71,14 @@ void ParamVector::Initialize(ReflSettings* InitStruct)
 	SetSubphase(InitStruct->SubSLD/InitStruct->FilmSLD);
 	
 
-	setroughness(2.0f);
+	SetRoughness(2.0);
 
 	for(int i = 0 ; i < InitStruct->Boxes; i++)
 		SetMutatableParameter(i,1.0);
 
 }
 
-
-
-void ParamVector::SetBounds(float lowrough, float highrough, float highimp, float highabs)
-{
-	if(m_binitialized)
-	{ 
-		//For annealing, we need to provide more reasonable restriction on boundary heights
-		for(int i = 0; i < length ; i++)
-		{
-			data_params_high_val[i] = 5.0f;
-			data_params_low_val[i] = -5.0f;
-
-		/*	if(i != 0 && i != length -1)
-			{
-				data_params_high_val.at(i) = max(data_params.at(i-1), data_params.at(i+1)) + 0.1;
-				data_params_low_val.at(i) =  min(data_params.at(i-1), data_params.at(i+1)) - 0.1;
-			}
-			else if(i == 0)
-			{
-				data_params_high_val.at(0) = data_params.at(i+1) + 0.1;
-				data_params_low_val.at(0) =  data_params.at(i+1) - 0.1;
-			}
-			else
-			{
-				data_params_high_val.at(i) = max(data_params.at(i-1), gnome.at(gnome.size()-1)) + 0.1;
-				data_params_low_val.at(i) =  min(data_params.at(i-1), gnome.at(gnome.size()-1)) - 0.1;
-			}*/
-		}
-
-		if(m_bfixroughness == false)
-		{
-			data_params_high_val.at(m_iroughness_index) = highrough;
-			data_params_low_val.at(m_iroughness_index) = lowrough;
-		}
-
-		if(m_bfiximpnorm)
-		{
-			data_params_high_val.at(m_iimpnorm_index) = highimp;
-			data_params_low_val.at(m_iimpnorm_index) = 0.0;
-		}
-
-		if(m_busesurfabs)
-		{
-			data_params_high_val.at(m_isurfabs_index) = highabs;
-			data_params_low_val.at(m_isurfabs_index) = 0.0;
-		}
-	}
-}
-
-void ParamVector::UpdateBoundaries(double* high, double* low)
-{
-	SetBounds(0.1,8.0,10000,10000);
-
-	if(high != NULL && low != NULL)
-	{
-		for(int i = 0; i < m_dparameter_size; i++)
-		{
-			high[i] = GetUpperBounds(i);
-			low[i] = GetLowerBounds(i);
-		}
-	}
-	else
-	{
-		////Set some fake bounds for initialization
-		//for(int i = 0; i < m_dparameter_size; i++)
-		//{
-		//	data_params_high_val[i] = data_params[i]+0.1;
-		//	data_params_low_val[i] = data_params[i]-0.1;
-		//}
-	}
-	
-}
-int ParamVector::RealparamsSize()
+int ParamVector::RealparamsSize() const 
 {
 	if(m_binitialized)
 		return(length+2);
@@ -176,7 +96,7 @@ int ParamVector::GetInitializationLength()
 	return length;
 }
 
-float ParamVector::GetRealparams(int i)
+double ParamVector::GetRealparams(int i) const
 {
 	if(m_binitialized)
 	{
@@ -190,19 +110,19 @@ float ParamVector::GetRealparams(int i)
 
 }
 
-void ParamVector::SetSubphase(float subval)
+void ParamVector::SetSubphase(double subval)
 {
 	if(m_binitialized)
 		gnome.at(length+1) = subval;
 }
 
-void ParamVector::SetSupphase(float supval)
+void ParamVector::SetSupphase(double supval)
 {
 	if(m_binitialized)
 		gnome.at(0) = supval;
 }
 
-float ParamVector::GetMutatableParameter(int i)
+double ParamVector::GetMutatableParameter(int i)
 {
 	if(m_binitialized)
 		return data_params.at(i);
@@ -211,11 +131,11 @@ float ParamVector::GetMutatableParameter(int i)
 }
 
 
-int ParamVector::SetMutatableParameter(int i,float val)
+int ParamVector::SetMutatableParameter(int i,double val)
 {
 	if(m_binitialized)
 	{
-		if(i < ParamCount() && val < GetUpperBounds(i) && val > GetLowerBounds(i))
+		if(i < ParamCount())
 		{
 			data_params.at(i) = val;
 			
@@ -224,26 +144,6 @@ int ParamVector::SetMutatableParameter(int i,float val)
 			
 			return 0;
 		}
-		else if( i < ParamCount() && val > GetUpperBounds(i))
-		{
-			data_params.at(i) = GetUpperBounds(i);
-			
-			if(i < length)
-				gnome.at(i+1) = GetUpperBounds(i);
-			
-			return 0;
-			
-		}
-		else if( i < ParamCount() && val < GetLowerBounds(i))
-		{
-			data_params.at(i) = GetLowerBounds(i);
-			
-			if(i < length)
-				gnome.at(i+1) = GetLowerBounds(i);
-			
-			return 0;
-			
-		}
 		else 
 			return -1;
 	}
@@ -251,23 +151,7 @@ int ParamVector::SetMutatableParameter(int i,float val)
 		return -1;
 }
 
-float ParamVector::GetUpperBounds(int index)
-{
-	if(m_binitialized && index < m_dparameter_size)
-		return data_params_high_val.at(index);
-	else
-		return -1;
-}
-
-float ParamVector::GetLowerBounds(int index)
-{
-	if(m_binitialized && index < m_dparameter_size)
-		return data_params_low_val.at(index);
-	else
-		return -1;
-}
-
-float ParamVector::getroughness()
+double ParamVector::GetRoughness() const
 {
 	if(m_binitialized)
 	{
@@ -280,17 +164,15 @@ float ParamVector::getroughness()
 		return -1;
 }
 
-int ParamVector::setroughness(float rough)
+int ParamVector::SetRoughness(double rough)
 {
 	if(m_binitialized)
 	{
-		if(m_bfixroughness == true)
+		if(m_bfixroughness)
 			return -1;
 		
-		if(rough > data_params_low_val.at(m_iroughness_index) && rough < data_params_high_val.at(m_iroughness_index))
-			data_params.at(m_iroughness_index) = rough;
-		else 
-			return -1;
+		data_params.at(m_iroughness_index) = rough;
+		
 
 		return 0;
 	}
@@ -298,7 +180,7 @@ int ParamVector::setroughness(float rough)
 		return -1;
 }
 
-float ParamVector::getImpNorm()
+double ParamVector::getImpNorm()
 {
 	if(m_binitialized)
 	{
@@ -311,17 +193,13 @@ float ParamVector::getImpNorm()
 		return -1;
 }
 
-int ParamVector::setImpNorm(float norm)
+int ParamVector::setImpNorm(double norm)
 {
 	if(m_binitialized)
 	{
-		if(m_bfiximpnorm == true)
+		if(m_bfiximpnorm)
 		{
-		
-			if(norm > data_params_low_val.at(m_iimpnorm_index) && norm < data_params_high_val.at(m_iimpnorm_index))
-				data_params.at(m_iimpnorm_index) = norm;
-			else 
-				return -1;
+			data_params.at(m_iimpnorm_index) = norm;
 		}
 		else
 			return -1;
@@ -332,7 +210,7 @@ int ParamVector::setImpNorm(float norm)
 		return -1;
 }
 
-float ParamVector::getSurfAbs()
+double ParamVector::GetSurfAbs() const
 {
 	if(m_binitialized)
 	{
@@ -345,17 +223,13 @@ float ParamVector::getSurfAbs()
 		return -1;
 }
 
-int ParamVector::setSurfAbs(float surfabs)
+int ParamVector::setSurfAbs(double surfabs)
 {
 	if(m_binitialized)
 	{
-		if(m_busesurfabs == true)
+		if(m_busesurfabs)
 		{
-		
-			if(surfabs > data_params_low_val.at(m_isurfabs_index) && surfabs < data_params_high_val.at(m_isurfabs_index))
-				data_params.at(m_isurfabs_index) = surfabs;
-			else 
-				return -1;
+			data_params.at(m_isurfabs_index) = surfabs;
 		}
 		else
 			return -1;
@@ -367,23 +241,3 @@ int ParamVector::setSurfAbs(float surfabs)
 }
 
 
-bool ParamVector::CopyArraytoGene(double* myarray)
-{
-	bool succeeded = true;
-
-	if(m_binitialized)
-	{
-		for(int i = 0; i < ParamCount(); i++)
-		{
-			if(SetMutatableParameter(i, myarray[i]) == -1)
-				succeeded = false;
-		}
-
-		if(succeeded)
-			return true;
-		else
-			return false;
-	}
-	return false;
-
-}

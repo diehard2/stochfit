@@ -113,7 +113,7 @@ namespace StochasticModeling
             RhoGraphing.UseSLD = m_bUseSLD;
             RhoGraphing.SetGraphType(false, false);
             
-            if (m_bUseSLD == false)
+            if (!m_bUseSLD)
                 RhoGraphing.CreateGraph(EDzedGraphControl1, "Electron Density Profile", "Z", "Normalized Electron Density", AxisType.Linear);
             else
                 RhoGraphing.CreateGraph(EDzedGraphControl1, "SLD Profile", "Z", "SLD", AxisType.Linear);
@@ -301,7 +301,7 @@ namespace StochasticModeling
         {
             try
             {
-                if (m_isupdating == false)
+                if (!m_isupdating)
                 {
                     RhoGraphing.SupSLD = ReflGraphing.SupSLD = SupSLDTB.ToDouble();
                     RhoGraphing.SubSLD = ReflGraphing.SubSLD = SubphaseSLD.ToDouble();
@@ -340,7 +340,7 @@ namespace StochasticModeling
         {
             try
             {
-                if (m_isupdating == false)
+                if (!m_isupdating)
                 {
                     m_bmodelreset = true;
                     Variable_Changed(sender, e);
@@ -374,7 +374,7 @@ namespace StochasticModeling
 
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
-            if (Properties.Settings.Default.DisableSavePrompt == false)
+            if (!Properties.Settings.Default.DisableSavePrompt)
             {
                 if (m_bfitperformed && !m_bfitsaved)
                 {
@@ -457,7 +457,7 @@ namespace StochasticModeling
                 holdcount++;
 
             //Check if any holds have been set
-            Action<CheckBox> f = p => { if (p.Checked == true) holdcount++; };
+            Action<CheckBox> f = p => { if (p.Checked) holdcount++; };
 
             HoldRhoArray.ForEach(f);
             HoldSigmaArray.ForEach(f);
@@ -466,19 +466,19 @@ namespace StochasticModeling
             //Setup all of our constraints if true, if it has been uninitialized, 
             if (ConstrForm.Initialized || holdcount > 0)
             {
-                if (ReflCalc.IsOneSigma == false) arrayconst = 3;
+                if (!ReflCalc.IsOneSigma) arrayconst = 3;
 
                 ReflCalc.UL = new double[2 + arrayconst * ReflCalc.BoxCount];
                 ReflCalc.LL = new double[2 + arrayconst * ReflCalc.BoxCount];
                 int ULLength = ReflCalc.UL.Length;
 
                 //Set the subphase constraints
-                if (SubRoughCB.Checked == true)
+                if (SubRoughCB.Checked)
                 {
                     ReflCalc.UL[0] = SubRough.ToDouble();
                     ReflCalc.LL[0] = SubRough.ToDouble();
                 }
-                else if (ConstrForm.Initialized == false)
+                else if (!ConstrForm.Initialized)
                 {
                     ReflCalc.UL[0] = 10000;
                     ReflCalc.LL[0] = -10000;
@@ -490,12 +490,12 @@ namespace StochasticModeling
                 }
 
                 //Set the Normalization const
-                if (NormCB.Checked == true)
+                if (NormCB.Checked)
                 {
                     ReflCalc.UL[ULLength - 1] = NormCorrectTB.ToDouble();
                     ReflCalc.LL[ULLength - 1] = NormCorrectTB.ToDouble();
                 }
-                else if (ConstrForm.Initialized == false)
+                else if (!ConstrForm.Initialized)
                 {
                     ReflCalc.UL[ULLength - 1] = 10000;
                     ReflCalc.LL[ULLength - 1] = -10000;
@@ -509,12 +509,12 @@ namespace StochasticModeling
                 for (int i = 0; i < ReflCalc.BoxCount; i++)
                 {
                     //Check for constraints
-                    if (ConstrForm.Initialized == true)
+                    if (ConstrForm.Initialized)
                     {
                         ReflCalc.UL[arrayconst * i + 1] = ConstrForm.ThickHighArray[i];
                         ReflCalc.LL[arrayconst * i + 1] = ConstrForm.ThickLowArray[i];
 
-                        if (m_bUseSLD == false)
+                        if (!m_bUseSLD)
                         {
                             ReflCalc.UL[arrayconst * i + 2] = ConstrForm.RhoHighArray[i];
                             ReflCalc.LL[arrayconst * i + 2] = ConstrForm.RhoLowArray[i];
@@ -532,7 +532,7 @@ namespace StochasticModeling
                                 ReflCalc.UL[arrayconst * i + 2] = ConstrForm.RhoLowArray[i] / ReflCalc.SubphaseSLD;
                             }
                         }
-                        if (Holdsigma.Checked == false)
+                        if (!Holdsigma.Checked)
                         {
                             ReflCalc.UL[arrayconst * i + 3] = ConstrForm.SigmaHighArray[i];
                             ReflCalc.LL[arrayconst * i + 3] = ConstrForm.SigmaLowArray[i];
@@ -543,22 +543,22 @@ namespace StochasticModeling
                         ReflCalc.UL[arrayconst * i + 2] = ReflCalc.UL[arrayconst * i + 1] = 10000;
                         ReflCalc.LL[arrayconst * i + 2] = ReflCalc.LL[arrayconst * i + 1] = -10000;
 
-                        if (Holdsigma.Checked == false)
+                        if (!Holdsigma.Checked)
                         {
                             ReflCalc.UL[arrayconst * i + 3] = 10000;
                             ReflCalc.LL[arrayconst * i + 3] = -10000;
                         }
                     }
                     //Check for holds - holds take precedence over constraints
-                    if (HoldLengthArray[i].Checked == true)
+                    if (HoldLengthArray[i].Checked)
                     {
                         ReflCalc.LL[arrayconst * i + 1] = ReflCalc.UL[arrayconst * i + 1] = LengthArray[i].ToDouble();
                     }
-                    if (HoldRhoArray[i].Checked == true)
+                    if (HoldRhoArray[i].Checked)
                     {
                         ReflCalc.LL[arrayconst * i + 2] = ReflCalc.UL[arrayconst * i + 2] = RhoArray[i].ToDouble();
                     }
-                    if (HoldSigmaArray[i].Checked == true && Holdsigma.Checked == false)
+                    if (HoldSigmaArray[i].Checked && !Holdsigma.Checked)
                     {
                         ReflCalc.LL[arrayconst * i + 3] = ReflCalc.UL[arrayconst * i + 3] = SigmaArray[i].ToDouble();
                     }

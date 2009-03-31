@@ -21,34 +21,26 @@
 #include "stdafx.h"
 #include "SA_Dispatcher.h"
 
-SA_Dispatcher::SA_Dispatcher()
-{
-}
-
 void SA_Dispatcher::Initialize(ReflSettings* InitStruct)
 {
 		m_cSA.Initialize(InitStruct);
-		m_cEDP.Init(InitStruct);
-		m_cRefl.Init(InitStruct);
+		m_cEDP.Initialize(InitStruct);
+		m_cRefl.Initialize(InitStruct);
 		m_cObjective.Initialize(InitStruct);
 		m_cParams.Initialize(InitStruct);
 }
 
-SA_Dispatcher::~SA_Dispatcher()
-{
-	
-}
 
-bool SA_Dispatcher::Iteration(ParamVector *params)
+bool SA_Dispatcher::Iteration(ParamVector *m_cParamVec)
 {
-		ParamVector OldParams = *params;
-	    m_cSA.TakeStep(params);
+		ParamVector OldParams = *m_cParamVec;
+	    m_cSA.TakeStep(m_cParamVec);
 		//We have to update the reflectivity generator with the normalization factor, the EDP has no concept of this
-		m_cRefl.m_dnormfactor = params->getImpNorm();
-		m_cEDP.GenerateEDP(params);
+		m_cRefl.SetNormFactor(m_cParamVec->getImpNorm());
+		m_cEDP.GenerateEDP(m_cParamVec);
 		m_cRefl.MakeReflectivity(&m_cEDP);
 		
-		m_dObjectiveScore = m_cObjective.GetFunction(m_cRefl.GetReflData());
+		m_dObjectiveScore = m_cObjective.CalculateFitScore(m_cRefl.GetReflData());
 		m_dChiSquare = m_cObjective.ChiSquare(m_cRefl.GetReflData());
 		
 		if(m_cSA.Iteration(m_dObjectiveScore))
@@ -57,7 +49,7 @@ bool SA_Dispatcher::Iteration(ParamVector *params)
 		}
 		else
 		{
-			*params = OldParams;
+			*m_cParamVec = OldParams;
 			return false;
 		}
 }

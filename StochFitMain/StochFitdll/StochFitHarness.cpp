@@ -27,9 +27,7 @@
 
 StochFit::StochFit(ReflSettings* InitStruct)
 {
-	m_bthreadstop = false;
-	m_bupdated = FALSE;
-	m_bwarmedup = false;
+	m_bwarmedup = m_bthreadstop = m_bupdated = false;
 	m_ipriority = 2;
 	
 	m_Directory = InitStruct->Directory;
@@ -38,13 +36,10 @@ StochFit::StochFit(ReflSettings* InitStruct)
     fnrho = InitStruct->Directory + wstring(L"\\rho.dat");
 
 	Initialize(InitStruct);
-	//Create our mutex
+	//Create our mutex that we use for locking purposes
 	m_hStochMutex = CreateMutex(NULL, FALSE, L"StochMutex");
 }
 
-StochFit::~StochFit()
-{}
-	
 void StochFit::Initialize(ReflSettings* InitStruct)
 {
 	 //////////////////////////////////////////////////////////
@@ -52,79 +47,71 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 	 ////////////////////////////////////////////////////////
 
 	m_SA.Initialize(InitStruct);
-	params.Initialize(InitStruct);
- 
-	//Blank the offsets for the DispArray and move the Display Q to Q
-	ReflSettings temp = *InitStruct;
+	m_cParamVec.Initialize(InitStruct);
+	m_cEDP.Initialize(InitStruct);
 
-#ifdef CHECKREFLCALC
-	temp.Q = InitStruct->DisplayQ;
-	temp.QPoints = InitStruct->DispQPoints;
-#endif
-	temp.HighQOffset = 0;
-	temp.CritEdgeOffset = 0;
-	m_cDispRefl.Init(&temp);
-	m_EDP.Init(&temp);
+	//Blank the offsets for the DispArray and move the Display Q to Q
+	#ifndef CHECKREFLCALC
+		InitStruct->Q = InitStruct->DisplayQ;
+		InitStruct->QPoints = InitStruct->DispQPoints;
+	#endif
+
+	InitStruct->HighQOffset = 0;
+	InitStruct->CritEdgeOffset = 0;
+	 
+	m_cDispRefl.Initialize(InitStruct);
+
 	 /////////////////////////////////////////////////////
      /******** Prepare Arrays for the Front End ********/
 	////////////////////////////////////////////////////
 
 	m_irhocount = m_SA.GetEDP()->Get_EDPPointCount();
-	m_irefldatacount = m_cDispRefl.GetDataCount();
+
+	//We've moved the appropriate Q point count to Q points by now
+	m_irefldatacount = InitStruct->QPoints;
 
 	//Let the frontend know that we've set up the arrays
 	m_bwarmedup = true;
 
 	//If we have a population already, load it
 	LoadFromFile();
-
-	// Update the constraints on the params
-	params.UpdateBoundaries(NULL,NULL);
-}
-
-int StochFit::Processing()
-{
-	//Set the thread priority
-	Priority(m_ipriority);
-
-	bool accepted = false;
-
-	//Main loop
-     for(int isteps=0;(isteps < m_itotaliterations) && (m_bthreadstop == false);isteps++)
-	 {
-
-		 WaitForSingleObject(m_hStochMutex, INFINITE);
-		 accepted = m_SA.Iteration(&params);
-		
-			if(accepted || isteps == 0)
-			{
-				m_dChiSquare = m_SA.Get_ChiSquare();
-				m_dGoodnessOfFit = m_SA.Get_ObjectiveScore();
-			}
-		    
-			//Write the population file every 5000 iterations
-			if((isteps+1)%5000 == 0 || m_bthreadstop == true || isteps == m_itotaliterations-1)
-			{
-				//Write out the population file for the best minimum found so far
-				if(m_isearchalgorithm != 0 && m_SA.Get_IsIterMinimum())
-					WritetoFile(wstring(m_Directory + L"\\BestSASolution.txt").c_str());
-
-				WritetoFile( fnpop.c_str());
-			}
-
-			m_icurrentiteration = isteps;
-
-			ReleaseMutex(m_hStochMutex);
-	 }
-
-	 return 0;
 }
 
 DWORD WINAPI StochFit::InterThread(LPVOID lParam)
 {
 	StochFit* Internalpointer = (StochFit*)lParam;
-	Internalpointer->Processing();
-	return 0;
+	//Set the thread priority
+	Internalpointer->Priority(Internalpointer->m_ipriority);
+
+     //Main loop
+     for(int isteps = 0;(isteps < Internalpointer->m_itotaliterations) && (!Internalpointer->m_bthreadstop);isteps++)
+	 {
+		 WaitForSingleObject(Internalpointer->m_hStochMutex, INFINITE);
+		 
+		 bool accepted = Internalpointer->m_SA.Iteration(&(Internalpointer->m_cParamVec));
+		
+		if(accepted || isteps == 0)
+		{
+			Internalpointer->m_dChiSquare = Internalpointer->m_SA.Get_ChiSquare();
+			Internalpointer->m_dGoodnessOfFit = Internalpointer->m_SA.Get_ObjectiveScore();
+		}
+	    
+		//Write the population file every 5000 iterations
+		if((isteps+1)%5000 == 0 || Internalpointer->m_bthreadstop || isteps == Internalpointer->m_itotaliterations-1)
+		{
+			//Write out the population file for the best minimum found so far
+			if(Internalpointer->m_isearchalgorithm != 0 && Internalpointer->m_SA.Get_IsIterMinimum())
+				Internalpointer->WritetoFile(wstring(Internalpointer->m_Directory + L"\\BestSASolution.txt").c_str());
+
+			Internalpointer->WritetoFile( Internalpointer->fnpop.c_str());
+		}
+
+		Internalpointer->m_icurrentiteration = isteps;
+
+		ReleaseMutex(Internalpointer->m_hStochMutex);
+	 }
+
+	 return 0;
 }
 
 int StochFit::Start(int iterations)
@@ -150,29 +137,29 @@ int StochFit::Cancel()
 }
 
 
-int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)
+int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, bool* isfinished)
 {
 	WaitForSingleObject(m_hStochMutex, INFINITE);
 
-	*roughness = params.getroughness();
-	*chisquare = m_SA.Get_ChiSquare();
-	*goodnessoffit = m_SA.Get_ObjectiveScore();
-	*isfinished = m_bthreadstop == true ? TRUE : FALSE;
+	*roughness = m_cParamVec.GetRoughness();
+	*chisquare = m_dChiSquare;
+	*goodnessoffit = m_dGoodnessOfFit;
+	*isfinished = m_bthreadstop;
 
+	m_cEDP.GenerateEDP(&m_cParamVec);
+	m_cDispRefl.SetNormFactor(m_cParamVec.getImpNorm());
+	m_cDispRefl.MakeReflectivity(&m_cEDP);
 
 	for(int i = 0; i<m_irhocount;i++)
 	{
 		Z[i] = m_SA.GetEDP()->GetZ()[i];
 		RhoOut[i] =  m_SA.GetEDP()->GetDoubledEDP()[i].re/m_SA.GetEDP()->GetDoubledEDP()[m_SA.GetEDP()->Get_EDPPointCount()-1].re;
 	}
-	
-	m_EDP.GenerateEDP(&params);
-	m_cDispRefl.m_dnormfactor = params.getImpNorm();
-	m_cDispRefl.MakeReflectivity(&m_EDP);
+
 	m_cDispRefl.GetData(Q, ReflOut);
 
 	
-	m_EDP.WriteOutputFile(fnrho);
+	m_cEDP.WriteOutputFile(fnrho);
 	m_cDispRefl.WriteOutputFile(fnrf);
 
 	int tempiter = m_icurrentiteration;
@@ -201,12 +188,16 @@ int StochFit::Priority(int priority)
 			case 2:
 				::SetThreadPriority(m_hThread,THREAD_PRIORITY_NORMAL);
 				break;
+			case 3:
+				::SetThreadPriority(m_hThread, THREAD_PRIORITY_ABOVE_NORMAL);
 			default:
 				::SetThreadPriority(m_hThread,THREAD_PRIORITY_NORMAL);
 		};
 	}
 	else
+	{
 		m_ipriority = priority;
+	}
 
 	return 0;
 }
@@ -215,12 +206,12 @@ void StochFit::WritetoFile(const wchar_t* filename)
 {
 	ofstream outfile;
 	outfile.open(fnpop.c_str());
-	outfile<< params.getroughness() <<' '<< m_SA.GetEDP()->Get_FilmAbs()*params.getSurfAbs()/ m_SA.GetEDP()->Get_WaveConstant() <<
-		' '<< m_SA.Get_Temp() <<' '<< params.getImpNorm() << ' ' << m_SA.Get_AveragefSTUN() << endl;
+	outfile<< m_cParamVec.GetRoughness() <<' '<< m_SA.GetEDP()->Get_FilmAbs()*m_cParamVec.GetSurfAbs()/ m_SA.GetEDP()->Get_WaveConstant() <<
+		' '<< m_SA.Get_Temp() <<' '<< m_cParamVec.getImpNorm() << ' ' << m_SA.Get_AveragefSTUN() << endl;
 
-	for(int i = 0; i < params.RealparamsSize(); i++)
+	for(int i = 0; i < m_cParamVec.RealparamsSize(); i++)
 	{
-		outfile<<params.GetRealparams(i)<< endl;
+		outfile<<m_cParamVec.GetRealparams(i)<< endl;
 	}
 
 	outfile.close();
@@ -228,7 +219,7 @@ void StochFit::WritetoFile(const wchar_t* filename)
 
 void StochFit::LoadFromFile(wstring file)
 {
-   ParamVector params1 = params;
+   ParamVector params1 = m_cParamVec;
    ifstream infile;
    
    if(file == wstring(L""))
@@ -236,7 +227,7 @@ void StochFit::LoadFromFile(wstring file)
    else
 	 infile.open(file.c_str());
 
-   int size = params.RealparamsSize();
+   int size = m_cParamVec.RealparamsSize();
    int counter = 0;
    bool kk = true;
    double beta = 0;
@@ -252,7 +243,7 @@ void StochFit::LoadFromFile(wstring file)
        double ED, roughness;
        infile >> roughness >> beta >> currenttemp >> normfactor >> avgfSTUN;
    
-       params1.setroughness(roughness);
+       params1.SetRoughness(roughness);
 
 	   while(!infile.eof() && i < params1.RealparamsSize())
 	   {
@@ -282,23 +273,23 @@ void StochFit::LoadFromFile(wstring file)
 		kk = false;
 	}
 
-	if(kk == true && infile.eof() == false)
+	if(kk && !infile.eof())
 	{
 		kk = false;
 	}
     
-    if(kk == true)
+    if(kk)
 	{
-		params = params1;
+		m_cParamVec = params1;
 		m_SA.GetEDP()->Set_FilmAbs(beta);
 		m_SA.Set_Temp(1.0/currenttemp);
-		params.setImpNorm(normfactor);
+		m_cParamVec.setImpNorm(normfactor);
 		m_SA.Set_AveragefSTUN(avgfSTUN);
     }
 	infile.close();
 
 	//If we're resuming, and we were Tunneling, load the best file
-	if(kk == true && wstring(fnpop).find(L"BestSASolution.txt") == wstring::npos)
+	if(kk && wstring(fnpop).find(L"BestSASolution.txt") == wstring::npos)
 	{
 		LoadFromFile(wstring(m_Directory+L"BestSASolution.txt").c_str());
 	}

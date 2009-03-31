@@ -19,6 +19,7 @@
  */
 
 #pragma once
+#include <queue>
 #include "ReflCalc.h"
 #include "CEDP.h"
 #include "ParamVector.h"
@@ -85,7 +86,7 @@ public:
 		double m_daveragefstun;
 		long double m_dbestsolution;
 		void SetOjbectiveFunc(func objective);
-		void TakeStep(ParamVector* params);
+		void TakeStep(ParamVector* m_cParamVec);
 
 
 };

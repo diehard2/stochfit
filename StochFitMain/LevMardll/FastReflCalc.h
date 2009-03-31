@@ -28,7 +28,7 @@ private:
    int m_icritqoffset, m_ihighqoffset;
    void ImpNorm(double* refl, int datapoints);
    void MakeTheta(BoxReflSettings* InitStruct);
-   BOOL m_bImpNorm;
+   bool m_bImpNorm;
    double* Realreflerrors; 
    int realrefllength;
    double m_dQSpread;
@@ -71,7 +71,7 @@ public:
 	
 	double CalcQc(double dSLD);
 	double CalcFresnelPoint(double Q, double Qc);
-	BOOL onesigma;
+	bool onesigma;
 	double subphaseSLD;
 
 	double* LengthArray;

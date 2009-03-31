@@ -19,7 +19,7 @@
 				FloatingPointModel="1000"
 				FlushDenormalResultsToZero="true"
 				GenerateAlternateCodePaths="0"
-				ProfileGuidedOptimization="3"/>
+				ProfileGuidedOptimization="0"/>
 		</Configuration>
 		<Configuration
 			Name="GIXOS|Win32">

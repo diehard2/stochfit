@@ -20,15 +20,15 @@
 
 #pragma once
 #include "stdafx.h"
-#include "SettingsStruct.h"
+#include <vector>
+
 
 class ParamVector 
 {
 	private:
 		vector <double> gnome;
 		vector <double> data_params;
-		vector <double> data_params_high_val;
-		vector <double> data_params_low_val;
+
 		int length;
 		bool m_binitialized;
 		bool m_bfixroughness;
@@ -38,36 +38,25 @@ class ParamVector
 		int m_iroughness_index;
 		int m_isurfabs_index;
 		int m_iimpnorm_index;
-		float roughness;
-
-		void SetBounds(float lowrough, float highrough, float highimp, float highabs);
+		double roughness;
 
 	public:
 		ParamVector();
-		void Initialize(ReflSettings* InitStruct);
-		int RealparamsSize();
+		void Initialize(const ReflSettings* InitStruct);
+		int RealparamsSize() const;
 		int GetInitializationLength();
 		int ParamCount();
-		float GetRealparams(int i);
-		float GetMutatableParameter(int i);
-		int SetMutatableParameter(int i,float x);
-		float getroughness();
-		int setroughness(float x);
-		float getImpNorm();
-		int setImpNorm(float rough);
-		float getSurfAbs();
-		int setSurfAbs(float norm);
-		void SetSubphase(float subval);
-		void SetSupphase(float supval);
-		bool CopyArraytoGene(double* myarray);
-		void UpdateBoundaries(double* high, double* low);
-		bool Get_FixedRoughness(){ return m_bfixroughness;}
-		bool Get_FixImpNorm(){ return m_bfiximpnorm;}
-		bool Get_UseSurfAbs(){ return m_busesurfabs;}
-
+		double GetRealparams(int i) const;
+		double GetMutatableParameter(int i);
+		int SetMutatableParameter(int i,double x);
+		double GetRoughness() const;
+		int SetRoughness(double x);
+		double getImpNorm();
+		int setImpNorm(double rough);
+		double GetSurfAbs() const;
+		int setSurfAbs(double norm);
+		void SetSubphase(double subval);
+		void SetSupphase(double supval);
 	
-		float GetUpperBounds(int index);
-		float GetLowerBounds(int index);
-
 		bool m_bXROnly;
 };

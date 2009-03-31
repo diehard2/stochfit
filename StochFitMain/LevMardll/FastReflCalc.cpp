@@ -146,7 +146,7 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
   FastReflcalc* reflinst = (FastReflcalc*)data;
 
 
-  if(reflinst->onesigma == TRUE)
+  if(reflinst->onesigma)
 	  reflinst->mkdensityonesigma(par,m);
   else
 	  reflinst->mkdensity(par,m);
@@ -505,7 +505,7 @@ void FastReflcalc::myrfdispatch()
 		QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
 	}
 
-	if(m_bImpNorm == TRUE)
+	if(m_bImpNorm)
 	{
 		ImpNorm(reflpt, m_idatapoints);
 	}

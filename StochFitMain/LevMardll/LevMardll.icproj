@@ -19,7 +19,7 @@
 				GlobalOptimizations="true"
 				FlushDenormalResultsToZero="true"
 				UseProcExt="0"
-				GenerateAlternateCodePaths="5"
+				GenerateAlternateCodePaths="0"
 				Parallelization="true"/>
 		</Configuration>
 		<Configuration

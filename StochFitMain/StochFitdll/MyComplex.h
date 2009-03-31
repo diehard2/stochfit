@@ -121,53 +121,50 @@ namespace MyComplexNumber{
 		return atan2(comp.im, comp.re);
 	}
 
-	inline MyComplex compsqrt(const MyComplex& comp)
-	{
-		//Use the half angle relation to calculate the square root. Prevents buffer
-		//over/under flows. Don't change this code. This problem actually occurs
-		double mag, theta, sqrtholder;
-		MyComplex holder;
-		if(comp.im != 0.0)
-		{
-			mag = sqrt(comp.re*comp.re+comp.im*comp.im);
-			theta = atan2(comp.im,(comp.re+mag));
-			sqrtholder = sqrt(mag);
-			holder = MyComplex(sqrtholder*cos(theta),sqrtholder*sin(theta));
-		}
-		else if(comp.re < 0.0)
-			holder = MyComplex(0.0, sqrt(abs(comp.re)));
-		else 
-			holder =  MyComplex(sqrt(comp.re),0.0);
-		
-		
-		return holder;
-	};
-
+	
+	//For some reason this way is faster than the easy way when timed
 	inline double compabs(const MyComplex& comp)
 	{
-		//While inefficient, this prevents buffer under/overflows - from Numerical Recipes in C++
-		double placeholder=0.0;
-		
-		if(comp.re >= comp.im)
-		{
-			
-			if(comp.re == 0.0)
-				return fabs(comp.im);
+		double r;
 
-			placeholder = comp.im/comp.re;
-			return fabs(comp.re)*sqrt(1.0f+placeholder*placeholder);
+		double re = abs(comp.re);
+		double im = abs(comp.im);
+
+		if (re > im) {
+			r = im/re;
+			return re*sqrt(1.0+r*r);
 		}
-		else
-		{
-			if(comp.im == 0.0)
-			{
-				return abs(comp.re);
-			}
-
-			placeholder = comp.re/comp.im;
-
-			return abs(comp.im)*sqrt(1.0+placeholder*placeholder);
-		}
+		if (im == 0.0)
+			return 0.0;
+		r = re/im;
+		return im*sqrt(1.0+r*r);
+	};
+	
+	inline MyComplex compsqrt(const MyComplex& comp)
+	{
+		////Use the half angle relation to calculate the square root. Prevents buffer
+		////over/under flows. Don't change this code. This problem actually occurs
+		//double mag, theta, sqrtholder;
+		//MyComplex holder;
+		//if(comp.im != 0.0)
+		//{
+		//	mag = sqrt(comp.re*comp.re+comp.im*comp.im);
+		//	theta = atan2(comp.im,(comp.re+mag));
+		//	sqrtholder = sqrt(mag);
+		//	holder = MyComplex(sqrtholder*cos(theta),sqrtholder*sin(theta));
+		//}
+		//else if(comp.re < 0.0)
+		//	holder = MyComplex(0.0, sqrt(abs(comp.re)));
+		//else 
+		//	holder =  MyComplex(sqrt(comp.re),0.0);
+		/*double multip = sqrt(compabs(comp));
+		double argx = atan(comp.im/comp.re)/2.0;
+		MyComplex holder = multip*(cos(argx));*/
+		if(comp.re < 0.0 && comp.im == 0)
+			return MyComplex(0.0, sqrt(abs(comp.re)));
+	
+		double mag = compabs(comp);
+		return MyComplex(sqrt((mag+comp.re)*0.5),sqrt((mag-comp.re)*0.5));
 	};
 	
 	inline MyComplex cln(const MyComplex& comp)

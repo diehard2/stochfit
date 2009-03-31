@@ -90,15 +90,23 @@ namespace StochasticModeling
                 ginfo.Add((i + 1).ToString());
                 ginfo.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[arrayconst * i + 1].ToString("#.### E-0"));
 
-                if (m_bUseSLD == false)
+                if (!m_bUseSLD)
+                {
                     ginfo.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[arrayconst * i + 2].ToString("#.### E-0"));
+                }
                 else
+                {
                     ginfo.Add((RhoArray[i] * SubphaseSLDTB).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (CovarArray[arrayconst * i + 2] * SubphaseSLDTB).ToString("#.### E-0"));
+                }
 
                 if (HoldsigmaCB)
+                {
                     ginfo.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[0].ToString("#.### E-0"));
+                }
                 else
+                {
                     ginfo.Add(SigmaArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[arrayconst * i + 3].ToString("#.### E-0"));
+                }
             }
            
             g.SetReflModelInfo = ginfo;
@@ -155,17 +163,21 @@ namespace StochasticModeling
 
             SubRoughTB = parameters[0];
 
-            if (HoldsigmaCB == true)
+            if (HoldsigmaCB)
+            {
                 arrayconst = 2;
+            }
             else
+            {
                 arrayconst = 3;
+            }
 
             //Update paramters
             for (int i = 0; i < BoxCountTB; i++)
             {
                 LengthArray[i] = parameters[arrayconst * i + 1];
 
-                if (m_bUseSLD == false)
+                if (!m_bUseSLD)
                     RhoArray[i] = parameters[arrayconst * i + 2];
                 else
                     RhoArray[i] = parameters[arrayconst * i + 2] * SubphaseSLDTB;

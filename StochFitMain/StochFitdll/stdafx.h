@@ -19,37 +19,28 @@
  */
 
 #pragma once
-#pragma warning(disable : 4391)
-#pragma warning(disable : 4996) 
-#pragma warning(disable : 1786) 
-#pragma warning(disable : 810)
+#pragma warning(disable : 4391 4996 1786 810 )
+
+#define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
 #include <math.h>
 #include <string>
-#include <algorithm>
-#include <queue>
-#include <vector>
 #include <fstream>
-#include <atlconv.h>
 #include <malloc.h>
-#include <time.h>
 #include <omp.h>
+
 #include "mycomplex.h"
 #include "random.h"
-#include <xmmintrin.h>
-#include <mmintrin.h>
 #include "SettingsStruct.h"
-#include <memory.h>
+
 
 //Define CHECKREFLCALC to see how the actual reflectivity calculation is proceeding
 //#define CHECKREFLCALC
-//Define SINGLEPROCDEBUG for debugging when the development machine only has one processor
+//Define SINGLEPROCDEBUG for debugging when OPENMP should be turned off
 //#define SINGLEPROCDEBUG
 
-//Maximum number of processors to run the reflectivity calculation on
-#define MAX_OMP_THREADS 8
-#define M_PI	3.1415926535897932384623233 
+const double PI = 3.1415926535897932384623233;
 
 using namespace MyComplexNumber;
 using namespace Random;

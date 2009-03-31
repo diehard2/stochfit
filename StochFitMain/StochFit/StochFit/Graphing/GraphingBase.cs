@@ -200,10 +200,7 @@ namespace StochasticModeling
         {
             get
             {
-                if (m_alDatainGraph.Count == 0 && m_bThisisadeepcopy == false)
-                    return false;
-                else
-                    return true;
+                return m_bThisisadeepcopy;
             }
         }
 
@@ -247,7 +244,7 @@ namespace StochasticModeling
             int i = 0;
             foreach (CurveItem c in Pane.CurveList)
             {
-                if (c.IsLine == true)
+                if (c.IsLine)
                 {
                     (c as LineItem).Color = Color.Black;
                     (c as LineItem).Symbol.Type = SymbolType.None;
@@ -294,7 +291,7 @@ namespace StochasticModeling
 
             foreach(CurveItem c in GraphCurveList)
             {
-                if (c.IsLine == true)
+                if (c.IsLine)
                 {
                     //This is needed, or else the top numbers of the graph are cut off.
                     c.Label.Text = " ";
@@ -355,8 +352,7 @@ namespace StochasticModeling
             myCurve.Line.IsAntiAlias = true;
             myCurve.Tag = tag;
 
-            if (isSmoothed == true)
-                myCurve.Line.IsSmooth = true;
+            myCurve.Line.IsSmooth = isSmoothed;
 
             AxisChange();
             Invalidate();
@@ -374,8 +370,7 @@ namespace StochasticModeling
             myCurve.Line.IsAntiAlias = true;
             myCurve.Tag = tag;
 
-            if (isSmoothed == true)
-                myCurve.Line.IsSmooth = true;
+            myCurve.Line.IsSmooth = isSmoothed;
 
             AxisChange();
             Invalidate();

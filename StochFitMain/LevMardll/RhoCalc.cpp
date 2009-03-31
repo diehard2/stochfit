@@ -148,7 +148,7 @@ void RhoCalc::mkdensityboxmodel(double* p, int plength)
 	double SubRough = 1e-16;
 	double ZOffset = p[1];
 
-	if(onesigma == true)
+	if(onesigma)
 	{
 		for(int i = 0; i< boxnumber;i++)
 		{
@@ -179,7 +179,7 @@ void RhoCalc::mkdensity(double* p, int plength)
 	double SubRough = p[0];
 	double ZOffset = p[1];
 
-	if(onesigma == TRUE)
+	if(onesigma)
 	{
 		for(int i = 0; i< boxnumber;i++)
 		{

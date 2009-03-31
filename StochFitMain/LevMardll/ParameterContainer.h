@@ -40,7 +40,7 @@ class ParameterContainer
 			m_dcutoff = -1.0;
 		}
 
-		ParameterContainer(double* params, double* covararray, int paramlength, bool onesigma, double* info, double cutoff)
+		ParameterContainer(double* m_cParamVec, double* covararray, int paramlength, bool onesigma, double* info, double cutoff)
 		{
 			
 			m_iparamlength = paramlength;
@@ -50,7 +50,7 @@ class ParameterContainer
 
 			if(m_iparamlength > 0)
 			{
-				memcpy(m_dparamarray, params, m_iparamlength*sizeof(double));
+				memcpy(m_dparamarray, m_cParamVec, m_iparamlength*sizeof(double));
 			    memcpy(m_dinfo, info, 9 * sizeof(double));
 				//Calculate the standard deviations in the parameters
 				for(int i = 0; i< paramlength;i++)
@@ -81,7 +81,7 @@ class ParameterContainer
 			}
         };
 
-		void SetContainer(double* params, double* covararray, int paramlength, bool onesigma, double* info, double cutoff)
+		void SetContainer(double* m_cParamVec, double* covararray, int paramlength, bool onesigma, double* info, double cutoff)
 		{
 			m_iparamlength = paramlength;
 			m_dscore = info[1];
@@ -90,7 +90,7 @@ class ParameterContainer
 
 			if(m_iparamlength > 0)
 			{
-				memcpy(m_dparamarray, params, paramlength*sizeof(double));
+				memcpy(m_dparamarray, m_cParamVec, paramlength*sizeof(double));
 				memcpy(m_dinfo, info, 9 * sizeof(double));
 				//Calculate the standard deviations in the parameters
 				for(int i = 0; i< paramlength;i++)
@@ -149,10 +149,14 @@ class ParameterContainer
 		friend bool operator!=(const ParameterContainer& lhs, const ParameterContainer& rhs)
 		{
 			double scoreholder = lhs.m_dscore/rhs.m_dscore; 
-			if(scoreholder > 1.005 || scoreholder < 0.995)
-				return true;
 			
+			if(scoreholder > 1.005 || scoreholder < 0.995)
+			{
+				return true;
+			}
+
 			double paramholder; 
+
 			for(int i = 0; i < lhs.m_iparamlength; i++)
 			{
 				paramholder = fabs(lhs.m_dparamarray[i]/rhs.m_dparamarray[i]);
@@ -188,7 +192,7 @@ class ParameterContainer
 				bool isreasonable = true;
 				//Discard negative numbers and parameters with large errors
 				//Negative roughnesses are allowed
-				if(m_bonesigma == true)
+				if(m_bonesigma)
 				{
 					for(int i = 0; i < (m_iparamlength-1)/2; i++)
 					{

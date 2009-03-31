@@ -96,7 +96,7 @@ extern "C" LEVMARDLL_API void RhoGenerate(BoxReflSettings* InitStruct, double pa
 }
 
 
-extern "C" LEVMARDLL_API void FastReflfit(BoxReflSettings* InitStruct, double params[], double covariance[], int paramsize, double info[])
+extern "C" LEVMARDLL_API void FastReflfit(BoxReflSettings* InitStruct, double m_cParamVec[], double covariance[], int paramsize, double info[])
 {
 	USES_CONVERSION;
 
@@ -124,9 +124,9 @@ extern "C" LEVMARDLL_API void FastReflfit(BoxReflSettings* InitStruct, double pa
 	covar=work+LM_DIF_WORKSZ(paramsize, InitStruct->QPoints);
 
 	if(InitStruct->UL == NULL)
-		dlevmar_dif(Refl.objective,params, xvec, paramsize,InitStruct->QPoints, 1000, opts, info, work, covar,(void*)(&Refl)); 
+		dlevmar_dif(Refl.objective,m_cParamVec, xvec, paramsize,InitStruct->QPoints, 1000, opts, info, work, covar,(void*)(&Refl)); 
 	else
-		dlevmar_bc_dif(Refl.objective, params, xvec,  paramsize,InitStruct->QPoints, InitStruct->LL,InitStruct->UL,1000, opts, info, work, covar,(void*)(&Refl)); 
+		dlevmar_bc_dif(Refl.objective, m_cParamVec, xvec,  paramsize,InitStruct->QPoints, InitStruct->LL,InitStruct->UL,1000, opts, info, work, covar,(void*)(&Refl)); 
 	
 	for(int i = 0; i< paramsize;i++)
 	{
@@ -163,7 +163,7 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 	double* origguess = new double[paramsize];
 	memcpy(origguess, parameters, sizeof(double)*paramsize);
 
-	if(InitStruct->OneSigma == TRUE)
+	if(InitStruct->OneSigma)
 		Refl.mkdensityonesigma(parameters, paramsize);
 	else
 		Refl.mkdensity(parameters, paramsize);
@@ -221,7 +221,7 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 			locparameters[0] = randgen.IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
 			for(int k = 0; k< InitStruct->Boxes; k++)
 			{
-				if(InitStruct->OneSigma == TRUE)
+				if(InitStruct->OneSigma)
 				{
 					locparameters[2*k+1] = randgen.IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
 					locparameters[2*k+2] = randgen.IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
@@ -245,7 +245,7 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 			
 			localanswer.SetContainer(locparameters,covar,paramsize,InitStruct->OneSigma,locinfo, parampercs[6]);
 
-			if(locinfo[1] < bestchisquare && localanswer.IsReasonable() == true)
+			if(locinfo[1] < bestchisquare && localanswer.IsReasonable())
 			{
 				//Resize the private arrays if we need the space
 				if(veccount+2 == vecsize)
@@ -267,7 +267,7 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 					}
 				}
 				//If the answer is unique add it to our set of answers
-				if(unique == true)
+				if(unique)
 				{
 					vec[veccount] = localanswer;
 					veccount++;

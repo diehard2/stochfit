@@ -28,11 +28,11 @@ class StochFit
 {
 	public:
 		StochFit(ReflSettings* InitStruct);
-		~StochFit();
+	
 		int Start(int iterations);
 		int Cancel();
 		int Priority(int priority);
-		int GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
+		int GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, bool* isfinished);
 		
 		void GetArraySizes(int* RhoSize, int* ReflSize);
 		bool GetWarmedUp();
@@ -43,7 +43,6 @@ class StochFit
 		
 
 	private:
-		int Processing();
 		void LoadFromFile(wstring File = wstring(L""));
 		static DWORD WINAPI InterThread(LPVOID lParam);
 		void WritetoFile(const wchar_t* filename);
@@ -52,7 +51,7 @@ class StochFit
 		HANDLE m_hStochMutex;
 		HANDLE m_hThread;
 		HANDLE mutex;
-		BOOL m_bupdated;
+		bool m_bupdated;
 		
 		bool m_bthreadstop;
 		
@@ -73,6 +72,6 @@ class StochFit
 		int m_isearchalgorithm;
 		bool m_bwarmedup;
 		CReflCalc m_cDispRefl;
-		CEDP m_EDP;
-		ParamVector params;
+		CEDP m_cEDP;
+		ParamVector m_cParamVec;
 };

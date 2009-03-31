@@ -188,7 +188,7 @@ namespace StochasticModeling
             datatable.AddCell("Layer #");
             datatable.AddCell("Length");
 
-            if(m_bUseSLD == false)
+            if(!m_bUseSLD)
                 datatable.AddCell("Rho/Rho(infinity)");
             else
                 datatable.AddCell("SLD");
@@ -226,7 +226,7 @@ namespace StochasticModeling
             datatable.AddCell("Layer #");
             datatable.AddCell("Length");
 
-            if (m_bUseSLD == false)
+            if (!m_bUseSLD)
                 datatable.AddCell("Rho/Rho(infinity)");
             else
                 datatable.AddCell("SLD");
@@ -277,7 +277,7 @@ namespace StochasticModeling
                 document.Add(Date);
 
                 //Make sure we aren't just model dependent
-                if (GraphCollection.Instance.MainReflGraph.IsDeepCopyFull == true)
+                if (GraphCollection.Instance.MainReflGraph.IsDeepCopyFull)
                 {
                     Header = new Phrase(new Chunk("Model Independent Parameters\n", FontFactory.GetFont(FontFactory.HELVETICA, 12, 1)));
                     document.Add(Header);
@@ -289,12 +289,12 @@ namespace StochasticModeling
                     document.Add(new Phrase(m_pBlankline));
 
                     //Add the modeled reflectivity graph
-                    if (GraphCollection.Instance.MainReflGraph.IsDeepCopyFull == true)
+                    if (GraphCollection.Instance.MainReflGraph.IsDeepCopyFull)
                     {
                         AddGraph(GraphCollection.Instance.MainReflGraph, document, writer);
                     }
 
-                    if (GraphCollection.Instance.MainRhoGraph.IsDeepCopyFull == true)
+                    if (GraphCollection.Instance.MainRhoGraph.IsDeepCopyFull)
                     {
                         AddGraph(GraphCollection.Instance.MainRhoGraph, document, writer);
                     }
@@ -307,14 +307,18 @@ namespace StochasticModeling
                     if (m_alRhoModelingInformation.Count > 0)
                     {
                         //Add a header for the fitted data
-                        if(m_bUseSLD == false)
+                        if (!m_bUseSLD)
+                        {
                             Header = new Phrase(new Chunk("Electron Density Non-Linear Regression Fit\n\n", FontFactory.GetFont(FontFactory.HELVETICA, 14, 1)));
+                        }
                         else
+                        {
                             Header = new Phrase(new Chunk("SLD Non-Linear Regression Fit\n\n", FontFactory.GetFont(FontFactory.HELVETICA, 14, 1)));
+                        }
 
                         document.Add(Header);
                         //Add the fitted electron density
-                        if (GraphCollection.Instance.RhoGraph.IsDeepCopyFull == true)
+                        if (GraphCollection.Instance.RhoGraph.IsDeepCopyFull)
                         {
                             AddGraph(GraphCollection.Instance.RhoGraph, document, writer);
                         }
@@ -331,14 +335,16 @@ namespace StochasticModeling
                     Header = new Phrase(new Chunk("Reflectivity Non-Linear Regression Fit\n\n", FontFactory.GetFont(FontFactory.HELVETICA, 14, 1)));
                     document.Add(Header);
                     //Add the fitted electron density
-                    if (GraphCollection.Instance.ReflGraph.IsDeepCopyFull == true)
+                    if (GraphCollection.Instance.ReflGraph.IsDeepCopyFull)
                     {
                         AddGraph(GraphCollection.Instance.ReflGraph, document, writer);
                     }
-                    if (GraphCollection.Instance.ReflEGraph.IsDeepCopyFull == true)
+
+                    if (GraphCollection.Instance.ReflEGraph.IsDeepCopyFull)
                     {
                         AddGraph(GraphCollection.Instance.ReflEGraph, document, writer);
                     }
+
                     //Add the chart
                     GenerateReflChart(m_alReflModelingInformation,document);
                 }

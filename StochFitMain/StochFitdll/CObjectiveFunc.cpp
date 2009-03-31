@@ -8,7 +8,7 @@ CObjective::~CObjective()
 	_mm_free(m_dDataError);
 }
 
-void CObjective::Initialize(ReflSettings* InitStruct)
+void CObjective::Initialize(const ReflSettings* InitStruct)
 {
 	m_iFunction = InitStruct->Objectivefunction;
 	m_iDataPoints = InitStruct->QPoints-InitStruct->HighQOffset - InitStruct->CritEdgeOffset;
@@ -20,7 +20,7 @@ void CObjective::Initialize(ReflSettings* InitStruct)
 }
 
 
-double CObjective::GetFunction(double* generateddata)
+double CObjective::CalculateFitScore(const double* generateddata)
 {
 	switch(m_iFunction)
 	{
@@ -35,11 +35,10 @@ double CObjective::GetFunction(double* generateddata)
 		default:
 			return LogLS(generateddata);
 	}
-
 }
 
 //Index 1
-double CObjective::LogLS(double* Exp)
+double CObjective::LogLS(const double* Exp)
 {
 	double goodnessoffit = 0;
 	double calcholder = 0;
@@ -55,7 +54,7 @@ double CObjective::LogLS(double* Exp)
 }
 
 //Index 3
-double CObjective::LogErrorLS(double* Exp)
+double CObjective::LogErrorLS(const double* Exp)
 {
 	double goodnessoffit = 0;
 	double calcholder = 0;
@@ -71,7 +70,7 @@ double CObjective::LogErrorLS(double* Exp)
 }
 
 //Index 2
-double CObjective::InverseLS(double* Exp)
+double CObjective::InverseLS(const double* Exp)
 {
 		double goodnessoffit = 0;
 		double calcholder = 0;
@@ -91,7 +90,7 @@ double CObjective::InverseLS(double* Exp)
 }
 
 //Index 4
-double CObjective::InverseErrorLS(double* Exp)
+double CObjective::InverseErrorLS(const double* Exp)
 {
 		double goodnessoffit = 0;
 		double calcholder = 0;
@@ -112,7 +111,7 @@ double CObjective::InverseErrorLS(double* Exp)
 		return goodnessoffit/(double)counter;
 }
 
-double CObjective::ChiSquare(double* Exp)
+double CObjective::ChiSquare(const double* Exp)
 {
 	double ChiSquare = 0;
 	double calcholder = 0;

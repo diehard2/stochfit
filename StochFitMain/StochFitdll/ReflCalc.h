@@ -26,61 +26,55 @@ class CReflCalc {
 private:
 
 	//Variables
-	double totalsize;
-    double lambda,k0;
-	BOOL m_bforcenorm;
-	BOOL m_bImpNorm;
-	float m_dQSpread;
-	int m_iuseableprocessors;
-	double m_dwaveconstant;
-	MyComplex* m_ckk;
-	double* m_dkk;
-	MyComplex* m_cak;
-	MyComplex* m_crj;
-	double* m_drj;
-	MyComplex* m_cRj;
+	double m_dWaveVecConst;
+	double m_dNormFactor;
+	int m_iDataPoints;
+	int m_iUseableProcessors;
+	
+	
+	double* m_dWaveVec;
+	MyComplex* m_cWaveVec;
+	MyComplex* m_cPhaseFactor;
+	MyComplex* m_cFresnelCoefs;
+	double* m_dFresnelCoefs;
+	MyComplex* m_cReflectivity;
 
-	double *sinsquaredthetai,*qspreadsinsquaredthetai,*qspreadreflpt;
-	static const double smear[];
-	static const double smearweight[];
+	bool m_bHasQError;
+	bool m_bForceNorm;
+	bool m_bImpNorm;
+
+	
+    double *m_dQ;
+	double *m_dRefl;
+	double *m_dSinSquaredTheta;
+	double *m_dQSpreadSinSquaredTheta;
+	double *m_dQSpreadRefl;
+
+	static const double m_Smear[];
+	static const double m_SmearWeight[];
 	
 	//Functions
-	void impnorm(double* refl, const int datapoints, bool isimprefl);
-	void MyFullRF(double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
-	void MyTransparentRF(double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
-	void QsmearRf(double* qspreadreflpt, double* reflpt, int datapoints);
-	void MyRF(double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
-	void GetOffSets(int& HighOffset, int& LowOffset, MyComplex* EDP, int EDPoints);
+	void SetupRefl(const ReflSettings* InitStruct);
+	void ImpNorm(double* refl, const int datapoints, bool isimprefl);
+	void FullRF(const double* sinsquaredtheta, int datapoints, double* refl, const CEDP* EDP);
+	void TransparentRF(const double* sinsquaredtheta, int datapoints, double* refl, const CEDP* EDP);
+	void OpaqueRF(const double* sinsquaredtheta, int datapoints, double* refl, const CEDP* EDP);
+	void QsmearRf();
+	void GetOffSets(int& HighOffset, int& LowOffset,const MyComplex* EDP, int EDPoints);
 	void InitializeScratchArrays(int EDPoints);
-	void SetupRef(ReflSettings* InitStruct);
-
-	BOOL m_bReflInitialized;
-	int m_idatapoints;
+	
 
 public:
 
-	//Variables
-
-	float m_dnormfactor;
-
-	//read from file
-    double *xi,*exi,*reflpt;
-
-	
-	//Member functions
 	CReflCalc();
 	~CReflCalc();
 	
-	
-    void Init(ReflSettings* InitStruct);
-	void MakeReflectivity(CEDP* EDP);
-
-	//Get/Let Functions
-	double GetWaveConstant();
-	int GetDataCount();
+    void Initialize(const ReflSettings* InitStruct);
+	void MakeReflectivity(const CEDP* EDP);
+	void MakeFullReflectivity(const CEDP* EDP);
+	//Get/Set Functions
 	void GetData(double* Q, double* Refl);
-	double* GetReflData();
+	const double* GetReflData();
 	void WriteOutputFile(wstring filename);
-	bool HasQError();
-
+	void SetNormFactor(double NormFactor);
 };

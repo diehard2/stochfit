@@ -334,7 +334,7 @@ namespace StochasticModeling
                 }
             }
 
-            if (outoforderq == true)
+            if (outoforderq)
             {
                 if (MessageBox.Show("Some of your Q data is out of order. Would you like to attempt rudimentary patching",
                     string.Empty, MessageBoxButtons.YesNo) == DialogResult.Yes)
@@ -372,7 +372,7 @@ namespace StochasticModeling
                 double[][] refldatatemp;
                 bool nooverlapregion = false;
 
-                if (patch == true)
+                if (patch)
                 {
 
                     for (int i = 0; i < GetNumberDataPoints - 1; i++)
@@ -393,7 +393,7 @@ namespace StochasticModeling
                                     {
                                         if (refldata[counter1][0] == refldata[counter2][0] && counter1 != counter2)
                                         {
-                                            if (beginindex.Contains(counter1) == false)
+                                            if (!beginindex.Contains(counter1))
                                             {
                                                 beginindex.Add(counter1);
                                                 endindex.Add(counter2);
@@ -405,8 +405,7 @@ namespace StochasticModeling
                                 }
 
                                 //We have non monotonically increasing q, but no overlap region
-                                if (overlapcount == 0)
-                                    nooverlapregion = true;
+                                nooverlapregion = overlapcount == 0;
 
                                 //We have our overlap region
                                 if (overlapcount > 0)
@@ -440,7 +439,7 @@ namespace StochasticModeling
                                                 }
                                             }
 
-                                            if (isoverlappt == false)
+                                            if (!isoverlappt)
                                                 refldatatemp[counter - indexoffset] = (double[])refldata[counter].Clone();
 
                                         }
@@ -483,14 +482,16 @@ namespace StochasticModeling
         private void MoveintoArrays(bool outoforderq)
         {
             //Sort the arrays if we are out of order to prevent ugly graphing and prog crash
-            if (outoforderq == true)
+            if (outoforderq)
+            {
                 Array.Sort(refldata, this);
+            }
 
             refldataarray = new double[GetNumberDataPoints];
             qdata = new double[GetNumberDataPoints];
             rerrors = new double[GetNumberDataPoints];
 
-            if (HaveErrorinQ == true)
+            if (HaveErrorinQ)
                 qerrors = new double[GetNumberDataPoints];
 
 

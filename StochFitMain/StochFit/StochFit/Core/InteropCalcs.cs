@@ -28,8 +28,6 @@ namespace StochasticModeling
     /// </summary>
     internal class NativeMethods
     {
-        private NativeMethods()
-        { }
         /// <summary>
         /// Initialize the model independent fitting procedures. This must be called before any other model independent routines
         /// </summary>
@@ -73,7 +71,7 @@ namespace StochasticModeling
         /// <param name="isfinished">True if the specified number of iterations has been reached, false otherwise</param>
         /// <returns>Number of completed iterations</returns>
         [DllImport("stochfitdll.dll", EntryPoint = "GetData", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        internal static extern int GetData(double[] ZRange, double[] Rho, double[] QRange, double[] Refl, out double roughness, out double chisquare, out double goodnessoffit, out bool isfinished);
+        internal static extern int GetData(double[] ZRange, double[] Rho, double[] QRange, double[] Refl, out double roughness, out double chisquare, out double goodnessoffit,[MarshalAs(UnmanagedType.I1)] out bool isfinished);
 
 
         /// <summary>
@@ -89,6 +87,7 @@ namespace StochasticModeling
         /// </summary>
         /// <returns></returns>
         [DllImport("stochfitdll.dll", EntryPoint = "WarmedUp", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+        [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool WarmedUp();
 
         /// <summary>
@@ -99,8 +98,6 @@ namespace StochasticModeling
         /// <param name="mode">Not used</param>
         [DllImport("stochfitdll.dll", EntryPoint = "SAparams", ExactSpelling = false, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         internal static extern void SAparams(out double lowestenergy, out double temp, out int mode);
-
-
 
         /// <summary>
         /// Generates a reflectivity using the Nevot-Croce correction to the Parratt recursion

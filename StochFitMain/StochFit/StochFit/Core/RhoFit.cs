@@ -22,17 +22,25 @@ namespace StochasticModeling
 
             if (HoldsigmaCB)
             {
-                if (m_bUseSLD == false)
+                if (!m_bUseSLD)
+                {
                     info.Add("The electron density profile was fit with a single roughness parameter\n");
+                }
                 else
+                {
                     info.Add("The SLD profile was fit with a single roughness parameter\n");
+                }
             }
             else
             {
-                if (m_bUseSLD == false)
+                if (!m_bUseSLD)
+                {
                     info.Add(String.Format("The electron density profile was fit with {0} roughness parameters\n", (BoxCountTB + 1)));
+                }
                 else
+                {
                     info.Add(String.Format("The SLD profile was fit with {0} roughness parameters\n", (BoxCountTB + 1)));
+                }
             }
 
             info.Add(string.Format("Chi Square: " + ChiSquare + "\n"));
@@ -41,14 +49,16 @@ namespace StochasticModeling
             int offset = 0;
 
             if (!HoldsigmaCB)
+            {
                 offset = 1;
+            }
 
             for (int i = 0; i < BoxCountTB; i++)
             {
                 info.Add((i + 1).ToString());
                 info.Add(LengthArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[(2 + offset) * i + 1].ToString("#.### E-0"));
 
-                if (m_bUseSLD == false)
+                if (!m_bUseSLD)
                     info.Add(RhoArray[i].ToString("#.### E-0") + " " + (char)0x00B1 + " " + CovarArray[(2 + offset) * i + 2].ToString("#.### E-0"));
                 else
                     info.Add((RhoArray[i]).ToString("#.### E-0") + " " + (char)0x00B1 + " " + (CovarArray[(2 + offset) * i + 2]).ToString("#.### E-0"));
@@ -81,17 +91,21 @@ namespace StochasticModeling
             SubRoughTB = parameters[0];
             ZOffsetTB = parameters[1];
 
-            if (HoldsigmaCB == true)
+            if (HoldsigmaCB)
+            {
                 arrayconst = 2;
+            }
             else
+            {
                 arrayconst = 3;
+            }
 
             //Update paramters
             for (int i = 0; i < BoxCountTB; i++)
             {
                 LengthArray[i] = parameters[arrayconst * i + 2];
 
-                if (m_bUseSLD == false)
+                if (!m_bUseSLD)
                     RhoArray[i] = parameters[arrayconst * i + 3];
                 else
                     RhoArray[i] = parameters[arrayconst * i + 3] * SubphaseSLDTB;

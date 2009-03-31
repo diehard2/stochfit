@@ -38,12 +38,11 @@ private:
 	CObjective m_cObjective;
 	double m_dChiSquare;
 	double m_dObjectiveScore;
+
 public: 
-	SA_Dispatcher();
-	~SA_Dispatcher();
 
 	void Initialize(ReflSettings* InitStruct);
-	bool Iteration(ParamVector* params);
+	bool Iteration(ParamVector* m_cParamVec);
 	double Get_Temp();
 	void Set_Temp(double Temp);
 	double Get_LowestEnergy();

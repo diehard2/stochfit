@@ -35,10 +35,14 @@ void SimAnneal::Initialize(ReflSettings* InitStruct)
 
 	if(m_dTemp == -1)
 	{
-		if(InitStruct->Adaptive == false)
+		if(!InitStruct->Adaptive)
+		{
 			m_dTemp = 1.0/InitStruct->Inittemp;
+		}
 		else
+		{
 			m_dTemp = 10;
+		}
 	}
 
 	//SA Parameters
@@ -106,10 +110,7 @@ bool SimAnneal::EvaluateSA(double bestval, double curval)
 		m_iTime++;
 	}
 
-	if(random(100.0,0.0) < ProbCalc(deltaE))
-		return true;
-	else 
-		return false;
+	return random(100.0,0.0) < ProbCalc(deltaE);
 }
 
 bool SimAnneal::EvaluateSTUN(long double bestval,long double curval)
@@ -129,7 +130,7 @@ bool SimAnneal::EvaluateSTUN(long double bestval,long double curval)
 		return true;
 	}
 
-	if(m_badaptive == true)
+	if(m_badaptive)
 	{
 			if(m_bdebugging)
 			{
@@ -340,31 +341,31 @@ bool SimAnneal::IsIterMinimum()
 	return m_bisiterminimum;
 }
 
-void SimAnneal::TakeStep(ParamVector* params)
+void SimAnneal::TakeStep(ParamVector* m_cParamVec)
 {
 		double roughmult = 5.0/3.0;
 		
 		//Pick the box we're going to mutate
-		int ii= random(params->GetInitializationLength()-1,0);
+		int ii= random(m_cParamVec->GetInitializationLength()-1,0);
 		int perc = random(100, 1);
 		
 	
 		//Only mutate for the actual guessed fuzzy layer length 
 		if(perc > m_isigmasearch + m_inormsearch + m_iabssearch)
 		{
-			params->SetMutatableParameter(ii, random(params->GetMutatableParameter(ii) + mc_stepsize,
-									params->GetMutatableParameter(ii) - mc_stepsize));
+			m_cParamVec->SetMutatableParameter(ii, random(m_cParamVec->GetMutatableParameter(ii) + mc_stepsize,
+									m_cParamVec->GetMutatableParameter(ii) - mc_stepsize));
 		}
 		else if(perc <= m_isigmasearch)
 		{
-			params->setroughness(random(params->getroughness()*(1+roughmult*mc_stepsize),params->getroughness()*(1-roughmult*mc_stepsize)));
+			m_cParamVec->SetRoughness(random(m_cParamVec->GetRoughness()*(1+roughmult*mc_stepsize),m_cParamVec->GetRoughness()*(1-roughmult*mc_stepsize)));
 		}
 		else if(perc > m_isigmasearch && perc <= m_isigmasearch + m_iabssearch)
 		{
-			params->setSurfAbs(random(params->getSurfAbs()*(1.0+mc_stepsize),params->getSurfAbs()*(1.0-mc_stepsize)));
+			m_cParamVec->setSurfAbs(random(m_cParamVec->GetSurfAbs()*(1.0+mc_stepsize),m_cParamVec->GetSurfAbs()*(1.0-mc_stepsize)));
 		}
 		else
 		{
-			params->setImpNorm(random(params->getImpNorm()*(1.0+mc_stepsize),params->getImpNorm()*(1.0-mc_stepsize)));
+			m_cParamVec->setImpNorm(random(m_cParamVec->getImpNorm()*(1.0+mc_stepsize),m_cParamVec->getImpNorm()*(1.0-mc_stepsize)));
 		}
 }

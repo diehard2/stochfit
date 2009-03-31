@@ -93,9 +93,9 @@ namespace StochasticModeling
 
         private void ZoomEvent(ZedGraphControl sender, ZoomState oldState, ZoomState newState)
         {
-            if (m_bnegativeerrorval == true)
+            if (m_bnegativeerrorval)
             {
-                if (m_bDBF == true)
+                if (m_bDBF)
                 {
                     if (sender.GraphPane.YAxis.Scale.Min == 3e-4)
                     {
@@ -103,7 +103,7 @@ namespace StochasticModeling
                         return;
                     }
                 }
-                else if (m_bisQfour == true)
+                else if (m_bisQfour)
                 {
                     if (sender.GraphPane.YAxis.Scale.Min == 1e-12)
                     {
@@ -125,12 +125,12 @@ namespace StochasticModeling
 
         public void SetGraphType(bool IsQFour, bool IsDBF)
         {
-            if (IsQFour == false && IsDBF == true)
+            if (!IsQFour && IsDBF)
             {
                 m_bisQfour = false;
                 m_bDBF = true;
             }
-            else if ((IsQFour = true && IsDBF == true) || (IsQFour == true && IsDBF == false))
+            else if ((IsQFour && IsDBF) || (IsQFour && IsDBF))
             {
                 m_bisQfour = true;
                 m_bDBF = false;
@@ -150,7 +150,7 @@ namespace StochasticModeling
 
             if (m_bdatafile)
             {
-                if (m_bRunning == false)
+                if (!m_bRunning)
                 {
                     AddMenuItem(menuStrip, "LowQCut_tag", "LowQCut_tag", "Select Low Q Cutoff", SelectLowQPoint);
                     AddMenuItem(menuStrip, "HighQCut_tag", "HighQCut_tag", "Select High Q Cutoff", SelectHighQPoint);
@@ -211,19 +211,25 @@ namespace StochasticModeling
 
         private void SetAxisScale()
         {
-            if (m_bnegativeerrorval == false)
+            if (!m_bnegativeerrorval)
                 AxisChange();
             else
             {
                 AxisChange();
-                if (m_biszoomed == false)
+                if (!m_biszoomed)
                 {
                     if (m_bDBF)
+                    {
                         Pane.YAxis.Scale.Min = 3e-4;
-                    else if(m_bisQfour)
+                    }
+                    else if (m_bisQfour)
+                    {
                         Pane.YAxis.Scale.Min = 1e-12;
+                    }
                     else
+                    {
                         Pane.YAxis.Scale.Min = 1e-11;
+                    }
                 }
             }
             Invalidate();
@@ -283,7 +289,7 @@ namespace StochasticModeling
                         }
                     }
 
-                if (m_bDBF == false && m_bisQfour == false)
+                if (!m_bDBF && !m_bisQfour)
                 {
                     //Set the Q scale
                     if(!m_biszoomed)
@@ -389,18 +395,18 @@ namespace StochasticModeling
 
                             Q = Double.Parse(datastring[0], CI_US);
 
-                            if (m_bDBF == true)
+                            if (m_bDBF)
                             {
                                 Refl = Double.Parse(datastring[1], CI_US) / HelperFunctions.CalcFresnelPoint(Q, Qc);
                                 Q = Q / Qc;
                             }
-                            else if (m_bisQfour == true)
+                            else if (m_bisQfour)
                             {
                                 Refl = Double.Parse(datastring[1], CI_US) * Math.Pow(Q, 4.0);
                             }
                             else
                             {
-                                if (m_bUseSLD == false)
+                                if (!m_bUseSLD)
                                     Refl = Double.Parse(datastring[1], CI_US);
                                 else
                                     Refl = Double.Parse(datastring[1], CI_US) * SubSLD;
@@ -450,7 +456,7 @@ namespace StochasticModeling
             {
                 for (int i = 0; i < X.Length; i++)
                 {
-                    if (m_bUseSLD == false)
+                    if (!m_bUseSLD)
                         list.Add(X[i], Y[i]);
                     else
                         list.Add(X[i], Y[i] * m_dSubSLD);

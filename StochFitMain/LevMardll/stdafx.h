@@ -19,6 +19,7 @@
  */
 
 #pragma once
+#pragma warning(disable:11505)
 
 #include <math.h>
 #include <fstream>

@@ -285,15 +285,21 @@ namespace StochasticModeling
             InitStruct.SupSLD = SuperSLDTB;
 
             if (WavelengthTB != 0)
+            {
                 InitStruct.Wavelength = WavelengthTB;
+            }
 
             InitStruct.OneSigma = HoldsigmaCB;
 
             if (_QSpreadTB != 0)
+            {
                 InitStruct.QSpread = _QSpreadTB;
+            }
 
-            if (_ImpNormCB == true)
+            if (_ImpNormCB)
+            {
                 InitStruct.ImpNorm = _ImpNormCB;
+            }
 
             if (_Z != null)
             {
@@ -394,23 +400,30 @@ namespace StochasticModeling
                 {
                     output.Append("Layer " + (i + 1).ToString() + Environment.NewLine);
 
-                    if (m_bUseSLD == false)
+                    if (!m_bUseSLD)
+                    {
                         output.Append("\t" + " \u03C1 = " + RhoArray[i].ToString("#.### E-0") + " " +
                             (char)0x00B1 + " " + m_dCovarArray[(2 + offset) * i + 1].ToString("#.### E-0") + Environment.NewLine);
+                    }
                     else
+                    {
                         output.Append("\t" + " SLD = " + RhoArray[i].ToString("#.### E-0") + " " +
                             (char)0x00B1 + " " + m_dCovarArray[(2 + offset) * i + 1].ToString("#.### E-0") + Environment.NewLine);
+                    }
 
                     output.Append("\t" + " Length = " + LengthArray[i].ToString("#.### E-0") + " " +
                     (char)0x00B1 + " " + m_dCovarArray[(2 + offset) * i + 2].ToString("#.### E-0") + Environment.NewLine);
 
                     if (!HoldsigmaCB)
+                    {
                         output.Append("\t" + " \u03C3 = " + SigmaArray[i].ToString("#.### E-0") + " " +
                           (char)0x00B1 + " " + m_dCovarArray[3 * i + 3].ToString("#.### E-0") + Environment.NewLine);
+                    }
                 }
 
                 output.Append(Environment.NewLine + "Levenberg-Marquadt output" + Environment.NewLine + "\tNumber of iterations : " + _fitinfo[5].ToString() + Environment.NewLine);
                     output.Append("Reason for termination: " + termreason((int)_fitinfo[6]));
+                
                 return output.ToString();
             }
             else

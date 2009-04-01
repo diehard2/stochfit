@@ -1,6 +1,7 @@
 // ReflStress.cpp : Defines the entry point for the console application.
 //
 #include <iostream>
+#include <iomanip>
 #include <tchar.h>
 #include <conio.h>
 #include "localstdafx.h"
@@ -10,18 +11,16 @@
 #include "..\..\StochFitMain\StochFitdll\ParamVector.h"
 #include "..\..\StochFitMain\StochFitdll\SettingsStruct.h"
 
+
+void SpeedTest(const CEDP* EDP, CReflCalc* Refl);
+void AccuracyTest(const CEDP* EDP, CReflCalc* Refl);
 void SetInitialStructure(ReflSettings* reflset);
-void SetParamVector(ParamVector* vec);
+
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	MyComplex test;
-	test.re = 1.0;
-	test.im = 1.0;
-	MyComplex temp = compsqrt(test);
 
-	__int64 start, stop, freq;
 	ReflSettings InitStruct;
 	ParamVector Vec;
 	CEDP EDP;
@@ -32,29 +31,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	EDP.Initialize(&InitStruct);
 	Refl.Initialize(&InitStruct);
 
-
 	EDP.GenerateEDP(&Vec);
 	
-
-	int iterations;
-	char ch = '0';
-	cout << "Enter the number of iterations" << endl;
-	cin >> iterations;
-	cin.ignore();
-	cout << "Calculating" << endl;
-	EDP.GenerateEDP(&Vec);
-	QueryPerformanceCounter((LARGE_INTEGER*) &start);
-	for(int i = 0; i < iterations ; i++)
-	{
-		
-		Refl.MakeReflectivity(&EDP);
-	}
-	QueryPerformanceCounter((LARGE_INTEGER*) &stop);
-	QueryPerformanceFrequency((LARGE_INTEGER*) &freq);
-
-	cout << "Iterations/sec =  " << iterations/((float)((stop-start)/freq)) << endl;
-	Refl.WriteOutputFile(L"Refl.txt");
-	cout << "\b \b";
+	//AccuracyTest(&EDP, &Refl);
+	SpeedTest(&EDP, &Refl);
+	
+	
 	cout << "Press any key to exit" << endl;
 	getch();
 
@@ -85,7 +67,106 @@ void SetInitialStructure(ReflSettings* reflset)
 	reflset->Wavelength = 1.25;
 }
 
-void SetParamVector(ParamVector* vec)
+void SpeedTest(const CEDP* EDP, CReflCalc* Refl)
 {
+	__int64 start, stop, freq;
+	int iterations;
 
+	cout << "Enter the number of iterations" << endl;
+	cin >> iterations;
+	cin.ignore();
+	cout << "\n\n*****Calculating for Full*****\n" << endl;
+
+	QueryPerformanceCounter((LARGE_INTEGER*) &start);
+	
+	for(int i = 0; i < iterations ; i++)
+	{
+		Refl->ForceReflectivityCalc(EDP, Full);
+	}
+
+	QueryPerformanceCounter((LARGE_INTEGER*) &stop);
+	QueryPerformanceFrequency((LARGE_INTEGER*) &freq);
+
+	cout << "Iterations/sec for the full calculation =  " << iterations/((float)((stop-start)/freq)) << endl;
+
+	cout << "\n\n*****Calculating for Opqaue*****\n" << endl;
+
+	QueryPerformanceCounter((LARGE_INTEGER*) &start);
+	
+	for(int i = 0; i < iterations ; i++)
+	{
+		Refl->ForceReflectivityCalc(EDP, Opaque);
+	}
+
+	QueryPerformanceCounter((LARGE_INTEGER*) &stop);
+	QueryPerformanceFrequency((LARGE_INTEGER*) &freq);
+
+	cout << "Iterations/sec for the opaque calculation =  " << iterations/((float)((stop-start)/freq)) << endl;
+
+	cout << "\n\n*****Calculating for Transparent*****\n" << endl;
+
+	QueryPerformanceCounter((LARGE_INTEGER*) &start);
+	
+	for(int i = 0; i < iterations ; i++)
+	{
+		Refl->ForceReflectivityCalc(EDP, Transparent);
+	}
+
+	QueryPerformanceCounter((LARGE_INTEGER*) &stop);
+	QueryPerformanceFrequency((LARGE_INTEGER*) &freq);
+
+	cout << "Iterations/sec for the transparent calculation =  " << iterations/((float)((stop-start)/freq)) << endl;
+}
+
+void AccuracyTest(const CEDP* EDP, CReflCalc* Refl)
+{
+	bool printflag = false;
+	double* FullCalc = new double[Refl->GetDataPoints()];
+	double* OpaqueCalc = new double[Refl->GetDataPoints()];
+	double* TransparentCalc = new double[Refl->GetDataPoints()];
+
+	cout << "Performing accuracy test" << endl;
+	cout << "Stage 1 - Checking internal consistency" << endl;
+	Refl->ForceReflectivityCalc(EDP, Full);
+	memcpy(FullCalc, Refl->GetReflData(), sizeof(double)*(Refl->GetDataPoints()));
+	
+	
+	Refl->ForceReflectivityCalc(EDP, Opaque);
+	memcpy(OpaqueCalc, Refl->GetReflData(), sizeof(double)*(Refl->GetDataPoints()));
+
+	Refl->ForceReflectivityCalc(EDP, Transparent);
+	memcpy(TransparentCalc, Refl->GetReflData(), sizeof(double)*(Refl->GetDataPoints()));
+
+	for(int i = 0; i < Refl->GetDataPoints(); i++)
+	{
+		cout << setprecision (9) << FullCalc[i] << "  " << OpaqueCalc[i] << "  " << TransparentCalc[i] << endl;
+
+		if(((FullCalc[i] - OpaqueCalc[i]) != 0) || ((FullCalc[i] - TransparentCalc[i])!= 0))
+			printflag = true; 
+	}
+
+	if(printflag)
+	{
+		cout << "There was a descrepancy in the reflectivities, the reflectivities were printed out to ReflComparison.txt in the following order. Full, Opaque, Transparent" << endl;
+		ofstream reflout(L"ReflComparison.xls");
+
+		for(int i = 0;i< Refl->GetDataPoints(); i++)
+		{
+			reflout <<  setprecision (9) << FullCalc[i] << "  " << OpaqueCalc[i] << "  " << TransparentCalc[i] << endl;
+		}
+		reflout.close();
+	}
+	else
+	{
+		cout << "The reflectivities were equivalent" << endl;
+	}
+
+	//To do - Stage 2 - Check against previous data
+
+
+	//To do - Stage 3 - Check against Motofit
+
+	delete[] FullCalc;
+	delete[] OpaqueCalc;
+	delete[] TransparentCalc;
 }

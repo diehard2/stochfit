@@ -15,7 +15,7 @@
 				InterproceduralOptimization="2"
 				FloatingPointModel="1000"
 				FlushDenormalResultsToZero="true"
-				ProfileGuidedOptimization="3"/>
+				ProfileGuidedOptimization="0"/>
 		</Configuration>
 	</Configurations>
 	<Files/>

@@ -29,7 +29,7 @@ namespace MyComplexNumber{
 	__declspec(align(16)) struct MyComplex
 	{
 	  public:
-	    double complexholder[2];
+
 		double re;
 		double im;
 

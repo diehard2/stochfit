@@ -29,6 +29,7 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Drawing.Drawing2D;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace StochasticModeling
 {
@@ -224,11 +225,9 @@ namespace StochasticModeling
 
         #endregion
 
-       
-
         public virtual void DeepCopy(GraphingBase graph)
         {
-
+          
             //this allows the class to be completely self contained on a deep copy. the calling function doesn't need to 
             //create a graph
             if (ZGControl == null)
@@ -236,22 +235,27 @@ namespace StochasticModeling
                 CreateGraph(null);
             }
 
+            //Fix if we're updating from a thread
+            if (ZGControl.InvokeRequired)
+            {
+                ZGControl.Invoke(new MethodInvoker(() => DeepCopy(graph)));
+                return;
+            }
+
             Title = graph.Title;
             SetAllFonts(graph.Pane.Title.FontSpec.Family, (int)graph.Pane.Title.FontSpec.Size, (int)graph.Pane.XAxis.Title.FontSpec.Size);
             SetAxisTitles(graph.Pane.XAxis.Title.Text, graph.Pane.YAxis.Title.Text);
             Pane.CurveList = graph.Pane.CurveList.Clone();
 
-            int i = 0;
-            foreach (CurveItem c in Pane.CurveList)
-            {
-                if (c.IsLine)
+            var y = Pane.CurveList.Where(curve => curve.IsLine).Cast<LineItem>();
+
+            Pane.CurveList.Where(curve => curve.IsLine).Cast<LineItem>().IndexedForEach((curve, index) =>
                 {
-                    (c as LineItem).Color = Color.Black;
-                    (c as LineItem).Symbol.Type = SymbolType.None;
-                    (c as LineItem).Line.Style = (DashStyle)i;
-                    (c as LineItem).Line.IsAntiAlias = ((LineItem)(graph.GraphCurveList[i])).Line.IsAntiAlias;
-                }
-            }
+                    curve.Color = Color.Black;
+                    curve.Symbol.Type = SymbolType.None;
+                    curve.Line.Style = (DashStyle)index;
+                    curve.Line.IsAntiAlias = true;
+                });
 
             GraphSize = graph.GraphSize;
             BorderState = graph.BorderState;
@@ -266,6 +270,7 @@ namespace StochasticModeling
             Invalidate();
             IsThisaDeepCopy = true;
         }
+
 
         //This gives us publication quality graphs
         public void AlterGraph(GraphingBase oldgraph)
@@ -289,16 +294,18 @@ namespace StochasticModeling
             Pane.XAxis.Scale.FontSpec.Size = 18;
             Pane.YAxis.Scale.FontSpec.Size = 18;
 
-            foreach(CurveItem c in GraphCurveList)
+            GraphCurveList.Where(curve => curve.IsLine).Cast<LineItem>().ForEach(curve =>
             {
-                if (c.IsLine)
+                //This is needed, or else the top numbers of the graph are cut off.
+                curve.Label.Text = " ";
+                curve.Label.FontSpec = new FontSpec("Garamond", (float)12.0, Color.Transparent, false, false, false);
+                curve.Label.FontSpec.Border.IsVisible = false;
+
+                if (curve.Line.Style != DashStyle.Solid)
                 {
-                    //This is needed, or else the top numbers of the graph are cut off.
-                    c.Label.Text = " ";
-                    c.Label.FontSpec = new FontSpec("Garamond", (float)12.0, Color.Transparent,false,false,false);
-                    c.Label.FontSpec.Border.IsVisible = false;
+                    curve.Line.Width += 1;
                 }
-            }
+            });
         }
 
         public virtual void LoadfromArray(string name, double[] X, double[] Y, Color color, SymbolType symbol, int symbolsize, bool isSmoothed, string tag)
@@ -354,8 +361,6 @@ namespace StochasticModeling
 
             myCurve.Line.IsSmooth = isSmoothed;
 
-            AxisChange();
-            Invalidate();
         }
 
         protected virtual void AddCurvetoGraph(PointPairList list, string DataName, Color linecolor, SymbolType type, int symbolsize, DashStyle style, bool isSmoothed, string tag)
@@ -372,8 +377,7 @@ namespace StochasticModeling
 
             myCurve.Line.IsSmooth = isSmoothed;
 
-            AxisChange();
-            Invalidate();
+          
         }
 
         protected virtual void AddCurvetoGraph(PointPairList list, PointPairList elist, string DataName, Color linecolor, SymbolType type, int symbolsize, string tag)
@@ -401,8 +405,7 @@ namespace StochasticModeling
                 myECurve.Bar.Symbol.Size = 2;
             }
 
-            AxisChange();
-            Invalidate();
+         
         }
 
         public void RemoveGraphfromArray(string name)

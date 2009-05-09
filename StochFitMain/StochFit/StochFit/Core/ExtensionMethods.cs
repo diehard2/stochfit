@@ -60,6 +60,8 @@ namespace StochasticModeling
             }
         }
 
+      
+
         public static void ThreadSafeChecked(this CheckBox t, bool check)
         {
             // InvokeRequired required compares the thread ID of the
@@ -95,13 +97,13 @@ namespace StochasticModeling
             }
         }
 
-        public static IEnumerable<T> IndexedForEach<T>(this IEnumerable<T> source, Action<T, int> action)
+        public static void IndexedForEach<T>(this IEnumerable<T> source, Action<T, int> action)
         {
             int i = 0;
             foreach (T element in source)
             {
                 action(element, i);
-                yield return element;
+                i++;
             }
         } 
         #endregion

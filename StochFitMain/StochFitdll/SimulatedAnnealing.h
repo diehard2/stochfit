@@ -27,18 +27,10 @@
 class SimAnneal
 {
 	private:
-
 		//Variables
 		int m_iIteration;
 		int m_iPlattime;
 		long double m_dTemp;
-		wstring m_sdirectory;
-
-		//Variables for tracking acceptance and rejection
-		int m_ipoorsolutionacc;
-		int m_inumberpoorsol;
-		double m_daverageSTUNval;
-
 		double m_iTime;
 		long double m_dgamma;
 		double m_dslope;
@@ -53,6 +45,18 @@ class SimAnneal
 		wofstream debugfile;
 		wofstream rejfile;
 		std::deque<double> Q;
+		double m_dAveragefSTUN;
+		int m_inumberpoorsol;
+		double m_daverageSTUNval;
+		int m_isigmasearch;
+		int m_iabssearch;
+		int m_inormsearch;
+		int m_ialgorithm;
+		double m_dState1;
+		double m_dbestsolution;
+		
+		//Variables for tracking acceptance and rejection
+		int m_ipoorsolutionacc;
 		
 		//Functions
 		double ProbCalc(double deltaE);
@@ -61,16 +65,7 @@ class SimAnneal
 		double Schedule();
 		void AdjustTemp(double AverageSTUNval);
 
-		int m_isigmasearch;
-		int m_iabssearch;
-		int m_inormsearch;
-		int m_ialgorithm;
-		double m_dState1;
-		
-	
 public:
-		typedef double (SimAnneal::*func)(double*);
-		
 		SimAnneal();
 		~SimAnneal();
 		void Initialize(ReflSettings* InitStruct);
@@ -78,15 +73,11 @@ public:
 		bool EvaluateGreedy(double bestval, double curval);
 		bool EvaluateSA(double bestval, double curval);
 		bool EvaluateSTUN(long double bestval,long double curval);
-		void SetGamma(double gamma);
 		void SetTemp(double currenttemp);
 		double GetTemp();
 		double GetLowestEnergy();
 		bool IsIterMinimum();
-		double m_daveragefstun;
-		long double m_dbestsolution;
-		void SetOjbectiveFunc(func objective);
+		double GetAverageSTUN();
+		void SetAveragefSTUN(double STUN);
 		void TakeStep(ParamVector* m_cParamVec);
-
-
 };

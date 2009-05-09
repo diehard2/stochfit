@@ -232,10 +232,12 @@ bool CEDP::CheckForNegDensity()
 	for(int i = 0; i < EDPoints; i++)
 	{
 		if(m_cEDP[i].re < 0)
-			return false;
+		{
+			return true;
+		}
 	}
 
-	return true;
+	return false;
 }
 
 void CEDP::WriteOutputFile(wstring filename)

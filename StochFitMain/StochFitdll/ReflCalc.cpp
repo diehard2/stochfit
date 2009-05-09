@@ -48,7 +48,6 @@ CReflCalc::CReflCalc():m_dQ(NULL), m_dRefl(NULL), m_dSinSquaredTheta(NULL), m_cW
 const double CReflCalc::m_Smear[] = {1.2, 1.0, 0.8, 0.6, 0.4, 0.2};	
 const double CReflCalc::m_SmearWeight[] = {0.056, 0.135, 0.278, 0.487, 0.726, 0.923};
 	
-
 void CReflCalc::Initialize(const ReflSettings* InitStruct)
 {
 	m_dWaveVecConst = 2.0 * PI/InitStruct->Wavelength;
@@ -109,17 +108,38 @@ void CReflCalc::SetupRefl(const ReflSettings* InitStruct)
 	}
 }
 
-void CReflCalc::MakeFullReflectivity(const CEDP* EDP)
+void CReflCalc::ForceReflectivityCalc(const CEDP* EDP, CalculationEnum Calc)
 {
 	if(!m_bHasQError)
 	{
-		FullRF(m_dSinSquaredTheta, m_iDataPoints, m_dRefl, EDP);
+		if(Calc == Full)
+		{
+			FullRF(m_dSinSquaredTheta, m_iDataPoints, m_dRefl, EDP);
+		}
+		else if (Calc == Opaque)
+		{
+			OpaqueRF(m_dSinSquaredTheta, m_iDataPoints, m_dRefl, EDP);
+		}
+		else
+		{
+			TransparentRF(m_dSinSquaredTheta, m_iDataPoints, m_dRefl, EDP);
+		}
 	}
 	else
 	{
-		FullRF(m_dQSpreadSinSquaredTheta, 13* m_iDataPoints, m_dQSpreadRefl, EDP);
+		if(Calc == Full)
+		{
+			FullRF(m_dQSpreadSinSquaredTheta, 13* m_iDataPoints, m_dQSpreadRefl, EDP);
+		}
+		else if (Calc == Opaque)
+		{
+			OpaqueRF(m_dQSpreadSinSquaredTheta, 13* m_iDataPoints, m_dQSpreadRefl, EDP);
+		}
+		else
+		{
+			TransparentRF(m_dQSpreadSinSquaredTheta, 13* m_iDataPoints, m_dQSpreadRefl, EDP);
+		}
 	}
-
 }
 
 void CReflCalc::MakeReflectivity(const CEDP* EDP)
@@ -219,13 +239,13 @@ void CReflCalc::OpaqueRF(const double* sinsquaredtheta, int datapoints,  double*
 			
 			//Workout the wavevector k -> kk[i] = m_dWaveVecConst *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
 			#pragma ivdep
-			for(int i = 0; i <= LowOffset;i++)
+			for(int i = 0; i < LowOffset;i++)
 			{
 				WaveVec[i] = TempCalc1;
 			}
 
 			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+			for(int i = LowOffset; i < HighOffSet;i++)
 			{
 				WaveVec[i] = m_dWaveVecConst * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[i]+DEDP[0]);
 			}
@@ -241,13 +261,13 @@ void CReflCalc::OpaqueRF(const double* sinsquaredtheta, int datapoints,  double*
 			TempCalc2 = compexp(lengthmultiplier*WaveVec[EDPointsMinOne]);
 
 			#pragma ivdep
-			for(int i = 1; i <= LowOffset;i++)
+			for(int i = 1; i < LowOffset;i++)
 			{
 				PhaseFactor[i] = TempCalc1;
 			}
 
 			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+			for(int i = LowOffset; i < HighOffSet;i++)
 			{
 				PhaseFactor[i] = compexp(lengthmultiplier*WaveVec[i]);
 			}
@@ -260,13 +280,13 @@ void CReflCalc::OpaqueRF(const double* sinsquaredtheta, int datapoints,  double*
 
 			//Make the Fresnel coefficients -> rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
 			#pragma ivdep
-			for(int i = 0; i <= LowOffset;i++)
+			for(int i = 0; i < LowOffset;i++)
 			{
 				FresnelCoef[i] = Zero;
 			}
 
 			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+			for(int i = LowOffset; i < HighOffSet;i++)
 			{
 				FresnelCoef[i] =(WaveVec[i]-WaveVec[i+1])/(WaveVec[i]+WaveVec[i+1]);
 			}
@@ -276,7 +296,7 @@ void CReflCalc::OpaqueRF(const double* sinsquaredtheta, int datapoints,  double*
 			{
 				FresnelCoef[i] = Zero;
 			}
-			
+
 			//Parratt recursion of the amplitude reflectivity
 			for(int i = EDPointsMinTwo; i >= 0 ;i--)
 			{
@@ -434,13 +454,13 @@ void CReflCalc::TransparentRF(const double* sinsquaredtheta, int datapoints,doub
 	
 			//Workout the wavevector k -> kk[i] = m_dWaveVecConst *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
 			#pragma ivdep
-			for(int i = 0; i <= LowOffset;i++)
+			for(int i = 0; i < LowOffset;i++)
 			{
 				WaveVec[i] = TempCalc1;
 			}
 
 			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+			for(int i = LowOffset; i < HighOffSet;i++)
 			{
 				WaveVec[i] = m_dWaveVecConst * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[i]+DEDP[0]);
 			}
@@ -456,13 +476,13 @@ void CReflCalc::TransparentRF(const double* sinsquaredtheta, int datapoints,doub
 			TempCalc2 = compexp(lengthmultiplier*WaveVec[EDPointsMinOne]);
 
 			#pragma ivdep
-			for(int i = 1; i <= LowOffset;i++)
+			for(int i = 1; i < LowOffset;i++)
 			{
 				PhaseFactor[i] = TempCalc1;
 			}
 
 			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+			for(int i = LowOffset; i < HighOffSet;i++)
 			{
 				PhaseFactor[i] = compexp(lengthmultiplier*WaveVec[i]);
 			}
@@ -475,13 +495,13 @@ void CReflCalc::TransparentRF(const double* sinsquaredtheta, int datapoints,doub
 
 			//Make the Fresnel coefficients -> rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
 			#pragma ivdep
-			for(int i = 0; i <= LowOffset;i++)
+			for(int i = 0; i < LowOffset;i++)
 			{
 				FresnelCoef[i] = Zero;
 			}
 			
 			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+			for(int i = LowOffset; i < HighOffSet;i++)
 			{
 				FresnelCoef[i] =(WaveVec[i]-WaveVec[i+1])/(WaveVec[i]+WaveVec[i+1]);
 			}
@@ -512,13 +532,13 @@ void CReflCalc::TransparentRF(const double* sinsquaredtheta, int datapoints,doub
 			
 			//Workout the wavevector k -> kk[i] = m_dWaveVecConst *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
 			#pragma ivdep
-			for(int i = 0; i <= LowOffset;i++)
+			for(int i = 0; i < LowOffset;i++)
 			{
 				dWaveVec[i] = dTempCalc1;
 			}
 
 			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+			for(int i = LowOffset; i < HighOffSet;i++)
 			{
 				dWaveVec[i] = m_dWaveVecConst * sqrt(indexsupsquared.re*sinsquaredtheta[l]-DEDP[i].re+DEDP[0].re);
 			}
@@ -534,13 +554,13 @@ void CReflCalc::TransparentRF(const double* sinsquaredtheta, int datapoints,doub
 			TempCalc2 = compexp(lengthmultiplier*dWaveVec[EDPointsMinOne]);
 
 			#pragma ivdep
-			for(int i = 1; i <= LowOffset;i++)
+			for(int i = 1; i < LowOffset;i++)
 			{
 				PhaseFactor[i] = TempCalc1;
 			}
 
 			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+			for(int i = LowOffset; i < HighOffSet;i++)
 			{
 				PhaseFactor[i] = compexp(lengthmultiplier*dWaveVec[i]);
 			}
@@ -552,15 +572,14 @@ void CReflCalc::TransparentRF(const double* sinsquaredtheta, int datapoints,doub
 			}
 
 			//Make the Fresnel coefficients -> rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
-			
 			#pragma ivdep
-			for(int i = 0; i <= LowOffset;i++)
+			for(int i = 0; i < LowOffset;i++)
 			{
 				dFresnelCoef[i] = 0.0;
 			}
 
 			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+			for(int i = LowOffset; i < HighOffSet;i++)
 			{
 				dFresnelCoef[i] =(dWaveVec[i]-dWaveVec[i+1])/(dWaveVec[i]+dWaveVec[i+1]);
 			}
@@ -570,7 +589,6 @@ void CReflCalc::TransparentRF(const double* sinsquaredtheta, int datapoints,doub
 			{
 				dFresnelCoef[i] = 0.0;
 			}
-			
 			
 			//Parratt recursion of the amplitude reflectivity
 			for(int i = EDPointsMinTwo; i >= 0 ;i--)
@@ -620,17 +638,17 @@ const double* CReflCalc::GetReflData()
 }
 
 void CReflCalc::GetOffSets(int& HighOffset, int& LowOffset, const MyComplex* EDP, int EDPoints)
-{
+{	
 		//Find duplicate pts so we don't do the same calculation over and over again
-		for(int i = 0; i < EDPoints; i++)
+		for(int i = 1; i < EDPoints; i++)
 		{
 			if(EDP[i].re == EDP[0].re)
-				LowOffset++;
+				LowOffset = i;
 			else
 				break;
 		}
 
-		for(int i = EDPoints - 1 ; i != 0; i--)
+		for(int i = EDPoints - 2 ; i != 0; i--)
 		{
 			if(EDP[i].re == EDP[EDPoints-1].re)
 				HighOffset = i;
@@ -660,4 +678,9 @@ void CReflCalc::GetData(double* Q, double* Refl)
 void CReflCalc::SetNormFactor(double NormFactor)
 {
 	m_dNormFactor = NormFactor;
+}
+
+int CReflCalc::GetDataPoints()
+{
+	return m_iDataPoints;
 }

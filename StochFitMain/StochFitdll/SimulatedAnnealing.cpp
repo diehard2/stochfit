@@ -23,15 +23,14 @@
 #include <iomanip>
 
 SimAnneal::SimAnneal(): m_bisiterminimum(false), m_dTemp(-1.0),
-	m_ipoorsolutionacc(0),m_inumberpoorsol(0),m_daverageSTUNval(0), m_dState1(-1.0)
+	m_ipoorsolutionacc(0),m_inumberpoorsol(0),m_daverageSTUNval(0), m_dState1(-1.0), m_dbestsolution(1.7E308)
 {}
 
 void SimAnneal::Initialize(ReflSettings* InitStruct)
 {
-	m_sdirectory = InitStruct->Directory;
 	m_bdebugging = InitStruct->Debug;
 	m_iPlattime = InitStruct->Platiter;
-	m_daveragefstun = InitStruct->Inittemp;
+	m_dAveragefSTUN = InitStruct->Inittemp;
 
 	if(m_dTemp == -1)
 	{
@@ -65,8 +64,8 @@ void SimAnneal::Initialize(ReflSettings* InitStruct)
 
 	if(m_bdebugging)
 	{
-		debugfile.open(wstring(m_sdirectory + wstring(L"\\debug.txt")).c_str());
-		rejfile.open(wstring(m_sdirectory + wstring(L"\\rejfile.txt")).c_str());
+		debugfile.open(wstring(InitStruct->Directory + wstring(L"\\debug.txt")).c_str());
+		rejfile.open(wstring(InitStruct->Directory + wstring(L"\\rejfile.txt")).c_str());
 	}
 	
 	//Initialize the random number generator
@@ -182,8 +181,8 @@ bool SimAnneal::EvaluateSTUN(long double bestval,long double curval)
 
 				if(m_iIteration%m_iSTUNdec == 0)
 				{
-					m_daveragefstun *= m_dgammadec;
-					rejfile << "decreasing average fstun = " << (double)m_daveragefstun << endl;
+					m_dAveragefSTUN *= m_dgammadec;
+					rejfile << "decreasing average fstun = " << (double)m_dAveragefSTUN << endl;
 				}
 			}
 			probability = ProbCalc(deltaE);
@@ -264,7 +263,7 @@ double SimAnneal::fSTUN(double val)
 	
 void SimAnneal::AdjustTemp(double averageSTUNval)
 {
-	if(averageSTUNval > m_daveragefstun)
+	if(averageSTUNval >  m_dAveragefSTUN)
 	{
 		if(m_dTemp < 1e200)
 			m_dTemp *=  0.5/m_dslope;
@@ -368,4 +367,14 @@ void SimAnneal::TakeStep(ParamVector* m_cParamVec)
 		{
 			m_cParamVec->setImpNorm(random(m_cParamVec->getImpNorm()*(1.0+mc_stepsize),m_cParamVec->getImpNorm()*(1.0-mc_stepsize)));
 		}
+}
+
+double SimAnneal::GetAverageSTUN()
+{
+	return m_dAveragefSTUN;
+}
+
+void SimAnneal::SetAveragefSTUN(double STUN)
+{
+	m_dAveragefSTUN = STUN;
 }

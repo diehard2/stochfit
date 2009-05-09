@@ -38,7 +38,7 @@ private:
 	CObjective m_cObjective;
 	double m_dChiSquare;
 	double m_dObjectiveScore;
-
+	bool m_bForceXR;
 public: 
 
 	void Initialize(ReflSettings* InitStruct);
@@ -54,4 +54,5 @@ public:
 	double Get_ObjectiveScore();
 	CEDP* GetEDP();
 	void GetReflData(double* Q, double* Refl);
+
 };

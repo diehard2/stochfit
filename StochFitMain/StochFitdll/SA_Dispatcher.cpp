@@ -21,13 +21,15 @@
 #include "stdafx.h"
 #include "SA_Dispatcher.h"
 
-void SA_Dispatcher::Initialize(ReflSettings* InitStruct)
+void SA_Dispatcher::Initialize(ReflSettings* InitStruct) 
 {
 		m_cSA.Initialize(InitStruct);
 		m_cEDP.Initialize(InitStruct);
 		m_cRefl.Initialize(InitStruct);
 		m_cObjective.Initialize(InitStruct);
 		m_cParams.Initialize(InitStruct);
+
+		m_bForceXR = InitStruct->XRonly;
 }
 
 
@@ -38,14 +40,25 @@ bool SA_Dispatcher::Iteration(ParamVector *m_cParamVec)
 		//We have to update the reflectivity generator with the normalization factor, the EDP has no concept of this
 		m_cRefl.SetNormFactor(m_cParamVec->getImpNorm());
 		m_cEDP.GenerateEDP(m_cParamVec);
+		
+		//Short circuit the calculation if we are not allowing negative density and restore the vector
+		if(m_bForceXR)
+		{
+			if(m_cEDP.CheckForNegDensity())
+			{
+				*m_cParamVec = OldParams;
+				return false;
+			}
+		}
+
 		m_cRefl.MakeReflectivity(&m_cEDP);
 		
 		m_dObjectiveScore = m_cObjective.CalculateFitScore(m_cRefl.GetReflData());
 		m_dChiSquare = m_cObjective.ChiSquare(m_cRefl.GetReflData());
-		
+
 		if(m_cSA.Iteration(m_dObjectiveScore))
 		{
-			return true;
+				return true;
 		}
 		else
 		{
@@ -92,12 +105,12 @@ bool SA_Dispatcher::Get_IsIterMinimum()
 
 double SA_Dispatcher::Get_AveragefSTUN()
 {
-		return m_cSA.m_daveragefstun;
+		return m_cSA.GetAverageSTUN();
 }
 	
 void SA_Dispatcher::Set_AveragefSTUN(double fSTUN)
 {
-		m_cSA.m_daveragefstun = fSTUN;
+		m_cSA.SetAveragefSTUN(fSTUN);
 }
 
 CEDP* SA_Dispatcher::GetEDP()

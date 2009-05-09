@@ -11,7 +11,8 @@
 			Name="Release|Win32">
 			<Tool
 				Name="GeneralTool"
-				ProfileDirectory="../bin/dlls"/>
+				ProfileGuidedOptimization="3"
+				ProfileDirectory=""/>
 			<Tool
 				Name="CppCmplrTool"
 				GlobalOptimizations="true"
@@ -19,7 +20,7 @@
 				FloatingPointModel="1000"
 				FlushDenormalResultsToZero="true"
 				GenerateAlternateCodePaths="0"
-				ProfileGuidedOptimization="0"/>
+				ProfileGuidedOptimization="3"/>
 		</Configuration>
 		<Configuration
 			Name="GIXOS|Win32">

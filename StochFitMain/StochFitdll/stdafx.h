@@ -40,7 +40,9 @@
 //Define SINGLEPROCDEBUG for debugging when OPENMP should be turned off
 //#define SINGLEPROCDEBUG
 
+enum CalculationEnum {Full, Opaque, Transparent};
 const double PI = 3.1415926535897932384623233;
+
 
 using namespace MyComplexNumber;
 using namespace Random;

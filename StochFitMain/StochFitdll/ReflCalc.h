@@ -31,7 +31,6 @@ private:
 	int m_iDataPoints;
 	int m_iUseableProcessors;
 	
-	
 	double* m_dWaveVec;
 	MyComplex* m_cWaveVec;
 	MyComplex* m_cPhaseFactor;
@@ -42,7 +41,6 @@ private:
 	bool m_bHasQError;
 	bool m_bForceNorm;
 	bool m_bImpNorm;
-
 	
     double *m_dQ;
 	double *m_dRefl;
@@ -68,13 +66,14 @@ public:
 
 	CReflCalc();
 	~CReflCalc();
-	
+
     void Initialize(const ReflSettings* InitStruct);
 	void MakeReflectivity(const CEDP* EDP);
-	void MakeFullReflectivity(const CEDP* EDP);
+	void ForceReflectivityCalc(const CEDP* EDP, CalculationEnum x);
 	//Get/Set Functions
 	void GetData(double* Q, double* Refl);
 	const double* GetReflData();
 	void WriteOutputFile(wstring filename);
 	void SetNormFactor(double NormFactor);
+	int GetDataPoints();
 };

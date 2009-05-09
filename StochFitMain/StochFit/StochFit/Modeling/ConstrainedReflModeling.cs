@@ -135,11 +135,12 @@ namespace StochasticModeling
 
             //Setup the callback if the graph updates the bounds
             ReflGraphing.ChangedBounds += new Graphing.ChangedEventHandler(PointChanged);
-           
+
             //Setup the callback to update the frontend with new information
             ReflCalc.Update += new BoxReflFitBase.UpdateProfileHandler(ReflCalc_Update);
             ReflCalc_Update(null, null);
             MakeReflectivity();
+            
         }
 
         /// <summary>
@@ -148,14 +149,19 @@ namespace StochasticModeling
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void ReflCalc_Update(object sender, EventArgs e)
+        void ReflCalc_Update(object sender, EventArgs e)    
         {
            //Necessary due to the possibility of updating from a separate thread (such as stochastic fitting). Otherwise, events are fired which reset some of the values
            //below. A lock isn't necessary this isn't necessarilly a race condition
            m_isupdating = true;
            
            SubRough.ThreadSafeSetText(ReflCalc.GetSubRoughness.ToString()) ;
-           NormCorrectTB.ThreadSafeSetText(ReflCalc.NormalizationFactor.ToString());
+
+           if (ReflCalc.ImpNormCB)
+           {
+               NormCorrectTB.ThreadSafeSetText(ReflCalc.NormalizationFactor.ToString());
+           }
+
            Holdsigma.ThreadSafeChecked(ReflCalc.IsOneSigma);
            BoxCount.ThreadSafeSetText(ReflCalc.BoxCount.ToString());
            ImpNormCB.ThreadSafeChecked(ReflCalc.ImpNormCB);
@@ -450,6 +456,9 @@ namespace StochasticModeling
 
         private void GetConstraints()
         {
+            ReflCalc.HighQOffset = Rightoffset.ToInt();
+            ReflCalc.LowQOffset = CritOffset.ToInt();
+
             int arrayconst = 2;
             int holdcount = 0;
 
@@ -692,5 +701,6 @@ namespace StochasticModeling
 
         }
 
+       
     }
 }

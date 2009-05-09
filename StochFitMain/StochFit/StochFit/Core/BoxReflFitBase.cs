@@ -308,6 +308,8 @@ namespace StochasticModeling
             }
 
             InitStruct.WriteFiles = true;
+            InitStruct.HighQOffset = HighQOffset;
+            InitStruct.LowQOffset = LowQOffset;
 
         }
 

@@ -242,6 +242,9 @@ namespace StochasticModeling
                         }
                         else
                         {
+                            //Clear the report
+                            ReportGenerator.Instance.ClearAll();
+
                             //Load the data file to the graph
                             reflgraphobject.LoadDatawithErrorstoGraph("Reflectivity Data", Color.Black, SymbolType.Circle, 5, ReflData.Instance.GetQData, ReflData.Instance.GetReflData);
 
@@ -642,8 +645,8 @@ namespace StochasticModeling
                 span = DateTime.Now - previtertime;
                
                 //Update the front end in a theadsafe manner
-                SAlowenergyTB.ThreadSafeSetText(lowestenergy.ToString("#.### E -000"));
-                SATempTB.ThreadSafeSetText(temp.ToString("#.### E -000"));
+                SAlowenergyTB.ThreadSafeSetText(lowestenergy.ToString("#.### E-000"));
+                SATempTB.ThreadSafeSetText(temp.ToString("#.### E-000"));
                 SAModeTB.ThreadSafeSetText("Annealing");
                 itertimetextbox.ThreadSafeSetText(((double)iterations / (double)span.TotalSeconds).ToString("#.#"));
                 ChiSquareTB.ThreadSafeSetText(chisquare.ToString("#.####E-000"));

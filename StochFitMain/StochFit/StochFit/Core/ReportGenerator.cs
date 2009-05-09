@@ -90,6 +90,13 @@ namespace StochasticModeling
             }
         }
 
+        public void ClearAll()
+        {
+            ClearMainInformation();
+            ClearReflModelInfo();
+            ClearRhoModelInfo();
+        }
+
         /// <summary>
         /// Clears the information from the model independent portion of the report
         /// </summary>

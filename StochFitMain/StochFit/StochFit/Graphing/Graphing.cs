@@ -211,10 +211,14 @@ namespace StochasticModeling
 
         private void SetAxisScale()
         {
+          
             if (!m_bnegativeerrorval)
+            {
                 AxisChange();
+            }
             else
             {
+               
                 AxisChange();
                 if (!m_biszoomed)
                 {

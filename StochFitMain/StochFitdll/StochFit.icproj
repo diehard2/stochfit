@@ -11,7 +11,6 @@
 			Name="Release|Win32">
 			<Tool
 				Name="GeneralTool"
-				ProfileGuidedOptimization="3"
 				ProfileDirectory="$(IntDir)"/>
 			<Tool
 				Name="CppCmplrTool"
@@ -26,16 +25,15 @@
 			Name="Release|x64">
 			<Tool
 				Name="GeneralTool"
-				ProfileGuidedOptimization="3"
+				ProfileGuidedOptimization="0"
 				ProfileDirectory="$(IntDir)"/>
 			<Tool
 				Name="CppCmplrTool"
-				GlobalOptimizations="true"
-				InterproceduralOptimization="2"
+				Optimization="1000"
 				FloatingPointModel="1000"
 				FlushDenormalResultsToZero="true"
-				GenerateAlternateCodePaths="0"
-				ProfileGuidedOptimization="3"/>
+				GenerateAlternateCodePaths="3"
+				UseIntelOptimizedHeaders="true"/>
 		</Configuration>
 	</Configurations>
 	<Files/>

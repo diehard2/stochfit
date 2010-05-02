@@ -33,11 +33,11 @@ namespace MyComplexNumber{
 		double re;
 		double im;
 
-		MyComplex(double real = 0.0, double imaginary = 0.0)
-		{
-			re = real;
-			im = imaginary;
-		}
+		MyComplex(double real = 0.0, double imaginary = 0.0):
+			re(real),
+			im(imaginary)
+		{	}
+	
 		//overload addition, subtraction, multiplication, division
 		MyComplex& operator=(const MyComplex& comp) 
 		{
@@ -59,31 +59,33 @@ namespace MyComplexNumber{
 
 		const MyComplex operator*(const double s) 
 		{
-			
-			return MyComplex(s*re,s*im);
+			MyComplex temp(s*re, s*im);	
+			return temp;
 		} 
 
 		friend const MyComplex operator*(const MyComplex& lhs, const MyComplex& rhs)
 		{
-			return MyComplex((lhs.re*rhs.re-lhs.im*rhs.im),(lhs.re*rhs.im+lhs.im*rhs.re));
-
+			MyComplex temp(lhs.re*rhs.re-lhs.im*rhs.im,lhs.re*rhs.im+lhs.im*rhs.re);
+			return temp;
 		}
 
 		friend const MyComplex operator/(const MyComplex& lhs,const MyComplex& rhs)
 		{
 			double denom = 1.0/(rhs.re*rhs.re+rhs.im*rhs.im);
-			
-			return MyComplex((lhs.re*rhs.re+lhs.im*rhs.im)*denom,(lhs.im*rhs.re-lhs.re*rhs.im)*denom);
+			MyComplex temp((lhs.re*rhs.re+lhs.im*rhs.im)*denom,(lhs.im*rhs.re-lhs.re*rhs.im)*denom);
+			return temp;
 		}
 
 		
 		friend MyComplex operator+(const MyComplex& lhs,const MyComplex& rhs)
 		{
-			return MyComplex(lhs.re+rhs.re,lhs.im+rhs.im);
+			MyComplex temp(lhs.re+rhs.re, lhs.im+rhs.im);
+			return temp;
 		}
 
 		friend const MyComplex operator-(const MyComplex& lhs, const MyComplex& rhs)
 		{
+			MyComplex temp;
 			return MyComplex(lhs.re-rhs.re,lhs.im-rhs.im);
 		}
 
@@ -94,7 +96,7 @@ namespace MyComplexNumber{
 		
 		friend bool operator!=(const MyComplex& lhs,const MyComplex& rhs)
 		{
-			return (lhs.re == rhs.re && lhs.im == rhs.im);
+			return (!(lhs == rhs));
 		}
 	};
 
@@ -103,22 +105,26 @@ namespace MyComplexNumber{
 	inline MyComplex compexp(const MyComplex& comp)
 	{
 		double exponent = exp(comp.re);
-		return MyComplex(exponent*cos(comp.im),exponent*sin(comp.im));
+		MyComplex temp(exponent*cos(comp.im),exponent*sin(comp.im));
+		return temp;
 	}
 
 	inline MyComplex compcos(const MyComplex& comp)
 	{
-		return MyComplex(cos(comp.re)*cosh(comp.im),0.0-(sin(comp.re)*sinh(comp.im)));
+		MyComplex temp(cos(comp.re)*cosh(comp.im),0.0-(sin(comp.re)*sinh(comp.im)));
+		return temp;
 	}
 
 	inline MyComplex compsin(const MyComplex& comp)
 	{
-		return MyComplex(sin(comp.re)*cosh(comp.im),cos(comp.re)*sinh(comp.im));
+		MyComplex temp(sin(comp.re)*cosh(comp.im),cos(comp.re)*sinh(comp.im));
+		return temp;
 	}
 
-	inline float comparg(const MyComplex& comp)
+	inline double comparg(const MyComplex& comp)
 	{
-		return atan2(comp.im, comp.re);
+		double arc = atan2(comp.im, comp.re);
+		return arc;
 	}
 
 	
@@ -169,6 +175,7 @@ namespace MyComplexNumber{
 	
 	inline MyComplex cln(const MyComplex& comp)
 	{
-		return MyComplex(log(compabs(comp)),comparg(comp));
+		MyComplex temp(log(compabs(comp)),comparg(comp));
+		return temp;
 	}
 }

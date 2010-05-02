@@ -31,7 +31,7 @@
 #include <string>
 #include "..\StochFitDll\random.h"
 #include "..\StochFitDll\mycomplex.h"
-#include ".\Levmar\lm.h"
+#include ".\Levmar\levmar.h"
 
 using namespace MyComplexNumber;
 using namespace Random;

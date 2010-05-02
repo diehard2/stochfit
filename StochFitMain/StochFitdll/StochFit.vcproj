@@ -21,8 +21,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory="$(SolutionDir)bin\x86\$(ConfigurationName)"
+			IntermediateDirectory="x86\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="1"
@@ -68,10 +68,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libmmdd.lib atls.lib libiomp5md.lib"
-				OutputFile="..\bin\Debug\StochFitDll.dll"
+				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="../bin/Debug/stochfitdll.pdb"
+				ProgramDatabaseFile="$(OutDir)\stochfitdll.pdb"
 				GenerateMapFile="true"
 				MapExports="true"
 				SubSystem="2"
@@ -98,11 +98,12 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy ..\bin\x86\dlls\libmmd.dll  $(OutDir)&#x0D;&#x0A;copy ..\bin\x86\dlls\genf.ico $(OutDir)&#x0D;&#x0A;copy ..\bin\x86\dlls\levmarmkl32.dll $(OutDir)&#x0D;&#x0A;copy ..\bin\x86\dlls\libiomp5md.dll $(OutDir)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)bin\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
@@ -131,7 +132,7 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				StructMemberAlignment="5"
+				StructMemberAlignment="0"
 				OpenMP="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -150,10 +151,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libmmdd.lib atls.lib libiomp5md.lib"
-				OutputFile="..\bin\Debug\StochFitDll.dll"
+				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="../bin/Debug/stochfitdll.pdb"
+				ProgramDatabaseFile="$(OutDir)\stochfitdll.pdb"
 				GenerateMapFile="true"
 				MapExports="true"
 				SubSystem="2"
@@ -180,12 +181,13 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy ..\bin\x64\dlls\libmmd.dll  $(OutDir)&#x0D;&#x0A;copy ..\bin\x64\dlls\genf.ico $(OutDir)&#x0D;&#x0A;copy ..\bin\x64\dlls\levmarmkl64.dll $(OutDir)&#x0D;&#x0A;copy ..\bin\x64\dlls\libiomp5md.dll $(OutDir)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
+			OutputDirectory="$(SolutionDir)bin\x86\$(ConfigurationName)"
+			IntermediateDirectory="x86\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfATL="0"
@@ -244,11 +246,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libmmd.lib atls.lib libiomp5md.lib"
-				OutputFile="..\bin\Release\StochFitDll.dll"
+				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="1"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="../bin/Release/StochFitDll.pdb"
+				ProgramDatabaseFile="$(OutDir)\stochfitdll.pdb"
 				GenerateMapFile="true"
 				MapExports="true"
 				SubSystem="2"
@@ -275,6 +277,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy ..\bin\x86\dlls\libmmd.dll  $(OutDir)&#x0D;&#x0A;copy ..\bin\x86\dlls\genf.ico $(OutDir)&#x0D;&#x0A;copy ..\bin\x86\dlls\levmarmkl32.dll $(OutDir)&#x0D;&#x0A;copy ..\bin\x86\dlls\libiomp5md.dll $(OutDir)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -305,23 +308,23 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/QaxSSE2,SSE3,SSSE3,SSE4.1,SSE4.2 /Qansi-alias /Qalias-args- /Qopt-prefetch"
-				Optimization="3"
+				AdditionalOptions="/Qvec-report1"
+				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="false"
-				FavorSizeOrSpeed="1"
+				FavorSizeOrSpeed="2"
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				WholeProgramOptimization="false"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;STOCHFIT_EXPORTS;__USE_ISOC99"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;STOCHFIT_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="1"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
-				StructMemberAlignment="5"
+				StructMemberAlignment="0"
 				BufferSecurityCheck="false"
 				FloatingPointModel="0"
-				RuntimeTypeInfo="true"
+				RuntimeTypeInfo="false"
 				OpenMP="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -340,11 +343,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libmmd.lib atls.lib libiomp5md.lib"
-				OutputFile="..\bin\Release\StochFitDll.dll"
+				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="1"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="../bin/Release/StochFitDll.pdb"
+				ProgramDatabaseFile="$(OutDir)\stochfitdll.pdb"
 				GenerateMapFile="true"
 				MapExports="true"
 				SubSystem="2"
@@ -371,6 +374,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy ..\bin\x64\dlls\libmmd.dll  $(OutDir)&#x0D;&#x0A;copy ..\bin\x64\dlls\genf.ico $(OutDir)&#x0D;&#x0A;copy ..\bin\x64\dlls\levmarmkl64.dll $(OutDir)&#x0D;&#x0A;copy ..\bin\x64\dlls\libiomp5md.dll $(OutDir)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

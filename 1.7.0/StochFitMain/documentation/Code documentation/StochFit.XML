@@ -1,0 +1,1207 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>StochFit</name>
+    </assembly>
+    <members>
+        <member name="M:StochasticModeling.Core.HelperFunctions.CalcQc(System.Double,System.Double)">
+            <summary>
+            Calculate the critical Q for a system
+            </summary>
+            <param name="dSLD">Substrate SLD</param>
+            <param name="SupSLD">Superphase SLD</param>
+            <param name="lambda">X-ray wavelength</param>
+            <returns>Critical Q</returns>
+        </member>
+        <member name="M:StochasticModeling.Core.HelperFunctions.CalcFresnelPoint(System.Double,System.Double)">
+            <summary>
+            Calculates the value of a Fresnel curve at a given Q and Qc
+            </summary>
+            <param name="Q">Q value</param>
+            <param name="Qc">Critical Q for the system</param>
+            <returns>Fresnel reflectivity point</returns>
+        </member>
+        <member name="F:StochasticModeling.AboutBox1.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.AboutBox1.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.AboutBox1.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.ExtensionMethods.IsEmpty(System.Windows.Forms.TextBox)">
+            <summary>
+            Returns true if the textbox is empty
+            </summary>
+            <param name="t"></param>
+            <returns></returns>
+        </member>
+        <member name="T:StochasticModeling.GraphingBase">
+            <summary>
+            Base class for using the ZedGraph graphing control for a scatter plot. While this class can be extended, it also
+            functions
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.Modeling.AnnealingParams">
+            <summary>
+            This form allows one to input the paramters for either Simulated Annealing or Stochastic Tunneling Annealing
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Modeling.AnnealingParams.#ctor(System.Double,System.Int32,System.Double)">
+            <summary>
+            Constructor for Annealing Parameters Form. 
+            </summary>
+            <param name="inittemp">Initial temperature</param>
+            <param name="platnum">Number of iterations before the temperature is decreased by tempslope</param>
+            <param name="tempslope">Fraction by which the temperature is decreased every platnum iterations</param>
+        </member>
+        <member name="M:StochasticModeling.Modeling.AnnealingParams.GetParams(System.Double@,System.Int32@,System.Double@)">
+            <summary>
+            Allows for retrieving parameters defined by the user
+            </summary>
+            <param name="inittemp">Initial temperature</param>
+            <param name="platnum">Number of iterations before the temperature is decreased by tempslope</param>
+            <param name="tempslope">Fraction by which the temperature is decreased every platnum iterations</param>
+        </member>
+        <member name="M:StochasticModeling.Modeling.AnnealingParams.ValidateNumericalInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to a double or false if not</param>
+        </member>
+        <member name="M:StochasticModeling.Modeling.AnnealingParams.ValidateIntegerInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry 
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to an integer or false if not</param>
+        </member>
+        <member name="F:StochasticModeling.Modeling.AnnealingParams.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Modeling.AnnealingParams.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:StochasticModeling.Modeling.AnnealingParams.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.Modeling.STUNAnnealingParams">
+            <summary>
+            Form for setting the Stochastic Tunneling parameters
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Modeling.STUNAnnealingParams.#ctor(System.Double,System.Int32,System.Double,System.Double,System.Int32,System.Boolean,System.Int32,System.Int32,System.Double)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="inittemp"></param>
+            <param name="platnum"></param>
+            <param name="tempslope"></param>
+            <param name="gamma"></param>
+            <param name="STUNfunc"></param>
+            <param name="STUNAdaptive"></param>
+            <param name="STUNtempiter"></param>
+            <param name="STUNdeciter"></param>
+            <param name="STUNgammadec"></param>
+        </member>
+        <member name="M:StochasticModeling.Modeling.STUNAnnealingParams.GetParams(System.Double@,System.Int32@,System.Double@,System.Double@,System.Int32@,System.Boolean@,System.Int32@,System.Int32@,System.Double@)">
+            <summary>
+            Returns the parameters generated by the user
+            </summary>
+            <param name="inittemp">Initial annealing temperature</param>
+            <param name="runningaverageiter"></param>
+            <param name="tempslope"></param>
+            <param name="gamma"></param>
+            <param name="func"></param>
+            <param name="adaptive"></param>
+            <param name="tempchangeiter"></param>
+            <param name="STUNdeciter"></param>
+            <param name="STUNgammadec"></param>
+        </member>
+        <member name="F:StochasticModeling.Modeling.STUNAnnealingParams.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Modeling.STUNAnnealingParams.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:StochasticModeling.Modeling.STUNAnnealingParams.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.Modeling.Constraints">
+            <summary>
+            This form allows one to enter constraints for the model dependent fitting routines
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Modeling.Constraints.SubRoughMin">
+            <summary>
+            Minimum allowed value of the roughness
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Modeling.Constraints.SubRoughMax">
+            <summary>
+            Maximum allowed value of the roughness
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Modeling.Constraints.NormMax">
+            <summary>
+            Maximum allowed value of the normalization constant
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Modeling.Constraints.NormMin">
+            <summary>
+            Minimum allowed value of the normalization constant
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Modeling.Constraints.RhoHighArray">
+            <summary>
+            Maximum allowed value of the electron density of a box
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Modeling.Constraints.RhoLowArray">
+            <summary>
+            Minimum allowed value of the electron density of a box
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Modeling.Constraints.ThickHighArray">
+            <summary>
+            Maximum allowed value of the thickness of a box
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Modeling.Constraints.ThickLowArray">
+            <summary>
+            Minimum allowed value of the thickness of a box
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Modeling.Constraints.SigmaHighArray">
+            <summary>
+            Maximum allowed value of the rougness of an interface
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Modeling.Constraints.SigmaLowArray">
+            <summary>
+            Minimum allowed value of the roughness of an interface
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Modeling.Constraints.#ctor(System.Int32)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="boxcount">Number of boxes in the fit</param>
+            
+        </member>
+        <member name="P:StochasticModeling.Modeling.Constraints.Initialized">
+            <summary>
+            Determine whether the constraints have been initialized
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Modeling.Constraints.ValidateNumericalInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to a double or false if not</param>
+        </member>
+        <member name="F:StochasticModeling.Modeling.Constraints.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Modeling.Constraints.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:StochasticModeling.Modeling.Constraints.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.Modeling.StochFitUI">
+            <summary>
+            This class allows the user to set parameters for the stochastic search of the parameter space
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Modeling.StochFitUI.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.Modeling.StochFitUI.IterationCount">
+            <summary>
+            Get the number of iterations to run the parameter space search
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Modeling.StochFitUI.GetParamPercs(System.Double[]@)">
+            <summary>
+            Returns the ranges for the paramters to vary by
+            </summary>
+            <param name="parampercs"></param>
+        </member>
+        <member name="M:StochasticModeling.Modeling.StochFitUI.ValidateNumericalInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to a double or false if not</param>
+        </member>
+        <member name="M:StochasticModeling.Modeling.StochFitUI.ValidateIntegerInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry 
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to an integer or false if not</param>
+        </member>
+        <member name="F:StochasticModeling.Modeling.StochFitUI.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Modeling.StochFitUI.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:StochasticModeling.Modeling.StochFitUI.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.Modeling.StochOutputWindow">
+            <summary>
+            Displays a collection of fits
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Modeling.StochOutputWindow.#ctor(System.Double[],System.Int32,System.Int32,System.Double[],System.Double[],System.Double[],StochasticModeling.BoxReflFitBase)">
+            <summary>
+            Contains all of the parameters for all of the fits. The format of which is determined in the class
+            </summary>
+            <param name="FullParameterArray"></param>
+            <param name="ParameterArraysize"></param>
+            <param name="paramsize"></param>
+            <param name="FullChisquareArray"></param>
+            <param name="FullCovariance"></param>
+            <param name="Refl"></param>
+        </member>
+        <member name="F:StochasticModeling.Modeling.StochOutputWindow.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Modeling.StochOutputWindow.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:StochasticModeling.Modeling.StochOutputWindow.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.ReflData">
+            <summary>
+            This class holds the reflectivity data loaded from the file. It is expected that the data be in the format of 
+            Q, R, Variance in R, Variance in Q. It is implemented as a Singleton
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.ReflData.Instance">
+            <summary>
+            The instance of the Singleton class ReflData
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.ReflData.GetReflData">
+            <summary>
+            Returns a copy of an array for the reflectivity data
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.ReflData.GetReflDataPt(System.Int32)">
+            <summary>
+            Get the value for the reflectivity point at position index
+            </summary>
+            <param name="index">Datapoint position</param>
+            <returns>Reflectivity for the datapoint index</returns>
+        </member>
+        <member name="P:StochasticModeling.ReflData.GetQData">
+            <summary>
+            Returns a copy of an array for the data in Q
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.ReflData.GetQDataPt(System.Int32)">
+            <summary>
+            Get the value for the Q point at position index
+            </summary>
+            <param name="index">Datapoint position</param>
+            <returns>Q for the datapoint index</returns>
+        </member>
+        <member name="P:StochasticModeling.ReflData.GetRErrors">
+            <summary>
+            Returns a copy of an array for the SD in the reflectivity
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.ReflData.GetRErrorPt(System.Int32)">
+            <summary>
+            Get the value for the SD in R at position index
+            </summary>
+            <param name="index">Datapoint position</param>
+            <returns>SD in R for the datapoint index</returns>
+        </member>
+        <member name="P:StochasticModeling.ReflData.GetQErrors">
+            <summary>
+            Returns a copy of an array for the SD in Q
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.ReflData.GetQErrorPt(System.Int32)">
+            <summary>
+            Get the value for the SD in Q at position index
+            </summary>
+            <param name="index">Datapoint position</param>
+            <returns>SD in Q for the datapoint index</returns>
+        </member>
+        <member name="P:StochasticModeling.ReflData.GetNumberDataPoints">
+            <summary>
+            Returns the number of valid data points in the reflectivity folder
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.ReflData.HaveErrorinQ">
+            <summary>
+            Returns true if there is a 4th data column with error in Q, false otherwise
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.ReflData.GetWorkingDirectory">
+            <summary>
+            Returns the working directory
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.ReflData.SetReflData(System.String,System.Boolean)">
+            <summary>
+            Load the data from the file. The expected columns are Q, R, SD in R, and SD in Q (optional).
+            Negative values for reflectivities are discarded, as are negative values for the variance in R. The variance
+            in the parameters is recalculated as standard deviation in this function.
+            </summary>
+            <param name="filename"></param>
+            <param name="IsSD">Set to true if the data errors are in standard deviation</param>
+            <returns>true if the file loaded, false otherwise</returns>
+        </member>
+        <member name="T:StochasticModeling.SLDCalculator">
+            <summary>
+            Scattering Length Density Calculator for X-ray and Neutrons
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.SLDCalculator.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.SLDCalculator.NeutronCalc(System.Double)">
+            <summary>
+            Calculates the Neutron Scattering Length Density - all values are from http://www.ncnr.nist.gov/resources/n-lengths/
+            </summary>
+            <param name="MWVol">The molecular volume of the compound</param>
+            <returns>Scattering Length Density</returns>
+        </member>
+        <member name="M:StochasticModeling.SLDCalculator.ValidateNumericalInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to a double or false if not</param>
+        </member>
+        <member name="M:StochasticModeling.SLDCalculator.ValidateIntegerInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry 
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to an integer or false if not</param>
+        </member>
+        <member name="F:StochasticModeling.SLDCalculator.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.SLDCalculator.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:StochasticModeling.SLDCalculator.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.SLDConverter.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.SLDConverter.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:StochasticModeling.SLDConverter.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.Stochfit">
+            <summary>
+            Main GUI for the StochFit program
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Stochfit.m_CI">
+            <summary>
+            The culture is set to US for the purposes of inputting data to the numerical routines
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Stochfit.#ctor(System.String[])">
+            <summary>
+            Default constructor
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Stochfit.ValidateNumericalInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to a double or false if not</param>
+        </member>
+        <member name="M:StochasticModeling.Stochfit.ValidateIntegerInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry 
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to an integer or false if not</param>
+        </member>
+        <member name="M:StochasticModeling.Stochfit.MenuItem_Check(System.Object,System.EventArgs)">
+            <summary>
+            Sets the "check" state on a menu item
+            </summary>
+            <param name="sender">Expects a ToolStripMenuItem</param>
+            <param name="e"></param>
+        </member>
+        <member name="F:StochasticModeling.Stochfit.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Stochfit.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:StochasticModeling.Stochfit.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.Graphing">
+            <summary>
+            Implements graphing for X-ray or neutron data
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.Graphing.ChangedEventHandler">
+            <summary>
+            Called if the bounds on the curve are changed
+            </summary>
+            <param name="sender">null</param>
+            <param name="e">null</param>
+        </member>
+        <member name="E:StochasticModeling.Graphing.ChangedBounds">
+            <summary>
+            Event to subsribe to if the bounds are changed
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Graphing.#ctor(System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="name">Name of the graph. Can be string.Empty</param>
+        </member>
+        <member name="M:StochasticModeling.Graphing.CreateGraph(ZedGraph.ZedGraphControl,System.String,System.String,System.String,ZedGraph.AxisType)">
+            <summary>
+            Create the graph
+            </summary>
+            <param name="zgc">The associated ZedGraph control. Can be null</param>
+            <param name="Title">Title for the graph</param>
+            <param name="XAxis">Title for the X axis</param>
+            <param name="YAxis">Title for the Y axis</param>
+            <param name="blog">Graphed as log(Y) if true, no scaling if false</param>
+        </member>
+        <member name="M:StochasticModeling.Graphing.Clear">
+            <summary>
+            Clears all of the graphs and resets the Zoom attribute
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Graphing.AddCurvetoGraph(ZedGraph.PointPairList,ZedGraph.PointPairList,System.String,System.Drawing.Color,ZedGraph.SymbolType,System.Int32,System.String)">
+            <summary>
+            Add a curve to the graph
+            </summary>
+            <param name="list">The X,Y list of data points</param>
+            <param name="elist">The list of errors associated with list</param>
+            <param name="DataName">Name for the curve to be displayed in the legend</param>
+            <param name="linecolor">Color for the line</param>
+            <param name="type">Type of symbol for the curve</param>
+            <param name="symbolsize">Size of the symbols on the curve </param>
+            <param name="tag">An internal name for the curve</param>
+        </member>
+        <member name="M:StochasticModeling.Graphing.AddCurvetoGraph(ZedGraph.PointPairList,System.String,System.Drawing.Color,ZedGraph.SymbolType,System.Int32,System.Boolean,System.String)">
+            <summary>
+            Add a curve to the graph
+            </summary>
+            <param name="list">The X,Y list of data points</param>
+            <param name="DataName">Name for the curve to be displayed in the legend</param>
+            <param name="linecolor">Color for the line</param>
+            <param name="type">Type of symbol for the curve</param>
+            <param name="symbolsize">Size of the symbols on the curve </param>
+            <param name="isSmoothed">The curve is antialiased if true</param>
+            <param name="tag">An internal name for the curve</param>
+        </member>
+        <member name="M:StochasticModeling.Graphing.LoadDatawithErrorstoGraph(System.String,System.Drawing.Color,ZedGraph.SymbolType,System.Int32,System.Double[],System.Double[])">
+            <summary>
+            Load the data in the singleton <seealso cref="T:StochasticModeling.ReflData"/> to the graph
+            </summary>
+            <param name="name">A unique name for the data</param>
+            <param name="color">The color of the data line</param>
+            <param name="symbol">Symbol Shape</param>
+            <param name="symbolsize">Size of the symbol</param>
+            <param name="XData">Q Data Points in A^-1</param>
+            <param name="YData">Reflectivity data in intensity</param>
+        </member>
+        <member name="P:StochasticModeling.Graphing.GetHighQOffset">
+            <summary>
+            Get/Set the offset for the high Q portion of the curve
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.Graphing.GetLowQOffset">
+            <summary>
+            Get/Set the offset for the low Q portion of the curve
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.Graphing.SubSLD">
+            <summary>
+            Get/Set the scattering length density of the substrate
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.Graphing.SupSLD">
+            <summary>
+            Get/Set the scattering length density of the superphase
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.Graphing.DataFileLoaded">
+            <summary>
+            Gets whether a datafile has been loaded at least once to the graph
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.Graphing.ProgramRunningState">
+            <summary>
+            Determines whether the main program is running in order to provide the correct context menu. This class should not set this value
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Graphing.OnChanged(System.Object,System.EventArgs)">
+            <summary>
+            Communicate with the graphing class. This will let us know if we've changed boundaries
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:StochasticModeling.Graphing.ClearCurves">
+            <summary>
+            Delete all curves that are not data
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.ConstrainedReflmodeling">
+            <summary>
+            Form for the Constrained Reflectivity Modeling Routines
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.ConstrainedReflmodeling.ReflCalc_Update(System.Object,System.EventArgs)">
+            <summary>
+            This routine updates our frontend. All updates are performed in a threadsafe manner, as the
+            stochastic methods can take place on a separate thread
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
+        <member name="M:StochasticModeling.ConstrainedReflmodeling.ValidateNumericalInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to a double or false if not</param>
+        </member>
+        <member name="M:StochasticModeling.ConstrainedReflmodeling.ValidateIntegerInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry. 
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to an integer or false if not</param>
+        </member>
+        <member name="F:StochasticModeling.ConstrainedReflmodeling.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.ConstrainedReflmodeling.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:StochasticModeling.ConstrainedReflmodeling.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.LevmarOutput">
+            <summary>
+            Simple output window for the least square fitting algorithm
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.LevmarOutput.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.LevmarOutput.DisplayOutput(System.String)">
+            <summary>
+            Displays the string to the form window
+            </summary>
+            <param name="display">Formatted output string</param>
+        </member>
+        <member name="F:StochasticModeling.LevmarOutput.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.LevmarOutput.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:StochasticModeling.LevmarOutput.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.GraphCollection">
+            <remarks>
+            The GraphCollection class maintains a collection of all of the graphs that have been used in the program.
+            For the purely model independent fits, the main two graphs will consist of the updated front panel graphs,
+            and for the MD fits, the last fit's graph will be saved
+            </remarks>
+        </member>
+        <member name="F:StochasticModeling.GraphCollection.Instance">
+            <summary>
+            The instance of the GraphCollection used to access publicly available members
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.GraphCollection.SetGraphUpdateLock">
+            <summary>
+            True locks the MI graphs so that they are not updated while being used by another module, while false releases the lock.
+            Note that the front panel still updates, however it is not updated in this class
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.GraphCollection.MainReflGraph">
+            <summary>
+            Sets the main reflectivity graph object as long as the lock is not set by SetGraphUpdateLock <see cref="P:StochasticModeling.GraphCollection.SetGraphUpdateLock"/>
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.GraphCollection.MainRhoGraph">
+            <summary>
+            Sets the main electron density graph object as long as the lock is not set by SetGraphUpdateLock <see cref="P:StochasticModeling.GraphCollection.SetGraphUpdateLock"/>
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.GraphCollection.RhoGraph">
+            <summary>
+            Sets the model dependent fit to the model independent electron density profile graph object
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.GraphCollection.ReflGraph">
+            <summary>
+            Sets the reflectivity graph object for the pure model dependent fit
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.GraphCollection.ReflEGraph">
+            <summary>
+            Sets the electron density profile graph object for the pure model dependent fit
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.MasterPaneForm">
+            <remarks>
+            This class creates a MasterPane using a Zedgraph control
+            that collects all of the graphical output for the program and 
+            </remarks>
+        </member>
+        <member name="M:StochasticModeling.MasterPaneForm.#ctor">
+            <summary>
+            Initializes all members of the master graph and checks whether the master graph should load
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.MasterPaneForm.MyLocalGraphContextMenuBuilder(ZedGraph.ZedGraphControl,System.Windows.Forms.ContextMenuStrip,System.Drawing.Point,ZedGraph.ZedGraphControl.ContextMenuObjectState)">
+            <summary>
+            Builds the appropriate right click menu for the master graph
+            </summary>
+            <param name="control"></param>
+            <param name="menuStrip"></param>
+            <param name="mousePt"></param>
+            <param name="objState"></param>
+        </member>
+        <member name="M:StochasticModeling.MasterPaneForm.ShowDialog(System.Windows.Forms.IWin32Window)">
+            <summary>
+            Will fail with a messagebox error if no graphs are loaded. 
+            </summary>
+            <param name="owner"></param>
+            <returns> DialogResult.OK on success and DialogResult.Abort on failure </returns>
+        </member>
+        <member name="M:StochasticModeling.MasterPaneForm.Show(System.Windows.Forms.IWin32Window)">
+            <summary>
+            Will fail with a messagebox error if no graphs are loaded. 
+            </summary>
+            <param name="owner"></param>
+            <returns> DialogResult.OK on success and DialogResult.Abort on failure </returns>
+        </member>
+        <member name="F:StochasticModeling.MasterPaneForm.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.MasterPaneForm.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:StochasticModeling.MasterPaneForm.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Program.Main(System.String[])">
+            <summary>
+            The main entry point for the application.
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.Rhomodeling">
+            <summary>
+            Fits a model dependent electron density profile to the model independent electron density profile
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Rhomodeling.#ctor(System.Double[],System.Double[],System.Double,System.String,System.String,System.String)">
+            <summary>
+            Graphs and fits an Electron Density Profile against a user defined Electron Density Profile
+            </summary>
+            <param name="Z">Array of thickness data points</param>
+            <param name="ERho">Electron density of the profile to be fit</param>
+            <param name="roughness">The overall smoothing parameter found by the model independent fit</param>
+            <param name="SupOffset">The offset in Z for the first box</param>
+            <param name="subsld">The subphase SLD</param>
+            <param name="supsld">The superphase SLD</param>
+        </member>
+        <member name="M:StochasticModeling.Rhomodeling.MakeArrays">
+            <summary>
+            Make textbox arrays so we can more easily iterate over them
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Rhomodeling.ValidateNumericalInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to a double or false if not</param>
+        </member>
+        <member name="M:StochasticModeling.Rhomodeling.ValidateIntegerInput(System.Object,System.ComponentModel.CancelEventArgs)">
+            <summary>
+            Checks to verify that the Textbox has valid numerical input. This check respects cultural variations
+            in number entry 
+            </summary>
+            <param name="sender">A textbox is expected as input</param>
+            <param name="e">return true if the number can be cast to an integer or false if not</param>
+        </member>
+        <member name="F:StochasticModeling.Rhomodeling.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Rhomodeling.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:StochasticModeling.Rhomodeling.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.ReportGenerator">
+            <summary>
+            Singleton class that collects information to be written into a pdf report using itextsharp
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.ReportGenerator.Instance">
+            <summary>
+            The publicly available instance of the class. All functions are called through instance
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.ReportGenerator.DataFileName">
+            <summary>
+            Get/Set the name for the report. The pdf extension is automatically included at the end
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.ReportGenerator.ClearMainInformation">
+            <summary>
+            Clears the information from the model independent portion of the report
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.ReportGenerator.SetMainInformation">
+            <summary>
+            Set information for the model independent portion of the report
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.ReportGenerator.ClearRhoModelInfo">
+            <summary>
+            Clear information related to the electron density profile fitting
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.ReportGenerator.SetRhoModelInfo">
+            <summary>
+            Add a List of formatted text to the electron density fitting portion of the report
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.ReportGenerator.ClearReflModelInfo">
+            <summary>
+            Clears the information in the model dependent fitting report section
+            </summary>
+        </member>
+        <member name="P:StochasticModeling.ReportGenerator.SetReflModelInfo">
+            <summary>
+            Set the information for the model dependent reflectivity fit
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.ReportGenerator.GeneratePDFReport">
+            <summary>
+            Generate the pdf report
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.Settings.ModelSettings">
+            <summary>
+            This class passes all of the settings to the C++ dll. If a value is added that is not going to be passed
+            to the dll, it should be added to the end of the parameter list. If a value is added towards the top, 
+            SettingsStruct.h in the C++ dll section will need to be appropriately updated
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.SubSLD">
+            <summary>
+            Subphase SLD
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.SurflayerSLD">
+            <summary>
+            Film SLD
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.SupSLD">
+            <summary>
+            Superphase SLD
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.Boxes">
+            <summary>
+            Number of Small Boxes
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.SurflayerAbs">
+            <summary>
+            Surface Layer Absorption
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.SubAbs">
+            <summary>
+            Subphase Absorption
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.SupAbs">
+            <summary>
+            Superphase Absorption
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.Wavelength">
+            <summary>
+            XR Wavelenght
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.UseAbs">
+            <summary>
+            True if absorptions are used, false otherwise
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.SupOffset">
+            <summary>
+            Superphase offset for the electron density profile
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.Percerror">
+            <summary>
+            Percent Error in Q
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.Forcenorm">
+            <summary>
+            True if normalization is forced, false otherwise. This set the first point 
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.Forcesig">
+            <summary>
+            Forces the sigma parameter to a user specified value. Sigma will not vary in this case. Useful for neutrons
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.Debug">
+            <summary>
+            Set to true to output debug files.
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.ForceXR">
+            <summary>
+            Heavily penalizes models with negative electron densities
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.CritEdgeOffset">
+            <summary>
+            Low Q offset in datapoints from the beginning of the curve
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.HighQOffset">
+            <summary>
+            High Q offset in datapoints from the end of the curve
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.Iterations">
+            <summary>
+            Number of iterations
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.IterationsCompleted">
+            <summary>
+            Number of iterations completed
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.ChiSquare">
+            <summary>
+            ChiSquare value for the current fit
+            </summary>
+        </member>
+        <member name="F:StochasticModeling.Settings.ModelSettings.Title">
+            <summary>
+            System description
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Settings.ModelSettings.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Settings.BoxModelSettings.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.Settings.MySettings">
+            <summary>
+            Serializes/Deserializes a ModelSettings class
+            </summary>
+        </member>
+        <member name="T:StochasticModeling.Calculations">
+            <summary>
+            All interop calculations are accessed from this class as static mehtods
+            </summary>
+        </member>
+        <member name="M:StochasticModeling.Calculations.Init(StochasticModeling.Settings.ModelSettings)">
+            <summary>
+            Initialize the model independent fitting procedures. This must be called before any other model independent routines
+            </summary>
+            <param name="settings">Struct of type <see cref="T:StochasticModeling.Settings.ModelSettings"/> containing all parameters</param>
+        </member>
+        <member name="M:StochasticModeling.Calculations.GenPriority(System.Int32)">
+            <summary>
+            Sets the windows priority of the model independent algorithm thread
+            </summary>
+            <param name="priority">Integer corresponding to priority. 0 = Idle, 1 = Below Idle, 2 = Normal</param>
+            <returns></returns>
+        </member>
+        <member name="M:StochasticModeling.Calculations.Start(System.Int32)">
+            <summary>
+            Starts the model idependent fitting process 
+            </summary>
+            <param name="iterations">Number of iterations to run the model independent fit</param>
+            <returns></returns>
+        </member>
+        <member name="M:StochasticModeling.Calculations.CancelFit">
+            <summary>
+            Cancel the model independent fit
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:StochasticModeling.Calculations.GetData(System.Double[],System.Double[],System.Double[],System.Double[],System.Double@,System.Double@,System.Double@,System.Boolean@)">
+            <summary>
+            Retrieves the data from the model independent algorithm
+            </summary>
+            <param name="ZRange">Z array for the electron density profile of the model independent fit </param>
+            <param name="Rho">Electron density array for the model independent fit</param>
+            <param name="QRange">The Q data corresponding to the model independent fit</param>
+            <param name="Refl">The reflectivity data for the model independent fit </param>
+            <param name="roughness">The smoothing parameter sigma for the electron density profile</param>
+            <param name="chisquare">The Chi Square of the fit</param>
+            <param name="goodnessoffit">The value of the fitting function</param>
+            <param name="isfinished">True if the specified number of iterations has been reached, false otherwise</param>
+            <returns>Number of completed iterations</returns>
+        </member>
+        <member name="M:StochasticModeling.Calculations.ArraySizes(System.Int32@,System.Int32@)">
+            <summary>
+            Gets the size needed to store the Reflectivity and Electron Density arrays generated by the model independent algorithm
+            </summary>
+            <param name="RhoSize">Size of the Electron Density Array</param>
+            <param name="Reflsize">Size of the Reflectivity Array</param>
+        </member>
+        <member name="M:StochasticModeling.Calculations.WarmedUp">
+            <summary>
+            Return true if the numerical routines are ready to return data, false otherwise
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:StochasticModeling.Calculations.SAparams(System.Double@,System.Double@,System.Int32@)">
+            <summary>
+            Retrieves the current values for the simulated annealing parameters
+            </summary>
+            <param name="lowestenergy">The lowest energy found so far by the SA algorithm</param>
+            <param name="temp">The current annealing temperature</param>
+            <param name="mode">Not used</param>
+        </member>
+        <member name="M:StochasticModeling.Calculations.FastReflGenerate(StochasticModeling.Settings.BoxModelSettings,System.Double[],System.Int32,System.Double[])">
+            <summary>
+            Generates a reflectivity using the Nevot-Croce correction to the Parratt recursion
+            </summary>
+            <param name="InitStruct"></param>
+            <param name="parameters"></param>
+            <param name="parametersize"></param>
+            <param name="ReflectivityMap"></param>
+        </member>
+        <member name="M:StochasticModeling.Calculations.FastReflfit(StochasticModeling.Settings.BoxModelSettings,System.Double[],System.Double[],System.Int32,System.Double[])">
+            <summary>
+            Performs a Levenberg-Marquadt least squares fit of Reflectivity data
+            </summary>
+            <param name="InitStruct"></param>
+            <param name="parameters"></param>
+            <param name="covar"></param>
+            <param name="covarsize"></param>
+            <param name="info"></param>
+        </member>
+        <member name="M:StochasticModeling.Calculations.RhoGenerate(StochasticModeling.Settings.BoxModelSettings,System.Double[],System.Int32,System.Double[],System.Double[])">
+            <summary>
+            Generates a smoothed and box electron density profile
+            </summary>
+            <param name="InitStruct"></param>
+            <param name="parameters"></param>
+            <param name="parametersize"></param>
+            <param name="ED"></param>
+            <param name="BoxED"></param>
+        </member>
+        <member name="M:StochasticModeling.Calculations.Rhofit(StochasticModeling.Settings.BoxModelSettings,System.Double[],System.Double[],System.Int32,System.Double[])">
+            <summary>
+             Fits an electron density profile to the electron density profile generated by the model independent fit
+            </summary>
+            <param name="InitStruct"></param>
+            <param name="parameters"></param>
+            <param name="covar"></param>
+            <param name="covarsize"></param>
+            <param name="info"></param>
+        </member>
+        <member name="M:StochasticModeling.Calculations.ConstrainedStochFit(StochasticModeling.Settings.BoxModelSettings,System.Double[],System.Double[],System.Int32,System.Double[],System.Double[],System.Double[],System.Int32@)">
+            <summary>
+            Performs a stochastic search of the parameter space using a constrained Levenberg-Marquadt least squares 
+            minimization
+            </summary>
+            <param name="InitStruct"></param>
+            <param name="parameters"></param>
+            <param name="covar"></param>
+            <param name="paramsize"></param>
+            <param name="info"></param>
+            <param name="ParamArray"></param>
+            <param name="chisquarearray"></param>
+            <param name="paramarraysize"></param>
+        </member>
+        <member name="T:ZedGraphSample.Resources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:ZedGraphSample.Resources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:ZedGraphSample.Resources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:ZedGraphSample.Resources.genf">
+            <summary>
+              Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+            </summary>
+        </member>
+    </members>
+</doc>

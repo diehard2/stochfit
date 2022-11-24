@@ -1,0 +1,14 @@
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.filters
+*.vcxproj.user
+
+
+.vs/
+bin/
+build/
+packages/
+obj/

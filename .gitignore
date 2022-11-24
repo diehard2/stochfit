@@ -5,7 +5,7 @@
 *.sln.docstates
 *.vcxproj.filters
 *.vcxproj.user
-
+*.testrunconfig
 
 .vs/
 bin/

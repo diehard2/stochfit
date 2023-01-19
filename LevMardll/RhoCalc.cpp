@@ -116,13 +116,7 @@ void RhoCalc::Rhocalculate(double SubRough, double Zoffset)
 		rougharray[i] = roughness*sqrt2;
 	}
 	
-	// This allows OpenMP to choose the appropriate number of threads
-	// The algorithm should now scale with the number of processors in a system
-	#ifdef _OPENMP
-		omp_set_dynamic(TRUE);	
-	#endif
-
-	#pragma omp parallel for schedule(guided)
+	#pragma omp parallel for /*schedule(guided)*/
 	for(int j = 0; j < Zlength;j++)
 	{
 		double summ = SuperphaseSLD;

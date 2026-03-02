@@ -75,7 +75,8 @@ public:
     void Init(ReflSettings* InitStruct);
 	void SetupRef(ReflSettings* InitStruct);
 	double Objective(CEDP* EDP);
-    void ParamsRF(CEDP* EDP, wstring reflfile);
+    void ParamsRF(CEDP* EDP, string reflfile);
+	void CalculateReflectivity(CEDP* EDP);
 
 	//Get/Let Functions
 	double GetWaveConstant();

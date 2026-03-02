@@ -6,11 +6,12 @@ include(cmake/Vcpkg.cmake)
 project(StochFit VERSION 1.0.0 LANGUAGES C CXX)
 
 # ── Global settings ────────────────────────────────────────────────────────────
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Warnings
 if(MSVC)
@@ -33,7 +34,12 @@ add_library(stochfit_core STATIC
     src/stochfitdll/StochFitDll.cpp
     src/stochfitdll/StochFitHarness.cpp
 )
-target_include_directories(stochfit_core PUBLIC include)
+target_include_directories(stochfit_core
+    PUBLIC include
+    PRIVATE include/stochfit/stochfitdll)
+set_target_properties(stochfit_core PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(stochfit_core PUBLIC OpenMP::OpenMP_CXX)
 endif()
@@ -50,7 +56,9 @@ add_library(levmar STATIC
     src/levmar/misc.c
 )
 target_compile_definitions(levmar PRIVATE HAVE_LAPACK)
-target_include_directories(levmar PUBLIC include)
+target_include_directories(levmar
+    PUBLIC include
+    PRIVATE include/stochfit/levmar)
 target_link_libraries(levmar PRIVATE ${LAPACK_LIBRARIES})
 
 # ── levmardll (static lib) ────────────────────────────────────────────────────
@@ -60,17 +68,58 @@ add_library(levmardll STATIC
     src/levmardll/LevMardll.cpp
     src/levmardll/ReflCalc.cpp
     src/levmardll/RhoCalc.cpp
-    src/levmardll/mersenne.cpp
 )
-target_include_directories(levmardll PUBLIC include)
+target_include_directories(levmardll
+    PUBLIC include
+    PRIVATE include/stochfit/levmardll include/stochfit/levmar)
+set_target_properties(levmardll PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON)
 target_link_libraries(levmardll PUBLIC stochfit_core levmar)
 
 # ── mirefl (console executable) ───────────────────────────────────────────────
 add_executable(mirefl
-    src/mirefl/CEDP.cpp
     src/mirefl/MIRefl.cpp
-    src/mirefl/ReflCalctest.cpp
 )
-# src/mirefl/ has private headers (MDParamVec.h, targetver.h)
-target_include_directories(mirefl PRIVATE src/mirefl include)
+# CEDP and CReflCalc come from stochfit_core (which transitively brings OpenMP).
+# src/mirefl is on the include path for MDParamVec.h / targetver.h.
+# include/stochfit/stochfitdll resolves the bare "CEDP.h" / "ReflCalc.h" includes.
+target_include_directories(mirefl PRIVATE src/mirefl include include/stochfit/stochfitdll)
 target_link_libraries(mirefl PRIVATE stochfit_core)
+
+# ── Shared library shims ───────────────────────────────────────────────────────
+add_library(stochfit_shared SHARED src/shim/stochfit_shim.cpp)
+set_target_properties(stochfit_shared PROPERTIES
+    OUTPUT_NAME stochfit
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON)
+target_include_directories(stochfit_shared PRIVATE include)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_options(stochfit_shared PRIVATE
+        -Wl,--whole-archive $<TARGET_FILE:stochfit_core> -Wl,--no-whole-archive)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    target_link_options(stochfit_shared PRIVATE
+        -Wl,-force_load,$<TARGET_FILE:stochfit_core>)
+elseif(MSVC)
+    target_link_options(stochfit_shared PRIVATE
+        /WHOLEARCHIVE:$<TARGET_FILE:stochfit_core>)
+endif()
+target_link_libraries(stochfit_shared PRIVATE stochfit_core)
+
+add_library(levmardll_shared SHARED src/shim/levmardll_shim.cpp)
+set_target_properties(levmardll_shared PROPERTIES
+    OUTPUT_NAME levmardll
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON)
+target_include_directories(levmardll_shared PRIVATE include)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_options(levmardll_shared PRIVATE
+        -Wl,--whole-archive $<TARGET_FILE:levmardll> -Wl,--no-whole-archive)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    target_link_options(levmardll_shared PRIVATE
+        -Wl,-force_load,$<TARGET_FILE:levmardll>)
+elseif(MSVC)
+    target_link_options(levmardll_shared PRIVATE
+        /WHOLEARCHIVE:$<TARGET_FILE:levmardll>)
+endif()
+target_link_libraries(levmardll_shared PRIVATE levmardll)

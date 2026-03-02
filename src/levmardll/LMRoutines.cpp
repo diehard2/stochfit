@@ -18,11 +18,11 @@
  *
  */
 
-#include "stdafx.h"
+#include <stochfit/common/platform.h>
 #include "LevMardll.h"
 #include "lm.h"
 
-extern "C" LEVMARDLL_API int dlevmardif(
+extern "C" EXPORT int dlevmardif(
       void (*func)(double *p, double *hx, int m, int n, void *adata),
       double *p, double *x, int m, int n, int itmax, double *opts,
       double *info, double *work, double *covar, double *adata)
@@ -31,7 +31,7 @@ extern "C" LEVMARDLL_API int dlevmardif(
 	return ret;
 }
 
-extern "C" LEVMARDLL_API int dlevmarder(
+extern "C" EXPORT int dlevmarder(
       void (*func)(double *p, double *hx, int m, int n, void *adata),
       void (*jacf)(double *p, double *j, int m, int n, void *adata),
       double *p, double *x, int m, int n, int itmax, double *opts,
@@ -42,7 +42,7 @@ extern "C" LEVMARDLL_API int dlevmarder(
 }
 
 /* box-constrained minimization */
-extern "C" LEVMARDLL_API int dlevmar_bcder(
+extern "C" EXPORT int dlevmar_bcder(
        void (*func)(double *p, double *hx, int m, int n, void *adata),
        void (*jacf)(double *p, double *j, int m, int n, void *adata),  
        double *p, double *x, int m, int n, double *lb, double *ub,
@@ -52,7 +52,7 @@ extern "C" LEVMARDLL_API int dlevmar_bcder(
 	return ret;
 }
 
-extern "C" LEVMARDLL_API int dlevmar_bcdif(
+extern "C" EXPORT int dlevmar_bcdif(
        void (*func)(double *p, double *hx, int m, int n, void *adata),
        double *p, double *x, int m, int n, double *lb, double *ub,
        int itmax, double *opts, double *info, double *work, double *covar, double *adata)
@@ -64,7 +64,7 @@ extern "C" LEVMARDLL_API int dlevmar_bcdif(
 //Need LAPACK for compilation
 /* linear equation constrained minimization */
 
-extern "C" LEVMARDLL_API int dlevmar_lecder(
+extern "C" EXPORT int dlevmar_lecder(
       void (*func)(double *p, double *hx, int m, int n, void *adata),
       void (*jacf)(double *p, double *j, int m, int n, void *adata),
       double *p, double *x, int m, int n, double *A, double *b, int k,
@@ -74,7 +74,7 @@ extern "C" LEVMARDLL_API int dlevmar_lecder(
 	return -1;
 }
 
-extern "C" LEVMARDLL_API int dlevmar_lecdif(
+extern "C" EXPORT int dlevmar_lecdif(
       void (*func)(double *p, double *hx, int m, int n, void *adata),
       double *p, double *x, int m, int n, double *A, double *b, int k,
       int itmax, double *opts, double *info, double *work, double *covar, double *adata)
@@ -87,7 +87,7 @@ extern "C" LEVMARDLL_API int dlevmar_lecdif(
 
 /* single precision LM, with & without jacobian */
 /* unconstrained minimization */
-extern "C" LEVMARDLL_API int slevmarder(
+extern "C" EXPORT int slevmarder(
       void (*func)(float *p, float *hx, int m, int n, void *adata),
       void (*jacf)(float *p, float *j, int m, int n, void *adata),
       float *p, float *x, int m, int n, int itmax, float *opts,
@@ -96,7 +96,7 @@ extern "C" LEVMARDLL_API int slevmarder(
 	return 0;
 }
 
-extern "C" LEVMARDLL_API int slevmardif(
+extern "C" EXPORT int slevmardif(
       void (*func)(float *p, float *hx, int m, int n, void *adata),
       float *p, float *x, int m, int n, int itmax, float *opts,
       float *info, float *work, float *covar, double *adata)
@@ -105,7 +105,7 @@ extern "C" LEVMARDLL_API int slevmardif(
 }
 
 /* box-constrained minimization */
-extern "C" LEVMARDLL_API int slevmar_bcder(
+extern "C" EXPORT int slevmar_bcder(
        void (*func)(float *p, float *hx, int m, int n, void *adata),
        void (*jacf)(float *p, float *j, int m, int n, void *adata),  
        float *p, float *x, int m, int n, float *lb, float *ub,
@@ -114,7 +114,7 @@ extern "C" LEVMARDLL_API int slevmar_bcder(
 	return 0;
 }
 
-extern "C" LEVMARDLL_API int slevmar_bcdif(
+extern "C" EXPORT int slevmar_bcdif(
        void (*func)(float *p, float *hx, int m, int n, void *adata),
        float *p, float *x, int m, int n, float *lb, float *ub,
        int itmax, float *opts, float *info, float *work, float *covar, double *adata)
@@ -124,7 +124,7 @@ extern "C" LEVMARDLL_API int slevmar_bcdif(
 
 
 /* linear equation constrained minimization */
-extern "C" LEVMARDLL_API int slevmar_lecder(
+extern "C" EXPORT int slevmar_lecder(
       void (*func)(float *p, float *hx, int m, int n, void *adata),
       void (*jacf)(float *p, float *j, int m, int n, void *adata),
       float *p, float *x, int m, int n, float *A, float *b, int k,
@@ -133,7 +133,7 @@ extern "C" LEVMARDLL_API int slevmar_lecder(
 	return 0;
 }
 
-extern "C" LEVMARDLL_API int slevmar_lecdif(
+extern "C" EXPORT int slevmar_lecdif(
       void (*func)(float *p, float *hx, int m, int n, void *adata),
       float *p, float *x, int m, int n, float *A, float *b, int k,
       int itmax, float *opts, float *info, float *work, float *covar, double *adata)

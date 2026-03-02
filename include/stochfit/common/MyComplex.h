@@ -26,7 +26,7 @@ namespace MyComplexNumber{
 
 	//Complex Class definition
 
-	__declspec(align(16)) struct MyComplex
+	struct alignas(16) MyComplex
 	{
 	  public:
 		double re;

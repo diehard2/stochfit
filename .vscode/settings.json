@@ -1,0 +1,10 @@
+{
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/build",
+    "--header-insertion=never",
+    "--clang-tidy"
+  ],
+  "cmake.configurePreset": "default",
+  "cmake.buildPreset": "default",
+  "C_Cpp.intelliSenseEngine": "disabled"
+}

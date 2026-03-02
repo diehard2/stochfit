@@ -18,11 +18,11 @@
  *
  */
 
-#include "stdafx.h"
+#include <stochfit/common/platform.h>
 #include "SimulatedAnnealing.h"
 #include <iomanip>
 
-SimAnneal::SimAnneal(bool debug, wstring directory): m_bisiterminimum(false), m_dTemp(-1.0),
+SimAnneal::SimAnneal(bool debug, string directory): m_bisiterminimum(false), m_dTemp(-1.0),
 	m_ipoorsolutionacc(0),m_inumberpoorsol(0),m_daverageSTUNval(0), m_sdirectory(directory), m_bdebugging(debug)
 {}
 
@@ -51,8 +51,8 @@ void SimAnneal::Initialize(ReflSettings* InitStruct)
 
 	if(m_bdebugging)
 	{
-		debugfile.open(wstring(m_sdirectory + wstring(L"\\debug.txt")).c_str());
-		rejfile.open(wstring(m_sdirectory + wstring(L"\\rejfile.txt")).c_str());
+		debugfile.open((m_sdirectory + "/debug.txt").c_str());
+		rejfile.open((m_sdirectory + "/rejfile.txt").c_str());
 	}
 	
 	//Initialize the random number generator

@@ -18,14 +18,14 @@
  *
  */
 
-#include "stdafx.h"
+#include <stochfit/common/platform.h>
 #include "SA_Dispatcher.h"
 
 SA_Dispatcher::SA_Dispatcher()
 {
 }
 
-void SA_Dispatcher::Initialize(bool debug, wstring directory)
+void SA_Dispatcher::Initialize(bool debug, string directory)
 {
 		m_cSA = new SimAnneal(debug, directory);
 }

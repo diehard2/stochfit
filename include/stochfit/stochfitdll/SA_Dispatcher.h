@@ -36,7 +36,7 @@ public:
 	SA_Dispatcher();
 	~SA_Dispatcher();
 
-	void Initialize(bool debug, std::wstring directory);
+	void Initialize(bool debug, std::string directory);
 	void Initialize_Subsytem(ReflSettings* InitStruct);
 	void InitializeParameters(ReflSettings* InitStruct, ParamVector* params, CReflCalc* m_cRefl, CEDP* EDP);
 	bool Iteration(ParamVector* params);

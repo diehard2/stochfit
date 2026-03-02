@@ -1,9 +1,10 @@
 #pragma once
+#include <stochfit/common/platform.h>
 
 #pragma pack(push, 8)
 struct BoxReflSettings
 {
-        LPCWSTR Directory;
+        const char* Directory;
         double* Q;
         double* Refl;
         double* ReflError;

@@ -1,35 +1,35 @@
-/* 
+/*
  *	Copyright (C) 2008 Stephen Danauskas
- *	
+ *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2, or (at your option)
  *  any later version.
- *   
+ *
  *  This Program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *  GNU General Public License for more details.
- *   
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with GNU Make; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  *  http://www.gnu.org/copyleft/gpl.html
  *
  */
 
-#include "stdafx.h"
+#include <stochfit/common/platform.h>
 #include "FastReflCalc.h"
 #include "Settings.h"
 
 FastReflcalc::~FastReflcalc()
 {
-	_aligned_free(sinsquaredthetai);
-	_aligned_free(sinthetai);
-	_aligned_free(reflpt);
-	_aligned_free(qspreadreflpt);
-	_aligned_free(qspreadsinsquaredthetai);
-	_aligned_free(qspreadsinthetai);
+	platform_aligned_free(sinsquaredthetai);
+	platform_aligned_free(sinthetai);
+	platform_aligned_free(reflpt);
+	platform_aligned_free(qspreadreflpt);
+	platform_aligned_free(qspreadsinsquaredthetai);
+	platform_aligned_free(qspreadsinthetai);
 	delete[] RhoArray;
 	delete[] SigmaArray;
 	delete[] ImagArray;
@@ -63,23 +63,23 @@ void FastReflcalc::init(BoxReflSettings* InitStruct)
 
 void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
 {
-	
+
 	double* QRange = InitStruct->Q;
 	double* QError = InitStruct->QError;
 
-	sinthetai = (double*)_aligned_malloc(m_idatapoints*sizeof(double),64);
-	sinsquaredthetai = (double*)_aligned_malloc(m_idatapoints*sizeof(double),64);
-	qspreadsinthetai = (double*)_aligned_malloc(m_idatapoints*20*sizeof(double),64);
-	qspreadsinsquaredthetai = (double*)_aligned_malloc(m_idatapoints*20*sizeof(double),64);
-	qspreadreflpt = (double*)_aligned_malloc(m_idatapoints*20*sizeof(double),64);
+	sinthetai = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),64);
+	sinsquaredthetai = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),64);
+	qspreadsinthetai = (double*)platform_aligned_alloc(m_idatapoints*20*sizeof(double),64);
+	qspreadsinsquaredthetai = (double*)platform_aligned_alloc(m_idatapoints*20*sizeof(double),64);
+	qspreadreflpt = (double*)platform_aligned_alloc(m_idatapoints*20*sizeof(double),64);
 
-	reflpt = (double*)_aligned_malloc(m_idatapoints*sizeof(double),64);
+	reflpt = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),64);
 
 	for(int i = 0; i< m_idatapoints; i++)
 	{
 		sinthetai[i] = QRange[i]*lambda/(4.0*M_PI);
 	}
-	
+
 
 	//Calculate the qspread sinthetai's for resolution smearing
 	if(QError != NULL)
@@ -103,7 +103,7 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
 			qspreadsinthetai[13*i+12] = holder*(QRange[i]-0.2*QError[i]);
 
 			if(qspreadsinthetai[13*i+1] < 0.0)
-				MessageBox(NULL, L"Error in QSpread please contact the author - the program will now crash :(", NULL,NULL);
+				platform_error("Error in QSpread please contact the author - the program will now crash :(");
 		}
 	}
 	else
@@ -125,7 +125,7 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
 			qspreadsinthetai[13*i+12] = sinthetai[i]*(1-0.2*m_dQSpread);
 
 			if(qspreadsinthetai[13*i+2] < 0.0)
-				MessageBox(NULL, L"Error in QSpread please contact the author", NULL,NULL);
+				platform_error("Error in QSpread please contact the author");
 		}
 	}
 
@@ -150,9 +150,9 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
 	  reflinst->mkdensityonesigma(par,m);
   else
 	  reflinst->mkdensity(par,m);
-  
+
   reflinst->myrfdispatch();
-  
+
   memset(x, 0, n*sizeof(double));
   for(int i = reflinst->m_icritqoffset; i < n - reflinst->m_ihighqoffset; i++)
   {
@@ -191,7 +191,7 @@ void FastReflcalc::mkdensity(double* p, int plength)
 {
 	//Move our parameters into individual arrays so they're easier to deal with
     double rhofactor = 1e-6*lambda*lambda/(2.*M_PI);
-	
+
 	double sigfake[20];
 	RhoArray[0] = m_dsupsld*rhofactor;
 	LengthArray[0] = 0.0;
@@ -204,9 +204,9 @@ void FastReflcalc::mkdensity(double* p, int plength)
 			SigmaArray[i-1] = 1e-8;
 		else
 			SigmaArray[i-1] = p[3*(i-1)+3];
-		
+
 	}
-	
+
 	RhoArray[boxnumber+1] = subphaseSLD*rhofactor;
 	SigmaArray[boxnumber] = p[0];
 	LengthArray[boxnumber+1] = 0;
@@ -228,8 +228,8 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 
 	int neg = 0;
     for(int i =0; i<datapoints;i++)
-	{	
-		
+	{
+
 		for(int k = 1; k<nl;k++)
 		{
 			if((suprefindexsquared*sinsquaredtheta[i]-2.0*RhoArray[k]+2.0*RhoArray[0])<0)
@@ -248,7 +248,7 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 			offset = i;
 		}
 	}
-	
+
 	MyComplex  lengthmultiplier = -2.0 * MyComplex (0.0,1.0) ;
 	MyComplex  kk[20];
 	double dkk[20];
@@ -266,7 +266,7 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 
 	MyComplex  doublenk[20];
 	MyComplex  lengthcalc[20];
-	
+
 
 	//Move some calcs out of the loop
 	for(int i = 0; i<nl;i++)
@@ -280,7 +280,7 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 	{
 		int nlminone = nl-1;
 		kk[0] = k0*suprefindex* sintheta[l];
-	
+
 		//Workout the wavevector k
 		for(int i = 1; i<nl;i++)
 		{
@@ -298,14 +298,14 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 		{
 			Qj[i] = compexp(sigmacalc[i]*kk[i]*kk[i+1]);
 		}
-		
+
 		//Make the Fresnel coefficients
 		for(int i = 0; i <nlminone;i++)
 		{
 			rj[i] =Qj[i]* (kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
 		}
-		
-		
+
+
 		for(int i = nl-2; i>=0;i--)
 		{
 			Rj[i] = ak[i]*(Rj[i+1]+rj[i])/(Rj[i+1]*rj[i]+1.0);
@@ -317,16 +317,16 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 	{
 		//Leave for vectorization
 		int nlminone = nl-1;
-		
+
 		//Boundary conditions
 		dkk[0] = k0*suprefindex*sintheta[l];
-	
+
 		//Workout the wavevector k
 		for(int i = 1; i<nl;i++)
 		{
 			dkk[i] = k0 *sqrt(suprefindexsquared * sinsquaredtheta[l]+ doublenk[i].re - doublenk[0].re);
-			
-		}	
+
+		}
 
 		//Make the aj
 		for(int i = 1; i<nlminone;i++)
@@ -340,14 +340,14 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 		{
 			dQj[i] = exp(sigmacalc[i]*dkk[i]*dkk[i+1]);
 		}
-		
+
 		//Make the Fresnel coefficients
 		for(int i = 0; i < nlminone;i++)
 		{
 			drj[i] =dQj[i]* (dkk[i]-dkk[i+1])/(dkk[i]+dkk[i+1]);
 		}
-	
-		
+
+
 		for(int i = nl-2; i>=0;i--)
 		{
 			Rj[i] = ak[i]*(Rj[i+1]+drj[i])/(Rj[i+1]*drj[i]+1.0);
@@ -357,20 +357,10 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 		refl[l] *= refl[l];
 
 	}
-}   
+}
 
 void FastReflcalc::Rhocalculate(double Zoffset,double* ZIncrement, double* LengthArray, double* RhoArray, double* SigmaArray, double* nk, double* nkb, int loopcounter)
 {
-	//The code for this section is based on the electron density calculation
-	//in Motofit (www.sourceforge.net/motofit). It is a standard method of calculating the
-	//electron density profile. We treat the profile as having a user defined number of boxes
-	//The last 30% of the curve will converge to have rho/rhoinf = 1.0. Currently, it is only
-	//useful for the air-lipid-substrate interfaces. In order to allow for a substrate-lipid-substrate
-	//model, set the superphaseSLD variable. Currently, the absorbance is not allowed to vary, however this can
-	//be changed by linking it to the density genome. For lipid and lipid protein films, the absorbance is negligible
-	//For films with large roughnesses, we allow the roughness of the air-film interface to vary
-
-	
 	int refllayers = boxnumber;
 	double SuperphaseSLD = RhoArray[0];
 	double deltarho = 0;
@@ -381,12 +371,12 @@ void FastReflcalc::Rhocalculate(double Zoffset,double* ZIncrement, double* Lengt
 
 	//Create arrays so we don't have to redo this calculation for every data point
 
-	double* distarray = (double*)_aligned_malloc((refllayers+1)*sizeof(double),64);
-	double* rhoarray = (double*)_aligned_malloc((refllayers+1)*sizeof(double),64);
-	double* rougharray = (double*)_aligned_malloc((refllayers+1)*sizeof(double),64);
+	double* distarray = (double*)platform_aligned_alloc((refllayers+1)*sizeof(double),64);
+	double* rhoarray = (double*)platform_aligned_alloc((refllayers+1)*sizeof(double),64);
+	double* rougharray = (double*)platform_aligned_alloc((refllayers+1)*sizeof(double),64);
 
 	//Calculate the portions of the e-density equation that don't need to be repeated
-	
+
 	for (int i = 0; i <= boxnumber; i++)
     {
           if (i == 0)
@@ -414,40 +404,40 @@ void FastReflcalc::Rhocalculate(double Zoffset,double* ZIncrement, double* Lengt
 		rhoarray[i] = deltarho;
 		rougharray[i] = roughness;
 	}
-	
+
 	double sqrt2 = sqrt(2.0);
-	
+
 	// This allows OpenMP to choose the appropriate number of threads
 	// The algorithm should now scale with the number of processors in a system
 
 	omp_set_num_threads(omp_get_num_threads());
-	
+
 	#pragma omp parallel for schedule(guided)
 	for(int j = 0; j < loopcounter;j++)
 	{
 		double summ = RhoArray[0];
 		double bsumm = RhoArray[0];
-		
+
 		for (int i = 0; i <= boxnumber; i++)
         {
 			summ += (rhoarray[i] / 2.0) * (1.0 + erf((ZIncrement[j] - distarray[i]-Zoffset) / (rougharray[i] * sqrt2)));
-		}	
-	
+		}
+
 		for (int i = 0; i <= boxnumber; i++)
         {
 			bsumm += (rhoarray[i] / 2.0) * (1.0 + erf((ZIncrement[j] - distarray[i]-Zoffset) / (1e-22 * sqrt2)));
-		}	
-		
+		}
+
 		nk[j] = summ/SubSLD;
-		
+
 		nkb[j] = bsumm/SubSLD;
 	}
 
 	//Free arrays
 
-	_aligned_free(distarray);
-	_aligned_free(rhoarray);
-	_aligned_free(rougharray);
+	platform_aligned_free(distarray);
+	platform_aligned_free(rhoarray);
+	platform_aligned_free(rougharray);
 }
 
 double FastReflcalc::CalcQc(double dSLD)
@@ -471,7 +461,7 @@ void FastReflcalc::QsmearRf(double* qspreadrefl, double* refl, int datapoints)
 {
 	double calcholder;
 
-	
+
 	for(int i = 0; i < datapoints; i++)
 	{
 		calcholder = 0;

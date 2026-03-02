@@ -18,7 +18,7 @@
  *
  */
 
-#include "stdafx.h"
+#include <stochfit/common/platform.h>
 #include "ParamVector.h"
 #include "ReflCalc.h"
 
@@ -29,28 +29,28 @@
 
 CReflCalc::~CReflCalc()
 {
-		_mm_free(xi);
-		_mm_free(yi);
-		_mm_free(sinthetai);
-		_mm_free(reflpt);
-		_mm_free(dataout);
-		_mm_free(tsinthetai);
-		_mm_free(qarray);
-		_mm_free(sinsquaredthetai);
-		_mm_free(tsinsquaredthetai);
-		_mm_free(eyi);
-		_mm_free(m_ckk);
-		_mm_free(m_dkk);
-		_mm_free(m_cak);
-		_mm_free(m_crj);
-		_mm_free(m_drj);
-		_mm_free(m_cRj);
-		_mm_free(qspreadsinsquaredthetai);
-		_mm_free(qspreadreflpt);
-		_mm_free(qspreadsinthetai);
+		platform_aligned_free(xi);
+		platform_aligned_free(yi);
+		platform_aligned_free(sinthetai);
+		platform_aligned_free(reflpt);
+		platform_aligned_free(dataout);
+		platform_aligned_free(tsinthetai);
+		platform_aligned_free(qarray);
+		platform_aligned_free(sinsquaredthetai);
+		platform_aligned_free(tsinsquaredthetai);
+		platform_aligned_free(eyi);
+		platform_aligned_free(m_ckk);
+		platform_aligned_free(m_dkk);
+		platform_aligned_free(m_cak);
+		platform_aligned_free(m_crj);
+		platform_aligned_free(m_drj);
+		platform_aligned_free(m_cRj);
+		platform_aligned_free(qspreadsinsquaredthetai);
+		platform_aligned_free(qspreadreflpt);
+		platform_aligned_free(qspreadsinthetai);
 
 		if(exi != NULL)
-			_mm_free(exi);
+			platform_aligned_free(exi);
 
 }
 
@@ -91,26 +91,28 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 {
 	//Now create our xi,yi,dyi, and thetai
 	m_idatapoints = InitStruct->QPoints - InitStruct->HighQOffset - InitStruct->CritEdgeOffset;
-	xi = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
-	yi = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
+	xi = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
+	yi = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
 	
 	if(InitStruct->QError != NULL)
-		exi = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
+		exi = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
 	
-	eyi = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
-	sinthetai = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
-	sinsquaredthetai = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
-	qspreadsinthetai = (double*)_mm_malloc(m_idatapoints*13*sizeof(double),16);
-	qspreadsinsquaredthetai = (double*)_mm_malloc(m_idatapoints*13*sizeof(double),16);
-	reflpt = (double*)_mm_malloc(m_idatapoints*sizeof(double),16);
-	qspreadreflpt = (double*)_mm_malloc(m_idatapoints*13*sizeof(double),16);
+	eyi = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
+	sinthetai = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
+	sinsquaredthetai = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
+	qspreadsinthetai = (double*)platform_aligned_alloc(m_idatapoints*13*sizeof(double),16);
+	qspreadsinsquaredthetai = (double*)platform_aligned_alloc(m_idatapoints*13*sizeof(double),16);
+	reflpt = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
+	qspreadreflpt = (double*)platform_aligned_alloc(m_idatapoints*13*sizeof(double),16);
 
 	//and fill them up
 	for(int i = 0; i< m_idatapoints; i++)
 	{
 		xi[i] = InitStruct->Q[i+InitStruct->CritEdgeOffset];
-		yi[i] = InitStruct->Refl[i+InitStruct->CritEdgeOffset];
-		eyi[i] = InitStruct->ReflError[i+InitStruct->CritEdgeOffset];
+		if(InitStruct->Refl != nullptr)
+			yi[i] = InitStruct->Refl[i+InitStruct->CritEdgeOffset];
+		if(InitStruct->ReflError != nullptr)
+			eyi[i] = InitStruct->ReflError[i+InitStruct->CritEdgeOffset];
 		
 		if(InitStruct->QError != NULL)
 			exi[i] = InitStruct->QError[i+InitStruct->CritEdgeOffset];
@@ -145,7 +147,7 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 			qspreadsinthetai[13*i+12] = holder*(qholder-0.2*qerrorholder);
 
 			if(qspreadsinthetai[13*i+1] < 0.0)
-				MessageBox(NULL, L"Error in QSpread please contact the author - the program will now crash :(", NULL,NULL);
+				platform_error("Error in QSpread please contact the author - the program will now crash :(");
 		}
 	}
 	else
@@ -167,7 +169,7 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 			qspreadsinthetai[13*i+12] = sinthetai[i]*(1-0.2*m_dQSpread);
 
 			if(qspreadsinthetai[13*i+1] < 0.0)
-				MessageBox(NULL, L"Error in QSpread please contact the author - the program will now crash :(", NULL,NULL);
+				platform_error("Error in QSpread please contact the author - the program will now crash :(");
 		}
 	}
 
@@ -177,9 +179,9 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
     double dx=(x1-x0)/150.0;
     x1=1.1*x1-0.1*x0;
 	
-	tsinthetai = (double*)_mm_malloc(3000*sizeof(double),16);
-	dataout = (double*)_mm_malloc(3000*sizeof(double),16);
-	qarray = (double*)_mm_malloc(3000*sizeof(double),16);
+	tsinthetai = (double*)platform_aligned_alloc(3000*sizeof(double),16);
+	dataout = (double*)platform_aligned_alloc(3000*sizeof(double),16);
+	qarray = (double*)platform_aligned_alloc(3000*sizeof(double),16);
 	tarraysize = 0;
 
 	int j=0;
@@ -226,7 +228,7 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 	}
 
 	//Calculate the theta's we'll use to make our plotting reflectivity
-	tsinsquaredthetai = (double*)_mm_malloc(tarraysize*sizeof(double),16);
+	tsinsquaredthetai = (double*)platform_aligned_alloc(tarraysize*sizeof(double),16);
 
 	for(int l=0; l<tarraysize; l++)
 	{
@@ -241,7 +243,7 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 
 
 //Write output files
-void CReflCalc::ParamsRF(CEDP* EDP,  wstring reflfile)
+void CReflCalc::ParamsRF(CEDP* EDP,  string reflfile)
 {
 	ofstream reflout(reflfile.c_str());
 	
@@ -821,12 +823,12 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 void CReflCalc::InitializeScratchArrays(int EDPoints)
 {
 	//Create the scratch arrays for the reflectivity calculation
- 	m_ckk = (MyComplex *)_mm_malloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
-	m_dkk = (double*)_mm_malloc(sizeof(double)*EDPoints*m_iuseableprocessors,16);
-	m_cak = (MyComplex *)_mm_malloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
-	m_crj = (MyComplex *)_mm_malloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
-	m_drj = (double*)_mm_malloc(sizeof(double)*EDPoints*m_iuseableprocessors,16);
-	m_cRj = (MyComplex *)_mm_malloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
+ 	m_ckk = (MyComplex *)platform_aligned_alloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
+	m_dkk = (double*)platform_aligned_alloc(sizeof(double)*EDPoints*m_iuseableprocessors,16);
+	m_cak = (MyComplex *)platform_aligned_alloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
+	m_crj = (MyComplex *)platform_aligned_alloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
+	m_drj = (double*)platform_aligned_alloc(sizeof(double)*EDPoints*m_iuseableprocessors,16);
+	m_cRj = (MyComplex *)platform_aligned_alloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
 
 	m_bReflInitialized = TRUE;
 }
@@ -893,4 +895,38 @@ void CReflCalc::GetOffSets(int& HighOffset, int& LowOffset, MyComplex* EDP, int 
 				break;
 		}
 
+}
+
+// Forward calculation without fitting data (used by mirefl and similar tools).
+// Results are stored in reflpt[].
+void CReflCalc::CalculateReflectivity(CEDP* EDP)
+{
+	if(m_bXRonly == true)
+	{
+		if(CheckDensity(EDP) == false)
+			return;
+	}
+
+	if(m_dQSpread < 0.005f || exi == NULL)
+	{
+		if(EDP->Get_UseABS() == false)
+			MyTransparentRF(sinthetai, sinsquaredthetai, m_idatapoints, reflpt, EDP);
+		else
+			MyRF(sinthetai, sinsquaredthetai, m_idatapoints, reflpt, EDP);
+	}
+	else
+	{
+		if(EDP->Get_UseABS())
+			MyTransparentRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
+		else
+			MyRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
+
+		QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
+	}
+
+	if(m_bforcenorm == TRUE)
+		impnorm(reflpt, m_idatapoints, false);
+
+	if(m_bImpNorm == TRUE)
+		impnorm(reflpt, m_idatapoints, true);
 }

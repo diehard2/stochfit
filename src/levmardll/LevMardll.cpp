@@ -1,19 +1,19 @@
-/* 
+/*
  *	Copyright (C) 2008 Stephen Danauskas
- *	
+ *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2, or (at your option)
  *  any later version.
- *   
+ *
  *  This Program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *  GNU General Public License for more details.
- *   
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with GNU Make; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  *  http://www.gnu.org/copyleft/gpl.html
  *
  */
@@ -22,41 +22,24 @@
 // LevMardll.cpp : Defines the entry point for the DLL application.
 //
 
-#include "stdafx.h"
+#include <stochfit/common/platform.h>
 #include "LevMardll.h"
 #include "FastReflCalc.h"
 #include "RhoCalc.h"
 #include "ParameterContainer.h"
-#include "randomc.h"
-#include "settings.h"
+#include <random>
+#include "Settings.h"
+#include "lm.h"
 
-BOOL APIENTRY DllMain( HANDLE hModule, 
-                       DWORD  ul_reason_for_call, 
-                       LPVOID lpReserved
-					 )
+extern "C" EXPORT void Rhofit(BoxReflSettings* InitStruct, double parameters[], double covariance[], int parametersize, double info[])
 {
-	switch (ul_reason_for_call)
-	{
-	case DLL_PROCESS_ATTACH:
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-	case DLL_PROCESS_DETACH:
-		break;
-	}
-    return TRUE;
-}
-
-extern "C" LEVMARDLL_API void Rhofit(BoxReflSettings* InitStruct, double parameters[], double covariance[], int parametersize, double info[])
-{
-	USES_CONVERSION;
-
 	double ChiSquare = 0;
 	double opts[LM_OPTS_SZ];
 	double* xvec = new double[InitStruct->ZLength] ;
 	double *work, *covar;
 
 	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20;
-	opts[4]=-LM_DIFF_DELTA; // relevant only if the finite difference jacobian version is used 
+	opts[4]=-LM_DIFF_DELTA; // relevant only if the finite difference jacobian version is used
 
 	RhoCalc Rho;
 	Rho.init(InitStruct);
@@ -68,20 +51,20 @@ extern "C" LEVMARDLL_API void Rhofit(BoxReflSettings* InitStruct, double paramet
 	work=new double[((LM_DIF_WORKSZ(parametersize, InitStruct->ZLength)+parametersize*InitStruct->ZLength))];
 	covar=work+LM_DIF_WORKSZ(parametersize, InitStruct->ZLength);
 
-	dlevmar_dif(Rho.objective, parameters, xvec,  parametersize,InitStruct->ZLength, 1000, opts, info, work, covar,(void*)(&Rho)); 
-	
+	dlevmar_dif(Rho.objective, parameters, xvec,  parametersize,InitStruct->ZLength, 1000, opts, info, work, covar,(void*)(&Rho));
+
 
 	//Calculate the standard deviations in the parameters
 	for(int i = 0; i< parametersize;i++)
 	{
 		covariance[i] = sqrt(covar[i*(parametersize+1)]);
 	}
-	
+
 	delete xvec;
 	delete work;
 }
 
-extern "C" LEVMARDLL_API void RhoGenerate(BoxReflSettings* InitStruct, double parameters[], int paramsize, double ED[], double BoxED[])
+extern "C" EXPORT void RhoGenerate(BoxReflSettings* InitStruct, double parameters[], int paramsize, double ED[], double BoxED[])
 {
 	RhoCalc Rho;
 	Rho.init(InitStruct);
@@ -96,10 +79,8 @@ extern "C" LEVMARDLL_API void RhoGenerate(BoxReflSettings* InitStruct, double pa
 }
 
 
-extern "C" LEVMARDLL_API void FastReflfit(BoxReflSettings* InitStruct, double params[], double covariance[], int paramsize, double info[])
+extern "C" EXPORT void FastReflfit(BoxReflSettings* InitStruct, double params[], double covariance[], int paramsize, double info[])
 {
-	USES_CONVERSION;
-
 	//Variables
 	double *work, *covar;
 	double ChiSquare = 0;
@@ -108,26 +89,26 @@ extern "C" LEVMARDLL_API void FastReflfit(BoxReflSettings* InitStruct, double pa
 
 	FastReflcalc Refl;
 	Refl.init(InitStruct);
-	
+
 	//Setup the fit
-	//opts[4] is relevant only if the finite difference jacobian version is used 
+	//opts[4] is relevant only if the finite difference jacobian version is used
 	double opts[LM_OPTS_SZ];
-	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20; opts[4]=-LM_DIFF_DELTA; 
-	
+	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20; opts[4]=-LM_DIFF_DELTA;
+
 	//Allocate a dummy array - Our real calculation is done in Refl.objective
 	double* xvec = new double[InitStruct->QPoints] ;
 	memset(xvec, 0, InitStruct->QPoints*sizeof(double));
-	
+
 	//Allocate workspace and our covariance matrix
-	
+
 	work=new double[((LM_DIF_WORKSZ(paramsize, InitStruct->QPoints)+paramsize*InitStruct->QPoints))];
 	covar=work+LM_DIF_WORKSZ(paramsize, InitStruct->QPoints);
 
 	if(InitStruct->UL == NULL)
-		dlevmar_dif(Refl.objective,params, xvec, paramsize,InitStruct->QPoints, 1000, opts, info, work, covar,(void*)(&Refl)); 
+		dlevmar_dif(Refl.objective,params, xvec, paramsize,InitStruct->QPoints, 1000, opts, info, work, covar,(void*)(&Refl));
 	else
-		dlevmar_bc_dif(Refl.objective, params, xvec,  paramsize,InitStruct->QPoints, InitStruct->LL,InitStruct->UL,1000, opts, info, work, covar,(void*)(&Refl)); 
-	
+		dlevmar_bc_dif(Refl.objective, params, xvec,  paramsize,InitStruct->QPoints, InitStruct->LL,InitStruct->UL,1000, opts, info, work, covar,(void*)(&Refl));
+
 	for(int i = 0; i< paramsize;i++)
 	{
 		covariance[i] = sqrt(covar[i*(paramsize+1)]);
@@ -138,7 +119,7 @@ extern "C" LEVMARDLL_API void FastReflfit(BoxReflSettings* InitStruct, double pa
 }
 
 
-extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double parameters[], double covararray[], int paramsize, 
+extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[], double covararray[], int paramsize,
 			double info[], double ParamArray[], double chisquarearray[], int* paramarraysize)
 {
 	FastReflcalc Refl;
@@ -150,8 +131,8 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 	//Setup the fit
 	double opts[LM_OPTS_SZ];
 	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20;
-	opts[4]=-LM_DIFF_DELTA; // relevant only if the finite difference jacobian version is used 
-	
+	opts[4]=-LM_DIFF_DELTA; // relevant only if the finite difference jacobian version is used
+
 	//Allocate a dummy array - Our real calculation is done in Refl.objective
 	double* xvec = new double[InitStruct->QPoints] ;
 	for(int i = 0; i < InitStruct->QPoints; i++)
@@ -175,7 +156,7 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 	{
 		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]))*(log(Refl.reflpt[i])-log(Reflectivity[i]));
 	}
-	
+
 	double tempinfoarray[9];
 	tempinfoarray[1] = bestchisquare;
 	double* tempcovararray = new double[paramsize*paramsize];
@@ -196,7 +177,11 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 
 		//Initialize random number generator
 		int seed = time_seed();
-		CRandomMersenne randgen(time_seed()+omp_get_thread_num());
+		std::mt19937 randgen(time_seed()+omp_get_thread_num());
+		// IRandom(max, min) mirrors the old CRandomMersenne::IRandom(double max, double min) signature
+		auto IRandom = [&](double max, double min) {
+			return std::uniform_real_distribution<double>(min, max)(randgen);
+		};
 
 		ParameterContainer localanswer;
 		double locparameters[20];
@@ -205,7 +190,7 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 		int vecsize = 1000;
 		int veccount = 0;
 		ParameterContainer* vec = (ParameterContainer*)malloc(vecsize*sizeof(ParameterContainer));
-		
+
 		double locinfo[9];
 
 		//Allocate workspace - these will be private to each thread
@@ -216,33 +201,33 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 
 
 		#pragma omp for schedule(runtime)
-		for(int i = 0; i < InitStruct->Iterations;i++) 
+		for(int i = 0; i < InitStruct->Iterations;i++)
 		{
-			locparameters[0] = randgen.IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
+			locparameters[0] = IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
 			for(int k = 0; k< InitStruct->Boxes; k++)
 			{
 				if(InitStruct->OneSigma == TRUE)
 				{
-					locparameters[2*k+1] = randgen.IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
-					locparameters[2*k+2] = randgen.IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
+					locparameters[2*k+1] = IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
+					locparameters[2*k+2] = IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
 				}
 				else
 				{
-					locparameters[3*k+1] = randgen.IRandom(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
-					locparameters[3*k+2] = randgen.IRandom(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
-					locparameters[3*k+3] = randgen.IRandom(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
+					locparameters[3*k+1] = IRandom(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
+					locparameters[3*k+2] = IRandom(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
+					locparameters[3*k+3] = IRandom(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
 				}
 			}
 
 			locparameters[paramsize-1] = origguess[paramsize-1];
-			
-			
+
+
 			if(InitStruct->UL == NULL)
-				dlevmar_dif(locRefl.objective, locparameters, xvec,  paramsize, InitStruct->QPoints, 500, opts, locinfo, work,covar,(void*)(&locRefl)); 
+				dlevmar_dif(locRefl.objective, locparameters, xvec,  paramsize, InitStruct->QPoints, 500, opts, locinfo, work,covar,(void*)(&locRefl));
 			else
 				dlevmar_bc_dif(locRefl.objective, locparameters, xvec, paramsize, InitStruct->QPoints, InitStruct->LL, InitStruct->UL,
-					500, opts, locinfo, work,covar,(void*)(&locRefl)); 
-			
+					500, opts, locinfo, work,covar,(void*)(&locRefl));
+
 			localanswer.SetContainer(locparameters,covar,paramsize,InitStruct->OneSigma,locinfo, parampercs[6]);
 
 			if(locinfo[1] < bestchisquare && localanswer.IsReasonable() == true)
@@ -262,7 +247,7 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 				{
 					if(localanswer == vec[i])
 					{
-						unique = false; 
+						unique = false;
 						i = arraysize;
 					}
 				}
@@ -319,7 +304,7 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 		sort(allsolutions.begin(), allsolutions.end());
 	}
 
-	for(int i = 0; i < allsolutions.size() && i < 1000 && allsolutions.size() > 0; i++)
+	for(int i = 0; i < (int)allsolutions.size() && i < 1000 && allsolutions.size() > 0; i++)
 	{
 		for(int j = 0; j < paramsize; j++)
 		{
@@ -332,14 +317,14 @@ extern "C" LEVMARDLL_API void StochFit(BoxReflSettings* InitStruct, double param
 
 		chisquarearray[i] = (allsolutions.at(i).GetScore());
 	}
-	*paramarraysize = min(allsolutions.size(),999);
+	*paramarraysize = min((int)allsolutions.size(),999);
 }
 
-extern "C" LEVMARDLL_API void FastReflGenerate(BoxReflSettings* InitStruct, double parameters[], int parametersize, double Reflectivity[])
+extern "C" EXPORT void FastReflGenerate(BoxReflSettings* InitStruct, double parameters[], int parametersize, double Reflectivity[])
 {
 	FastReflcalc FastRefl;
 	FastRefl.init(InitStruct);
-	
+
 	if(InitStruct->OneSigma)
 		FastRefl.mkdensityonesigma(parameters, parametersize);
 	else
@@ -353,4 +338,3 @@ extern "C" LEVMARDLL_API void FastReflGenerate(BoxReflSettings* InitStruct, doub
 		Reflectivity[i] = FastRefl.reflpt[i];
 	}
 }
-

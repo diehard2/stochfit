@@ -19,7 +19,7 @@
  */
 
 #pragma once
-#include "stdafx.h"
+#include <stochfit/common/platform.h>
 #include "SettingsStruct.h"
 
 class ParamVector 

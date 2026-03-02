@@ -17,7 +17,8 @@
  *  http://www.gnu.org/copyleft/gpl.html
  *
  */
-#include "stdafx.h"
+#pragma once
+#include <stochfit/common/platform.h>
 
 class ParameterContainer
 {

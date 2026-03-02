@@ -1,9 +1,10 @@
 #pragma once
+#include <stochfit/common/platform.h>
 
 #pragma pack(push, 8)
 struct ReflSettings
 {
-		LPCWSTR Directory;
+		const char* Directory;
         double* Q;
         double* Refl;
         double* ReflError;
@@ -45,15 +46,14 @@ struct ReflSettings
 		int Tempiter;
 		int STUNdeciter;
 		double Gammadec;
-		
+
 		int CritEdgeOffset;
 		int HighQOffset;
 		//Not used
 		int Iterations;
 		int IterationsCompleted;
 		double ChiSquare;
-		LPCWSTR Title;
-		
+		const char* Title;
+
 };
 #pragma pack(pop)
-

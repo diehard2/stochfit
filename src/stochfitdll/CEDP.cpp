@@ -1,10 +1,10 @@
-#include "stdafx.h"
+#include <stochfit/common/platform.h>
 #include "CEDP.h"
 
 CEDP::~CEDP()
 {
-	_mm_free(m_EDP);
-	_mm_free(m_DEDP);
+	platform_aligned_free(m_EDP);
+	platform_aligned_free(m_DEDP);
 }
 
 void CEDP::Init(ReflSettings* InitStruct)
@@ -19,7 +19,7 @@ void CEDP::Init(ReflSettings* InitStruct)
 	//Set the total length of our surface layer - default 40 Angstroms of superphase,
 	//7 extra Angstroms of file, and 40 Angstroms of subphase
 	if(InitStruct->Totallength > 0)
-		m_iLayers = InitStruct->Totallength; 
+		m_iLayers = InitStruct->Totallength;
 	else
         m_iLayers = InitStruct->Leftoffset + InitStruct->FilmLength + FilmSlack + 40;
 
@@ -38,15 +38,15 @@ void CEDP::Init(ReflSettings* InitStruct)
 	}
 
 	//Arrays for the electron density profile and twice the electron density profile
-    m_EDP = (MyComplex*)_mm_malloc(sizeof(MyComplex)*m_iLayers,64);
-    m_DEDP = (MyComplex*)_mm_malloc(sizeof(MyComplex)*m_iLayers,64);
-	m_fEDSpacingArray = (float*)_mm_malloc(m_iLayers*sizeof(float),64);
+    m_EDP = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*m_iLayers,64);
+    m_DEDP = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*m_iLayers,64);
+	m_fEDSpacingArray = (float*)platform_aligned_alloc(m_iLayers*sizeof(float),64);
 
 	//Create scratch arrays for the electron density calculation
-	m_fDistArray = (float*)_mm_malloc((InitStruct->Boxes+2)*sizeof(float),64);
-	m_fRhoArray = (float*)_mm_malloc((InitStruct->Boxes+2)*sizeof(float),64);
-	m_fImagRhoArray = (float*)_mm_malloc((InitStruct->Boxes+2)*sizeof(float),64);
-	
+	m_fDistArray = (float*)platform_aligned_alloc((InitStruct->Boxes+2)*sizeof(float),64);
+	m_fRhoArray = (float*)platform_aligned_alloc((InitStruct->Boxes+2)*sizeof(float),64);
+	m_fImagRhoArray = (float*)platform_aligned_alloc((InitStruct->Boxes+2)*sizeof(float),64);
+
 
 	for(int i = 0; i < m_iLayers; i++)
 	{
@@ -70,7 +70,7 @@ void CEDP::GenerateEDP(ParamVector* g)
 //The code for the ED calculation section is loosely based on the electron density calculation
 //in Motofit (www.sourceforge.net/motofit). It is a standard method of calculating the
 //electron density profile. We treat the profile as having a user defined number of boxes
-//The last 30% or so of the curve will converge to have rho/rhoinf = 1.0. 
+//The last 30% or so of the curve will converge to have rho/rhoinf = 1.0.
 //For lipid and lipid protein films, the absorbance is negligible
 
 
@@ -87,12 +87,12 @@ void CEDP::MakeTranparentEDP(ParamVector* g)
 		roughness = 1e-6;
 
 	roughness = 1.0f/( roughness * sqrt(2.0f));
-	
-	
+
+
 	//Don't delete this, otherwise the reflectivity calculation won't work sometimes
 	m_EDP[0].im = 0.0f;
-	
-	for(int k = 0; k < refllayers; k++)	
+
+	for(int k = 0; k < refllayers; k++)
 	{
 		m_fRhoArray[k] = m_dRho*(g->GetRealparams(k+1)-g->GetRealparams(k))*0.5f;
 	}
@@ -101,7 +101,7 @@ void CEDP::MakeTranparentEDP(ParamVector* g)
 	for(int i = 0; i < reflpoints; i++)
  	{
 		m_EDP[i].re = supersld;
-			
+
 		for(int k = 0; k < refllayers; k++)
 		{
 			dist = (m_fEDSpacingArray[i]-m_fDistArray[k] )*roughness;
@@ -131,14 +131,14 @@ void CEDP::MakeEDP(ParamVector* g)
 		roughness = 1e-6;
 
 	roughness = 1.0f/( roughness * sqrt(2.0f));
-	
+
 	#pragma omp parallel
 	{
 		#pragma omp for
 		for(int k = 0; k < refllayers; k++)
 		{
 			m_fRhoArray[k] = m_dRho*(g->GetRealparams(k+1)-g->GetRealparams(k))/2.0f;
-			
+
 			//Imag calculation
 			if(k == 0)
 			{
@@ -150,7 +150,7 @@ void CEDP::MakeEDP(ParamVector* g)
 			}
 			else
 			{
-				m_fImagRhoArray[k] = (m_dBeta* g->getSurfAbs() * g->GetRealparams(k+1)/g->GetRealparams(refllayers) - 
+				m_fImagRhoArray[k] = (m_dBeta* g->getSurfAbs() * g->GetRealparams(k+1)/g->GetRealparams(refllayers) -
 					(m_dBeta * g->getSurfAbs()* g->GetRealparams(k)/g->GetRealparams(refllayers))/2.0f);
 			}
 		}
@@ -160,8 +160,8 @@ void CEDP::MakeEDP(ParamVector* g)
  		{
 			m_EDP[i].im = m_dBeta;
 			m_EDP[i].re = supersld;
-			
-			
+
+
 			for(int k = 0; k < refllayers; k++)
 			{
 				dist = (m_fEDSpacingArray[i]-m_fDistArray[k] )*roughness;
@@ -177,14 +177,14 @@ void CEDP::MakeEDP(ParamVector* g)
 					m_EDP[i].im += (m_fImagRhoArray[k])*(1.0f+erff(dist));
 				}
 			}
-		
+
 			m_DEDP[i].re = 2.0f*m_EDP[i].re;
 			m_DEDP[i].im = 2.0f*m_EDP[i].im;
 		}
 	}
 }
 
-void CEDP::WriteOutputFile(wstring filename)
+void CEDP::WriteOutputFile(string filename)
 {
 	double z = 0;
 	ofstream rhoout(filename.c_str());
@@ -192,15 +192,15 @@ void CEDP::WriteOutputFile(wstring filename)
 	for(int j = 0; j < m_iLayers; j++)
 	{
 		rhoout << z << ' ' << m_EDP[j].re/m_EDP[m_iLayers-1].re << ' ' ;
-		
+
 		if(m_bUseSurfAbs == TRUE)
 			rhoout << m_EDP[j].im/m_EDP[m_iLayers-1].im;
-		
+
 		rhoout << endl;
 
 		z += m_dDz0;
 	}
-	
+
 	rhoout.close();
 }
 

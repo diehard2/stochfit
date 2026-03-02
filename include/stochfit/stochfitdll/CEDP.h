@@ -8,7 +8,7 @@ private:
 	float* m_fRhoArray;
 	float* m_fImagRhoArray;
 	float* m_fEDSpacingArray;
-	
+
 	double m_dRho;
 	double m_dLambda;
     double m_dDz0;
@@ -18,7 +18,7 @@ private:
 	double m_dWaveConstant;
 
 	int m_iLayers;
-	
+
 	BOOL m_bUseSurfAbs;
 
 	void MakeTranparentEDP(ParamVector* g);
@@ -36,7 +36,7 @@ public:
 	double Get_Dz();
 	float Get_WaveConstant();
 	void Set_FilmAbs(float absorption);
-	void WriteOutputFile(wstring filename);
+	void WriteOutputFile(string filename);
 
 	MyComplex* m_EDP;
 	MyComplex* m_DEDP;

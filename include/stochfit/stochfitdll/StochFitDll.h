@@ -18,24 +18,14 @@
  *
  */
 
-// The following ifdef block is the standard way of creating macros which make exporting 
-// from a DLL simpler. All files within this DLL are compiled with the STOCHFIT_API
-// symbol defined on the command line. this symbol should not be defined on any project
-// that uses this DLL. This way any other project whose source files include this file see 
-// STOCHFIT_API functions as being imported from a DLL, whereas this DLL sees symbols
-// defined with this macro as being exported.
-#ifdef STOCHFIT_EXPORTS
-#define STOCHFIT_API __declspec(dllexport)
-#else
-#define STOCHFIT_API __declspec(dllimport)
-#endif
+#include <stochfit/common/platform.h>
+#include <stochfit/stochfitdll/SettingsStruct.h>
 
-
-extern "C" STOCHFIT_API void Init(ReflSettings* initstruct);
-extern "C" STOCHFIT_API void GenPriority(int priority);
-extern "C" STOCHFIT_API void Start(int iterations);
-extern "C" STOCHFIT_API void Cancel();
-extern "C" STOCHFIT_API int GetData(double ZRange[],double Rho[],double QRange[], double Refl[] ,double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
-extern "C" STOCHFIT_API void ArraySizes(int* RhoSize, int* Reflsize);
-extern "C" STOCHFIT_API bool WarmedUp();
-extern "C" STOCHFIT_API void SAparams(double* lowestenergy, double* temp, int* mode);
+extern "C" EXPORT void Init(ReflSettings* initstruct);
+extern "C" EXPORT void GenPriority(int priority);
+extern "C" EXPORT void Start(int iterations);
+extern "C" EXPORT void Cancel();
+extern "C" EXPORT int GetData(double ZRange[],double Rho[],double QRange[], double Refl[] ,double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
+extern "C" EXPORT void ArraySizes(int* RhoSize, int* Reflsize);
+extern "C" EXPORT bool WarmedUp();
+extern "C" EXPORT void SAparams(double* lowestenergy, double* temp, int* mode);

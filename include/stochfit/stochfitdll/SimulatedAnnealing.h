@@ -34,7 +34,7 @@ class SimAnneal
 		int m_iIteration;
 		int m_iPlattime;
 		long double m_dTemp;
-		wstring m_sdirectory;
+		string m_sdirectory;
 
 		//Variables for tracking acceptance and rejection
 		int m_ipoorsolutionacc;
@@ -52,8 +52,8 @@ class SimAnneal
 		int m_iSTUNfunc;
 		int m_itempiter;
 		double mc_stepsize;
-		wofstream debugfile;
-		wofstream rejfile;
+		ofstream debugfile;
+		ofstream rejfile;
 		std::deque<double> Q;
 		
 		//Functions
@@ -72,7 +72,7 @@ class SimAnneal
 		CEDP* m_cEDP;
 	
 public:
-	SimAnneal(bool debug, std::wstring directory);
+	SimAnneal(bool debug, std::string directory);
 		~SimAnneal();
 		void Initialize(ReflSettings* InitStruct);
 		bool Iteration(ParamVector* params);

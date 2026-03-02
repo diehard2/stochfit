@@ -13,3 +13,6 @@ bin/
 build/
 packages/
 obj/
+
+# CMake / vcpkg (build/ already listed above covers vcpkg inside build/)
+vcpkg_installed/

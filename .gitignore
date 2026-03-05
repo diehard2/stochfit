@@ -20,3 +20,7 @@ vcpkg_installed/
 # Electron GUI — generated artifacts (node_modules must stay next to package.json per npm convention)
 gui/node_modules/
 gui/.vite/
+
+# Runtime output files
+EDP.txt
+refl.txt

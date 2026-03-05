@@ -147,7 +147,7 @@ void StochFit::UpdateFits(int currentiteration)
 			for(int i = 0; i<m_irhocount;i++)
 			{
 				Zinc[i] = i*m_cEDP.Get_Dz();
-				Rho[i] =  m_cEDP.m_EDP[i].re/m_cEDP.m_EDP[m_cEDP.Get_EDPPointCount()-1].re;
+				Rho[i] =  m_cEDP.m_EDP[i].real()/m_cEDP.m_EDP[m_cEDP.Get_EDPPointCount()-1].real();
 			}
 
 			for(int i = 0; i < m_irefldatacount;i++)

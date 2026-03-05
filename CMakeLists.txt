@@ -23,6 +23,8 @@ endif()
 # ── Dependencies ───────────────────────────────────────────────────────────────
 find_package(LAPACK REQUIRED)
 find_package(OpenMP)
+find_package(GTest REQUIRED)
+enable_testing()
 
 # ── stochfit_core (static lib — StochFitdll sources) ──────────────────────────
 add_library(stochfit_core STATIC
@@ -106,6 +108,13 @@ elseif(MSVC)
 endif()
 target_link_libraries(stochfit_shared PRIVATE stochfit_core)
 
+add_executable(stochfit_tests
+    tests/test_reflectivity.cpp)
+target_include_directories(stochfit_tests PRIVATE include include/stochfit/stochfitdll)
+target_link_libraries(stochfit_tests PRIVATE stochfit_core GTest::gtest GTest::gtest_main)
+target_compile_features(stochfit_tests PRIVATE cxx_std_23)
+add_test(NAME stochfit_tests COMMAND stochfit_tests)
+
 add_library(levmardll_shared SHARED src/shim/levmardll_shim.cpp)
 set_target_properties(levmardll_shared PROPERTIES
     OUTPUT_NAME levmardll
@@ -123,3 +132,34 @@ elseif(MSVC)
         /WHOLEARCHIVE:$<TARGET_FILE:levmardll>)
 endif()
 target_link_libraries(levmardll_shared PRIVATE levmardll)
+
+# ── Electron GUI ──────────────────────────────────────────────────────────────
+# cmake --build build            → C++ only (fast, default)
+# cmake --build build --target gui → npm install + forge make → build/electron/
+find_program(NPM npm)
+if(NPM)
+    # Tracked install step: only re-runs when package.json / package-lock.json change
+    add_custom_command(
+        OUTPUT ${CMAKE_SOURCE_DIR}/gui/node_modules/.package-lock.json
+        COMMAND ${NPM} install
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/gui
+        DEPENDS
+            ${CMAKE_SOURCE_DIR}/gui/package.json
+            ${CMAKE_SOURCE_DIR}/gui/package-lock.json
+        COMMENT "Installing npm dependencies"
+        VERBATIM
+    )
+
+    add_custom_target(gui
+        COMMAND ${NPM} run make
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/gui
+        DEPENDS
+            ${CMAKE_SOURCE_DIR}/gui/node_modules/.package-lock.json
+            stochfit_shared
+            levmardll_shared
+        COMMENT "Packaging Electron GUI → build/electron/"
+        VERBATIM
+    )
+else()
+    message(STATUS "npm not found — 'gui' target unavailable")
+endif()

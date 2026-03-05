@@ -70,6 +70,7 @@ class SimAnneal
 		double m_dState1, m_dState2;
 		double TakeStep(ParamVector* params);
 		CEDP* m_cEDP;
+		std::mt19937 m_rng;
 	
 public:
 	SimAnneal(bool debug, std::string directory);

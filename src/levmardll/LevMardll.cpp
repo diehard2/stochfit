@@ -176,8 +176,7 @@ extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[]
 		locRefl.init(InitStruct);
 
 		//Initialize random number generator
-		int seed = time_seed();
-		std::mt19937 randgen(time_seed()+omp_get_thread_num());
+		std::mt19937 randgen(std::random_device{}() + omp_get_thread_num());
 		// IRandom(max, min) mirrors the old CRandomMersenne::IRandom(double max, double min) signature
 		auto IRandom = [&](double max, double min) {
 			return std::uniform_real_distribution<double>(min, max)(randgen);

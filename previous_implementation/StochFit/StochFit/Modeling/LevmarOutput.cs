@@ -18,54 +18,30 @@
  *
  */
 
-#pragma once
+using System.Windows.Forms;
 
-namespace Random{
-
-inline double uniform_deviate ( int seed )
- {
-   return seed * ( 1.0 / ( RAND_MAX + 1.0 ) );
- }
-
-inline unsigned time_seed()
-  {
-    time_t now = time ( 0 );
-    unsigned char *p = (unsigned char *)&now;
-    unsigned seed = 0;
-	size_t i;
-  
-    for ( i = 0; i < sizeof now; i++ )
-      seed = seed * ( UCHAR_MAX + 2U ) + p[i];
- 
-  return seed;
- }
-
-inline int random()
+namespace StochasticModeling
 {
-	return uniform_deviate(rand());
-}
+    /// <summary>
+    /// Simple output window for the least square fitting algorithm
+    /// </summary>
+    public partial class LevmarOutput : Form
+    {
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public LevmarOutput()
+        {
+            InitializeComponent();
+        }
 
-inline  int random( int max, int min)
-  {
-    max++;
-	int r = min + uniform_deviate ( rand() ) * ( max - min );
-	return r;
-  }
-
-inline  int plusminus()
-  {
-	  int r = random(1,0);
-
-	  if(r == 1)
-		  return 1;
-	  else
-		  return -1;
-  }
-
-inline double random(double max, double min)
-  {
-	double r = min + uniform_deviate ( rand() ) * ( max - min );
-	return r;
-
-  }
+        /// <summary>
+        /// Displays the string to the form window
+        /// </summary>
+        /// <param name="display">Formatted output string</param>
+        public void DisplayOutput(string display)
+        {
+            LevMarOut.Text = display;
+        }
+    }
 }

@@ -1,0 +1,10 @@
+xfull data on graphing
+x fields and full control for splitting
+x make sure debugging works
+x gray out unused boxes dynamically
+x check threading in C++ modules for speed - not a problem
+xfull refldata
+xmake sure all files are printed
+xitextsharp update
+xremove fresnel option
+xupdate to 3.5

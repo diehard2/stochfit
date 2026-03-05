@@ -167,7 +167,7 @@ void Reflcalc::Rhocalc(double SubRough, double* LengthArray, double* RhoArray, d
 	double* rougharray = (double*)platform_aligned_alloc((refllayers+1)*sizeof(double),16);
 
 	//Calculate the portions of the e-density equation that don't need to be repeated
-	double SubSLD = nk[nl-1].re;
+	double SubSLD = nk[nl-1].real();
 	for (int i = 0; i <= refllayers; i++)
     {
         if (i == 0)
@@ -218,13 +218,11 @@ void Reflcalc::Rhocalc(double SubRough, double* LengthArray, double* RhoArray, d
 
 		if(SubRough != 1e-16)
 		{
-			nk[j].re = summ;
-			nk[j].im = 0;
+			nk[j] = summ;
 		}
 		else
 		{
-			nkb[j].re = summ;
-			nkb[j].im = 0;
+			nkb[j] = summ;
 		}
 	}
 
@@ -232,8 +230,7 @@ void Reflcalc::Rhocalc(double SubRough, double* LengthArray, double* RhoArray, d
 	#pragma ivdep
 	for(int i = 0; i<reflpoints;i++)
 	{
-		doublenk[i].re = 2.0*nk[i].re;
-		doublenk[i].im = 0;
+		doublenk[i] = 2.0*nk[i].real();
 	}
 
 	//Free arrays
@@ -340,8 +337,6 @@ double Reflcalc::myrf()
 		MyComplex* ak = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*nl,16);
 		MyComplex* rj = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*nl,16);
 		MyComplex* Rj = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*nl,16);
-		MyComplex* calcholder = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*nl,16);
-
 		//In order to vectorize loops, you cannot use global variables
 		int nlminone = nl-1;
 		int numlay =  nl;
@@ -351,7 +346,6 @@ double Reflcalc::myrf()
 
 		double holder;
 		MyComplex cholder;
-		double b,mag,temptheta,sqrtholder,temp2;
 
 		/********Boundary conditions********/
 		//No reflection in the last layer
@@ -362,27 +356,18 @@ double Reflcalc::myrf()
 		//The refractive index for air is 1, so there is no refractive index term for kk[0]
 		kk[0] = k0*sinthetai[l];
 
-		//Workout the wavevector k -> kk[i] = k0 *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
+		//Workout the wavevector k -> kk[i] = k0 *std::sqrt(sinsquaredthetai[l]-2.0*nk[i]);
 
 		for(int i = 1; i<numlay;i++)
 		{
-			kk[i] = k0 * compsqrt(sinsquaredthetai[l]-doublenk[i]);
+			kk[i] = k0 * std::sqrt(sinsquaredthetai[l]-doublenk[i]);
 		}
 
-
-		//Make the ak -> ak[i] = compexp(-1.0*imaginary*kk[i]*dz0/2.0);
+		//Make the ak -> ak[i] = std::exp(-1.0*imaginary*kk[i]*dz0/2.0);
 
 		for(int i = 1; i<nlminone;i++)
 		{
-			calcholder[i].re = kk[i].re*lengthmultiplier.re-kk[i].im*lengthmultiplier.im;
-			calcholder[i].im = kk[i].re*lengthmultiplier.im+kk[i].im*lengthmultiplier.re;
-		}
-
-		for(int i = 1; i<nlminone;i++)
-		{
-			holder = exp(calcholder[i].re);
-			ak[i].re = holder*cos(calcholder[i].im);
-			ak[i].im = holder*sin(calcholder[i].im);
+			ak[i] = std::exp(kk[i] * lengthmultiplier);
 		}
 
 		//Make the Fresnel coefficients -> rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
@@ -403,7 +388,7 @@ double Reflcalc::myrf()
 			}
 
 			//The magnitude of the reflection at layer 0 is the reflectivity of the film
-			holder = compabs(Rj[0]);
+			holder = std::abs(Rj[0]);
 			reflpt[l] = holder*holder;
 		}
 
@@ -411,7 +396,6 @@ double Reflcalc::myrf()
 	platform_aligned_free(ak);
 	platform_aligned_free(rj);
 	platform_aligned_free(Rj);
-	platform_aligned_free(calcholder);
 
   }
 

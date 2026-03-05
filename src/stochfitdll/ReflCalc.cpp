@@ -301,7 +301,7 @@ bool CReflCalc::CheckDensity(CEDP* EDP)
 
 	for(int i = 0; i < EDPoints; i++)
 	{
-		if(tEDP[i].re < 0)
+		if(tEDP[i].real() < 0)
 			return false;
 	}
 
@@ -500,9 +500,9 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 			//The refractive index for air is 1, so there is no refractive index term for kk[0]
 			kk[0] = k0 * indexsup * sintheta[l];
 
-			tempk1 = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[1]+DEDP[0]);
-			tempk2 = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[numlay-1]+DEDP[0]);
-			//Workout the wavevector k -> kk[i] = k0 *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
+			tempk1 = k0 * std::sqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[1]+DEDP[0]);
+			tempk2 = k0 * std::sqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[numlay-1]+DEDP[0]);
+			//Workout the wavevector k -> kk[i] = k0 *std::sqrt(sinsquaredthetai[l]-2.0*nk[i]);
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
 			{
@@ -512,7 +512,7 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 			#pragma ivdep
 			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
-				kk[i] = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[i]+DEDP[0]);
+				kk[i] = k0 * std::sqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[i]+DEDP[0]);
 			}
 
 			#pragma ivdep
@@ -521,10 +521,10 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 				kk[i] = tempk2;
 			}
 
-			//Make the phase factors ak -> ak[i] = compexp(-1.0*imaginary*kk[i]*dz0/2.0);
+			//Make the phase factors ak -> ak[i] = std::exp(-1.0*imaginary*kk[i]*dz0/2.0);
 
-			tempk1 = compexp(lengthmultiplier*kk[1]);
-			tempk2 = compexp(lengthmultiplier*kk[numlay-1]);
+			tempk1 = std::exp(lengthmultiplier*kk[1]);
+			tempk2 = std::exp(lengthmultiplier*kk[numlay-1]);
 
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
@@ -535,7 +535,7 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 			#pragma ivdep
 			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
-				ak[i] = compexp(lengthmultiplier*kk[i]);
+				ak[i] = std::exp(lengthmultiplier*kk[i]);
 			}
 
 			#pragma ivdep
@@ -574,7 +574,7 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 			}
 			
 			//The magnitude of the reflection at layer 0 is the measured reflectivity of the film
-			holder = compabs(Rj[0]);
+			holder = std::abs(Rj[0]);
 			refl[l] = holder*holder;
 		}
 	}
@@ -592,7 +592,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 
 
 	////Calculate some complex constants to keep them out of the loop
-	MyComplex  lengthmultiplier = -2.0f*MyComplex (0.0f,1.0f)*EDP->Get_Dz();
+	MyComplex  lengthmultiplier = -2.0*MyComplex (0.0,1.0)*EDP->Get_Dz();
 	MyComplex  indexsup = 1.0 - DEDP[0]/2.0;
 	MyComplex  indexsupsquared = indexsup * indexsup;
 	int HighOffSet = EDPoints;
@@ -608,7 +608,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 		int neg = 0;
 		for(int k = 0; k<EDPoints;k++)
 		{
-			if((indexsupsquared.re*sinsquaredtheta[i]-DEDP[k].re+DEDP[0].re)< 0.0)
+			if((indexsupsquared.real()*sinsquaredtheta[i]-DEDP[k].real()+DEDP[0].real())< 0.0)
 			{
 				neg -= 1;
 				break;
@@ -656,9 +656,9 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			//The refractive index for air is 1, so there is no refractive index term for kk[0]
 			kk[0] = k0 * indexsup * sintheta[l];
 
-			tempk1 = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[1]+DEDP[0]);
-			tempk2 = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[EDPointsMinOne]+DEDP[0]);
-			//Workout the wavevector k -> kk[i] = k0 *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
+			tempk1 = k0 * std::sqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[1]+DEDP[0]);
+			tempk2 = k0 * std::sqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[EDPointsMinOne]+DEDP[0]);
+			//Workout the wavevector k -> kk[i] = k0 *std::sqrt(sinsquaredthetai[l]-2.0*nk[i]);
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
 			{
@@ -668,7 +668,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			#pragma ivdep
 			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
-				kk[i] = k0 * compsqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[i]+DEDP[0]);
+				kk[i] = k0 * std::sqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[i]+DEDP[0]);
 			}
 
 			#pragma ivdep
@@ -677,10 +677,10 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 				kk[i] = tempk2;
 			}
 
-			//Make the phase factors ak -> ak[i] = compexp(-1.0*imaginary*kk[i]*dz0/2.0);
+			//Make the phase factors ak -> ak[i] = std::exp(-1.0*imaginary*kk[i]*dz0/2.0);
 
-			tempk1 = compexp(lengthmultiplier*kk[1]);
-			tempk2 = compexp(lengthmultiplier*kk[EDPointsMinOne]);
+			tempk1 = std::exp(lengthmultiplier*kk[1]);
+			tempk2 = std::exp(lengthmultiplier*kk[EDPointsMinOne]);
 
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
@@ -691,7 +691,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			#pragma ivdep
 			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
-				ak[i] = compexp(lengthmultiplier*kk[i]);
+				ak[i] = std::exp(lengthmultiplier*kk[i]);
 			}
 
 			#pragma ivdep
@@ -729,7 +729,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			}
 			
 			//The magnitude of the reflection at layer 0 is the measured reflectivity of the film
-			holder = compabs(Rj[0]);
+			holder = std::abs(Rj[0]);
 			refl[l] = holder*holder;
 		}
 
@@ -738,11 +738,11 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 		for(int l = offset; l < datapoints;l++)
 		{
 				//The refractive index for air is 1, so there is no refractive index term for kk[0]
-			dkk[0] = k0 * indexsup.re * sintheta[l];
+			dkk[0] = k0 * indexsup.real() * sintheta[l];
 
-			dtempk1 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-DEDP[1].re+DEDP[0].re);
-			dtempk2 = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-DEDP[EDPointsMinOne].re+DEDP[0].re);
-			//Workout the wavevector k -> kk[i] = k0 *compsqrt(sinsquaredthetai[l]-2.0*nk[i]);
+			dtempk1 = k0 * sqrt(indexsupsquared.real()*sinsquaredtheta[l]-DEDP[1].real()+DEDP[0].real());
+			dtempk2 = k0 * sqrt(indexsupsquared.real()*sinsquaredtheta[l]-DEDP[EDPointsMinOne].real()+DEDP[0].real());
+			//Workout the wavevector k -> kk[i] = k0 *std::sqrt(sinsquaredthetai[l]-2.0*nk[i]);
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
 			{
@@ -752,7 +752,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			#pragma ivdep
 			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
-				dkk[i] = k0 * sqrtf(indexsupsquared.re*sinsquaredtheta[l]-DEDP[i].re+DEDP[0].re);
+				dkk[i] = k0 * sqrt(indexsupsquared.real()*sinsquaredtheta[l]-DEDP[i].real()+DEDP[0].real());
 			}
 
 			#pragma ivdep
@@ -761,10 +761,10 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 				dkk[i] = dtempk2;
 			}
 
-			//Make the phase factors ak -> ak[i] = compexp(-1.0*imaginary*kk[i]*dz0/2.0);
+			//Make the phase factors ak -> ak[i] = std::exp(-1.0*imaginary*kk[i]*dz0/2.0);
 
-			tempk1 = compexp(lengthmultiplier*dkk[1]);
-			tempk2 = compexp(lengthmultiplier*dkk[EDPointsMinOne]);
+			tempk1 = std::exp(lengthmultiplier*dkk[1]);
+			tempk2 = std::exp(lengthmultiplier*dkk[EDPointsMinOne]);
 
 			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
@@ -775,7 +775,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			#pragma ivdep
 			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
-				ak[i] = compexp(lengthmultiplier*dkk[i]);
+				ak[i] = std::exp(lengthmultiplier*dkk[i]);
 			}
 
 			#pragma ivdep
@@ -814,7 +814,7 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			
 			
 			//The magnitude of the reflection at layer 0 is the measured reflectivity of the film
-			holder = compabs(Rj[0]);
+			holder = std::abs(Rj[0]);
 			refl[l] = holder*holder;
 		}
 	}
@@ -881,7 +881,7 @@ void CReflCalc::GetOffSets(int& HighOffset, int& LowOffset, MyComplex* EDP, int 
 		//Find duplicate pts so we don't do the same calculation over and over again
 		for(int i = 0; i < EDPoints; i++)
 		{
-			if(EDP[i].re == EDP[0].re)
+			if(EDP[i].real() == EDP[0].real())
 				LowOffset++;
 			else
 				break;
@@ -889,7 +889,7 @@ void CReflCalc::GetOffSets(int& HighOffset, int& LowOffset, MyComplex* EDP, int 
 
 		for(int i = EDPoints - 1 ; i != 0; i--)
 		{
-			if(EDP[i].re == EDP[EDPoints-1].re)
+			if(EDP[i].real() == EDP[EDPoints-1].real())
 				HighOffset = i;
 			else
 				break;

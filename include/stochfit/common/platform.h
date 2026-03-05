@@ -10,6 +10,7 @@
 #include <cmath>
 #include <ctime>
 #include <climits>
+#include <complex>
 #include <string>
 #include <vector>
 #include <deque>
@@ -20,6 +21,7 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <random>
 
 // ── OpenMP ──────────────────────────────────────────────────────────────────
 #ifdef _OPENMP
@@ -78,9 +80,5 @@ inline void platform_error(const char* msg) { std::cerr << msg << std::endl; }
 // ── Convenience namespaces (matching existing codebase convention) ──────────
 using namespace std;
 
-// ── Project headers ─────────────────────────────────────────────────────────
-#include <stochfit/common/MyComplex.h>
-#include <stochfit/common/random.h>
-
-using namespace MyComplexNumber;
-using namespace Random;
+// ── Complex number type ──────────────────────────────────────────────────────
+using MyComplex = std::complex<double>;

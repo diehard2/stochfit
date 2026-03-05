@@ -56,7 +56,7 @@ void SimAnneal::Initialize(ReflSettings* InitStruct)
 	}
 	
 	//Initialize the random number generator
-	srand(time_seed());
+	m_rng.seed(std::random_device{}());
 }
 
 SimAnneal::~SimAnneal()
@@ -111,7 +111,7 @@ bool SimAnneal::EvaluateSA(double bestval, double curval)
 		m_iTime++;
 	}
 
-	if(random(100.0,0.0) < ProbCalc(deltaE))
+	if(std::uniform_real_distribution<double>(0.0, 100.0)(m_rng) < ProbCalc(deltaE))
 		return true;
 	else 
 		return false;
@@ -219,7 +219,7 @@ bool SimAnneal::EvaluateSTUN(long double bestval,long double curval)
 				m_inumberpoorsol++;
 		}
 
-		if(random(100.0,0.0) < probability)
+		if(std::uniform_real_distribution<double>(0.0, 100.0)(m_rng) < probability)
 		{
 			if(m_bdebugging)
 			{
@@ -343,27 +343,34 @@ double SimAnneal::TakeStep(ParamVector* params)
 		double roughmult = 5.0/3.0;
 		
 		//Pick the box we're going to mutate
-		int ii= random(params->GetInitializationLength()-1,0);
-		int perc = random(100, 1);
+		int ii= std::uniform_int_distribution<int>(0, params->GetInitializationLength()-1)(m_rng);
+		int perc = std::uniform_int_distribution<int>(1, 100)(m_rng);
 		
 	
 		//Only mutate for the actual guessed fuzzy layer length 
 		if(perc > m_isigmasearch + m_inormsearch + m_iabssearch)
 		{
-			params->SetMutatableParameter(ii, random(params->GetMutatableParameter(ii) + mc_stepsize,
-									params->GetMutatableParameter(ii) - mc_stepsize));
+			params->SetMutatableParameter(ii, std::uniform_real_distribution<double>(
+									params->GetMutatableParameter(ii) - mc_stepsize,
+									params->GetMutatableParameter(ii) + mc_stepsize)(m_rng));
 		}
 		else if(perc <= m_isigmasearch)
 		{
-			params->setroughness(random(params->getroughness()*(1+roughmult*mc_stepsize),params->getroughness()*(1-roughmult*mc_stepsize)));
+			params->setroughness(std::uniform_real_distribution<double>(
+				params->getroughness()*(1-roughmult*mc_stepsize),
+				params->getroughness()*(1+roughmult*mc_stepsize))(m_rng));
 		}
 		else if(perc > m_isigmasearch && perc <= m_isigmasearch + m_iabssearch)
 		{
-			params->setSurfAbs(random(params->getSurfAbs()*(1.0+mc_stepsize),params->getSurfAbs()*(1.0-mc_stepsize)));
+			params->setSurfAbs(std::uniform_real_distribution<double>(
+				params->getSurfAbs()*(1.0-mc_stepsize),
+				params->getSurfAbs()*(1.0+mc_stepsize))(m_rng));
 		}
 		else
 		{
-			params->setImpNorm(random(params->getImpNorm()*(1.0+mc_stepsize),params->getImpNorm()*(1.0-mc_stepsize)));
+			params->setImpNorm(std::uniform_real_distribution<double>(
+				params->getImpNorm()*(1.0-mc_stepsize),
+				params->getImpNorm()*(1.0+mc_stepsize))(m_rng));
 			//We have to update the reflectivity generator with the normalization factor, the EDP has no concept of this
 			multi->m_dnormfactor = params->getImpNorm();
 		}

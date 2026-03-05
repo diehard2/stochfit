@@ -284,19 +284,19 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 		//Workout the wavevector k
 		for(int i = 1; i<nl;i++)
 		{
-			kk[i] = k0 *compsqrt(suprefindexsquared * sinsquaredtheta[l]+ doublenk[i] - doublenk[0]);
+			kk[i] = k0 *std::sqrt(suprefindexsquared * sinsquaredtheta[l]+ doublenk[i] - doublenk[0]);
 		}
 
 		//Make the aj
 		for(int i = 1; i<nlminone;i++)
 		{
-			ak[i] = compexp(kk[i]*lengthcalc[i]);
+			ak[i] = std::exp(kk[i]*lengthcalc[i]);
 		}
 
 		//Make the roughness correction term (Nevot-Croce)
 		for(int i = 0; i< nlminone; i++)
 		{
-			Qj[i] = compexp(sigmacalc[i]*kk[i]*kk[i+1]);
+			Qj[i] = std::exp(sigmacalc[i]*kk[i]*kk[i+1]);
 		}
 
 		//Make the Fresnel coefficients
@@ -310,7 +310,7 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 		{
 			Rj[i] = ak[i]*(Rj[i+1]+rj[i])/(Rj[i+1]*rj[i]+1.0);
 		}
-		refl[l] = compabs(Rj[0]);
+		refl[l] = std::abs(Rj[0]);
 		refl[l] *= refl[l];
 	}
 	for(int l = offset+1; l< datapoints ;l++)
@@ -324,14 +324,14 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 		//Workout the wavevector k
 		for(int i = 1; i<nl;i++)
 		{
-			dkk[i] = k0 *sqrt(suprefindexsquared * sinsquaredtheta[l]+ doublenk[i].re - doublenk[0].re);
+			dkk[i] = k0 *sqrt(suprefindexsquared * sinsquaredtheta[l]+ doublenk[i].real() - doublenk[0].real());
 
 		}
 
 		//Make the aj
 		for(int i = 1; i<nlminone;i++)
 		{
-			ak[i] = compexp(lengthcalc[i]*dkk[i]);
+			ak[i] = std::exp(lengthcalc[i]*dkk[i]);
 		}
 
 		//Make the roughness correction term (Nevot-Croce)
@@ -353,7 +353,7 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 			Rj[i] = ak[i]*(Rj[i+1]+drj[i])/(Rj[i+1]*drj[i]+1.0);
 		}
 
-		refl[l] = compabs(Rj[0]);
+		refl[l] = std::abs(Rj[0]);
 		refl[l] *= refl[l];
 
 	}

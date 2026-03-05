@@ -90,7 +90,7 @@ void CEDP::MakeTranparentEDP(ParamVector* g)
 
 
 	//Don't delete this, otherwise the reflectivity calculation won't work sometimes
-	m_EDP[0].im = 0.0f;
+	m_EDP[0].imag(0.0);
 
 	for(int k = 0; k < refllayers; k++)
 	{
@@ -100,20 +100,19 @@ void CEDP::MakeTranparentEDP(ParamVector* g)
 	#pragma omp parallel for private(dist)
 	for(int i = 0; i < reflpoints; i++)
  	{
-		m_EDP[i].re = supersld;
+		m_EDP[i].real(supersld);
 
 		for(int k = 0; k < refllayers; k++)
 		{
 			dist = (m_fEDSpacingArray[i]-m_fDistArray[k] )*roughness;
 
 			if(dist > 6.0f)
-				m_EDP[i].re += (m_fRhoArray[k])*(2.0f);
+				m_EDP[i] += (m_fRhoArray[k])*(2.0f);
 			else if(dist > -6.0f)
-				m_EDP[i].re += (m_fRhoArray[k])*(1.0f+erff(dist));
+				m_EDP[i] += (m_fRhoArray[k])*(1.0f+erff(dist));
 
 			//Make double array for the reflectivity calculation
-			m_DEDP[i].re = 2.0f*m_EDP[i].re;
-			m_DEDP[i].im = 0.0f;
+			m_DEDP[i] = 2.0 * m_EDP[i].real();
 		}
 	}
 }
@@ -158,9 +157,7 @@ void CEDP::MakeEDP(ParamVector* g)
 		#pragma omp for private(dist)
 		for(int i = 0; i < reflpoints; i++)
  		{
-			m_EDP[i].im = m_dBeta;
-			m_EDP[i].re = supersld;
-
+			m_EDP[i] = MyComplex(supersld, m_dBeta);
 
 			for(int k = 0; k < refllayers; k++)
 			{
@@ -168,18 +165,15 @@ void CEDP::MakeEDP(ParamVector* g)
 
 				if(dist > 6)
 				{
-					m_EDP[i].re += (m_fRhoArray[k])*(2.0f);
-					m_EDP[i].im += (m_fImagRhoArray[k])*(2.0f);
+					m_EDP[i] += MyComplex((m_fRhoArray[k])*(2.0f), (m_fImagRhoArray[k])*(2.0f));
 				}
 				else if (dist > -6)
 				{
-					m_EDP[i].re += (m_fRhoArray[k])*(1.0f+erff(dist));
-					m_EDP[i].im += (m_fImagRhoArray[k])*(1.0f+erff(dist));
+					m_EDP[i] += MyComplex((m_fRhoArray[k])*(1.0f+erff(dist)), (m_fImagRhoArray[k])*(1.0f+erff(dist)));
 				}
 			}
 
-			m_DEDP[i].re = 2.0f*m_EDP[i].re;
-			m_DEDP[i].im = 2.0f*m_EDP[i].im;
+			m_DEDP[i] = 2.0 * m_EDP[i];
 		}
 	}
 }
@@ -191,10 +185,10 @@ void CEDP::WriteOutputFile(string filename)
 
 	for(int j = 0; j < m_iLayers; j++)
 	{
-		rhoout << z << ' ' << m_EDP[j].re/m_EDP[m_iLayers-1].re << ' ' ;
+		rhoout << z << ' ' << m_EDP[j].real()/m_EDP[m_iLayers-1].real() << ' ' ;
 
 		if(m_bUseSurfAbs == TRUE)
-			rhoout << m_EDP[j].im/m_EDP[m_iLayers-1].im;
+			rhoout << m_EDP[j].imag()/m_EDP[m_iLayers-1].imag();
 
 		rhoout << endl;
 

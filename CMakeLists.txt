@@ -44,11 +44,9 @@ option(STOCHFIT_USE_CUDA "Enable CUDA GPU acceleration" ON)
 option(STOCHFIT_USE_METAL "Enable Metal GPU acceleration" ON)
 
 if(STOCHFIT_USE_CUDA AND NOT APPLE)
-    include(CheckLanguage)
-    check_language(CUDA)
-    if(CMAKE_CUDA_COMPILER)
+    find_package(CUDAToolkit CONFIG QUIET)
+    if(CUDAToolkit_FOUND)
         enable_language(CUDA)
-        find_package(CUDAToolkit REQUIRED)
         set(STOCHFIT_HAS_CUDA TRUE)
         message(STATUS "CUDA GPU acceleration enabled")
     else()
@@ -205,7 +203,13 @@ target_link_libraries(levmardll_shared PRIVATE levmardll)
 # ── Electron GUI ──────────────────────────────────────────────────────────────
 # cmake --build build            → C++ only (fast, default)
 # cmake --build build --target gui → npm install + forge make → build/electron/
-find_program(NPM npm)
+find_program(NPM npm.cmd npm
+    HINTS
+        "C:/Program Files/nodejs"
+        "C:/Program Files (x86)/nodejs"
+        "/usr/local/bin"
+        "/opt/homebrew/bin"
+    NO_CACHE)
 if(NPM)
     # Tracked install step: only re-runs when package.json / package-lock.json change
     add_custom_command(

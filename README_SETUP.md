@@ -189,26 +189,32 @@ Produces packaged Electron app in `build/electron/` (e.g., `StochFit.app`)
 
 **Requirements:**
 - NVIDIA GPU with compute capability ≥ 7.5 (Turing+: RTX 3050, 4060, 4080, etc.)
-- NVIDIA CUDA Toolkit 11.2+ installed
+- NVIDIA CUDA Toolkit 11.2+ installed on system (required; not installed via vcpkg)
+
+**Important:** The build system does NOT install CUDA for you. You must download and install the CUDA Toolkit separately from NVIDIA.
 
 **Windows:**
 1. Download CUDA Toolkit from https://developer.nvidia.com/cuda-downloads
-2. Run installer (adds to PATH automatically)
-3. Reconfigure: `cmake --preset windows --fresh`
-4. Rebuild: `cmake --build build --parallel`
-
-The build system will auto-detect CUDA and enable GPU path.
+2. Run installer with default options (adds `nvcc` to PATH automatically)
+3. Verify installation: `nvcc --version` (should print version 11.2+)
+4. Reconfigure: `cmake --preset windows --fresh`
+5. Build output should show: `-- CUDA GPU acceleration enabled`
+6. Rebuild: `cmake --build build --parallel`
 
 **Linux:**
-```bash
-# Ubuntu 22.04
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
-sudo dpkg -i cuda-keyring_1.1-1_all.deb
-sudo apt update
-sudo apt install cuda-toolkit
-```
+1. Download CUDA Toolkit from https://developer.nvidia.com/cuda-downloads or use package manager
+   ```bash
+   # Ubuntu 22.04 example:
+   wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+   sudo dpkg -i cuda-keyring_1.1-1_all.deb
+   sudo apt update
+   sudo apt install cuda-toolkit
+   ```
+2. Verify: `nvcc --version`
+3. Reconfigure: `cmake --preset default --fresh`
+4. Rebuild: `cmake --build build --parallel`
 
-Then reconfigure and rebuild.
+If CUDA is not found, CMake will print `CUDA not found — GPU acceleration disabled` and continue with CPU-only build.
 
 ### Metal (macOS)
 

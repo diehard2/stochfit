@@ -6,8 +6,12 @@
       "displayName": "Default (Ninja, build/)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
+      "environment": {
+        "VCPKG_VISUAL_STUDIO_PATH": "C:/Program Files/Microsoft Visual Studio/18/Community"
+      },
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_MAKE_PROGRAM": "${sourceDir}/tools/ninja.exe"
       }
     },
     {

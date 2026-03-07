@@ -13,6 +13,11 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Use static CRT (/MT) to match vcpkg x64-windows-static libraries
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 # Warnings
 if(MSVC)
     add_compile_options(/W3)
@@ -21,10 +26,46 @@ else()
 endif()
 
 # ── Dependencies ───────────────────────────────────────────────────────────────
-find_package(LAPACK REQUIRED)
+# CMake 4.x FindLAPACK changed cheev_ detection; use clapack CONFIG directly on Windows
+if(WIN32 OR (DEFINED VCPKG_TARGET_TRIPLET))
+    find_package(clapack CONFIG REQUIRED)
+    # clapack exports: lapack (STATIC IMPORTED) and f2c (STATIC IMPORTED)
+    # BLAS comes from openblas; use imported targets directly
+    set(LAPACK_LIBRARIES lapack f2c)
+else()
+    find_package(LAPACK REQUIRED)
+endif()
 find_package(OpenMP)
 find_package(GTest REQUIRED)
 enable_testing()
+
+# ── Optional GPU support ──────────────────────────────────────────────────────
+option(STOCHFIT_USE_CUDA "Enable CUDA GPU acceleration" ON)
+option(STOCHFIT_USE_METAL "Enable Metal GPU acceleration" ON)
+
+if(STOCHFIT_USE_CUDA AND NOT APPLE)
+    include(CheckLanguage)
+    check_language(CUDA)
+    if(CMAKE_CUDA_COMPILER)
+        enable_language(CUDA)
+        find_package(CUDAToolkit REQUIRED)
+        set(STOCHFIT_HAS_CUDA TRUE)
+        message(STATUS "CUDA GPU acceleration enabled")
+    else()
+        message(STATUS "CUDA not found — GPU acceleration disabled")
+    endif()
+endif()
+
+if(STOCHFIT_USE_METAL AND APPLE)
+    find_library(METAL_FRAMEWORK Metal)
+    find_library(FOUNDATION_FRAMEWORK Foundation)
+    if(METAL_FRAMEWORK)
+        set(STOCHFIT_HAS_METAL TRUE)
+        message(STATUS "Metal GPU acceleration enabled")
+    else()
+        message(STATUS "Metal not found — GPU acceleration disabled")
+    endif()
+endif()
 
 # ── stochfit_core (static lib — StochFitdll sources) ──────────────────────────
 add_library(stochfit_core STATIC
@@ -38,12 +79,39 @@ add_library(stochfit_core STATIC
 )
 target_include_directories(stochfit_core
     PUBLIC include
-    PRIVATE include/stochfit/stochfitdll)
+    PRIVATE include/stochfit/stochfitdll src/stochfitdll)
 set_target_properties(stochfit_core PROPERTIES
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(stochfit_core PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
+# GPU sources and libraries
+set(GPU_SOURCES
+    src/stochfitdll/gpu/gpu_detect.cpp
+    src/stochfitdll/gpu/gpu_sa_runner.cpp
+)
+if(STOCHFIT_HAS_CUDA)
+    list(APPEND GPU_SOURCES src/stochfitdll/gpu/stochfit_cuda.cu)
+endif()
+if(STOCHFIT_HAS_METAL)
+    list(APPEND GPU_SOURCES src/stochfitdll/gpu/stochfit_metal.mm)
+endif()
+
+if(STOCHFIT_HAS_CUDA OR STOCHFIT_HAS_METAL)
+    target_sources(stochfit_core PRIVATE ${GPU_SOURCES})
+endif()
+
+if(STOCHFIT_HAS_CUDA)
+    target_compile_definitions(stochfit_core PUBLIC STOCHFIT_HAS_CUDA)
+    target_link_libraries(stochfit_core PUBLIC CUDA::cudart)
+    set_source_files_properties(src/stochfitdll/gpu/stochfit_cuda.cu
+        PROPERTIES CUDA_ARCHITECTURES "75;86;89;100")
+endif()
+if(STOCHFIT_HAS_METAL)
+    target_compile_definitions(stochfit_core PUBLIC STOCHFIT_HAS_METAL)
+    target_link_libraries(stochfit_core PUBLIC ${METAL_FRAMEWORK} ${FOUNDATION_FRAMEWORK})
 endif()
 
 # ── levmar (static lib — pure C Lourakis library) ─────────────────────────────
@@ -76,7 +144,8 @@ target_include_directories(levmardll
     PRIVATE include/stochfit/levmardll include/stochfit/levmar)
 set_target_properties(levmardll PROPERTIES
     CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN ON)
+    VISIBILITY_INLINES_HIDDEN ON
+    ARCHIVE_OUTPUT_NAME levmardll_core)
 target_link_libraries(levmardll PUBLIC stochfit_core levmar)
 
 # ── mirefl (console executable) ───────────────────────────────────────────────

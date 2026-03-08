@@ -134,7 +134,6 @@ export function stochInit(settings: ReflSettingsInput): void {
     IterationsCompleted: 0,
     ChiSquare: 0.0,
     UseGpu: settings.useGpu ? 1 : 0,
-    _pad_UseGpu: [0, 0, 0, 0],
     Title: settings.title,
   };
 

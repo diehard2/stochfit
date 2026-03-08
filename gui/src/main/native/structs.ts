@@ -50,6 +50,8 @@ export const ReflSettingsType = koffi.struct('ReflSettings', {
   Iterations: 'int',
   IterationsCompleted: 'int',
   ChiSquare: 'double',
+  UseGpu: 'int',
+  _pad_UseGpu: koffi.array('uint8', 4), // Padding for 8-byte alignment of Title pointer
   Title: 'str',
 });
 

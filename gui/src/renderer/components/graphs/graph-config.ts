@@ -35,15 +35,15 @@ export function baseLayout(overrides: Partial<Layout> = {}): Partial<Layout> {
     showlegend: true,
     legend: { x: 0.5, y: -0.15, xanchor: 'center', orientation: 'h', font: { size: 10 } },
     xaxis: {
-      gridcolor: COLORS.grid,
+      gridcolor: 'rgba(100, 100, 100, 0.15)',
       linecolor: 'transparent',
-      zerolinecolor: COLORS.grid,
+      zerolinecolor: 'transparent',
       tickcolor: '#444',
     },
     yaxis: {
-      gridcolor: COLORS.grid,
+      gridcolor: 'rgba(100, 100, 100, 0.15)',
       linecolor: 'transparent',
-      zerolinecolor: COLORS.grid,
+      zerolinecolor: 'transparent',
       tickcolor: '#444',
     },
     ...overrides,
@@ -58,42 +58,35 @@ export const plotlyConfig: Partial<Config> = {
   toImageButtonOptions: { format: 'svg', width: 1200, height: 800 },
 };
 
-export function reflLayout(): Partial<Layout> {
-  return baseLayout({
+export function reflLayout(overrides: Partial<Layout> = {}): Partial<Layout> {
+  const base = baseLayout();
+  return {
+    ...base,
     xaxis: {
+      ...(base.xaxis as any),
       title: { text: 'Q (Å⁻¹)', font: { size: 12 } },
-      type: 'log',
-      gridcolor: COLORS.grid,
-      linecolor: 'transparent',
-      zerolinecolor: COLORS.grid,
-      tickcolor: '#444',
+      type: 'linear',
     },
     yaxis: {
+      ...(base.yaxis as any),
       title: { text: 'Intensity', font: { size: 12 } },
       type: 'log',
-      gridcolor: COLORS.grid,
-      linecolor: 'transparent',
-      zerolinecolor: COLORS.grid,
-      tickcolor: '#444',
     },
-  });
+    ...overrides,
+  };
 }
 
 export function edpLayout(): Partial<Layout> {
-  return baseLayout({
+  const base = baseLayout();
+  return {
+    ...base,
     xaxis: {
+      ...(base.xaxis as any),
       title: { text: 'Z (Å)', font: { size: 12 } },
-      gridcolor: COLORS.grid,
-      linecolor: 'transparent',
-      zerolinecolor: COLORS.grid,
-      tickcolor: '#444',
     },
     yaxis: {
+      ...(base.yaxis as any),
       title: { text: 'Electron Density (norm.)', font: { size: 12 } },
-      gridcolor: COLORS.grid,
-      linecolor: 'transparent',
-      zerolinecolor: COLORS.grid,
-      tickcolor: '#444',
     },
-  });
+  };
 }

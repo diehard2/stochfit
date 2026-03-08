@@ -74,7 +74,7 @@ let _qErrBuf: unknown = null;
 
 function allocAndEncode(arr: number[]): unknown {
   const buf = koffi.alloc('double', arr.length);
-  koffi.encode(buf, 'double', arr);
+  koffi.encode(buf, 'double', arr, arr.length);
   return buf;
 }
 

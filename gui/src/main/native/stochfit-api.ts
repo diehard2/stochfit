@@ -46,6 +46,7 @@ export interface ReflSettingsInput {
   highQOffset: number;
   iterations: number;
   title: string;
+  useGpu: boolean;
 }
 
 export interface FitData {
@@ -132,6 +133,7 @@ export function stochInit(settings: ReflSettingsInput): void {
     Iterations: settings.iterations,
     IterationsCompleted: 0,
     ChiSquare: 0.0,
+    UseGpu: settings.useGpu ? 1 : 0,
     Title: settings.title,
   };
 
@@ -192,4 +194,8 @@ export function stochSAParams(): SAParams {
   const mode = [0];
   fns.SAparams(lowestEnergy, temp, mode);
   return { lowestEnergy: lowestEnergy[0], temp: temp[0], mode: mode[0] };
+}
+
+export function stochGpuAvailable(): boolean {
+  return Boolean(getStochFns().GpuAvailable());
 }

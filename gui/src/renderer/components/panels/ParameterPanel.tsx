@@ -10,13 +10,15 @@ function Field({
   step,
   tooltip,
   disabled,
+  options,
 }: {
   label: string;
   field: keyof ModelSettings;
-  type?: 'number' | 'checkbox' | 'text';
+  type?: 'number' | 'checkbox' | 'text' | 'select';
   step?: number;
   tooltip?: string;
   disabled?: boolean;
+  options?: { label: string; value: number }[];
 }) {
   const { settings, update } = useSettingsStore();
   const value = settings[field];
@@ -39,6 +41,26 @@ function Field({
             {tooltip}
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (type === 'select') {
+    return (
+      <div className="flex flex-col gap-0.5">
+        <label className="text-xs text-secondary">{label}</label>
+        <select
+          value={String(value)}
+          onChange={(e) => update({ [field]: parseInt(e.target.value) })}
+          disabled={disabled}
+          className={`h-7 px-2 text-xs bg-elevated border border-border rounded-input text-primary focus:outline-none focus:border-accent/50 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          {options?.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </div>
     );
   }
@@ -99,7 +121,17 @@ export function ParameterPanel() {
         <Field label="Force σ" field="forcesig" step={0.1} />
         <Field label="Crit. Edge Offset" field="critEdgeOffset" step={1} />
         <Field label="High-Q Offset" field="highQOffset" step={1} />
-        <Field label="Objective Function" field="objectivefunction" step={1} />
+        <Field
+          label="Objective Function"
+          field="objectivefunction"
+          type="select"
+          options={[
+            { label: 'Log Difference', value: 0 },
+            { label: 'Inverse Difference', value: 1 },
+            { label: 'Log Difference with Errors', value: 2 },
+            { label: 'Inverse Difference with Errors', value: 3 },
+          ]}
+        />
         <Field label="Use Surf. Absorption" field="useSurfAbs" type="checkbox" />
         <Field label="Force Normalization" field="forcenorm" type="checkbox" />
         <Field label="Improved Normalization" field="impnorm" type="checkbox" />
@@ -107,7 +139,16 @@ export function ParameterPanel() {
       </Section>
 
       <Section title="Annealing">
-        <Field label="Algorithm" field="algorithm" step={1} />
+        <Field
+          label="Algorithm"
+          field="algorithm"
+          type="select"
+          options={[
+            { label: 'Greedy', value: 0 },
+            { label: 'Simulated Annealing', value: 1 },
+            { label: 'STUN', value: 2 },
+          ]}
+        />
         <Field label="Initial Temp" field="inittemp" step={0.1} />
         <Field label="Plateau Iterations" field="platiter" step={1} />
         <Field label="Temp. Iterations" field="tempiter" step={1} />

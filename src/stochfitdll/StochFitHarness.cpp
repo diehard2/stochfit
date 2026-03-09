@@ -53,6 +53,13 @@ StochFit::StochFit(ReflSettings* InitStruct)
 
 StochFit::~StochFit()
 {
+	// Stop the worker thread if it's still running
+	if(m_thread.joinable())
+	{
+		m_thread.request_stop();
+		m_thread.join();
+	}
+
 	if(Zinc != NULL)
 	{
 		delete params;

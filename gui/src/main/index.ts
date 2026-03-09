@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, nativeTheme } from 'electron';
 import path from 'path';
 import { registerIpcHandlers } from './ipc-handlers';
 
@@ -17,7 +17,8 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     backgroundColor: '#0A0A0F',
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    titleBarStyle: 'default',
+    frame: true,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -38,6 +39,9 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Force dark theme
+  nativeTheme.themeSource = 'dark';
+
   registerIpcHandlers();
   createWindow();
 

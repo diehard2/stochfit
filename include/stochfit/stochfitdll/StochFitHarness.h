@@ -19,10 +19,21 @@
  */
 
 #pragma once
+#include <memory>
+#include <thread>
 #include "ParamVector.h"
 #include "ReflCalc.h"
 #include "CEDP.h"
 #include "SA_Dispatcher.h"
+
+#if STOCHFIT_HAS_GPU
+class GpuSARunner;
+enum class GpuBackend : int;
+struct GpuSAState;
+struct GpuParams;
+struct GpuMeasurement;
+struct GpuEDPConfig;
+#endif
 
 class StochFit
 {
@@ -41,11 +52,30 @@ class StochFit
 		bool m_bwarmedup;
 
 	private:
-		int Processing();
+		int Processing(std::stop_token stop_tok);
 		void LoadFromFile(string File = string());
 		void WritetoFile(const char* filename);
 		void UpdateFits(int currentiteration);
 	    void Initialize(ReflSettings* InitStruct);
+
+#if STOCHFIT_HAS_GPU
+		int ProcessingGPU(std::stop_token stop_tok);
+		void InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
+		                 GpuMeasurement& meas, GpuEDPConfig& edp_config);
+		std::unique_ptr<GpuSARunner> m_gpuRunner;
+		GpuBackend m_gpuBackend = GpuBackend::None;
+
+		// Float buffers for GPU->host data transfer
+		std::vector<float> m_fMeasSintheta;
+		std::vector<float> m_fMeasSinsq;
+		std::vector<float> m_fMeasQ;
+		std::vector<float> m_fMeasRefl;
+		std::vector<float> m_fMeasErr;
+		std::vector<float> m_fQspreadSin;
+		std::vector<float> m_fQspreadSin2;
+		std::vector<float> m_fEdSpacing;
+		std::vector<float> m_fDistArray;
+#endif
 
 		double* Zinc;
 		double* Qinc;
@@ -75,4 +105,5 @@ class StochFit
 		CReflCalc m_cRefl;
 		CEDP m_cEDP;
 		ParamVector* params;
+		ReflSettings m_initStruct;
 };

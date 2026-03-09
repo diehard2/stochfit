@@ -29,3 +29,4 @@ extern "C" EXPORT int GetData(double ZRange[],double Rho[],double QRange[], doub
 extern "C" EXPORT void ArraySizes(int* RhoSize, int* Reflsize);
 extern "C" EXPORT bool WarmedUp();
 extern "C" EXPORT void SAparams(double* lowestenergy, double* temp, int* mode);
+extern "C" EXPORT bool GpuAvailable();

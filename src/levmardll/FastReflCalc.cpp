@@ -335,7 +335,6 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 		}
 
 		//Make the roughness correction term (Nevot-Croce)
-		#pragma ivdep
 		for(int i = 0; i< nlminone; i++)
 		{
 			dQj[i] = exp(sigmacalc[i]*dkk[i]*dkk[i+1]);

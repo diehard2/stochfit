@@ -8,6 +8,7 @@ import {
   stochArraySizes,
   stochWarmedUp,
   stochSAParams,
+  stochGpuAvailable,
   type ReflSettingsInput,
 } from './native/stochfit-api';
 import {
@@ -48,6 +49,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.STOCH_SA_PARAMS, () => {
     return stochSAParams();
+  });
+
+  ipcMain.handle(IPC.STOCH_GPU_AVAILABLE, () => {
+    return stochGpuAvailable();
   });
 
   // ── LevMar ──────────────────────────────────────────────────────────────

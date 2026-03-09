@@ -110,7 +110,6 @@ void RhoCalc::Rhocalculate(double SubRough, double Zoffset)
 	for(int j = 0; j < Zlength;j++)
 	{
 		double summ = SuperphaseSLD;
-		#pragma ivdep
 		for (int i = 0; i <= boxnumber; i++)
         {
 			summ += (rhoarray[i]) * (1.0 + erf((ZIncrement[j] - distarray[i]-Zoffset) / (rougharray[i])));

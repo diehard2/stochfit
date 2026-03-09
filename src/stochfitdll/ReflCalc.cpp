@@ -503,19 +503,16 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 			tempk1 = k0 * std::sqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[1]+DEDP[0]);
 			tempk2 = k0 * std::sqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[numlay-1]+DEDP[0]);
 			//Workout the wavevector k -> kk[i] = k0 *std::sqrt(sinsquaredthetai[l]-2.0*nk[i]);
-			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
 			{
 				kk[i] = tempk1;
 			}
 
-			#pragma ivdep
 			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
 				kk[i] = k0 * std::sqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[i]+DEDP[0]);
 			}
 
-			#pragma ivdep
 			for(int i = HighOffSet; i < numlay; i++)
 			{
 				kk[i] = tempk2;
@@ -526,39 +523,33 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 			tempk1 = std::exp(lengthmultiplier*kk[1]);
 			tempk2 = std::exp(lengthmultiplier*kk[numlay-1]);
 
-			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
 			{
 				ak[i] = tempk1;
 			}
 
-			#pragma ivdep
 			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
 				ak[i] = std::exp(lengthmultiplier*kk[i]);
 			}
 
-			#pragma ivdep
 			for(int i = HighOffSet; i < numlay-1; i++)
 			{
 				ak[i] = tempk2;
 			}
 
 			//Make the Fresnel coefficients -> rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
-			
-			#pragma ivdep
+
 			for(int i = 0; i <= LowOffset;i++)
 			{
 				rj[i] = zero;
 			}
 
-			#pragma ivdep
 			for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
 				rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
 			}
-			
-			#pragma ivdep
+
 			for(int i = HighOffSet; i < numlay-1; i++)
 			{
 				rj[i] = zero;
@@ -659,20 +650,17 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			tempk1 = k0 * std::sqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[1]+DEDP[0]);
 			tempk2 = k0 * std::sqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[EDPointsMinOne]+DEDP[0]);
 			//Workout the wavevector k -> kk[i] = k0 *std::sqrt(sinsquaredthetai[l]-2.0*nk[i]);
-			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
 			{
 				kk[i] = tempk1;
 			}
 
-			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
 				kk[i] = k0 * std::sqrt(indexsupsquared*sinsquaredtheta[l]-DEDP[i]+DEDP[0]);
 			}
 
-			#pragma ivdep
-			for(int i = HighOffSet; i < EDPoints; i++)
+for(int i = HighOffSet; i < EDPoints; i++)
 			{
 				kk[i] = tempk2;
 			}
@@ -682,40 +670,34 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			tempk1 = std::exp(lengthmultiplier*kk[1]);
 			tempk2 = std::exp(lengthmultiplier*kk[EDPointsMinOne]);
 
-			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
 			{
 				ak[i] = tempk1;
 			}
 
-			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
 				ak[i] = std::exp(lengthmultiplier*kk[i]);
 			}
 
-			#pragma ivdep
-			for(int i = HighOffSet; i < EDPointsMinOne; i++)
+for(int i = HighOffSet; i < EDPointsMinOne; i++)
 			{
 				ak[i] = tempk2;
 			}
 
 			//Make the Fresnel coefficients -> rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
 			
-			#pragma ivdep
-			for(int i = 0; i < LowOffset;i++)
+for(int i = 0; i < LowOffset;i++)
 			{
 				rj[i] = zero;
 			}
 
-			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
 				rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
 			}
 			
-			#pragma ivdep
-			for(int i = HighOffSet; i < EDPointsMinOne; i++)
+for(int i = HighOffSet; i < EDPointsMinOne; i++)
 			{
 				rj[i] = zero;
 			}
@@ -743,20 +725,17 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			dtempk1 = k0 * sqrt(indexsupsquared.real()*sinsquaredtheta[l]-DEDP[1].real()+DEDP[0].real());
 			dtempk2 = k0 * sqrt(indexsupsquared.real()*sinsquaredtheta[l]-DEDP[EDPointsMinOne].real()+DEDP[0].real());
 			//Workout the wavevector k -> kk[i] = k0 *std::sqrt(sinsquaredthetai[l]-2.0*nk[i]);
-			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
 			{
 				dkk[i] = dtempk1;
 			}
 
-			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
 				dkk[i] = k0 * sqrt(indexsupsquared.real()*sinsquaredtheta[l]-DEDP[i].real()+DEDP[0].real());
 			}
 
-			#pragma ivdep
-			for(int i = HighOffSet; i < EDPoints; i++)
+for(int i = HighOffSet; i < EDPoints; i++)
 			{
 				dkk[i] = dtempk2;
 			}
@@ -766,40 +745,34 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 			tempk1 = std::exp(lengthmultiplier*dkk[1]);
 			tempk2 = std::exp(lengthmultiplier*dkk[EDPointsMinOne]);
 
-			#pragma ivdep
 			for(int i = 1; i <= LowOffset;i++)
 			{
 				ak[i] = tempk1;
 			}
 
-			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
 				ak[i] = std::exp(lengthmultiplier*dkk[i]);
 			}
 
-			#pragma ivdep
-			for(int i = HighOffSet; i < EDPointsMinOne; i++)
+for(int i = HighOffSet; i < EDPointsMinOne; i++)
 			{
 				ak[i] = tempk2;
 			}
 
 			//Make the Fresnel coefficients -> rj[i] =(kk[i]-kk[i+1])/(kk[i]+kk[i+1]);
 			
-			#pragma ivdep
-			for(int i = 0; i <= LowOffset;i++)
+for(int i = 0; i <= LowOffset;i++)
 			{
 				drj[i] = 0.0f;
 			}
 
-			#pragma ivdep
-			for(int i = LowOffset+1; i < HighOffSet;i++)
+for(int i = LowOffset+1; i < HighOffSet;i++)
 			{
 				drj[i] =(dkk[i]-dkk[i+1])/(dkk[i]+dkk[i+1]);
 			}
 			
-			#pragma ivdep
-			for(int i = HighOffSet; i < EDPointsMinOne; i++)
+for(int i = HighOffSet; i < EDPointsMinOne; i++)
 			{
 				drj[i] = 0.0f;
 			}
@@ -836,7 +809,6 @@ void CReflCalc::InitializeScratchArrays(int EDPoints)
 void CReflCalc::QsmearRf(double* qspreadreflpt, double* refl, int datapoints)
 {
 	float calcholder;
-	#pragma ivdep
 	for(int i = 0; i < datapoints; i++)
 	{
 		calcholder = 0.0f;

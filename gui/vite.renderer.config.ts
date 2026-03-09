@@ -9,7 +9,7 @@ export default defineConfig({
     postcss: path.join(__dirname, 'postcss.config.js'),
   },
   build: {
-    outDir: path.join(__dirname, '.vite/renderer/main_window'),
+    outDir: path.join(__dirname, '.vite/build/renderer/main_window'),
     emptyOutDir: true,
   },
 });

@@ -6,17 +6,28 @@ import { MakerRpm } from '@electron-forge/maker-rpm';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 // @ts-ignore — type-only import not needed at runtime
 
+const libExt = process.platform === 'win32' ? '.dll' : '.so';
+const libPrefix = process.platform === 'win32' ? '' : 'lib';
+
 const config: ForgeConfig = {
   outDir: '../build/electron',
   packagerConfig: {
-    asar: true,
+    asar: false,
     name: 'StochFit',
     executableName: 'stochfit',
-    extraResource: ['../build/libstochfit.so', '../build/liblevmardll.so'],
+    ignore: [],
+    extraResource: [
+      `../build/bin/${libPrefix}stochfit${libExt}`,
+      `../build/bin/${libPrefix}levmardll${libExt}`,
+    ],
   },
-  rebuildConfig: {},
+  rebuildConfig: {
+    onlyModules: ['koffi'],
+  },
   makers: [
-    new MakerSquirrel({}),
+    new MakerSquirrel({
+      authors: 'StochFit Contributors',
+    }),
     new MakerZIP({}, ['darwin']),
     new MakerRpm({}),
     new MakerDeb({}),

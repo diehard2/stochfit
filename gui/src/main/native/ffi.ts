@@ -8,23 +8,42 @@ import './structs';
 let _stochLib: ReturnType<typeof koffi.load> | null = null;
 let _levmarLib: ReturnType<typeof koffi.load> | null = null;
 
-function libPath(name: string): string {
-  if (app.isPackaged) {
-    return path.join(process.resourcesPath, name);
+function getLibExt(): string {
+  switch (process.platform) {
+    case 'win32':
+      return '.dll';
+    case 'darwin':
+      return '.dylib';
+    default:
+      return '.so';
   }
-  return path.join(__dirname, '../../../../build', name);
+}
+
+function getLibPrefix(): string {
+  return process.platform === 'win32' ? '' : 'lib';
+}
+
+function libPath(name: string): string {
+  const ext = getLibExt();
+  const prefix = getLibPrefix();
+  const fileName = `${prefix}${name}${ext}`;
+
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, fileName);
+  }
+  return path.join(__dirname, '../../../../build/bin', fileName);
 }
 
 export function getStochLib() {
   if (!_stochLib) {
-    _stochLib = koffi.load(libPath('libstochfit.so'));
+    _stochLib = koffi.load(libPath('stochfit'));
   }
   return _stochLib;
 }
 
 export function getLevmarLib() {
   if (!_levmarLib) {
-    _levmarLib = koffi.load(libPath('liblevmardll.so'));
+    _levmarLib = koffi.load(libPath('levmardll'));
   }
   return _levmarLib;
 }
@@ -38,6 +57,7 @@ let _fnGetData: KoffiFn | null = null;
 let _fnArraySizes: KoffiFn | null = null;
 let _fnWarmedUp: KoffiFn | null = null;
 let _fnSAparams: KoffiFn | null = null;
+let _fnGpuAvailable: KoffiFn | null = null;
 
 export function getStochFns() {
   const lib = getStochLib();
@@ -49,6 +69,7 @@ export function getStochFns() {
     _fnArraySizes = lib.func('void ArraySizes(int *RhoSize, int *Reflsize)');
     _fnWarmedUp = lib.func('bool WarmedUp()');
     _fnSAparams = lib.func('void SAparams(double *lowestenergy, double *temp, int *mode)');
+    _fnGpuAvailable = lib.func('bool GpuAvailable()');
   }
   return {
     Init: _fnInit!,
@@ -58,6 +79,7 @@ export function getStochFns() {
     ArraySizes: _fnArraySizes!,
     WarmedUp: _fnWarmedUp!,
     SAparams: _fnSAparams!,
+    GpuAvailable: _fnGpuAvailable!,
   };
 }
 

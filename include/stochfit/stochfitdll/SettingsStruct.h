@@ -53,7 +53,10 @@ struct ReflSettings
 		int Iterations;
 		int IterationsCompleted;
 		double ChiSquare;
-		const char* Title;
+
+	// GPU acceleration control
+	BOOL UseGpu;
+	const char* Title;
 
 };
 #pragma pack(pop)

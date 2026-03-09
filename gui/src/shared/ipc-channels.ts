@@ -7,6 +7,7 @@ export const IPC = {
   STOCH_ARRAY_SIZES: 'stoch:arraySizes',
   STOCH_WARMED_UP: 'stoch:warmedUp',
   STOCH_SA_PARAMS: 'stoch:saParams',
+  STOCH_GPU_AVAILABLE: 'stoch:gpuAvailable',
 
   // LevMar channels
   LM_FAST_REFL_FIT: 'lm:fastReflFit',

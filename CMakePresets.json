@@ -2,22 +2,41 @@
   "version": 3,
   "configurePresets": [
     {
-      "name": "default",
-      "displayName": "Default (Ninja, build/)",
-      "generator": "Ninja",
+      "name": "base",
+      "hidden": true,
       "binaryDir": "${sourceDir}/build",
-      "environment": {
-        "VCPKG_VISUAL_STUDIO_PATH": "C:/Program Files/Microsoft Visual Studio/18/Community"
-      },
+      "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_MAKE_PROGRAM": "${sourceDir}/tools/ninja.exe"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
+      "name": "default",
+      "displayName": "Default Release (Linux/Mac)",
+      "inherits": "base"
+    },
+    {
       "name": "debug",
+      "displayName": "Debug (Linux/Mac)",
       "inherits": "default",
-      "displayName": "Debug (Ninja, build/)",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows",
+      "displayName": "Windows Release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_MAKE_PROGRAM": "${sourceDir}/tools/ninja.exe",
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/MsvcEnvironment.cmake",
+        "VCPKG_APPLOCAL_DEPS": "OFF"
+      }
+    },
+    {
+      "name": "windows-debug",
+      "displayName": "Windows Debug",
+      "inherits": "windows",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
@@ -31,6 +50,14 @@
     {
       "name": "debug",
       "configurePreset": "debug"
+    },
+    {
+      "name": "windows",
+      "configurePreset": "windows"
+    },
+    {
+      "name": "windows-debug",
+      "configurePreset": "windows-debug"
     }
   ]
 }

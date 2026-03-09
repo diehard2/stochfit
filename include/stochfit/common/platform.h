@@ -82,3 +82,10 @@ using namespace std;
 
 // ── Complex number type ──────────────────────────────────────────────────────
 using MyComplex = std::complex<double>;
+
+// ── GPU availability ────────────────────────────────────────────────────────
+#if defined(STOCHFIT_HAS_CUDA) || defined(STOCHFIT_HAS_METAL)
+#  define STOCHFIT_HAS_GPU 1
+#else
+#  define STOCHFIT_HAS_GPU 0
+#endif

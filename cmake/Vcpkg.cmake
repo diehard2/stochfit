@@ -58,10 +58,10 @@ if(NOT _VCPKG_CACHED_VERSION STREQUAL VCPKG_VERSION)
     file(WRITE "${VCPKG_STAMP}" "${VCPKG_VERSION}\n")
 endif()
 
-# Select static triplet per platform
+# Select triplet per platform (dynamic CRT on Windows for better compatibility)
 if(WIN32)
     if(NOT DEFINED VCPKG_TARGET_TRIPLET)
-        set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "vcpkg triplet")
+        set(VCPKG_TARGET_TRIPLET "x64-windows" CACHE STRING "vcpkg triplet")
     endif()
 elseif(APPLE)
     if(NOT DEFINED VCPKG_TARGET_TRIPLET)

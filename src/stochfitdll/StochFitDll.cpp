@@ -22,6 +22,10 @@
 #include "StochFitDll.h"
 #include "StochFitHarness.h"
 
+#if STOCHFIT_HAS_GPU
+#include "gpu/gpu_detect.h"
+#endif
+
 //The global stochfit class pointer
 StochFit* stochfit = NULL;
 
@@ -101,4 +105,13 @@ extern "C" EXPORT void SAparams(double* lowestenergy, double* temp, int* mode)
 		}
 		else
 			return ;
+}
+
+extern "C" EXPORT bool GpuAvailable()
+{
+#if STOCHFIT_HAS_GPU
+	return is_gpu_available();
+#else
+	return false;
+#endif
 }

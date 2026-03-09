@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('api', {
   stochArraySizes: () => ipcRenderer.invoke(IPC.STOCH_ARRAY_SIZES),
   stochWarmedUp: () => ipcRenderer.invoke(IPC.STOCH_WARMED_UP),
   stochSAParams: () => ipcRenderer.invoke(IPC.STOCH_SA_PARAMS),
+  stochGpuAvailable: () => ipcRenderer.invoke(IPC.STOCH_GPU_AVAILABLE),
 
   // LevMar
   lmFastReflFit: (input: BoxReflSettingsInput, params: number[]) =>

@@ -23,4 +23,20 @@ export const FONTS = {
   publication: 'Garamond, Georgia, serif',
 } as const;
 
-export const POLLING_INTERVAL_MS = 5000;
+export const POLLING_INTERVAL_MS = 2000;
+
+// Fresnel normalization helpers
+export function calcQc(subSLD: number, supSLD: number): number {
+  if (subSLD - supSLD > 0) {
+    return 4 * Math.sqrt(Math.PI * (subSLD - supSLD) * 1e-6);
+  }
+  return 0;
+}
+
+export function calcFresnelPoint(Q: number, Qc: number): number {
+  if (Q <= Qc) {
+    return 1;
+  }
+  const term1 = Math.sqrt(1 - Math.pow(Qc / Q, 2));
+  return Math.pow((1 - term1) / (1 + term1), 2);
+}

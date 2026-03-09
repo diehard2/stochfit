@@ -65,6 +65,9 @@ export interface ModelSettings {
   highQOffset: number;
   iterations: number;
   title: string;
+
+  // GPU acceleration
+  useGpu: boolean;
 }
 
 export const DEFAULT_SETTINGS: ModelSettings = {
@@ -105,6 +108,7 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   highQOffset: 0,
   iterations: 5000000,
   title: 'StochFit',
+  useGpu: true,
 };
 
 export interface BoxLMSettings {

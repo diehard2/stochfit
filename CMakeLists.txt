@@ -13,9 +13,17 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Use static CRT (/MT) to match vcpkg x64-windows-static libraries
+# Output all binaries to build/bin
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+# Use dynamic CRT (/MD) for Windows — standard for compatibility with CUDA and other libraries
 if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLLDebug")
+    else()
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+    endif()
 endif()
 
 # Warnings
@@ -44,13 +52,32 @@ option(STOCHFIT_USE_CUDA "Enable CUDA GPU acceleration" ON)
 option(STOCHFIT_USE_METAL "Enable Metal GPU acceleration" ON)
 
 if(STOCHFIT_USE_CUDA AND NOT APPLE)
-    find_package(CUDAToolkit CONFIG QUIET)
+    # CUDA 13.1 maxes out at C++20, so set it before enabling CUDA language
+    set(CMAKE_CUDA_STANDARD 20)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+
+    # Set unsupported compiler flag for MSVC
+    if(MSVC)
+        set(CMAKE_CUDA_FLAGS "-allow-unsupported-compiler" CACHE STRING "CUDA flags")
+    endif()
+
+    # Find CUDA toolkit
+    find_package(CUDAToolkit REQUIRED)
+
     if(CUDAToolkit_FOUND)
-        enable_language(CUDA)
-        set(STOCHFIT_HAS_CUDA TRUE)
-        message(STATUS "CUDA GPU acceleration enabled")
+        # Enable CUDA language
+        include(CheckLanguage)
+        check_language(CUDA)
+        if(CMAKE_CUDA_COMPILER)
+            enable_language(CUDA)
+            set(STOCHFIT_HAS_CUDA TRUE)
+            set(CMAKE_CUDA_RUNTIME_LIBRARY "Static")
+            message(STATUS "CUDA GPU acceleration enabled (CUDA ${CUDAToolkit_VERSION})")
+        else()
+            message(STATUS "CUDA compiler not found — GPU acceleration disabled")
+        endif()
     else()
-        message(STATUS "CUDA not found — GPU acceleration disabled")
+        message(STATUS "CUDA toolkit not found — GPU acceleration disabled")
     endif()
 endif()
 

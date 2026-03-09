@@ -24,3 +24,5 @@ gui/.vite/
 # Runtime output files
 EDP.txt
 refl.txt
+
+.claude/

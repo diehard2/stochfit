@@ -25,9 +25,13 @@
 #include "SimulatedAnnealing.h"
 #include "StochFitHarness.h"
 
+#if STOCHFIT_HAS_GPU
+#include "gpu/gpu_detect.h"
+#include "gpu/gpu_sa_runner.h"
+#endif
+
 StochFit::StochFit(ReflSettings* InitStruct)
 {
-	m_bthreadstop = false;
 	m_bupdated = false;
 	m_bwarmedup = false;
 	m_ipriority = 2;
@@ -39,6 +43,9 @@ StochFit::StochFit(ReflSettings* InitStruct)
     fnrho = m_Directory + "/rho.dat";
 
 	m_SA = new SA_Dispatcher();
+
+	m_initStruct = *InitStruct;
+	m_isearchalgorithm = InitStruct->Algorithm;
 
 	InitializeSA(InitStruct, m_SA);
 	Initialize(InitStruct);
@@ -100,13 +107,38 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 		platform_error("Catastrophic error in SA - please contact the author");
 }
 
-int StochFit::Processing()
+int StochFit::Processing(std::stop_token stop_tok)
 {
+	FILE* log = fopen("C:/Users/Stephen/Code/stochfit/processing.log", "a");
+	fprintf(log, "[StochFit] Processing() started\n");
+	fflush(log);
+
+#if STOCHFIT_HAS_GPU
+	fprintf(log, "[StochFit] Detecting GPU...\n");
+	fflush(log);
+	auto gpu_info = detect_gpu();
+	fprintf(log, "[StochFit] GPU detection done, UseGpu=%d, backend=%d\n", m_initStruct.UseGpu, (int)gpu_info.backend);
+	fflush(log);
+	if (m_initStruct.UseGpu && gpu_info.backend != GpuBackend::None) {
+		fprintf(log, "[StochFit] Using GPU path\n");
+		fflush(log);
+		m_gpuBackend = gpu_info.backend;
+		fclose(log);
+		return ProcessingGPU(stop_tok);
+	}
+#endif
+
+	fprintf(log, "[StochFit] Using CPU path, iterations=%d\n", m_itotaliterations);
+	fflush(log);
 	bool accepted = false;
 
 	//Main loop
-     for(int isteps=0;(isteps < m_itotaliterations) && (m_bthreadstop == false);isteps++)
+     for(int isteps=0;(isteps < m_itotaliterations) && !stop_tok.stop_requested();isteps++)
 	 {
+			if (isteps == 0) {
+				fprintf(log, "[StochFit] Starting iteration loop...\n");
+				fflush(log);
+			}
 			accepted = m_SA->Iteration(params);
 
 			if(accepted || isteps == 0)
@@ -117,7 +149,7 @@ int StochFit::Processing()
 		    UpdateFits(isteps);
 
 			//Write the population file every 5000 iterations
-			if((isteps+1)%5000 == 0 || m_bthreadstop == true || isteps == m_itotaliterations-1)
+			if((isteps+1)%5000 == 0 || isteps == m_itotaliterations-1)
 			{
 				//Write out the population file for the best minimum found so far
 				if(m_isearchalgorithm != 0 && m_SA->Get_IsIterMinimum())
@@ -128,10 +160,243 @@ int StochFit::Processing()
 	 }
 
 	//Update the arrays one last time
+	fprintf(log, "[StochFit] Loop finished, updating arrays\n");
+	fflush(log);
 	UpdateFits(m_icurrentiteration);
-
+	fprintf(log, "[StochFit] Processing() complete\n");
+	fflush(log);
+	fclose(log);
 	return 0;
 }
+
+#if STOCHFIT_HAS_GPU
+void StochFit::InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
+                            GpuMeasurement& meas, GpuEDPConfig& edp_config)
+{
+	// SA state from current SimAnneal
+	memset(&sa_state, 0, sizeof(sa_state));
+	sa_state.temperature = 1.0f / (float)m_SA->Get_Temp();
+	sa_state.best_energy = (float)m_SA->Get_LowestEnergy();
+	sa_state.current_energy = sa_state.best_energy;
+	sa_state.best_solution = sa_state.best_energy;
+	sa_state.slope = (float)m_initStruct.Slope;
+	sa_state.gamma = (float)m_initStruct.Gamma;
+	sa_state.avg_fstun = (float)m_initStruct.Inittemp;
+	sa_state.gammadec = (float)m_initStruct.Gammadec;
+	sa_state.stepsize = (float)m_initStruct.Paramtemp;
+	sa_state.algorithm = m_initStruct.Algorithm;
+	sa_state.iteration = 0;
+	sa_state.plat_time = m_initStruct.Platiter;
+	sa_state.temp_iter = m_initStruct.Tempiter;
+	sa_state.stun_func = m_initStruct.STUNfunc;
+	sa_state.stun_dec_iter = m_initStruct.STUNdeciter;
+	sa_state.adaptive = m_initStruct.Adaptive;
+	sa_state.sigmasearch = m_initStruct.Sigmasearch;
+	sa_state.normsearch = m_initStruct.NormalizationSearchPerc;
+	sa_state.abssearch = m_initStruct.AbsorptionSearchPerc;
+
+	// Params from ParamVector
+	memset(&gpu_params, 0, sizeof(gpu_params));
+	int rps = params->RealparamsSize();
+	gpu_params.real_params_size = rps;
+	gpu_params.num_boxes = params->GetInitializationLength();
+	for (int i = 0; i < rps; i++)
+		gpu_params.sld_values[i] = params->GetRealparams(i);
+	gpu_params.roughness = params->getroughness();
+	gpu_params.surf_abs = params->getSurfAbs();
+	gpu_params.imp_norm = params->getImpNorm();
+	gpu_params.fix_roughness = params->Get_FixedRoughness() ? 1 : 0;
+	gpu_params.use_surf_abs = params->Get_UseSurfAbs() ? 1 : 0;
+	gpu_params.fix_imp_norm = params->Get_FixImpNorm() ? 1 : 0;
+	gpu_params.roughness_low = 0.1f;
+	gpu_params.roughness_high = 8.0f;
+	gpu_params.surfabs_high = 10000.0f;
+	gpu_params.impnorm_high = 10000.0f;
+	gpu_params.param_low = -5.0f;
+	gpu_params.param_high = 5.0f;
+
+	// Measurement data (convert double -> float)
+	int nd = m_cRefl.m_idatapoints;
+	m_fMeasQ.resize(nd);
+	m_fMeasRefl.resize(nd);
+	m_fMeasErr.resize(nd);
+	m_fMeasSintheta.resize(nd);
+	m_fMeasSinsq.resize(nd);
+	for (int i = 0; i < nd; i++) {
+		m_fMeasQ[i] = (float)m_cRefl.xi[i];
+		m_fMeasRefl[i] = (float)m_cRefl.yi[i];
+		m_fMeasErr[i] = (float)m_cRefl.eyi[i];
+		m_fMeasSintheta[i] = (float)m_cRefl.sinthetai[i];
+		m_fMeasSinsq[i] = (float)m_cRefl.sinsquaredthetai[i];
+	}
+
+	bool use_qspread = (m_cRefl.m_dQSpread > 0.0f && m_cRefl.exi != NULL);
+	if (use_qspread) {
+		m_fQspreadSin.resize(nd * 13);
+		m_fQspreadSin2.resize(nd * 13);
+		for (int i = 0; i < nd * 13; i++) {
+			m_fQspreadSin[i] = (float)m_cRefl.qspreadsinthetai[i];
+			m_fQspreadSin2[i] = (float)m_cRefl.qspreadsinsquaredthetai[i];
+		}
+	}
+
+	memset(&meas, 0, sizeof(meas));
+	meas.q_values = m_fMeasQ.data();
+	meas.refl_values = m_fMeasRefl.data();
+	meas.refl_errors = m_fMeasErr.data();
+	meas.sintheta = m_fMeasSintheta.data();
+	meas.sinsquaredtheta = m_fMeasSinsq.data();
+	meas.qspread_sintheta = use_qspread ? m_fQspreadSin.data() : nullptr;
+	meas.qspread_sin2theta = use_qspread ? m_fQspreadSin2.data() : nullptr;
+	meas.num_datapoints = nd;
+	meas.objective_function = m_cRefl.objectivefunction;
+	meas.use_qspread = use_qspread ? 1 : 0;
+	meas.force_norm = m_initStruct.Forcenorm;
+	meas.imp_norm = m_initStruct.Impnorm;
+	meas.xr_only = m_initStruct.XRonly;
+
+	// EDP config
+	int nl = m_cEDP.Get_EDPPointCount();
+	m_fEdSpacing.resize(nl);
+	m_fDistArray.resize(gpu_params.num_boxes + 2);
+
+	// Read from CEDP's internal arrays (they are float already)
+	// We need to access them - use the public Init data
+	for (int i = 0; i < nl; i++)
+		m_fEdSpacing[i] = i * (float)m_cEDP.Get_Dz() - (float)m_initStruct.Leftoffset;
+
+	int FilmSlack = 7;
+	for (int k = 0; k < gpu_params.num_boxes + 2; k++)
+		m_fDistArray[k] = k * ((float)m_initStruct.FilmLength + (float)FilmSlack) / (float)m_initStruct.Boxes;
+
+	float waveConst = m_cEDP.Get_WaveConstant();
+	float lambda = (float)m_initStruct.Wavelength;
+
+	memset(&edp_config, 0, sizeof(edp_config));
+	edp_config.ed_spacing = m_fEdSpacing.data();
+	edp_config.dist_array = m_fDistArray.data();
+	edp_config.rho = (float)(m_initStruct.FilmSLD * 1e-6) * waveConst;
+	edp_config.dz = (float)m_cEDP.Get_Dz();
+	edp_config.k0 = 2.0f * (float)M_PI / lambda;
+	edp_config.num_layers = nl;
+	edp_config.use_abs = m_initStruct.UseSurfAbs;
+	if (m_initStruct.UseSurfAbs) {
+		edp_config.beta = (float)m_initStruct.FilmAbs * waveConst;
+		edp_config.beta_sub = (float)m_initStruct.SubAbs * waveConst;
+		edp_config.beta_sup = (float)m_initStruct.SupAbs * waveConst;
+	}
+}
+
+int StochFit::ProcessingGPU(std::stop_token stop_tok)
+{
+	GpuSAState sa_state;
+	GpuParams gpu_params;
+	GpuMeasurement meas;
+	GpuEDPConfig edp_config;
+	InitGpuData(sa_state, gpu_params, meas, edp_config);
+
+	auto gpu_info = detect_gpu();
+	int num_chains = std::min(gpu_info.max_chains, 64);
+
+	m_gpuRunner = GpuSARunner::create(m_gpuBackend);
+	if (!m_gpuRunner) {
+		// GPU runner creation failed — should not happen if detect_gpu() succeeded
+		return -1;
+	}
+
+	m_gpuRunner->initialize(sa_state, gpu_params, meas, edp_config, num_chains);
+
+	int batch_size = 5000;
+	auto last_update = std::chrono::steady_clock::now();
+	constexpr auto update_interval = std::chrono::seconds(2);
+
+	for (int done = 0; done < m_itotaliterations && !stop_tok.stop_requested(); done += batch_size) {
+		int this_batch = std::min(batch_size, m_itotaliterations - done);
+		m_gpuRunner->run_batch(this_batch);
+		m_icurrentiteration = done + this_batch;
+
+		auto now = std::chrono::steady_clock::now();
+		bool time_for_update = (now - last_update) >= update_interval;
+
+		if (m_bupdated || time_for_update) {
+			GpuResultSummary result = m_gpuRunner->get_result();
+
+			m_dRoughness = (double)result.best_roughness;
+			m_dChiSquare = (double)result.best_chi_square;
+			m_dGoodnessOfFit = (double)result.best_gof;
+
+			// Update EDP arrays for frontend
+			std::vector<float> edp_buf(m_irhocount);
+			m_gpuRunner->get_best_edp(edp_buf.data(), m_irhocount);
+			float edp_last = edp_buf[m_irhocount - 1];
+			for (int i = 0; i < m_irhocount; i++) {
+				Zinc[i] = i * m_cEDP.Get_Dz();
+				Rho[i] = (edp_last != 0.0f) ? (double)(edp_buf[i] / edp_last) : 0.0;
+			}
+
+			// Update reflectivity arrays for frontend
+			int refl_count = m_cRefl.m_idatapoints;
+			std::vector<float> refl_buf(refl_count);
+			m_gpuRunner->get_best_reflectivity(refl_buf.data(), refl_count);
+
+			// For GetData, we need Q values and reflectivity
+			// Use the measurement Q values directly
+			int out_count = std::min(m_irefldatacount, refl_count);
+			for (int i = 0; i < out_count; i++) {
+				Qinc[i] = (double)m_fMeasQ[i];
+				Refl[i] = (double)refl_buf[i];
+			}
+
+			m_bupdated = false;
+			last_update = now;
+
+			// Copy best params back to ParamVector for file writing
+			int rps = params->RealparamsSize();
+			for (int i = 0; i < rps && i < (int)(GPU_MAX_BOXES + 2); i++) {
+				if (i == 0)
+					params->SetSupphase(result.best_params[i]);
+				else if (i == rps - 1)
+					params->SetSubphase(result.best_params[i]);
+				else
+					params->SetMutatableParameter(i - 1, result.best_params[i]);
+			}
+			params->setroughness(result.best_roughness);
+			if (params->Get_UseSurfAbs())
+				params->setSurfAbs(result.best_surf_abs);
+			if (params->Get_FixImpNorm())
+				params->setImpNorm(result.best_imp_norm);
+
+			m_SA->Set_Temp(1.0 / (double)result.best_temperature);
+			m_SA->Set_AveragefSTUN((double)result.best_avg_fstun);
+
+			WritetoFile(fnpop.c_str());
+		}
+	}
+
+	// Final update
+	GpuResultSummary result = m_gpuRunner->get_result();
+	m_dRoughness = (double)result.best_roughness;
+	m_dChiSquare = (double)result.best_chi_square;
+	m_dGoodnessOfFit = (double)result.best_gof;
+
+	// Copy final params back
+	int rps = params->RealparamsSize();
+	for (int i = 0; i < rps && i < (int)(GPU_MAX_BOXES + 2); i++) {
+		if (i == 0)
+			params->SetSupphase(result.best_params[i]);
+		else if (i == rps - 1)
+			params->SetSubphase(result.best_params[i]);
+		else
+			params->SetMutatableParameter(i - 1, result.best_params[i]);
+	}
+	params->setroughness(result.best_roughness);
+
+	WritetoFile(fnpop.c_str());
+
+	m_gpuRunner.reset();
+	return 0;
+}
+#endif
 
 void StochFit::UpdateFits(int currentiteration)
 {
@@ -177,17 +442,17 @@ void StochFit::UpdateFits(int currentiteration)
 int StochFit::Start(int iterations)
 {
 	m_itotaliterations = iterations;
-	m_thread = std::jthread([this]{ Processing(); });
+	m_thread = std::jthread([this](std::stop_token stop_tok){ Processing(stop_tok); });
 	return 0;
 }
 
 int StochFit::Cancel()
 {
-	m_bthreadstop = true;
 	if(m_thread.joinable())
 	{
 		m_thread.request_stop();
-		m_thread.join();
+		// Don't join here - let the thread finish on its own
+		// Joining blocks the main thread and can cause UI freezes
 	}
 	return 0;
 }
@@ -232,10 +497,8 @@ int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, dou
 	*chisquare = m_dChiSquare;
 	*goodnessoffit = m_dGoodnessOfFit;
 
-	if(m_bthreadstop == true)
-		*isfinished = TRUE;
-	else
-		*isfinished = FALSE;
+	// Check if thread is still running
+	*isfinished = !m_thread.joinable();
 
 	return m_icurrentiteration;
 }

@@ -39,7 +39,7 @@ private:
 	double* m_drj;
 	MyComplex* m_cRj;
 
-	double *tsinsquaredthetai,*sinsquaredthetai,*qspreadsinsquaredthetai,*qspreadreflpt,*qspreadsinthetai;
+	double *tsinsquaredthetai,*qspreadreflpt;
 
 
 	//Functions
@@ -64,6 +64,7 @@ public:
 
 	//read from file
     double *xi,*yi,*eyi,*exi,*sinthetai,*reflpt,*dataout,*tsinthetai,*qarray;
+    double *sinsquaredthetai,*qspreadsinsquaredthetai,*qspreadsinthetai;
     int m_idatapoints, tarraysize;
 	
 	//Member functions

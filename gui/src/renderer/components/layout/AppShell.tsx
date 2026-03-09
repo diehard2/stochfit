@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { DataPanel } from '../panels/DataPanel';
@@ -31,25 +31,42 @@ function PanelContent() {
 export function AppShell() {
   const data = useDataStore((s) => s.data);
   const fitResult = useFitStore((s) => s.result);
-  const { setSettingsOpen, setAboutOpen } = useUiStore();
+  const { setSettingsOpen, setAboutOpen, normalizeByFresnel, setNormalizeByFresnel, setGpuAvailable } = useUiStore();
+
+  useEffect(() => {
+    window.api.stochGpuAvailable().then((available) => {
+      setGpuAvailable(available);
+    });
+  }, [setGpuAvailable]);
 
   return (
     <div className="flex flex-col h-screen bg-bg text-primary overflow-hidden">
       {/* Top menu bar */}
-      <div className="h-9 flex items-center gap-4 px-4 border-b border-border bg-elevated flex-shrink-0">
-        <span className="text-xs font-bold text-primary tracking-tight mr-2">StochFit</span>
-        <button
-          onClick={() => setSettingsOpen(true)}
-          className="text-xs text-secondary hover:text-primary transition-colors"
-        >
-          Settings
-        </button>
-        <button
-          onClick={() => setAboutOpen(true)}
-          className="text-xs text-secondary hover:text-primary transition-colors"
-        >
-          About
-        </button>
+      <div className="h-9 flex items-center justify-between px-4 border-b border-border bg-elevated flex-shrink-0">
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-bold text-primary tracking-tight mr-2">StochFit</span>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="text-xs text-secondary hover:text-primary transition-colors"
+          >
+            Settings
+          </button>
+          <button
+            onClick={() => setAboutOpen(true)}
+            className="text-xs text-secondary hover:text-primary transition-colors"
+          >
+            About
+          </button>
+        </div>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={normalizeByFresnel}
+            onChange={(e) => setNormalizeByFresnel(e.target.checked)}
+            className="rounded"
+          />
+          <span className="text-xs text-secondary hover:text-primary transition-colors">Normalize by Fresnel</span>
+        </label>
       </div>
 
       <div className="flex flex-1 overflow-hidden">

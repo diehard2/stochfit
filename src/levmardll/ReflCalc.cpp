@@ -210,7 +210,6 @@ void Reflcalc::Rhocalc(double SubRough, double* LengthArray, double* RhoArray, d
 	for(int j = 0; j < loopcount;j++)
 	{
 		double summ = 0;
-		#pragma ivdep
 		for (int i = 0; i <= refllayers; i++)
         {
             summ += (rhoarray[i] / 2.0) * (1.0 + erf((j*dz0 - distarray[i]-leftoffset) / (rougharray[i] * sqrt2)));
@@ -227,7 +226,6 @@ void Reflcalc::Rhocalc(double SubRough, double* LengthArray, double* RhoArray, d
 	}
 
 	//Make double array for the reflectivity calculation
-	#pragma ivdep
 	for(int i = 0; i<reflpoints;i++)
 	{
 		doublenk[i] = 2.0*nk[i].real();

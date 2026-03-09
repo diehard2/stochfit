@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSettingsStore } from '../../stores/settings-store';
+import { useUiStore } from '../../stores/ui-store';
 import type { ModelSettings } from '../../lib/types';
 
 function Field({
@@ -7,26 +8,38 @@ function Field({
   field,
   type = 'number',
   step,
+  tooltip,
+  disabled,
 }: {
   label: string;
   field: keyof ModelSettings;
   type?: 'number' | 'checkbox' | 'text';
   step?: number;
+  tooltip?: string;
+  disabled?: boolean;
 }) {
   const { settings, update } = useSettingsStore();
   const value = settings[field];
 
   if (type === 'checkbox') {
     return (
-      <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={Boolean(value)}
-          onChange={(e) => update({ [field]: e.target.checked })}
-          className="w-3.5 h-3.5 accent-accent"
-        />
-        <span className="text-secondary">{label}</span>
-      </label>
+      <div className="group relative">
+        <label className={`flex items-center gap-2 text-xs cursor-pointer select-none ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+          <input
+            type="checkbox"
+            checked={Boolean(value)}
+            onChange={(e) => update({ [field]: e.target.checked })}
+            disabled={disabled}
+            className="w-3.5 h-3.5 accent-accent disabled:cursor-not-allowed"
+          />
+          <span className="text-secondary">{label}</span>
+        </label>
+        {tooltip && (
+          <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block bg-elevated border border-border rounded-input p-2 text-xs text-secondary whitespace-nowrap z-10 shadow-lg">
+            {tooltip}
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -37,11 +50,12 @@ function Field({
         type={type}
         value={String(value)}
         step={step}
+        disabled={disabled}
         onChange={(e) => {
           const v = type === 'number' ? parseFloat(e.target.value) : e.target.value;
           update({ [field]: v });
         }}
-        className="h-7 px-2 text-xs bg-elevated border border-border rounded-input text-primary focus:outline-none focus:border-accent/50"
+        className={`h-7 px-2 text-xs bg-elevated border border-border rounded-input text-primary focus:outline-none focus:border-accent/50 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       />
     </div>
   );
@@ -59,6 +73,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function ParameterPanel() {
+  const gpuAvailable = useUiStore((s) => s.gpuAvailable);
+
   return (
     <div className="flex flex-col gap-5 p-4 overflow-y-auto">
       <h2 className="text-sm font-semibold text-primary uppercase tracking-wider">Model Parameters</h2>
@@ -106,6 +122,13 @@ export function ParameterPanel() {
         <Field label="Abs. Search %" field="absSearchPerc" step={1} />
         <Field label="Iterations" field="iterations" step={100000} />
         <Field label="Adaptive" field="adaptive" type="checkbox" />
+        <Field
+          label="Use GPU Acceleration"
+          field="useGpu"
+          type="checkbox"
+          disabled={!gpuAvailable}
+          tooltip={gpuAvailable ? undefined : 'Requires NVIDIA RTX 20+ (compute 7.5+) or Apple Silicon Mac'}
+        />
       </Section>
 
       <Section title="Output">

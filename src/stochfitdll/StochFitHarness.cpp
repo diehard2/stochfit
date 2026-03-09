@@ -109,36 +109,19 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 
 int StochFit::Processing(std::stop_token stop_tok)
 {
-	FILE* log = fopen("C:/Users/Stephen/Code/stochfit/processing.log", "a");
-	fprintf(log, "[StochFit] Processing() started\n");
-	fflush(log);
-
 #if STOCHFIT_HAS_GPU
-	fprintf(log, "[StochFit] Detecting GPU...\n");
-	fflush(log);
 	auto gpu_info = detect_gpu();
-	fprintf(log, "[StochFit] GPU detection done, UseGpu=%d, backend=%d\n", m_initStruct.UseGpu, (int)gpu_info.backend);
-	fflush(log);
 	if (m_initStruct.UseGpu && gpu_info.backend != GpuBackend::None) {
-		fprintf(log, "[StochFit] Using GPU path\n");
-		fflush(log);
 		m_gpuBackend = gpu_info.backend;
-		fclose(log);
 		return ProcessingGPU(stop_tok);
 	}
 #endif
 
-	fprintf(log, "[StochFit] Using CPU path, iterations=%d\n", m_itotaliterations);
-	fflush(log);
 	bool accepted = false;
 
 	//Main loop
      for(int isteps=0;(isteps < m_itotaliterations) && !stop_tok.stop_requested();isteps++)
 	 {
-			if (isteps == 0) {
-				fprintf(log, "[StochFit] Starting iteration loop...\n");
-				fflush(log);
-			}
 			accepted = m_SA->Iteration(params);
 
 			if(accepted || isteps == 0)
@@ -160,12 +143,8 @@ int StochFit::Processing(std::stop_token stop_tok)
 	 }
 
 	//Update the arrays one last time
-	fprintf(log, "[StochFit] Loop finished, updating arrays\n");
-	fflush(log);
 	UpdateFits(m_icurrentiteration);
-	fprintf(log, "[StochFit] Processing() complete\n");
-	fflush(log);
-	fclose(log);
+
 	return 0;
 }
 

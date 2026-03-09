@@ -89,12 +89,12 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   totallength: 500.0,
   filmLength: 100.0,
   impnorm: false,
-  objectivefunction: 2, // Log difference with errors (takes measurement errors into account)
-  paramtemp: 0.1,
+  objectivefunction: 0, // Log(R) cost
+  paramtemp: 0.03, // Parameter temperature
   sigmasearch: 100,
   normSearchPerc: 10,
   absSearchPerc: 10,
-  algorithm: 1, // Simulated Annealing (more robust than Greedy)
+  algorithm: 1, // Simulated Annealing
   inittemp: 10.0,
   platiter: 10,
   slope: 0.8,

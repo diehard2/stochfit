@@ -150,36 +150,49 @@ export function stochCancel(): void {
 
 export function stochArraySizes(): { rhoSize: number; reflSize: number } {
   const fns = getStochFns();
-  const rhoSize = [0];
-  const reflSize = [0];
-  fns.ArraySizes(rhoSize, reflSize);
-  return { rhoSize: rhoSize[0], reflSize: reflSize[0] };
+  const rhoSizeBuf = koffi.alloc('int', 1);
+  const reflSizeBuf = koffi.alloc('int', 1);
+  fns.ArraySizes(rhoSizeBuf, reflSizeBuf);
+  const rhoSize = koffi.decode('int', rhoSizeBuf, 1)[0];
+  const reflSize = koffi.decode('int', reflSizeBuf, 1)[0];
+  return { rhoSize, reflSize };
 }
 
 export function stochGetData(): FitData {
   const fns = getStochFns();
   const { rhoSize, reflSize } = stochArraySizes();
 
-  const zRange = new Array<number>(rhoSize).fill(0);
-  const rho = new Array<number>(rhoSize).fill(0);
-  const qRange = new Array<number>(reflSize).fill(0);
-  const refl = new Array<number>(reflSize).fill(0);
-  const roughness = [0.0];
-  const chiSquare = [0.0];
-  const goodnessOfFit = [0.0];
-  const isFinished = [0];
+  // Allocate buffers that C++ can write to
+  const zRangeBuf = koffi.alloc('double', rhoSize);
+  const rhoBuf = koffi.alloc('double', rhoSize);
+  const qRangeBuf = koffi.alloc('double', reflSize);
+  const reflBuf = koffi.alloc('double', reflSize);
+  const roughnessBuf = koffi.alloc('double', 1);
+  const chiSquareBuf = koffi.alloc('double', 1);
+  const goodnessOfFitBuf = koffi.alloc('double', 1);
+  const isFinishedBuf = koffi.alloc('int', 1);
 
-  fns.GetData(zRange, rho, qRange, refl, roughness, chiSquare, goodnessOfFit, isFinished);
+  fns.GetData(zRangeBuf, rhoBuf, qRangeBuf, reflBuf, roughnessBuf, chiSquareBuf, goodnessOfFitBuf, isFinishedBuf);
+
+  // Decode the buffers back to JavaScript arrays
+  const zRange = koffi.decode('double', zRangeBuf, rhoSize);
+  const rho = koffi.decode('double', rhoBuf, rhoSize);
+  const qRange = koffi.decode('double', qRangeBuf, reflSize);
+  const refl = koffi.decode('double', reflBuf, reflSize);
+  const roughness = koffi.decode('double', roughnessBuf, 1)[0];
+  const chiSquare = koffi.decode('double', chiSquareBuf, 1)[0];
+  const goodnessOfFit = koffi.decode('double', goodnessOfFitBuf, 1)[0];
+  const isFinished = koffi.decode('int', isFinishedBuf, 1)[0] !== 0;
 
   return {
     zRange,
     rho,
     qRange,
     refl,
-    roughness: roughness[0],
-    chiSquare: chiSquare[0],
-    goodnessOfFit: goodnessOfFit[0],
-    isFinished: isFinished[0] !== 0,
+    roughness,
+    chiSquare,
+    goodnessOfFit,
+    isFinished,
   };
 }
 
@@ -189,11 +202,14 @@ export function stochWarmedUp(): boolean {
 
 export function stochSAParams(): SAParams {
   const fns = getStochFns();
-  const lowestEnergy = [0.0];
-  const temp = [0.0];
-  const mode = [0];
-  fns.SAparams(lowestEnergy, temp, mode);
-  return { lowestEnergy: lowestEnergy[0], temp: temp[0], mode: mode[0] };
+  const lowestEnergyBuf = koffi.alloc('double', 1);
+  const tempBuf = koffi.alloc('double', 1);
+  const modeBuf = koffi.alloc('int', 1);
+  fns.SAparams(lowestEnergyBuf, tempBuf, modeBuf);
+  const lowestEnergy = koffi.decode('double', lowestEnergyBuf, 1)[0];
+  const temp = koffi.decode('double', tempBuf, 1)[0];
+  const mode = koffi.decode('int', modeBuf, 1)[0];
+  return { lowestEnergy, temp, mode };
 }
 
 export function stochGpuAvailable(): boolean {

@@ -72,9 +72,14 @@ function Field({
         type={type}
         value={String(value)}
         step={step}
+        min={field === 'slope' ? '1' : undefined}
         disabled={disabled}
         onChange={(e) => {
-          const v = type === 'number' ? parseFloat(e.target.value) : e.target.value;
+          let v = type === 'number' ? parseFloat(e.target.value) : e.target.value;
+          // Enforce minimum value for slope (must be > 1 for temp schedule to work)
+          if (field === 'slope' && typeof v === 'number' && v < 1) {
+            v = 1;
+          }
           update({ [field]: v });
         }}
         className={`h-7 px-2 text-xs bg-elevated border border-border rounded-input text-primary focus:outline-none focus:border-accent/50 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}

@@ -94,10 +94,10 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   sigmasearch: 100,
   normSearchPerc: 10,
   absSearchPerc: 10,
-  algorithm: 1, // Simulated Annealing
+  algorithm: 0, // Greedy (doesn't use slope parameter)
   inittemp: 10.0,
   platiter: 10,
-  slope: 0.8,
+  slope: 0.95,
   gamma: 1.0,
   stunFunc: 0,
   adaptive: true,

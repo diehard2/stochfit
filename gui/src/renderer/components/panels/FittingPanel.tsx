@@ -101,6 +101,7 @@ export function FittingPanel() {
         <div className="rounded-card bg-elevated border border-border p-3 flex flex-col gap-2">
           {result && (
             <>
+              <StatRow label="Iterations" value={`${result.iterationsCompleted.toLocaleString()} / ${result.iterationsCompleted > 0 ? '∞' : '0'}`} />
               <StatRow label="χ²" value={result.chiSquare.toExponential(4)} />
               <StatRow label="Goodness" value={result.goodnessOfFit.toFixed(4)} />
               <StatRow label="Roughness" value={`${result.roughness.toFixed(2)} Å`} />

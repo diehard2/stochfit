@@ -58,6 +58,7 @@ export interface FitData {
   chiSquare: number;
   goodnessOfFit: number;
   isFinished: boolean;
+  iterationsCompleted: number;
 }
 
 export interface SAParams {
@@ -170,7 +171,8 @@ export function stochGetData(): FitData {
   const goodnessOfFit = new Float64Array(1);
   const isFinished = new Int32Array(1);
 
-  fns.GetData(zRange, rho, qRange, refl, roughness, chiSquare, goodnessOfFit, isFinished);
+  // GetData returns the current iteration count
+  const iterationsCompleted = fns.GetData(zRange, rho, qRange, refl, roughness, chiSquare, goodnessOfFit, isFinished);
 
   return {
     zRange: Array.from(zRange),
@@ -181,6 +183,7 @@ export function stochGetData(): FitData {
     chiSquare: chiSquare[0],
     goodnessOfFit: goodnessOfFit[0],
     isFinished: isFinished[0] !== 0,
+    iterationsCompleted,
   };
 }
 

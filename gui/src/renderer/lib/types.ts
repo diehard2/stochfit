@@ -89,12 +89,12 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   totallength: 500.0,
   filmLength: 100.0,
   impnorm: false,
-  objectivefunction: 0,
+  objectivefunction: 2, // Log difference with errors (takes measurement errors into account)
   paramtemp: 0.1,
   sigmasearch: 100,
   normSearchPerc: 10,
   absSearchPerc: 10,
-  algorithm: 0,
+  algorithm: 1, // Simulated Annealing (more robust than Greedy)
   inittemp: 10.0,
   platiter: 10,
   slope: 0.8,
@@ -108,7 +108,7 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   highQOffset: 0,
   iterations: 5000000,
   title: 'StochFit',
-  useGpu: true,
+  useGpu: false, // Opt-in, not default enabled
 };
 
 export interface BoxLMSettings {

@@ -45,7 +45,7 @@ jobs:
 
       - name: Install CUDA
         if: runner.os != 'macOS'
-        uses: Jimver/cuda-toolkit@v0.2.21
+        uses: Jimver/cuda-toolkit@v0.2.30
         with:
           cuda: '13.1.0'
 

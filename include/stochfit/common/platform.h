@@ -32,6 +32,17 @@
 #include <optional>
 #include <tl/expected.hpp>
 
+// ── macOS jthread polyfill ──────────────────────────────────────────────────
+#ifdef __APPLE__
+#  include <jthread.hpp>
+namespace std {
+    using jthread = jstd::jthread;
+    using stop_token = jstd::stop_token;
+    using stop_source = jstd::stop_source;
+    using stop_callback = jstd::stop_callback;
+}
+#endif
+
 // ── OpenMP ──────────────────────────────────────────────────────────────────
 #ifdef _OPENMP
 #  include <omp.h>

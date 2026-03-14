@@ -136,6 +136,10 @@ if(OpenMP_CXX_FOUND)
         endif()
     endif()
 endif()
+if(APPLE)
+    find_package(jthread CONFIG REQUIRED)
+    target_link_libraries(stochfit_core PUBLIC jthread::jthread)
+endif()
 target_link_libraries(stochfit_core PUBLIC tl::expected)
 
 # GPU sources and libraries

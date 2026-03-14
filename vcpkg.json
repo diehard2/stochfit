@@ -8,6 +8,10 @@
       "name": "cuda",
       "platform": "!osx"
     },
+    {
+      "name": "josuttis-jthread",
+      "platform": "osx"
+    },
     "tl-expected"
   ]
 }

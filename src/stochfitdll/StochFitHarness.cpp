@@ -48,7 +48,7 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	m_isearchalgorithm = InitStruct->Algorithm;
 
 	InitializeSA(InitStruct, m_SA);
-	Initialize(InitStruct);
+	m_initError = Initialize(InitStruct);
 }
 
 StochFit::~StochFit()
@@ -74,13 +74,14 @@ StochFit::~StochFit()
 	}
 }
 
-void StochFit::Initialize(ReflSettings* InitStruct)
+tl::expected<void, std::string> StochFit::Initialize(ReflSettings* InitStruct)
 {
 	 //////////////////////////////////////////////////////////
 	 /******** Setup Variables and ReflectivityClass ********/
 	 ////////////////////////////////////////////////////////
 
-	m_cRefl.Init(InitStruct);
+	if(auto r = m_cRefl.Init(InitStruct); !r)
+		return r;
 	m_cEDP.Init(InitStruct);
 
 
@@ -112,6 +113,7 @@ void StochFit::Initialize(ReflSettings* InitStruct)
 
 	if(m_SA->CheckForFailure() == true)
 		platform_error("Catastrophic error in SA - please contact the author");
+	return {};
 }
 
 int StochFit::Processing(std::stop_token stop_tok)
@@ -216,7 +218,7 @@ void StochFit::InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
 		m_fMeasSinsq[i] = (float)m_cRefl.sinsquaredthetai[i];
 	}
 
-	bool use_qspread = (m_cRefl.m_dQSpread > 0.0f && m_cRefl.exi != NULL);
+	bool use_qspread = (m_cRefl.m_dQSpread > 0.0f && m_cRefl.exi.has_value());
 	if (use_qspread) {
 		m_fQspreadSin.resize(nd * 13);
 		m_fQspreadSin2.resize(nd * 13);

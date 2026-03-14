@@ -29,15 +29,20 @@
 //The global stochfit class pointer
 StochFit* stochfit = NULL;
 
-extern "C" EXPORT void Init(ReflSettings* initstruct)
+extern "C" EXPORT const char* Init(ReflSettings* initstruct)
 {
-	if(stochfit == NULL)
-		stochfit = new StochFit(initstruct);
-	else
+	delete stochfit;
+	stochfit = new StochFit(initstruct);
+
+	if(auto r = stochfit->GetInitError(); !r)
 	{
+		static std::string last_error;
+		last_error = r.error();
 		delete stochfit;
-		stochfit = new StochFit(initstruct);
+		stochfit = nullptr;
+		return last_error.c_str();
 	}
+	return "";  // success — empty string avoids koffi null-pointer issues with 'str' type
 }
 
 extern "C" EXPORT void GenPriority(int priority)

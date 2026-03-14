@@ -22,6 +22,8 @@
 #include <atomic>
 #include <chrono>
 #include <random>
+#include <optional>
+#include <tl/expected.hpp>
 
 // ── OpenMP ──────────────────────────────────────────────────────────────────
 #ifdef _OPENMP

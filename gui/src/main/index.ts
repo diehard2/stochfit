@@ -1,4 +1,5 @@
-import { app, BrowserWindow, nativeTheme } from 'electron';
+import { app, BrowserWindow, Menu, nativeTheme } from 'electron';
+import { IPC } from '../shared/ipc-channels';
 import path from 'path';
 import { registerIpcHandlers } from './ipc-handlers';
 
@@ -38,12 +39,36 @@ function createWindow() {
   }
 }
 
+function buildMenu() {
+  const template: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: 'Edit',
+      submenu: [
+        {
+          label: 'Restore Default Settings',
+          click: () => {
+            mainWindow?.webContents.send(IPC.SETTINGS_RESET);
+          },
+        },
+      ],
+    },
+  ];
+
+  // On macOS prepend the app menu
+  if (process.platform === 'darwin') {
+    template.unshift({ role: 'appMenu' });
+  }
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 app.whenReady().then(() => {
   // Force dark theme
   nativeTheme.themeSource = 'dark';
 
   registerIpcHandlers();
   createWindow();
+  buildMenu();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

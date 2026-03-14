@@ -21,6 +21,8 @@ declare global {
       lmStochFit: (i: unknown, p: number[]) => Promise<unknown>;
       onFitProgress: (cb: (d: unknown) => void) => () => void;
       onFitComplete: (cb: (d: unknown) => void) => () => void;
+      onSettingsReset: (cb: () => void) => () => void;
+      stochGpuAvailable: () => Promise<boolean>;
     };
   }
 }

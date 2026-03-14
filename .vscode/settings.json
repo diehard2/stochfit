@@ -4,7 +4,8 @@
     "--header-insertion=never",
     "--clang-tidy"
   ],
-  "cmake.configurePreset": "default",
-  "cmake.buildPreset": "default",
-  "C_Cpp.intelliSenseEngine": "disabled"
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "cmake.useCMakePresets": "always",
+  "cmake.configurePreset": "windows-debug",
+  "cmake.buildPreset": "windows-debug"
 }

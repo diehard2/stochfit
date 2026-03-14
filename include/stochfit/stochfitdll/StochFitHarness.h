@@ -47,6 +47,7 @@ class StochFit
 		void InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA);
 		void GetArraySizes(int* RhoSize, int* ReflSize);
 		bool GetWarmedUp();
+		tl::expected<void, std::string> GetInitError() const { return m_initError; }
 
 		SA_Dispatcher* m_SA;
 		bool m_bwarmedup;
@@ -56,7 +57,8 @@ class StochFit
 		void LoadFromFile(string File = string());
 		void WritetoFile(const char* filename);
 		void UpdateFits(int currentiteration);
-	    void Initialize(ReflSettings* InitStruct);
+	    tl::expected<void, std::string> Initialize(ReflSettings* InitStruct);
+		tl::expected<void, std::string> m_initError;
 
 #if STOCHFIT_HAS_GPU
 		int ProcessingGPU(std::stop_token stop_tok);

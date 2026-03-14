@@ -23,6 +23,9 @@ export const IPC = {
   // Progress events (main → renderer)
   FIT_PROGRESS: 'fit:progress',
   FIT_COMPLETE: 'fit:complete',
+
+  // Settings events (main → renderer)
+  SETTINGS_RESET: 'settings:reset',
 } as const;
 
 export type IpcChannel = typeof IPC[keyof typeof IPC];

@@ -17,14 +17,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-# Use dynamic CRT (/MD) for Windows — standard for compatibility with CUDA and other libraries
-if(MSVC)
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLLDebug")
-    else()
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
-    endif()
-endif()
 
 # Warnings
 if(MSVC)
@@ -45,6 +37,7 @@ else()
 endif()
 find_package(OpenMP)
 find_package(GTest REQUIRED)
+find_package(tl-expected CONFIG REQUIRED)
 enable_testing()
 
 # ── Optional GPU support ──────────────────────────────────────────────────────
@@ -111,6 +104,7 @@ set_target_properties(stochfit_core PROPERTIES
 if(OpenMP_CXX_FOUND)
     target_link_libraries(stochfit_core PUBLIC OpenMP::OpenMP_CXX)
 endif()
+target_link_libraries(stochfit_core PUBLIC tl::expected)
 
 # GPU sources and libraries
 set(GPU_SOURCES

@@ -4,6 +4,7 @@
   "dependencies": [
     "clapack",
     "gtest",
-    "cuda"
+    "cuda",
+    "tl-expected"
   ]
 }

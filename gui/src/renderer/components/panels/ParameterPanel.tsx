@@ -122,7 +122,7 @@ export function ParameterPanel() {
         <Field label="Substrate Absorption" field="subAbs" step={0.0001} />
         <Field label="Superphase Absorption" field="supAbs" step={0.0001} />
         <Field label="Q Spread (σ)" field="qErr" step={0.0001} />
-        <Field label="Resolution (0=none)" field="resolution" step={1} />
+        <Field label="Resolution (pts/Å)" field="resolution" step={1} />
         <Field label="Force σ" field="forcesig" step={0.1} />
         <Field label="Crit. Edge Offset" field="critEdgeOffset" step={1} />
         <Field label="High-Q Offset" field="highQOffset" step={1} />

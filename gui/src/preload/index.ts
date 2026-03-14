@@ -40,4 +40,10 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on(IPC.FIT_COMPLETE, (_event, data) => callback(data));
     return () => ipcRenderer.removeAllListeners(IPC.FIT_COMPLETE);
   },
+
+  // Settings events (main → renderer)
+  onSettingsReset: (callback: () => void) => {
+    ipcRenderer.on(IPC.SETTINGS_RESET, () => callback());
+    return () => ipcRenderer.removeAllListeners(IPC.SETTINGS_RESET);
+  },
 });

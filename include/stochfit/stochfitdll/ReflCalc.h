@@ -32,14 +32,9 @@ private:
 	BOOL m_bImpNorm;
 	int m_iuseableprocessors;
 	double m_dwaveconstant;
-	MyComplex* m_ckk;
-	double* m_dkk;
-	MyComplex* m_cak;
-	MyComplex* m_crj;
-	double* m_drj;
-	MyComplex* m_cRj;
-
-	double *tsinsquaredthetai,*qspreadreflpt;
+	vector<MyComplex> m_ckk, m_cak, m_crj, m_cRj;
+	vector<double> m_dkk, m_drj;
+	vector<double> tsinsquaredthetai, qspreadreflpt;
 
 
 	//Functions
@@ -63,18 +58,18 @@ public:
 	float m_dnormfactor;
 
 	//read from file
-    double *xi,*yi,*eyi,*exi,*sinthetai,*reflpt,*dataout,*tsinthetai,*qarray;
-    double *sinsquaredthetai,*qspreadsinsquaredthetai,*qspreadsinthetai;
+	vector<double> xi, yi, eyi, sinthetai, reflpt;
+	vector<double> dataout, tsinthetai, qarray;
+	vector<double> sinsquaredthetai, qspreadsinsquaredthetai, qspreadsinthetai;
+	std::optional<vector<double>> exi;  // nullopt = no Q errors
     int m_idatapoints, tarraysize;
-	
-	//Member functions
+
 	CReflCalc();
-	~CReflCalc();
 	int GetDataCount();
 
 	
-    void Init(ReflSettings* InitStruct);
-	void SetupRef(ReflSettings* InitStruct);
+    tl::expected<void, std::string> Init(ReflSettings* InitStruct);
+	tl::expected<void, std::string> SetupRef(ReflSettings* InitStruct);
 	double Objective(CEDP* EDP);
     void ParamsRF(CEDP* EDP, string reflfile);
 	void CalculateReflectivity(CEDP* EDP);

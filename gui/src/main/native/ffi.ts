@@ -62,7 +62,7 @@ let _fnGpuAvailable: KoffiFn | null = null;
 export function getStochFns() {
   const lib = getStochLib();
   if (!_fnInit) {
-    _fnInit = lib.func('void Init(ReflSettings *initstruct)');
+    _fnInit = lib.func('str Init(ReflSettings *initstruct)');
     _fnStart = lib.func('void Start(int iterations)');
     _fnCancel = lib.func('void Cancel()');
     _fnGetData = lib.func('int GetData(double *ZRange, double *Rho, double *QRange, double *Refl, double *roughness, double *chisquare, double *goodnessoffit, int *isfinished)');

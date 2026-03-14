@@ -21,7 +21,7 @@
 #include <stochfit/common/platform.h>
 #include <stochfit/stochfitdll/SettingsStruct.h>
 
-extern "C" EXPORT void Init(ReflSettings* initstruct);
+extern "C" EXPORT const char* Init(ReflSettings* initstruct);
 extern "C" EXPORT void GenPriority(int priority);
 extern "C" EXPORT void Start(int iterations);
 extern "C" EXPORT void Cancel();

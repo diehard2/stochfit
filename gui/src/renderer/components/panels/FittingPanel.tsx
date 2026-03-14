@@ -33,9 +33,17 @@ export function FittingPanel() {
       qPoints: data.q.length,
       debug: false,
       ...settings,
+      normSearchPerc: settings.impnorm ? settings.normSearchPerc : 0,
+      absSearchPerc: settings.useSurfAbs ? settings.absSearchPerc : 0,
     };
 
-    await window.api.stochInit(input);
+    try {
+      await window.api.stochInit(input);
+    } catch (e) {
+      setStatus('idle');
+      alert(String(e));
+      return;
+    }
     await window.api.stochStart(settings.iterations);
 
     const timer = setInterval(async () => {

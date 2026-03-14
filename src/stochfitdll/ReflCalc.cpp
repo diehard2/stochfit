@@ -27,48 +27,20 @@
 // L. G. Parratt, Phys. Rev. 95(2), 359(1954)
 
 
-CReflCalc::~CReflCalc()
-{
-		platform_aligned_free(xi);
-		platform_aligned_free(yi);
-		platform_aligned_free(sinthetai);
-		platform_aligned_free(reflpt);
-		platform_aligned_free(dataout);
-		platform_aligned_free(tsinthetai);
-		platform_aligned_free(qarray);
-		platform_aligned_free(sinsquaredthetai);
-		platform_aligned_free(tsinsquaredthetai);
-		platform_aligned_free(eyi);
-		platform_aligned_free(m_ckk);
-		platform_aligned_free(m_dkk);
-		platform_aligned_free(m_cak);
-		platform_aligned_free(m_crj);
-		platform_aligned_free(m_drj);
-		platform_aligned_free(m_cRj);
-		platform_aligned_free(qspreadsinsquaredthetai);
-		platform_aligned_free(qspreadreflpt);
-		platform_aligned_free(qspreadsinthetai);
+CReflCalc::CReflCalc() : m_bReflInitialized(FALSE) {}
 
-		if(exi != NULL)
-			platform_aligned_free(exi);
-
-}
-
-CReflCalc::CReflCalc():exi(NULL),eyi(NULL),xi(NULL),yi(NULL), m_bReflInitialized(FALSE)
-{}
-
-void CReflCalc::Init(ReflSettings* InitStruct)
+tl::expected<void, std::string> CReflCalc::Init(ReflSettings* InitStruct)
 {
 	lambda = InitStruct->Wavelength;
 	k0 = 2.0*M_PI/lambda;
-    
+
 	objectivefunction = InitStruct->Objectivefunction;
 	m_bforcenorm = InitStruct->Forcenorm;
 	m_dnormfactor = 1.0;
 	m_dQSpread = InitStruct->QErr/100;
 	m_bXRonly = InitStruct->XRonly;
 	m_bImpNorm = InitStruct->Impnorm;
-	
+
 	//Setup OpenMP - currently a maximum of 8 processors is allowed. After a certain number
 	//of data points, there will not be much of a benefit to allowing additional processors
 	//to work on the calculation. If more than 2-300 data points are being analyzed, it would
@@ -84,39 +56,42 @@ void CReflCalc::Init(ReflSettings* InitStruct)
 	#endif
 
 	omp_set_num_threads(m_iuseableprocessors);
-	SetupRef(InitStruct);
+	return SetupRef(InitStruct);
 }
 
-void CReflCalc::SetupRef(ReflSettings* InitStruct)
+tl::expected<void, std::string> CReflCalc::SetupRef(ReflSettings* InitStruct)
 {
+	if(InitStruct->Refl == nullptr)
+		return tl::unexpected(std::string("Refl data pointer is null — check data file format"));
+	if(InitStruct->ReflError == nullptr)
+		return tl::unexpected(std::string("ReflError data pointer is null — check data file format"));
+
 	//Now create our xi,yi,dyi, and thetai
 	m_idatapoints = InitStruct->QPoints - InitStruct->HighQOffset - InitStruct->CritEdgeOffset;
-	xi = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
-	yi = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
-	
+	xi.resize(m_idatapoints);
+	yi.resize(m_idatapoints);
+
 	if(InitStruct->QError != NULL)
-		exi = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
-	
-	eyi = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
-	sinthetai = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
-	sinsquaredthetai = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
-	qspreadsinthetai = (double*)platform_aligned_alloc(m_idatapoints*13*sizeof(double),16);
-	qspreadsinsquaredthetai = (double*)platform_aligned_alloc(m_idatapoints*13*sizeof(double),16);
-	reflpt = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),16);
-	qspreadreflpt = (double*)platform_aligned_alloc(m_idatapoints*13*sizeof(double),16);
+		exi = vector<double>(m_idatapoints);
+
+	eyi.resize(m_idatapoints);
+	sinthetai.resize(m_idatapoints);
+	sinsquaredthetai.resize(m_idatapoints);
+	qspreadsinthetai.resize(m_idatapoints*13);
+	qspreadsinsquaredthetai.resize(m_idatapoints*13);
+	reflpt.resize(m_idatapoints);
+	qspreadreflpt.resize(m_idatapoints*13);
 
 	//and fill them up
 	for(int i = 0; i< m_idatapoints; i++)
 	{
 		xi[i] = InitStruct->Q[i+InitStruct->CritEdgeOffset];
-		if(InitStruct->Refl != nullptr)
-			yi[i] = InitStruct->Refl[i+InitStruct->CritEdgeOffset];
-		if(InitStruct->ReflError != nullptr)
-			eyi[i] = InitStruct->ReflError[i+InitStruct->CritEdgeOffset];
-		
-		if(InitStruct->QError != NULL)
-			exi[i] = InitStruct->QError[i+InitStruct->CritEdgeOffset];
-		
+		yi[i] = InitStruct->Refl[i+InitStruct->CritEdgeOffset];
+		eyi[i] = InitStruct->ReflError[i+InitStruct->CritEdgeOffset];
+
+		if(exi.has_value())
+			(*exi)[i] = InitStruct->QError[i+InitStruct->CritEdgeOffset];
+
 		sinthetai[i] = InitStruct->Q[i+InitStruct->CritEdgeOffset]*lambda/(4*M_PI);
 	}
 
@@ -179,9 +154,9 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
     double dx=(x1-x0)/150.0;
     x1=1.1*x1-0.1*x0;
 	
-	tsinthetai = (double*)platform_aligned_alloc(3000*sizeof(double),16);
-	dataout = (double*)platform_aligned_alloc(3000*sizeof(double),16);
-	qarray = (double*)platform_aligned_alloc(3000*sizeof(double),16);
+	tsinthetai.resize(3000);
+	dataout.resize(3000);
+	qarray.resize(3000);
 	tarraysize = 0;
 
 	int j=0;
@@ -228,7 +203,7 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 	}
 
 	//Calculate the theta's we'll use to make our plotting reflectivity
-	tsinsquaredthetai = (double*)platform_aligned_alloc(tarraysize*sizeof(double),16);
+	tsinsquaredthetai.resize(tarraysize);
 
 	for(int l=0; l<tarraysize; l++)
 	{
@@ -239,6 +214,7 @@ void CReflCalc::SetupRef(ReflSettings* InitStruct)
 	{
 		qspreadsinsquaredthetai[l] = qspreadsinthetai[l]*qspreadsinthetai[l];
 	}
+	return {};
 }
 
 
@@ -249,32 +225,32 @@ void CReflCalc::ParamsRF(CEDP* EDP,  string reflfile)
 	
 	
 	
-	if(m_dQSpread == 0.0 || exi == NULL)
+	if(m_dQSpread == 0.0 || !exi.has_value())
 	{
 		if(EDP->Get_UseABS() == false)
-			MyTransparentRF(tsinthetai, tsinsquaredthetai, tarraysize, dataout, EDP);
+			MyTransparentRF(tsinthetai.data(), tsinsquaredthetai.data(), tarraysize, dataout.data(), EDP);
 		else
-			MyRF(tsinthetai, tsinsquaredthetai, tarraysize, dataout, EDP);
+			MyRF(tsinthetai.data(), tsinsquaredthetai.data(), tarraysize, dataout.data(), EDP);
 	}
 	else
 	{
 		if(EDP->Get_UseABS())
-			MyTransparentRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
+			MyTransparentRF(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(), 13*m_idatapoints, qspreadreflpt.data(), EDP);
 		else
-			MyRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
+			MyRF(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(), 13*m_idatapoints, qspreadreflpt.data(), EDP);
 
-		QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
+		QsmearRf(qspreadreflpt.data(), reflpt.data(), m_idatapoints);
 	}
 
-	
+
 	if(m_bforcenorm == TRUE)
 	{
-		impnorm(dataout,tarraysize,false);
+		impnorm(dataout.data(),tarraysize,false);
 	}
 
 	if(m_bImpNorm == TRUE)
 	{
-		impnorm(dataout,tarraysize,true);
+		impnorm(dataout.data(),tarraysize,true);
 	}
 
 	#ifndef CHECKREFLCALC
@@ -320,33 +296,33 @@ double CReflCalc::Objective(CEDP* EDP)
 			return -1;
 	}
 
-	if(m_dQSpread == 0.0 || exi == NULL)
+	if(m_dQSpread == 0.0 || !exi.has_value())
 	{
 		if(EDP->Get_UseABS() == FALSE)
-			MyTransparentRF(sinthetai, sinsquaredthetai, m_idatapoints, reflpt, EDP);
+			MyTransparentRF(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints, reflpt.data(), EDP);
 		else
-			MyRF(sinthetai, sinsquaredthetai, m_idatapoints, reflpt, EDP);
+			MyRF(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints, reflpt.data(), EDP);
 	}
 	else
 	{
 		if(EDP->Get_UseABS())
-			MyTransparentRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
+			MyTransparentRF(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(), 13*m_idatapoints, qspreadreflpt.data(), EDP);
 		else
-			MyRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
+			MyRF(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(), 13*m_idatapoints, qspreadreflpt.data(), EDP);
 
-		QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
+		QsmearRf(qspreadreflpt.data(), reflpt.data(), m_idatapoints);
 	}
 
 	//Normalize if we let the absorption vary
 	if(m_bforcenorm == TRUE)
 	{
-		impnorm(reflpt, m_idatapoints, false);
+		impnorm(reflpt.data(), m_idatapoints, false);
 	}
-	
+
 	//Fix imperfect normalization
 	if(m_bImpNorm == TRUE)
 	{
-		impnorm(reflpt, m_idatapoints, true);
+		impnorm(reflpt.data(), m_idatapoints, true);
 	}
 
 	//Calculate the fitness score
@@ -474,12 +450,12 @@ void CReflCalc::MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, 
 		int threadnum = omp_get_thread_num();
 		int arrayoffset = threadnum*EDPoints;
 
-		double* dkk = m_dkk+arrayoffset;
-		MyComplex * kk = m_ckk+arrayoffset;
-		MyComplex * ak = m_cak+arrayoffset;
-		double* drj = m_drj+arrayoffset;
-		MyComplex * rj= m_crj+arrayoffset;
-		MyComplex * Rj= m_cRj+arrayoffset;
+		double* dkk = m_dkk.data()+arrayoffset;
+		MyComplex* kk = m_ckk.data()+arrayoffset;
+		MyComplex* ak = m_cak.data()+arrayoffset;
+		double* drj = m_drj.data()+arrayoffset;
+		MyComplex* rj = m_crj.data()+arrayoffset;
+		MyComplex* Rj = m_cRj.data()+arrayoffset;
 		MyComplex  cholder, tempk1, tempk2;
 		double holder;
 		
@@ -623,12 +599,12 @@ void CReflCalc::MyTransparentRF(double* sintheta, double* sinsquaredtheta, int d
 		int threadnum = omp_get_thread_num();
 		int arrayoffset = threadnum*EDPoints;
 
-		double* dkk = m_dkk+arrayoffset;
-		MyComplex * kk = m_ckk+arrayoffset;
-		MyComplex * ak = m_cak+arrayoffset;
-		double* drj = m_drj+arrayoffset;
-		MyComplex * rj= m_crj+arrayoffset;
-		MyComplex * Rj= m_cRj+arrayoffset;
+		double* dkk = m_dkk.data()+arrayoffset;
+		MyComplex* kk = m_ckk.data()+arrayoffset;
+		MyComplex* ak = m_cak.data()+arrayoffset;
+		double* drj = m_drj.data()+arrayoffset;
+		MyComplex* rj = m_crj.data()+arrayoffset;
+		MyComplex* Rj = m_cRj.data()+arrayoffset;
 		MyComplex  cholder, tempk1, tempk2, zero;
 		double holder, dtempk1, dtempk2;
 
@@ -796,12 +772,12 @@ for(int i = HighOffSet; i < EDPointsMinOne; i++)
 void CReflCalc::InitializeScratchArrays(int EDPoints)
 {
 	//Create the scratch arrays for the reflectivity calculation
- 	m_ckk = (MyComplex *)platform_aligned_alloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
-	m_dkk = (double*)platform_aligned_alloc(sizeof(double)*EDPoints*m_iuseableprocessors,16);
-	m_cak = (MyComplex *)platform_aligned_alloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
-	m_crj = (MyComplex *)platform_aligned_alloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
-	m_drj = (double*)platform_aligned_alloc(sizeof(double)*EDPoints*m_iuseableprocessors,16);
-	m_cRj = (MyComplex *)platform_aligned_alloc(sizeof(MyComplex )*EDPoints*m_iuseableprocessors,16);
+	m_ckk.resize(EDPoints * m_iuseableprocessors);
+	m_dkk.resize(EDPoints * m_iuseableprocessors);
+	m_cak.resize(EDPoints * m_iuseableprocessors);
+	m_crj.resize(EDPoints * m_iuseableprocessors);
+	m_drj.resize(EDPoints * m_iuseableprocessors);
+	m_cRj.resize(EDPoints * m_iuseableprocessors);
 
 	m_bReflInitialized = TRUE;
 }
@@ -834,9 +810,9 @@ void CReflCalc::QsmearRf(double* qspreadreflpt, double* refl, int datapoints)
 int CReflCalc::GetDataCount()
 {
 	#ifndef CHECKREFLCALC
-		if(m_dQSpread == 0.0 || exi == NULL)
+		if(m_dQSpread == 0.0 || !exi.has_value())
 			return tarraysize;
-		else 
+		else
 			return m_idatapoints;
 	#else
 		return m_idatapoints;
@@ -859,6 +835,10 @@ void CReflCalc::GetOffSets(int& HighOffset, int& LowOffset, MyComplex* EDP, int 
 				break;
 		}
 
+		// Cap LowOffset: loops use `i <= LowOffset` starting at i=1, so max valid index is EDPoints-1
+		if(LowOffset >= EDPoints)
+			LowOffset = EDPoints - 1;
+
 		for(int i = EDPoints - 1 ; i != 0; i--)
 		{
 			if(EDP[i].real() == EDP[EDPoints-1].real())
@@ -879,26 +859,26 @@ void CReflCalc::CalculateReflectivity(CEDP* EDP)
 			return;
 	}
 
-	if(m_dQSpread < 0.005f || exi == NULL)
+	if(m_dQSpread < 0.005f || !exi.has_value())
 	{
 		if(EDP->Get_UseABS() == false)
-			MyTransparentRF(sinthetai, sinsquaredthetai, m_idatapoints, reflpt, EDP);
+			MyTransparentRF(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints, reflpt.data(), EDP);
 		else
-			MyRF(sinthetai, sinsquaredthetai, m_idatapoints, reflpt, EDP);
+			MyRF(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints, reflpt.data(), EDP);
 	}
 	else
 	{
 		if(EDP->Get_UseABS())
-			MyTransparentRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
+			MyTransparentRF(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(), 13*m_idatapoints, qspreadreflpt.data(), EDP);
 		else
-			MyRF(qspreadsinthetai, qspreadsinsquaredthetai, 13*m_idatapoints, qspreadreflpt, EDP);
+			MyRF(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(), 13*m_idatapoints, qspreadreflpt.data(), EDP);
 
-		QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
+		QsmearRf(qspreadreflpt.data(), reflpt.data(), m_idatapoints);
 	}
 
 	if(m_bforcenorm == TRUE)
-		impnorm(reflpt, m_idatapoints, false);
+		impnorm(reflpt.data(), m_idatapoints, false);
 
 	if(m_bImpNorm == TRUE)
-		impnorm(reflpt, m_idatapoints, true);
+		impnorm(reflpt.data(), m_idatapoints, true);
 }

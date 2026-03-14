@@ -9,8 +9,7 @@
 
 #include <string>
 #include <cstddef>
-
-enum class GpuBackend : int { None, CUDA, Metal };
+#include <stochfit/common/platform.h>
 
 struct GpuInfo {
     GpuBackend backend = GpuBackend::None;

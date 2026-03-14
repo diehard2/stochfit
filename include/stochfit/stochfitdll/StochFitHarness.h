@@ -30,6 +30,7 @@
 
 #include <memory>
 #include <thread>
+#include <stop_token>
 #include "ParamVector.h"
 #include "ReflCalc.h"
 #include "CEDP.h"
@@ -37,7 +38,6 @@
 
 #if STOCHFIT_HAS_GPU
 class GpuSARunner;
-enum class GpuBackend : int;
 struct GpuSAState;
 struct GpuParams;
 struct GpuMeasurement;

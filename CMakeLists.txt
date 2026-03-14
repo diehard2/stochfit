@@ -5,6 +5,11 @@ include(env/cmake/Vcpkg.cmake)
 
 project(StochFit VERSION 1.0.0 LANGUAGES C CXX)
 
+# ── macOS deployment target (required for std::jthread) ──────────────────────
+if(APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "macOS Deployment Target")
+endif()
+
 # ── Global settings ────────────────────────────────────────────────────────────
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,6 +40,12 @@ if(WIN32 OR (DEFINED VCPKG_TARGET_TRIPLET))
 else()
     find_package(LAPACK REQUIRED)
 endif()
+
+if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # Homebrew libomp path
+    set(OpenMP_ROOT "/opt/homebrew/opt/libomp")
+endif()
+
 find_package(OpenMP)
 find_package(GTest REQUIRED)
 find_package(tl-expected CONFIG REQUIRED)
@@ -103,6 +114,26 @@ set_target_properties(stochfit_core PROPERTIES
     VISIBILITY_INLINES_HIDDEN ON)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(stochfit_core PUBLIC OpenMP::OpenMP_CXX)
+    
+    # On macOS, we need to redistribute libomp.dylib
+    if(APPLE)
+        get_target_property(OMP_LIBRARY OpenMP::OpenMP_CXX IMPORTED_LOCATION_RELEASE)
+        if(NOT OMP_LIBRARY)
+             get_target_property(OMP_LIBRARY OpenMP::OpenMP_CXX IMPORTED_LOCATION_DEBUG)
+        endif()
+        if(NOT OMP_LIBRARY)
+             get_target_property(OMP_LIBRARY OpenMP::OpenMP_CXX IMPORTED_LOCATION)
+        endif()
+
+        if(OMP_LIBRARY)
+            add_custom_command(TARGET stochfit_core POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${OMP_LIBRARY}"
+                "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/libomp.dylib"
+                COMMENT "Copying libomp.dylib to output directory"
+            )
+        endif()
+    endif()
 endif()
 target_link_libraries(stochfit_core PUBLIC tl::expected)
 

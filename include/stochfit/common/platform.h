@@ -73,6 +73,8 @@ using namespace std;
 using MyComplex = std::complex<double>;
 
 // ── GPU availability ────────────────────────────────────────────────────────
+enum class GpuBackend : int { None, CUDA, Metal };
+
 #if defined(STOCHFIT_HAS_CUDA) || defined(STOCHFIT_HAS_METAL)
 #  define STOCHFIT_HAS_GPU 1
 #else

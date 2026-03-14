@@ -4,7 +4,10 @@
   "dependencies": [
     "clapack",
     "gtest",
-    "cuda",
+    {
+      "name": "cuda",
+      "platform": "!osx"
+    },
     "tl-expected"
   ]
 }

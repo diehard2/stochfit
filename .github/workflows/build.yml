@@ -43,6 +43,12 @@ jobs:
           path: build/vcpkg
           key: vcpkg-bootstrap-${{ runner.os }}-${{ hashFiles('env/vcpkg-version.txt') }}
 
+      - name: Install CUDA
+        if: runner.os != 'macOS'
+        uses: Jimver/cuda-toolkit@v0.2.21
+        with:
+          cuda: '13.1.0'
+
       - name: Configure
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

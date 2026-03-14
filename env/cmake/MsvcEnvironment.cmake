@@ -7,12 +7,15 @@ endif()
 
 # Search for vcvarsall.bat across common VS installation paths
 find_program(VCVARSALL vcvarsall.bat PATHS
-  "$ENV{ProgramFiles}/Microsoft Visual Studio/18/Community/VC/Auxiliary/Build"
-  "$ENV{ProgramFiles}/Microsoft Visual Studio/18/Professional/VC/Auxiliary/Build"
-  "$ENV{ProgramFiles}/Microsoft Visual Studio/18/Enterprise/VC/Auxiliary/Build"
-  "$ENV{ProgramFiles}/Microsoft Visual Studio/17/Community/VC/Auxiliary/Build"
-  "$ENV{ProgramFiles}/Microsoft Visual Studio/17/Professional/VC/Auxiliary/Build"
-  "$ENV{ProgramFiles}/Microsoft Visual Studio/17/Enterprise/VC/Auxiliary/Build"
+  "$ENV{ProgramFiles}/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build"
+  "$ENV{ProgramFiles}/Microsoft Visual Studio/2022/Professional/VC/Auxiliary/Build"
+  "$ENV{ProgramFiles}/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build"
+  "$ENV{ProgramFiles}/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
+  "$ENV{ProgramFiles}/Microsoft Visual Studio/2019/Professional/VC/Auxiliary/Build"
+  "$ENV{ProgramFiles}/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build"
+  "$ENV{ProgramFiles\(x86\)}/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
+  "$ENV{ProgramFiles\(x86\)}/Microsoft Visual Studio/2019/Professional/VC/Auxiliary/Build"
+  "$ENV{ProgramFiles\(x86\)}/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build"
   NO_DEFAULT_PATH
 )
 

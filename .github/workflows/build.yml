@@ -35,6 +35,10 @@ jobs:
         if: runner.os == 'Windows'
         uses: seanmiddleditch/gha-setup-ninja@v5
 
+      - name: Setup MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       # Cache the vcpkg clone + bootstrap binary.  The stamp file lives inside
       # build/vcpkg so a cache hit also restores it, skipping re-bootstrap.
       - name: Cache vcpkg bootstrap

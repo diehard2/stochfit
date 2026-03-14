@@ -12,6 +12,10 @@ export function FittingPanel() {
   const { status, result, saParams, pollTimer, setStatus, setResult, setSAParams, setPollTimer, reset } = useFitStore();
   const totalIterations = settings?.iterations ?? 0;
 
+  const [itPerSec, setItPerSec] = React.useState<number>(0);
+  const prevIterationRef = React.useRef<number>(0);
+  const prevTimeRef = React.useRef<number>(0);
+
   // Clean up poll timer on unmount
   useEffect(() => {
     return () => {
@@ -23,6 +27,9 @@ export function FittingPanel() {
     if (!data) return alert('Load a data file first.');
     reset();
     setStatus('running');
+    setItPerSec(0);
+    prevIterationRef.current = 0;
+    prevTimeRef.current = Date.now();
 
     const input: ReflSettingsInput = {
       directory: data.filePath.replace(/[^/\\]+$/, ''),
@@ -58,6 +65,17 @@ export function FittingPanel() {
       ]);
       setResult(fitData);
       setSAParams(saData);
+
+      // Calculate it/s
+      const now = Date.now();
+      const elapsed = (now - prevTimeRef.current) / 1000;
+      if (elapsed > 0) {
+          const delta = fitData.iterationsCompleted - prevIterationRef.current;
+          setItPerSec(Math.round(delta / elapsed));
+      }
+      prevIterationRef.current = fitData.iterationsCompleted;
+      prevTimeRef.current = now;
+
       if (fitData.isFinished) {
         clearInterval(timer);
         setPollTimer(null);
@@ -116,6 +134,7 @@ export function FittingPanel() {
           {result && (
             <>
               <StatRow label="Iterations" value={`${result.iterationsCompleted.toLocaleString()} / ${totalIterations.toLocaleString()}`} />
+              <StatRow label="Speed" value={`${itPerSec.toLocaleString()} it/s`} />
               <StatRow label="χ²" value={result.chiSquare.toExponential(4)} />
               <StatRow label="Goodness" value={result.goodnessOfFit.toFixed(4)} />
               <StatRow label="Roughness" value={`${result.roughness.toFixed(2)} Å`} />

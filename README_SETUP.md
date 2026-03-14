@@ -55,14 +55,14 @@ cmake --build build --parallel
 ```
 
 Produces:
-- `build/stochfit.dll` — core fitting library
-- `build/levmardll.dll` — Levenberg-Marquardt library
-- `build/mirefl.exe` — console tool
-- `build/stochfit_tests.exe` — unit tests
+- `build/bin/stochfit.dll` — core fitting library
+- `build/bin/levmardll.dll` — Levenberg-Marquardt library
+- `build/bin/mirefl.exe` — console tool
+- `build/bin/stochfit_tests.exe` — unit tests
 
 ### Step 5: Run Tests
 ```bash
-./build/stochfit_tests.exe
+./build/bin/stochfit_tests.exe
 ```
 
 ### Step 6: Build GUI (Electron)
@@ -111,14 +111,14 @@ cmake --build build --parallel
 ```
 
 Produces:
-- `build/libstochfit.so` — core fitting library
-- `build/liblevmardll.so` — Levenberg-Marquardt library
-- `build/mirefl` — console tool
-- `build/stochfit_tests` — unit tests
+- `build/bin/libstochfit.so` — core fitting library
+- `build/bin/liblevmardll.so` — Levenberg-Marquardt library
+- `build/bin/mirefl` — console tool
+- `build/bin/stochfit_tests` — unit tests
 
 ### Step 5: Run Tests
 ```bash
-./build/stochfit_tests
+./build/bin/stochfit_tests
 ```
 
 ### Step 6: Build GUI (Electron)
@@ -164,14 +164,14 @@ cmake --build build --parallel
 ```
 
 Produces:
-- `build/libstochfit.dylib` — core fitting library
-- `build/liblevmardll.dylib` — Levenberg-Marquardt library
-- `build/mirefl` — console tool
-- `build/stochfit_tests` — unit tests
+- `build/bin/libstochfit.dylib` — core fitting library
+- `build/bin/liblevmardll.dylib` — Levenberg-Marquardt library
+- `build/bin/mirefl` — console tool
+- `build/bin/stochfit_tests` — unit tests
 
 ### Step 6: Run Tests
 ```bash
-./build/stochfit_tests
+./build/bin/stochfit_tests
 ```
 
 ### Step 7: Build GUI (Electron)
@@ -228,10 +228,10 @@ After building, verify the installation:
 
 ```bash
 # C++ components built
-ls -lh build/stochfit* build/levmardll*
+ls -lh build/bin/
 
 # Tests pass
-./build/stochfit_tests
+./build/bin/stochfit_tests
 
 # GUI available
 ls -lh build/electron/
@@ -270,7 +270,7 @@ ls -lh build/electron/
 1. **Edit code** in `src/`, `include/`, or `gui/`
 2. **Rebuild C++**: `cmake --build build --parallel`
 3. **Rebuild GUI** (if you changed TypeScript): `cmake --build build --target gui`
-4. **Run tests**: `./build/stochfit_tests` (C++) or tests in GUI app
+4. **Run tests**: `./build/bin/stochfit_tests` (C++) or tests in GUI app
 5. **Commit**: `git add -A && git commit -m "..."`
 
 ---

@@ -1,17 +1,18 @@
 cmake_minimum_required(VERSION 3.21)
 
+# ── macOS deployment target (required for std::jthread) ──────────────────────
+# Must be set before project() to correctly initialize compiler flags
+if(APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "macOS Deployment Target")
+endif()
+
 # vcpkg must be set up before project()
 include(env/cmake/Vcpkg.cmake)
 
 project(StochFit VERSION 1.0.0 LANGUAGES C CXX)
 
-# ── macOS deployment target (required for std::jthread) ──────────────────────
-if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "macOS Deployment Target")
-endif()
-
 # ── Global settings ────────────────────────────────────────────────────────────
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -231,7 +232,7 @@ add_executable(stochfit_tests
     tests/test_reflectivity.cpp)
 target_include_directories(stochfit_tests PRIVATE include include/stochfit/stochfitdll)
 target_link_libraries(stochfit_tests PRIVATE stochfit_core GTest::gtest GTest::gtest_main)
-target_compile_features(stochfit_tests PRIVATE cxx_std_23)
+target_compile_features(stochfit_tests PRIVATE cxx_std_20)
 add_test(NAME stochfit_tests COMMAND stochfit_tests)
 
 add_library(levmardll_shared SHARED src/shim/levmardll_shim.cpp)

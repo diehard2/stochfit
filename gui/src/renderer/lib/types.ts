@@ -16,6 +16,7 @@ export interface FitResult {
   chiSquare: number;
   goodnessOfFit: number;
   isFinished: boolean;
+  iterationsCompleted: number;
 }
 
 export interface SAParams {

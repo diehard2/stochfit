@@ -47,12 +47,6 @@
 
 Reflcalc::~Reflcalc()
 {
-	platform_aligned_free(sinsquaredthetai);
-	platform_aligned_free(doublenk);
-	platform_aligned_free(sinthetai);
-	platform_aligned_free(nk);
-	platform_aligned_free(reflpt);
-	platform_aligned_free(nkb);
 }
 
 void Reflcalc::init(double xraylambda,int boxes, double subSLD, double* parameters, int paramcount, double* refldata, int refldatacount, bool onesig)
@@ -67,9 +61,9 @@ void Reflcalc::init(double xraylambda,int boxes, double subSLD, double* paramete
 
 	MakeZ();
 
-    nk = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*nl,16);
-	doublenk = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*nl,16);
-	nkb = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*nl,16);
+    nk.resize(nl);
+	doublenk.resize(nl);
+	nkb.resize(nl);
 
 	//Neglect absorption
 	setbulk(subSLD,0);
@@ -80,9 +74,9 @@ void Reflcalc::MakeTheta(double* QRange, int QRangesize)
 	m_idatapoints = QRangesize;
 	double holder;
 
-	sinthetai = (double*)platform_aligned_alloc(QRangesize*sizeof(double),16);
-	sinsquaredthetai = (double*)platform_aligned_alloc(QRangesize*sizeof(double),16);
-	reflpt = (double*)platform_aligned_alloc(QRangesize*sizeof(double),16);
+	sinthetai.resize(QRangesize);
+	sinsquaredthetai.resize(QRangesize);
+	reflpt.resize(QRangesize);
 
 	for(int i = 0; i< m_idatapoints; i++)
 	{
@@ -142,7 +136,7 @@ void Reflcalc::MakeZ()
             double Length = (double)CalculateZLength();
 			Zlength = (int)Length*5;
 			nl = Zlength;
-			ZIncrement = (double*)platform_aligned_alloc(Zlength*sizeof(double),16);
+			ZIncrement.resize(Zlength);
 			for (int i = 0; i < Zlength; i++)
             {
                 ZIncrement[i] = i*dx;
@@ -162,9 +156,9 @@ void Reflcalc::Rhocalc(double SubRough, double* LengthArray, double* RhoArray, d
 
 	//Create arrays so we don't have to redo this calculation for every data point
 
-	double* distarray = (double*)platform_aligned_alloc((refllayers+1)*sizeof(double),16);
-	double* rhoarray = (double*)platform_aligned_alloc((refllayers+1)*sizeof(double),16);
-	double* rougharray = (double*)platform_aligned_alloc((refllayers+1)*sizeof(double),16);
+	vector<double> distarray(refllayers+1);
+	vector<double> rhoarray(refllayers+1);
+	vector<double> rougharray(refllayers+1);
 
 	//Calculate the portions of the e-density equation that don't need to be repeated
 	double SubSLD = nk[nl-1].real();
@@ -231,11 +225,6 @@ void Reflcalc::Rhocalc(double SubRough, double* LengthArray, double* RhoArray, d
 		doublenk[i] = 2.0*nk[i].real();
 	}
 
-	//Free arrays
-
-	platform_aligned_free(distarray);
-	platform_aligned_free(rhoarray);
-	platform_aligned_free(rougharray);
 }
 
 void Reflcalc::mkdensityboxmodel(double* p, int plength, bool onesigma)
@@ -331,10 +320,10 @@ double Reflcalc::myrf()
 		//loop for OpenMP
 		//
 		MyComplex lengthmultiplier = -1.0*MyComplex(0.0,1.0)*dz0/2.0 ;
-		MyComplex* kk = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*nl,16);
-		MyComplex* ak = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*nl,16);
-		MyComplex* rj = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*nl,16);
-		MyComplex* Rj = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*nl,16);
+		vector<MyComplex> kk(nl);
+		vector<MyComplex> ak(nl);
+		vector<MyComplex> rj(nl);
+		vector<MyComplex> Rj(nl);
 		//In order to vectorize loops, you cannot use global variables
 		int nlminone = nl-1;
 		int numlay =  nl;
@@ -389,11 +378,6 @@ double Reflcalc::myrf()
 			holder = std::abs(Rj[0]);
 			reflpt[l] = holder*holder;
 		}
-
-	platform_aligned_free(kk);
-	platform_aligned_free(ak);
-	platform_aligned_free(rj);
-	platform_aligned_free(Rj);
 
   }
 

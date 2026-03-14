@@ -19,6 +19,15 @@
  */
 
 #pragma once
+
+// Top-level SA orchestrator.
+// Manages the worker jthread, GPU dispatch (CUDA/Metal when UseGpu=true),
+// data marshaling between C++ and the FFI layer, and population file I/O.
+// On GPU builds (STOCHFIT_HAS_GPU), ProcessingGPU() runs multi-chain SA
+// on the GPU; otherwise Processing() runs single-chain CPU SA.
+// Float buffers (m_fMeas*, m_fQspread*, m_fEdSpacing, m_fDistArray) hold
+// double→float downsampled data for GPU transfer.
+
 #include <memory>
 #include <thread>
 #include "ParamVector.h"
@@ -42,6 +51,7 @@ class StochFit
 		~StochFit();
 		int Start(int iterations);
 		int Cancel();
+		// ******** MAYBEDEAD ******** Priority — stores value but never acts on it
 		int Priority(int priority);
 		int GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
 		void InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA);
@@ -86,8 +96,6 @@ class StochFit
 
 		std::jthread m_thread;
 		std::atomic<bool> m_bupdated;
-
-		bool m_bthreadstop;
 
 		//Set the output file names
 		string m_Directory;

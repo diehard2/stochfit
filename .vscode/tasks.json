@@ -2,17 +2,30 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build Debug DLL",
+      "label": "Configure Windows Release",
       "type": "shell",
-      "command": "cmake --build build --preset windows-debug",
-      "group": { "kind": "build", "isDefault": true },
-      "problemMatcher": ["$msCompile"],
+      "command": "cmake --preset windows",
+      "problemMatcher": [],
       "options": { "cwd": "${workspaceFolder}" }
     },
     {
-      "label": "Configure Debug",
+      "label": "Configure Windows Debug",
       "type": "shell",
       "command": "cmake --preset windows-debug",
+      "problemMatcher": [],
+      "options": { "cwd": "${workspaceFolder}" }
+    },
+    {
+      "label": "Configure Linux/macOS Release",
+      "type": "shell",
+      "command": "cmake --preset default",
+      "problemMatcher": [],
+      "options": { "cwd": "${workspaceFolder}" }
+    },
+    {
+      "label": "Configure Linux/macOS Debug",
+      "type": "shell",
+      "command": "cmake --preset debug",
       "problemMatcher": [],
       "options": { "cwd": "${workspaceFolder}" }
     }

@@ -1,13 +1,20 @@
 #pragma once
 
+// Electron density profile (EDP) generator for SA fitting.
+// Builds the real and imaginary EDP arrays (m_EDP, m_DEDP) from a ParamVector
+// using Gaussian interface broadening (Motofit-style erf convolution).
+// Supports both transparent films (MakeTranparentEDP) and absorbing films (MakeEDP).
+// All internal scratch arrays are double-precision vectors.
+// m_DEDP = 2 * m_EDP and is the input to the Parratt reflectivity calculation.
+
 #include "ParamVector.h"
 
 class CEDP {
 private:
-	float* m_fDistArray;
-	float* m_fRhoArray;
-	float* m_fImagRhoArray;
-	float* m_fEDSpacingArray;
+	vector<double> m_fDistArray;
+	vector<double> m_fRhoArray;
+	vector<double> m_fImagRhoArray;
+	vector<double> m_fEDSpacingArray;
 
 	double m_dRho;
 	double m_dLambda;
@@ -25,19 +32,16 @@ private:
 	void MakeEDP(ParamVector* g);
 
 public:
-	~CEDP();
-
 	void Init(ReflSettings* InitStruct);
 	void GenerateEDP(ParamVector* g);
-	double Get_LayerThickness();
 	int Get_EDPPointCount();
 	BOOL Get_UseABS();
-	float Get_FilmAbs();
+	double Get_FilmAbs();
 	double Get_Dz();
-	float Get_WaveConstant();
-	void Set_FilmAbs(float absorption);
+	double Get_WaveConstant();
+	void Set_FilmAbs(double absorption);
 	void WriteOutputFile(string filename);
 
-	MyComplex* m_EDP;
-	MyComplex* m_DEDP;
+	vector<MyComplex> m_EDP;
+	vector<MyComplex> m_DEDP;
 };

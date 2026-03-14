@@ -37,14 +37,19 @@ export function FittingPanel() {
       absSearchPerc: settings.useSurfAbs ? settings.absSearchPerc : 0,
     };
 
+    console.log('[FittingPanel] calling stochInit, resolution=', input.resolution, 'boxes=', input.boxes, 'qPoints=', input.qPoints);
     try {
       await window.api.stochInit(input);
+      console.log('[FittingPanel] stochInit returned OK');
     } catch (e) {
+      console.error('[FittingPanel] stochInit threw:', e);
       setStatus('idle');
       alert(String(e));
       return;
     }
+    console.log('[FittingPanel] calling stochStart iterations=', settings.iterations);
     await window.api.stochStart(settings.iterations);
+    console.log('[FittingPanel] stochStart returned');
 
     const timer = setInterval(async () => {
       const [fitData, saData] = await Promise.all([

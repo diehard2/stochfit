@@ -33,7 +33,6 @@
 
 extern "C" EXPORT void Rhofit(BoxReflSettings* InitStruct, double parameters[], double covariance[], int parametersize, double info[])
 {
-	double ChiSquare = 0;
 	double opts[LM_OPTS_SZ];
 	double* xvec = new double[InitStruct->ZLength] ;
 	double *work, *covar;
@@ -60,8 +59,8 @@ extern "C" EXPORT void Rhofit(BoxReflSettings* InitStruct, double parameters[], 
 		covariance[i] = sqrt(covar[i*(parametersize+1)]);
 	}
 
-	delete xvec;
-	delete work;
+	delete[] xvec;
+	delete[] work;
 }
 
 extern "C" EXPORT void RhoGenerate(BoxReflSettings* InitStruct, double parameters[], int paramsize, double ED[], double BoxED[])
@@ -83,9 +82,6 @@ extern "C" EXPORT void FastReflfit(BoxReflSettings* InitStruct, double params[],
 {
 	//Variables
 	double *work, *covar;
-	double ChiSquare = 0;
-	double Qc = 0;
-	double calcholder = 0;
 
 	FastReflcalc Refl;
 	Refl.init(InitStruct);

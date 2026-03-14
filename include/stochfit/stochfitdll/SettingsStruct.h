@@ -1,4 +1,11 @@
 #pragma once
+
+// FFI-compatible settings struct for SA fitting.
+// Uses #pragma pack(push, 8) for koffi interop — the JS side must explicitly
+// add padding fields between misaligned members (e.g., 4-byte UseGpu before
+// 8-byte pointer Title). Algorithm: 0=Greedy, 1=SA, 2=STUN. UseGpu enables
+// GPU-accelerated SA when a compatible device is available.
+
 #include <stochfit/common/platform.h>
 
 #pragma pack(push, 8)

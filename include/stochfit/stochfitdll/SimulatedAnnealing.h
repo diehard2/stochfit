@@ -19,6 +19,13 @@
  */
 
 #pragma once
+
+// Core SA engine implementing Greedy (algorithm=0), Simulated Annealing (1),
+// and STUN (2) algorithms. Temperature schedule is exponential: T /= slope
+// every plat_time accepted steps. Adaptive mode adjusts T based on average
+// fSTUN value. Parameter mutations are drawn from uniform distributions
+// scaled by mc_stepsize. All temperature/energy tracking uses double.
+
 #include "ReflCalc.h"
 #include "CEDP.h"
 #include "ParamVector.h"
@@ -33,7 +40,7 @@ class SimAnneal
 
 		int m_iIteration;
 		int m_iPlattime;
-		long double m_dTemp;
+		double m_dTemp;
 		string m_sdirectory;
 
 		//Variables for tracking acceptance and rejection
@@ -42,7 +49,7 @@ class SimAnneal
 		double m_daverageSTUNval;
 
 		double m_iTime;
-		long double m_dgamma;
+		double m_dgamma;
 		double m_dslope;
 		bool m_badaptive;
 		bool m_bdebugging;
@@ -59,7 +66,6 @@ class SimAnneal
 		//Functions
 		double ProbCalc(double deltaE);
 		double fSTUN(double val);
-		double fSTUNExp(double val);
 		double Schedule();
 		void AdjustTemp(double AverageSTUNval);
 
@@ -80,14 +86,13 @@ public:
 		void InitializeParameters(ReflSettings* InitStruct, ParamVector* params, CReflCalc* m_cRefl, CEDP* EDP);
 		bool EvaluateGreedy(double bestval, double curval);
 		bool EvaluateSA(double bestval, double curval);
-		bool EvaluateSTUN(long double bestval,long double curval);
-		void SetGamma(double gamma);
+		bool EvaluateSTUN(double bestval, double curval);
 		void SetTemp(double currenttemp);
 		double GetTemp();
 		double GetLowestEnergy();
 		bool IsIterMinimum();
 		double m_daveragefstun;
-		long double m_dbestsolution;
+		double m_dbestsolution;
 
 
 };

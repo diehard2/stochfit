@@ -1,5 +1,12 @@
 #pragma once
 
+// Cross-platform portability layer for StochFit.
+// Provides: BOOL/TRUE/FALSE compatibility (int32_t), M_PI via <numbers>,
+// MAX_OMP_THREADS limit, EXPORT visibility macro (dllexport / visibility("default")),
+// platform_error() stderr sink, MyComplex alias (std::complex<double>),
+// and STOCHFIT_HAS_GPU flag (set if STOCHFIT_HAS_CUDA or STOCHFIT_HAS_METAL).
+// All standard headers needed by the codebase are included here.
+
 // Cross-platform replacement for stdafx.h — all Windows-specific constructs
 // are either stubbed out or replaced with C++23 equivalents.
 
@@ -48,26 +55,6 @@ using BOOL = int32_t;
 #ifndef MAX_OMP_THREADS
 #  define MAX_OMP_THREADS 8
 #endif
-
-// ── Aligned alloc wrappers ──────────────────────────────────────────────────
-// Signature matches _mm_malloc / _aligned_malloc: (size, alignment).
-inline void* platform_aligned_alloc(size_t size, size_t alignment) {
-#if defined(_MSC_VER)
-    return _aligned_malloc(size, alignment);
-#else
-    // std::aligned_alloc requires size to be a multiple of alignment
-    size_t rounded = ((size + alignment - 1u) / alignment) * alignment;
-    return std::aligned_alloc(alignment, rounded);
-#endif
-}
-
-inline void platform_aligned_free(void* p) {
-#if defined(_MSC_VER)
-    _aligned_free(p);
-#else
-    std::free(p);
-#endif
-}
 
 // ── Export macro ────────────────────────────────────────────────────────────
 #if defined(_MSC_VER)

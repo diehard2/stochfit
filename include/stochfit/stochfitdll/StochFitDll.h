@@ -18,10 +18,17 @@
  *
  */
 
+// FFI entry points exported from stochfit_shared.dll / libstochfit.so.
+// Called from the Electron GUI via koffi. All functions use C linkage.
+// Lifecycle: Init() → Start() → [GetData() polling] → Cancel().
+// GpuAvailable() is called at startup to determine if UseGpu can be enabled.
+
 #include <stochfit/common/platform.h>
 #include <stochfit/stochfitdll/SettingsStruct.h>
 
-extern "C" EXPORT const char* Init(ReflSettings* initstruct);
+extern "C" EXPORT void Init(ReflSettings* initstruct);
+extern "C" EXPORT const char* GetInitError();
+// ******** MAYBEDEAD ******** GenPriority — not called from GUI (thread priority not portable)
 extern "C" EXPORT void GenPriority(int priority);
 extern "C" EXPORT void Start(int iterations);
 extern "C" EXPORT void Cancel();

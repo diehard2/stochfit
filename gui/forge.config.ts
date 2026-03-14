@@ -1,13 +1,29 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
-import { MakerZIP } from '@electron-forge/maker-zip';
 import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerRpm } from '@electron-forge/maker-rpm';
 import { VitePlugin } from '@electron-forge/plugin-vite';
-// @ts-ignore — type-only import not needed at runtime
 
 const libExt = process.platform === 'win32' ? '.dll' : '.so';
 const libPrefix = process.platform === 'win32' ? '' : 'lib';
+
+// MakerDMG uses appdmg which has macOS-only native binaries — load it only on
+// macOS so that `npm install` succeeds on Windows/Linux (optionalDependency).
+const makers: ForgeConfig['makers'] = [
+  new MakerSquirrel({ authors: 'StochFit Contributors' }),
+  new MakerDeb({}),
+  new MakerRpm({}),
+];
+
+if (process.platform === 'darwin') {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { MakerDMG } = require('@electron-forge/maker-dmg');
+    makers.push(new MakerDMG({}, ['darwin']));
+  } catch {
+    // maker-dmg not installed (non-macOS environment)
+  }
+}
 
 const config: ForgeConfig = {
   outDir: '../build/electron',
@@ -24,14 +40,7 @@ const config: ForgeConfig = {
   rebuildConfig: {
     onlyModules: ['koffi'],
   },
-  makers: [
-    new MakerSquirrel({
-      authors: 'StochFit Contributors',
-    }),
-    new MakerZIP({}, ['darwin']),
-    new MakerRpm({}),
-    new MakerDeb({}),
-  ],
+  makers,
   plugins: [
     new VitePlugin({
       build: [

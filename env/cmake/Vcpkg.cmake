@@ -1,9 +1,9 @@
-# cmake/Vcpkg.cmake
+# env/cmake/Vcpkg.cmake
 # Auto-downloads and bootstraps vcpkg, then wires it in as the toolchain.
 # Must be included BEFORE the first project() call.
 
 # Read pinned version (tag or commit hash) from env/vcpkg-version.txt
-file(READ "${CMAKE_CURRENT_LIST_DIR}/../env/vcpkg-version.txt" VCPKG_VERSION)
+file(READ "${CMAKE_CURRENT_LIST_DIR}/../vcpkg-version.txt" VCPKG_VERSION)
 string(STRIP "${VCPKG_VERSION}" VCPKG_VERSION)
 
 set(VCPKG_DIR "${CMAKE_BINARY_DIR}/vcpkg")

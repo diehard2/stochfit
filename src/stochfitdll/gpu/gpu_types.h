@@ -1,5 +1,13 @@
 #pragma once
 
+// GPU data structures for SA fitting. All fields use float32 for
+// consumer GPU performance (NVIDIA 4xxx/5xxx have 1:64 FP64:FP32 ratio).
+// GpuSAState — per-chain SA algorithm state (temperature, gamma, etc.)
+// GpuParams — box-model parameter vector with bounds for GPU mutation
+// GpuMeasurement — Q/R/dR measurement data and objective function selection
+// GpuEDPConfig — precomputed EDP geometry (spacing, distances, wave constant)
+// GpuResultSummary — best-chain result after a run_batch() call
+
 // All GPU computation uses float (32-bit) for performance.
 // Consumer NVIDIA GPUs (4xxx/5xxx) have 1:64 FP64:FP32 ratio.
 

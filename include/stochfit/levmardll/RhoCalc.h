@@ -25,17 +25,17 @@
 class RhoCalc
 {
 private:
-	double* distarray;
-	double* rhoarray;
-	double* rougharray;
+	vector<double> distarray;
+	vector<double> rhoarray;
+	vector<double> rougharray;
 	double* MIRho;
-	double* param; 
-	
+	double* param;
+
 	double* ZIncrement;
 
-	double* m_LengthArray;
-	double* m_RhoArray;
-	double* m_SigmaArray;
+	vector<double> m_LengthArray;
+	vector<double> m_RhoArray;
+	vector<double> m_SigmaArray;
 	
 	int pcount;
 	bool onesigma;
@@ -57,6 +57,6 @@ public:
     static void objective(double *p, double *x, int m, int n, void *data);
 	void writefiles(const char* filename);
 
-	double* nk;
-	double* nkb;
+	vector<double> nk;
+	vector<double> nkb;
 };

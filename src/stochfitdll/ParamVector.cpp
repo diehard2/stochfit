@@ -22,7 +22,7 @@
 #include "ParamVector.h"
 
 ParamVector::ParamVector(ReflSettings* InitStruct):m_bfixroughness(false),
-m_busesurfabs(false), m_bfiximpnorm(false), m_bXROnly(false), m_binitialized(false), m_isurfabs_index(-1), m_iimpnorm_index(-1),
+m_busesurfabs(false), m_bfiximpnorm(false), m_binitialized(false), m_isurfabs_index(-1), m_iimpnorm_index(-1),
 m_iroughness_index(-1)
 {
 	m_binitialized = true;
@@ -76,42 +76,26 @@ m_iroughness_index(-1)
 	SetSubphase(InitStruct->SubSLD/InitStruct->FilmSLD);
 	
 
-	setroughness(2.0f);
+	setroughness(2.0);
 
 	for(int i = 0 ; i < InitStruct->Boxes; i++)
 		SetMutatableParameter(i,1.0);
 }
 
-ParamVector::ParamVector():m_bfixroughness(false),m_busesurfabs(false), m_bfiximpnorm(false), m_bXROnly(false), m_binitialized(false)
+ParamVector::ParamVector():m_bfixroughness(false),m_busesurfabs(false), m_bfiximpnorm(false), m_binitialized(false)
 {
 	m_binitialized = false;
 }
 
-void ParamVector::SetBounds(float lowrough, float highrough, float highimp, float highabs)
+void ParamVector::SetBounds(double lowrough, double highrough, double highimp, double highabs)
 {
 	if(m_binitialized)
-	{ 
+	{
 		//For annealing, we need to provide more reasonable restriction on boundary heights
 		for(int i = 0; i < length ; i++)
 		{
-			data_params_high_val[i] = 5.0f;
-			data_params_low_val[i] = -5.0f;
-
-		/*	if(i != 0 && i != length -1)
-			{
-				data_params_high_val.at(i) = max(data_params.at(i-1), data_params.at(i+1)) + 0.1;
-				data_params_low_val.at(i) =  min(data_params.at(i-1), data_params.at(i+1)) - 0.1;
-			}
-			else if(i == 0)
-			{
-				data_params_high_val.at(0) = data_params.at(i+1) + 0.1;
-				data_params_low_val.at(0) =  data_params.at(i+1) - 0.1;
-			}
-			else
-			{
-				data_params_high_val.at(i) = max(data_params.at(i-1), gnome.at(gnome.size()-1)) + 0.1;
-				data_params_low_val.at(i) =  min(data_params.at(i-1), gnome.at(gnome.size()-1)) - 0.1;
-			}*/
+			data_params_high_val[i] = 5.0;
+			data_params_low_val[i] = -5.0;
 		}
 
 		if(m_bfixroughness == false)
@@ -148,12 +132,6 @@ void ParamVector::UpdateBoundaries(double* high, double* low)
 	}
 	else
 	{
-		////Set some fake bounds for initialization
-		//for(int i = 0; i < m_dparameter_size; i++)
-		//{
-		//	data_params_high_val[i] = data_params[i]+0.1;
-		//	data_params_low_val[i] = data_params[i]-0.1;
-		//}
 	}
 	
 }
@@ -175,7 +153,7 @@ int ParamVector::GetInitializationLength()
 	return length;
 }
 
-float ParamVector::GetRealparams(int i)
+double ParamVector::GetRealparams(int i)
 {
 	if(m_binitialized)
 	{
@@ -189,19 +167,19 @@ float ParamVector::GetRealparams(int i)
 
 }
 
-void ParamVector::SetSubphase(float subval)
+void ParamVector::SetSubphase(double subval)
 {
 	if(m_binitialized)
 		gnome.at(length+1) = subval;
 }
 
-void ParamVector::SetSupphase(float supval)
+void ParamVector::SetSupphase(double supval)
 {
 	if(m_binitialized)
 		gnome.at(0) = supval;
 }
 
-float ParamVector::GetMutatableParameter(int i)
+double ParamVector::GetMutatableParameter(int i)
 {
 	if(m_binitialized)
 		return data_params.at(i);
@@ -210,7 +188,7 @@ float ParamVector::GetMutatableParameter(int i)
 }
 
 
-int ParamVector::SetMutatableParameter(int i,float val)
+int ParamVector::SetMutatableParameter(int i, double val)
 {
 	if(m_binitialized)
 	{
@@ -250,7 +228,7 @@ int ParamVector::SetMutatableParameter(int i,float val)
 		return -1;
 }
 
-float ParamVector::GetUpperBounds(int index)
+double ParamVector::GetUpperBounds(int index)
 {
 	if(m_binitialized && index < m_dparameter_size)
 		return data_params_high_val.at(index);
@@ -258,7 +236,7 @@ float ParamVector::GetUpperBounds(int index)
 		return -1;
 }
 
-float ParamVector::GetLowerBounds(int index)
+double ParamVector::GetLowerBounds(int index)
 {
 	if(m_binitialized && index < m_dparameter_size)
 		return data_params_low_val.at(index);
@@ -266,7 +244,7 @@ float ParamVector::GetLowerBounds(int index)
 		return -1;
 }
 
-float ParamVector::getroughness()
+double ParamVector::getroughness()
 {
 	if(m_binitialized)
 	{
@@ -279,7 +257,7 @@ float ParamVector::getroughness()
 		return -1;
 }
 
-int ParamVector::setroughness(float rough)
+int ParamVector::setroughness(double rough)
 {
 	if(m_binitialized)
 	{
@@ -297,20 +275,20 @@ int ParamVector::setroughness(float rough)
 		return -1;
 }
 
-float ParamVector::getImpNorm()
+double ParamVector::getImpNorm()
 {
 	if(m_binitialized)
 	{
 		if(m_bfiximpnorm)
 			return data_params.at(m_iimpnorm_index);
-		else 
+		else
 			return 1.0;
 	}
 	else
 		return -1;
 }
 
-int ParamVector::setImpNorm(float norm)
+int ParamVector::setImpNorm(double norm)
 {
 	if(m_binitialized)
 	{
@@ -331,7 +309,7 @@ int ParamVector::setImpNorm(float norm)
 		return -1;
 }
 
-float ParamVector::getSurfAbs()
+double ParamVector::getSurfAbs()
 {
 	if(m_binitialized)
 	{
@@ -340,11 +318,11 @@ float ParamVector::getSurfAbs()
 		else
 			return 0;
 	}
-	else 
+	else
 		return -1;
 }
 
-int ParamVector::setSurfAbs(float surfabs)
+int ParamVector::setSurfAbs(double surfabs)
 {
 	if(m_binitialized)
 	{

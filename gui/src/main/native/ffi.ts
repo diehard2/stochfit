@@ -57,12 +57,14 @@ let _fnGetData: KoffiFn | null = null;
 let _fnArraySizes: KoffiFn | null = null;
 let _fnWarmedUp: KoffiFn | null = null;
 let _fnSAparams: KoffiFn | null = null;
+let _fnGetInitError: KoffiFn | null = null;
 let _fnGpuAvailable: KoffiFn | null = null;
 
 export function getStochFns() {
   const lib = getStochLib();
   if (!_fnInit) {
-    _fnInit = lib.func('str Init(ReflSettings *initstruct)');
+    _fnInit = lib.func('void Init(ReflSettings *initstruct)');
+    _fnGetInitError = lib.func('str GetInitError()');
     _fnStart = lib.func('void Start(int iterations)');
     _fnCancel = lib.func('void Cancel()');
     _fnGetData = lib.func('int GetData(double *ZRange, double *Rho, double *QRange, double *Refl, double *roughness, double *chisquare, double *goodnessoffit, int *isfinished)');
@@ -73,6 +75,7 @@ export function getStochFns() {
   }
   return {
     Init: _fnInit!,
+    GetInitError: _fnGetInitError!,
     Start: _fnStart!,
     Cancel: _fnCancel!,
     GetData: _fnGetData!,

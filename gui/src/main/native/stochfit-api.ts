@@ -138,7 +138,8 @@ export function stochInit(settings: ReflSettingsInput): void {
     Title: settings.title,
   };
 
-  const errMsg: string = fns.Init(s);
+  fns.Init(s);
+  const errMsg: string = fns.GetInitError();
   if (errMsg) {
     throw new Error(`StochFit init failed: ${errMsg}`);
   }

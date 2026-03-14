@@ -23,11 +23,11 @@
 class Reflcalc
 {
 private:
-   MyComplex *doublenk;
-   double *sinthetai,*sinsquaredthetai;
+   vector<MyComplex> doublenk;
+   vector<double> sinthetai, sinsquaredthetai;
 public:
-	
-	MyComplex *nk, *nkb;
+
+	vector<MyComplex> nk, nkb;
 	double* Realrefl, *Realreflerrors; int realrefllength;
 	//Variables
 
@@ -40,7 +40,7 @@ public:
 	double sdyi;
 
 	//read from file
-    double *reflpt;
+    vector<double> reflpt;
     int m_idatapoints;
     int nl;
 	double totalsize;
@@ -62,7 +62,7 @@ public:
 	//Density calcs
 	int CalculateZLength();
 	void MakeZ();
-	double* ZIncrement;
+	vector<double> ZIncrement;
 	int Zlength;
 	double* param; 
 	int pcount;

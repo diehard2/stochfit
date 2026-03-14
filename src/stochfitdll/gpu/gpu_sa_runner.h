@@ -1,5 +1,11 @@
 #pragma once
 
+// Abstract GPU SA runner interface.
+// GpuSARunner::create(backend) returns a CUDA or Metal runner depending on
+// the detected backend. initialize() uploads all problem data to the GPU.
+// run_batch(N) runs N SA iterations synchronously across all chains.
+// get_result() / get_best_edp() / get_best_reflectivity() retrieve results.
+
 #include "gpu_detect.h"
 #include "gpu_types.h"
 #include <memory>

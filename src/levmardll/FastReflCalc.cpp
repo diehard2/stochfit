@@ -24,16 +24,6 @@
 
 FastReflcalc::~FastReflcalc()
 {
-	platform_aligned_free(sinsquaredthetai);
-	platform_aligned_free(sinthetai);
-	platform_aligned_free(reflpt);
-	platform_aligned_free(qspreadreflpt);
-	platform_aligned_free(qspreadsinsquaredthetai);
-	platform_aligned_free(qspreadsinthetai);
-	delete[] RhoArray;
-	delete[] SigmaArray;
-	delete[] ImagArray;
-	delete[] LengthArray;
 }
 
 void FastReflcalc::init(BoxReflSettings* InitStruct)
@@ -53,10 +43,10 @@ void FastReflcalc::init(BoxReflSettings* InitStruct)
 	m_ihighqoffset = InitStruct->HighQOffset;
 	m_idatapoints = InitStruct->QPoints;
 
-	RhoArray = new double[boxnumber+2];
-	SigmaArray = new double[boxnumber+2];
-	LengthArray = new double[boxnumber+2];
-	ImagArray = new double[boxnumber+2];
+	RhoArray.resize(boxnumber+2);
+	SigmaArray.resize(boxnumber+2);
+	LengthArray.resize(boxnumber+2);
+	ImagArray.resize(boxnumber+2);
 
 	MakeTheta(InitStruct);
 }
@@ -67,13 +57,13 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
 	double* QRange = InitStruct->Q;
 	double* QError = InitStruct->QError;
 
-	sinthetai = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),64);
-	sinsquaredthetai = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),64);
-	qspreadsinthetai = (double*)platform_aligned_alloc(m_idatapoints*20*sizeof(double),64);
-	qspreadsinsquaredthetai = (double*)platform_aligned_alloc(m_idatapoints*20*sizeof(double),64);
-	qspreadreflpt = (double*)platform_aligned_alloc(m_idatapoints*20*sizeof(double),64);
+	sinthetai.resize(m_idatapoints);
+	sinsquaredthetai.resize(m_idatapoints);
+	qspreadsinthetai.resize(m_idatapoints*20);
+	qspreadsinsquaredthetai.resize(m_idatapoints*20);
+	qspreadreflpt.resize(m_idatapoints*20);
 
-	reflpt = (double*)platform_aligned_alloc(m_idatapoints*sizeof(double),64);
+	reflpt.resize(m_idatapoints);
 
 	for(int i = 0; i< m_idatapoints; i++)
 	{
@@ -370,9 +360,9 @@ void FastReflcalc::Rhocalculate(double Zoffset,double* ZIncrement, double* Lengt
 
 	//Create arrays so we don't have to redo this calculation for every data point
 
-	double* distarray = (double*)platform_aligned_alloc((refllayers+1)*sizeof(double),64);
-	double* rhoarray = (double*)platform_aligned_alloc((refllayers+1)*sizeof(double),64);
-	double* rougharray = (double*)platform_aligned_alloc((refllayers+1)*sizeof(double),64);
+	vector<double> distarray(refllayers+1);
+	vector<double> rhoarray(refllayers+1);
+	vector<double> rougharray(refllayers+1);
 
 	//Calculate the portions of the e-density equation that don't need to be repeated
 
@@ -432,11 +422,6 @@ void FastReflcalc::Rhocalculate(double Zoffset,double* ZIncrement, double* Lengt
 		nkb[j] = bsumm/SubSLD;
 	}
 
-	//Free arrays
-
-	platform_aligned_free(distarray);
-	platform_aligned_free(rhoarray);
-	platform_aligned_free(rougharray);
 }
 
 double FastReflcalc::CalcQc(double dSLD)
@@ -486,17 +471,17 @@ void FastReflcalc::myrfdispatch()
 {
 	if(m_dQSpread < 0.005)
 	{
-		CalcRefl(sinthetai,sinsquaredthetai,m_idatapoints,reflpt);
+		CalcRefl(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints, reflpt.data());
 	}
 	else
 	{
-		CalcRefl(qspreadsinthetai, qspreadsinsquaredthetai, m_idatapoints*13, qspreadreflpt);
-		QsmearRf(qspreadreflpt, reflpt, m_idatapoints);
+		CalcRefl(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(), m_idatapoints*13, qspreadreflpt.data());
+		QsmearRf(qspreadreflpt.data(), reflpt.data(), m_idatapoints);
 	}
 
 	if(m_bImpNorm == TRUE)
 	{
-		ImpNorm(reflpt, m_idatapoints);
+		ImpNorm(reflpt.data(), m_idatapoints);
 	}
 }
 

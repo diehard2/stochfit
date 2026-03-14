@@ -19,6 +19,15 @@
  */
 
 #pragma once
+
+// Parratt recursive reflectivity calculator with OpenMP parallelization.
+// Supports transparent and absorbing films, four objective functions (0=log
+// difference, 1=inverse ratio, 2/3=error-weighted variants), optional
+// Q-smearing via 13-point Gaussian quadrature, and imperfect normalization.
+// Thread count is limited to MAX_OMP_THREADS (default 8).
+// sinsquaredthetai, qspreadsinsquaredthetai, qspreadsinthetai are public
+// for GPU data marshaling.
+
 #include "ParamVector.h"
 #include "CEDP.h"
 
@@ -31,7 +40,6 @@ private:
 	BOOL m_bforcenorm;
 	BOOL m_bImpNorm;
 	int m_iuseableprocessors;
-	double m_dwaveconstant;
 	vector<MyComplex> m_ckk, m_cak, m_crj, m_cRj;
 	vector<double> m_dkk, m_drj;
 	vector<double> tsinsquaredthetai, qspreadreflpt;
@@ -54,8 +62,8 @@ public:
 	//Variables
 	double m_dChiSquare;
 	double m_dgoodnessoffit;
-	float m_dQSpread;
-	float m_dnormfactor;
+	double m_dQSpread;
+	double m_dnormfactor;
 
 	//read from file
 	vector<double> xi, yi, eyi, sinthetai, reflpt;
@@ -74,8 +82,5 @@ public:
     void ParamsRF(CEDP* EDP, string reflfile);
 	void CalculateReflectivity(CEDP* EDP);
 
-	//Get/Let Functions
-	double GetWaveConstant();
-    
 	int objectivefunction;
 };

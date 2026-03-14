@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # vcpkg must be set up before project()
-include(cmake/Vcpkg.cmake)
+include(env/cmake/Vcpkg.cmake)
 
 project(StochFit VERSION 1.0.0 LANGUAGES C CXX)
 

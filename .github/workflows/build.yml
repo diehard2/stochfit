@@ -58,3 +58,16 @@ jobs:
       - name: Test (mirefl smoke test — Windows)
         run: build\mirefl.exe
         if: runner.os == 'Windows'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install GUI dependencies
+        working-directory: gui
+        run: npm ci
+
+      - name: Package GUI (no installer)
+        working-directory: gui
+        run: npm run package

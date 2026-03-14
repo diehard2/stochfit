@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
 import type { Data } from 'plotly.js';
 import { reflLayout, plotlyConfig } from './graph-config';
@@ -13,17 +13,44 @@ interface Props {
   fitResult: FitResult | null;
 }
 
+type LockedRange = {
+  xaxis?: { range: [number, number]; autorange: false };
+  yaxis?: { range: [number, number]; autorange: false };
+} | null;
+
 export function ReflectivityGraph({ data, fitResult }: Props) {
   const plotRef = useRef<any>(null);
   const normalizeByFresnel = useUiStore((s) => s.normalizeByFresnel);
   const settings = useSettingsStore((s) => s.settings);
+  const [lockedRange, setLockedRange] = useState<LockedRange>(null);
   const traces: Data[] = [];
 
+  // Reset zoom when Fresnel normalization toggles (axes change scale/meaning)
   useEffect(() => {
+    setLockedRange(null);
     if (plotRef.current?.el) {
       plotRef.current.el.Plotly?.redraw?.();
     }
   }, [normalizeByFresnel]);
+
+  const handleRelayout = (e: Readonly<Plotly.PlotRelayoutEvent>) => {
+    if (e['xaxis.autorange'] === true) {
+      setLockedRange(null);
+      return;
+    }
+    const x0 = e['xaxis.range[0]'] as number | undefined;
+    const x1 = e['xaxis.range[1]'] as number | undefined;
+    const y0 = e['yaxis.range[0]'] as number | undefined;
+    const y1 = e['yaxis.range[1]'] as number | undefined;
+    if (x0 !== undefined && x1 !== undefined) {
+      setLockedRange({
+        xaxis: { range: [x0, x1], autorange: false },
+        ...(y0 !== undefined && y1 !== undefined
+          ? { yaxis: { range: [y0, y1], autorange: false } }
+          : {}),
+      });
+    }
+  };
 
   const applyFresnelNorm = (q: number[], refl: number[], errors?: number[]) => {
     if (!normalizeByFresnel || !settings) {
@@ -67,12 +94,18 @@ export function ReflectivityGraph({ data, fitResult }: Props) {
     });
   }
 
-  const layout = normalizeByFresnel && settings && calcQc(settings.subSLD, settings.supSLD) !== 0
+  const baseLayout = normalizeByFresnel && settings && calcQc(settings.subSLD, settings.supSLD) !== 0
     ? reflLayout({
         xaxis: { title: { text: 'Q / Q<sub>c</sub>', font: { size: 12 } }, type: 'linear', gridcolor: 'rgba(100, 100, 100, 0.15)' },
         yaxis: { title: { text: 'Intensity / Fresnel', font: { size: 12 } }, type: 'log', gridcolor: 'rgba(100, 100, 100, 0.15)' },
       })
     : reflLayout();
+
+  const layout = {
+    ...baseLayout,
+    xaxis: { ...(baseLayout.xaxis as any), ...(lockedRange?.xaxis ?? {}) },
+    yaxis: { ...(baseLayout.yaxis as any), ...(lockedRange?.yaxis ?? {}) },
+  };
 
   return (
     <Plot
@@ -82,6 +115,7 @@ export function ReflectivityGraph({ data, fitResult }: Props) {
       config={plotlyConfig}
       style={{ width: '100%', height: '100%' }}
       useResizeHandler
+      onRelayout={handleRelayout}
     />
   );
 }

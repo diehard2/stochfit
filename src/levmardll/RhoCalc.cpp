@@ -32,28 +32,20 @@ void RhoCalc::init(BoxReflSettings* InitStruct)
 	SubSLD = InitStruct->SubSLD;
 	m_dSupSLD = InitStruct->SupSLD;
 
-	nk = (double*)platform_aligned_alloc(sizeof(double)*Zlength,16);
-	nkb = (double*)platform_aligned_alloc(sizeof(double)*Zlength,16);
+	nk.resize(Zlength);
+	nkb.resize(Zlength);
 
-	distarray = (double*)platform_aligned_alloc((boxnumber+1)*sizeof(double),16);
-	rhoarray = (double*)platform_aligned_alloc((boxnumber+1)*sizeof(double),16);
-	rougharray = (double*)platform_aligned_alloc((boxnumber+1)*sizeof(double),16);
+	distarray.resize(boxnumber+1);
+	rhoarray.resize(boxnumber+1);
+	rougharray.resize(boxnumber+1);
 
-	m_LengthArray = new double[boxnumber];
-	m_RhoArray = new double[boxnumber];
-	m_SigmaArray = new double[boxnumber];
+	m_LengthArray.resize(boxnumber);
+	m_RhoArray.resize(boxnumber);
+	m_SigmaArray.resize(boxnumber);
 }
 
 RhoCalc::~RhoCalc()
 {
-	platform_aligned_free(nk);
-	platform_aligned_free(nkb);
-	platform_aligned_free(distarray);
-	platform_aligned_free(rhoarray);
-	platform_aligned_free(rougharray);
-	delete(m_LengthArray);
-	delete(m_SigmaArray);
-	delete(m_RhoArray);
 }
 
  void RhoCalc::objective(double* par, double* x, int m, int n, void* data)

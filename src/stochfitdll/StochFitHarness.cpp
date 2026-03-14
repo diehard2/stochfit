@@ -163,15 +163,15 @@ void StochFit::InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
 {
 	// SA state from current SimAnneal
 	memset(&sa_state, 0, sizeof(sa_state));
-	sa_state.temperature = 1.0f / (float)m_SA->Get_Temp();
-	sa_state.best_energy = (float)m_SA->Get_LowestEnergy();
+	sa_state.temperature = 1.0f / static_cast<float>(m_SA->Get_Temp());
+	sa_state.best_energy = static_cast<float>(m_SA->Get_LowestEnergy());
 	sa_state.current_energy = sa_state.best_energy;
 	sa_state.best_solution = sa_state.best_energy;
-	sa_state.slope = (float)m_initStruct.Slope;
-	sa_state.gamma = (float)m_initStruct.Gamma;
-	sa_state.avg_fstun = (float)m_initStruct.Inittemp;
-	sa_state.gammadec = (float)m_initStruct.Gammadec;
-	sa_state.stepsize = (float)m_initStruct.Paramtemp;
+	sa_state.slope = static_cast<float>(m_initStruct.Slope);
+	sa_state.gamma = static_cast<float>(m_initStruct.Gamma);
+	sa_state.avg_fstun = static_cast<float>(m_initStruct.Inittemp);
+	sa_state.gammadec = static_cast<float>(m_initStruct.Gammadec);
+	sa_state.stepsize = static_cast<float>(m_initStruct.Paramtemp);
 	sa_state.algorithm = m_initStruct.Algorithm;
 	sa_state.iteration = 0;
 	sa_state.plat_time = m_initStruct.Platiter;
@@ -189,10 +189,10 @@ void StochFit::InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
 	gpu_params.real_params_size = rps;
 	gpu_params.num_boxes = params->GetInitializationLength();
 	for (int i = 0; i < rps; i++)
-		gpu_params.sld_values[i] = params->GetRealparams(i);
-	gpu_params.roughness = params->getroughness();
-	gpu_params.surf_abs = params->getSurfAbs();
-	gpu_params.imp_norm = params->getImpNorm();
+		gpu_params.sld_values[i] = static_cast<float>(params->GetRealparams(i));
+	gpu_params.roughness = static_cast<float>(params->getroughness());
+	gpu_params.surf_abs = static_cast<float>(params->getSurfAbs());
+	gpu_params.imp_norm = static_cast<float>(params->getImpNorm());
 	gpu_params.fix_roughness = params->Get_FixedRoughness() ? 1 : 0;
 	gpu_params.use_surf_abs = params->Get_UseSurfAbs() ? 1 : 0;
 	gpu_params.fix_imp_norm = params->Get_FixImpNorm() ? 1 : 0;
@@ -211,11 +211,11 @@ void StochFit::InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
 	m_fMeasSintheta.resize(nd);
 	m_fMeasSinsq.resize(nd);
 	for (int i = 0; i < nd; i++) {
-		m_fMeasQ[i] = (float)m_cRefl.xi[i];
-		m_fMeasRefl[i] = (float)m_cRefl.yi[i];
-		m_fMeasErr[i] = (float)m_cRefl.eyi[i];
-		m_fMeasSintheta[i] = (float)m_cRefl.sinthetai[i];
-		m_fMeasSinsq[i] = (float)m_cRefl.sinsquaredthetai[i];
+		m_fMeasQ[i] = static_cast<float>(m_cRefl.xi[i]);
+		m_fMeasRefl[i] = static_cast<float>(m_cRefl.yi[i]);
+		m_fMeasErr[i] = static_cast<float>(m_cRefl.eyi[i]);
+		m_fMeasSintheta[i] = static_cast<float>(m_cRefl.sinthetai[i]);
+		m_fMeasSinsq[i] = static_cast<float>(m_cRefl.sinsquaredthetai[i]);
 	}
 
 	bool use_qspread = (m_cRefl.m_dQSpread > 0.0f && m_cRefl.exi.has_value());
@@ -223,8 +223,8 @@ void StochFit::InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
 		m_fQspreadSin.resize(nd * 13);
 		m_fQspreadSin2.resize(nd * 13);
 		for (int i = 0; i < nd * 13; i++) {
-			m_fQspreadSin[i] = (float)m_cRefl.qspreadsinthetai[i];
-			m_fQspreadSin2[i] = (float)m_cRefl.qspreadsinsquaredthetai[i];
+			m_fQspreadSin[i] = static_cast<float>(m_cRefl.qspreadsinthetai[i]);
+			m_fQspreadSin2[i] = static_cast<float>(m_cRefl.qspreadsinsquaredthetai[i]);
 		}
 	}
 
@@ -251,27 +251,27 @@ void StochFit::InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
 	// Read from CEDP's internal arrays (they are float already)
 	// We need to access them - use the public Init data
 	for (int i = 0; i < nl; i++)
-		m_fEdSpacing[i] = i * (float)m_cEDP.Get_Dz() - (float)m_initStruct.Leftoffset;
+		m_fEdSpacing[i] = i * static_cast<float>(m_cEDP.Get_Dz()) - static_cast<float>(m_initStruct.Leftoffset);
 
 	int FilmSlack = 7;
 	for (int k = 0; k < gpu_params.num_boxes + 2; k++)
-		m_fDistArray[k] = k * ((float)m_initStruct.FilmLength + (float)FilmSlack) / (float)m_initStruct.Boxes;
+		m_fDistArray[k] = k * (static_cast<float>(m_initStruct.FilmLength) + static_cast<float>(FilmSlack)) / static_cast<float>(m_initStruct.Boxes);
 
-	float waveConst = m_cEDP.Get_WaveConstant();
-	float lambda = (float)m_initStruct.Wavelength;
+	float waveConst = static_cast<float>(m_cEDP.Get_WaveConstant());
+	float lambda = static_cast<float>(m_initStruct.Wavelength);
 
 	memset(&edp_config, 0, sizeof(edp_config));
 	edp_config.ed_spacing = m_fEdSpacing.data();
 	edp_config.dist_array = m_fDistArray.data();
-	edp_config.rho = (float)(m_initStruct.FilmSLD * 1e-6) * waveConst;
-	edp_config.dz = (float)m_cEDP.Get_Dz();
-	edp_config.k0 = 2.0f * (float)M_PI / lambda;
+	edp_config.rho = static_cast<float>(m_initStruct.FilmSLD * 1e-6) * waveConst;
+	edp_config.dz = static_cast<float>(m_cEDP.Get_Dz());
+	edp_config.k0 = 2.0f * static_cast<float>(M_PI) / lambda;
 	edp_config.num_layers = nl;
 	edp_config.use_abs = m_initStruct.UseSurfAbs;
 	if (m_initStruct.UseSurfAbs) {
-		edp_config.beta = (float)m_initStruct.FilmAbs * waveConst;
-		edp_config.beta_sub = (float)m_initStruct.SubAbs * waveConst;
-		edp_config.beta_sup = (float)m_initStruct.SupAbs * waveConst;
+		edp_config.beta = static_cast<float>(m_initStruct.FilmAbs) * waveConst;
+		edp_config.beta_sub = static_cast<float>(m_initStruct.SubAbs) * waveConst;
+		edp_config.beta_sup = static_cast<float>(m_initStruct.SupAbs) * waveConst;
 	}
 }
 
@@ -309,9 +309,9 @@ int StochFit::ProcessingGPU(std::stop_token stop_tok)
 		if (m_bupdated || time_for_update) {
 			GpuResultSummary result = m_gpuRunner->get_result();
 
-			m_dRoughness = (double)result.best_roughness;
-			m_dChiSquare = (double)result.best_chi_square;
-			m_dGoodnessOfFit = (double)result.best_gof;
+			m_dRoughness = static_cast<double>(result.best_roughness);
+			m_dChiSquare = static_cast<double>(result.best_chi_square);
+			m_dGoodnessOfFit = static_cast<double>(result.best_gof);
 
 			// Update EDP arrays for frontend
 			std::vector<float> edp_buf(m_irhocount);
@@ -319,7 +319,7 @@ int StochFit::ProcessingGPU(std::stop_token stop_tok)
 			float edp_last = edp_buf[m_irhocount - 1];
 			for (int i = 0; i < m_irhocount; i++) {
 				Zinc[i] = i * m_cEDP.Get_Dz();
-				Rho[i] = (edp_last != 0.0f) ? (double)(edp_buf[i] / edp_last) : 0.0;
+				Rho[i] = (edp_last != 0.0f) ? static_cast<double>(edp_buf[i] / edp_last) : 0.0;
 			}
 
 			// Update reflectivity arrays for frontend
@@ -331,8 +331,8 @@ int StochFit::ProcessingGPU(std::stop_token stop_tok)
 			// Use the measurement Q values directly
 			int out_count = std::min(m_irefldatacount, refl_count);
 			for (int i = 0; i < out_count; i++) {
-				Qinc[i] = (double)m_fMeasQ[i];
-				Refl[i] = (double)refl_buf[i];
+				Qinc[i] = static_cast<double>(m_fMeasQ[i]);
+				Refl[i] = static_cast<double>(refl_buf[i]);
 			}
 
 			m_bupdated = false;

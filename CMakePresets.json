@@ -28,8 +28,8 @@
       "displayName": "Windows Release",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_MAKE_PROGRAM": "${sourceDir}/tools/ninja.exe",
-        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/MsvcEnvironment.cmake",
+        "CMAKE_MAKE_PROGRAM": "${sourceDir}/env/tools/ninja.exe",
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/env/cmake/MsvcEnvironment.cmake",
         "VCPKG_APPLOCAL_DEPS": "OFF"
       }
     },

@@ -19,6 +19,11 @@
  */
 
 #pragma once
+
+// Thin delegation wrapper around SimAnneal.
+// Provides the same interface as SimAnneal but decouples StochFit from
+// the concrete SA algorithm class, allowing future substitution.
+
 #include "ReflCalc.h"
 #include "ParamVector.h"
 #include "SimulatedAnnealing.h"
@@ -46,5 +51,6 @@ public:
 	bool Get_IsIterMinimum();
 	double Get_AveragefSTUN();
 	void Set_AveragefSTUN(double fSTUN);
+	// ******** MAYBEDEAD ******** CheckForFailure — always returns false
 	bool CheckForFailure();
 };

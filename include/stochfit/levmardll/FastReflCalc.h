@@ -24,7 +24,7 @@ class FastReflcalc
 {
 private:
 
-   double *sinthetai,*sinsquaredthetai, *qspreadsinthetai, *qspreadsinsquaredthetai, *qspreadreflpt;
+   vector<double> sinthetai, sinsquaredthetai, qspreadsinthetai, qspreadsinsquaredthetai, qspreadreflpt;
    int m_icritqoffset, m_ihighqoffset;
    void ImpNorm(double* refl, int datapoints);
    void MakeTheta(BoxReflSettings* InitStruct);
@@ -45,7 +45,7 @@ public:
 
 	double m_dsupsld;
 
-    double *reflpt;
+    vector<double> reflpt;
     int m_idatapoints;
  
 	double totalsize;
@@ -74,10 +74,10 @@ public:
 	BOOL onesigma;
 	double subphaseSLD;
 
-	double* LengthArray;
-	double* RhoArray;
-	double* SigmaArray;
-	double* ImagArray;
+	vector<double> LengthArray;
+	vector<double> RhoArray;
+	vector<double> SigmaArray;
+	vector<double> ImagArray;
 
 	virtual void Rhocalculate(double Zoffset,double* ZIncrement, double* LengthArray, double* RhoArray, double* SigmaArray, double* nk, double* nkb, int counter);
 

@@ -117,7 +117,7 @@ bool SimAnneal::EvaluateSA(double bestval, double curval)
 		return false;
 }
 
-bool SimAnneal::EvaluateSTUN(long double bestval,long double curval)
+bool SimAnneal::EvaluateSTUN(double bestval, double curval)
 {
 
 	double probability = 0;
@@ -128,8 +128,8 @@ bool SimAnneal::EvaluateSTUN(long double bestval,long double curval)
 		m_dbestsolution = min(curval,bestval);
 		if(m_bdebugging)
 		{
-			rejfile << "New minimimum found - " << (double)m_dbestsolution << endl;
-			debugfile << "New minimimum found - " << (double)m_dbestsolution << endl;
+			rejfile << "New minimimum found - " << m_dbestsolution << endl;
+			debugfile << "New minimimum found - " << m_dbestsolution << endl;
 		}
 		return true;
 	}
@@ -139,11 +139,11 @@ bool SimAnneal::EvaluateSTUN(long double bestval,long double curval)
 			if(m_bdebugging)
 			{
 				debugfile << "Iteration - " << m_iIteration << endl;
-				debugfile << (double)m_dbestsolution << "  " << (double)bestval << "  " << (double)curval << endl;
+				debugfile << m_dbestsolution << "  " << bestval << "  " << curval << endl;
 				debugfile << "fstun(curval) = " << 1.0+fSTUN(curval) << "   fstun(bestval) = "  << 1.0+fSTUN(bestval) << endl;
-				debugfile << "deltaE = " << (double)deltaE << endl;
+				debugfile << "deltaE = " << deltaE << endl;
 				debugfile << "ProbCalcE = " << ProbCalc(deltaE) << endl ;
-				debugfile << "Temp = " << 1.0/(double)m_dTemp << endl;
+				debugfile << "Temp = " << 1.0/m_dTemp << endl;
 			}
 
 			if(Q.size() < m_iPlattime)
@@ -173,8 +173,8 @@ bool SimAnneal::EvaluateSTUN(long double bestval,long double curval)
 				{
 					if(m_inumberpoorsol != 0)
 					{
-						debugfile << "PoorSolAccPerc - " << (double)m_ipoorsolutionacc*100.0/(double)m_inumberpoorsol <<  endl << endl;
-						rejfile << (double)m_ipoorsolutionacc*100.0/(double)m_inumberpoorsol << "   " << m_inumberpoorsol << endl;
+						debugfile << "PoorSolAccPerc - " << m_ipoorsolutionacc*100.0/m_inumberpoorsol <<  endl << endl;
+						rejfile << m_ipoorsolutionacc*100.0/m_inumberpoorsol << "   " << m_inumberpoorsol << endl;
 					}
 					else
 						rejfile << "All solutions accepted" << endl;
@@ -187,7 +187,7 @@ bool SimAnneal::EvaluateSTUN(long double bestval,long double curval)
 				if(m_iIteration%m_iSTUNdec == 0)
 				{
 					m_daveragefstun *= m_dgammadec;
-					rejfile << "decreasing average fstun = " << (double)m_daveragefstun << endl;
+					rejfile << "decreasing average fstun = " << m_daveragefstun << endl;
 				}
 			}
 			probability = ProbCalc(deltaE);
@@ -199,11 +199,11 @@ bool SimAnneal::EvaluateSTUN(long double bestval,long double curval)
 		if(m_bdebugging)
 		{
 				debugfile << "Iteration - " << m_iIteration << endl;
-				debugfile << (double)m_dbestsolution << "  " << (double)bestval << "  " << (double)curval << endl;
+				debugfile << m_dbestsolution << "  " << bestval << "  " << curval << endl;
 				debugfile << "1.0+fstun(curval) = " << 1.0+fSTUN(curval) << "   fstun(bestval) = "  << 1.0+fSTUN(bestval) << endl;
-				debugfile << "deltaE = " << (double)deltaE << endl;
+				debugfile << "deltaE = " << deltaE << endl;
 				debugfile << "ProbCalcE = " << ProbCalc(deltaE) << endl ;
-				debugfile << "Temp = " << 1.0/(double)m_dTemp << endl;
+				debugfile << "Temp = " << 1.0/m_dTemp << endl;
 		}
 
 		m_iIteration++;
@@ -246,13 +246,8 @@ double SimAnneal::ProbCalc(double deltaE)
 
 double SimAnneal::Schedule()
 {
-	//Our schedule is exponential	- also pretty slow
-	//m_dTemp = m_dTemp*pow(0.999999,(double)m_iTime);
-	//Just right
 	if(m_dTemp > 1e-30)
 		m_dTemp = m_dTemp/m_dslope;
-	//Our schedule is geometrical - way too slow
-	//m_dTemp = 1/(1+m_iTime);
 	return 0;
 }
 
@@ -274,7 +269,7 @@ void SimAnneal::AdjustTemp(double averageSTUNval)
 			m_dTemp *=  0.5/m_dslope;
 	
 		if(m_bdebugging)
-			debugfile << "Reducing Temp - " << (double)m_dTemp << endl;
+			debugfile << "Reducing Temp - " << m_dTemp << endl;
 	}
 	else
 	{
@@ -282,7 +277,7 @@ void SimAnneal::AdjustTemp(double averageSTUNval)
 			m_dTemp  *= m_dslope;
 	
 		if(m_bdebugging)
-			debugfile << "Increasing Temp - " << (double)m_dTemp << endl;
+			debugfile << "Increasing Temp - " << m_dTemp << endl;
 	}
 }
 

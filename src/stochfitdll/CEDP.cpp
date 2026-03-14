@@ -1,15 +1,10 @@
 #include <stochfit/common/platform.h>
 #include "CEDP.h"
 
-CEDP::~CEDP()
-{
-	platform_aligned_free(m_EDP);
-	platform_aligned_free(m_DEDP);
-}
-
 void CEDP::Init(ReflSettings* InitStruct)
 {
-    m_dDz0= 1.0f/InitStruct->Resolution;
+    if(InitStruct->Resolution <= 0) InitStruct->Resolution = 3;
+    m_dDz0 = 1.0/InitStruct->Resolution;
 	m_dLambda = InitStruct->Wavelength;
 	m_bUseSurfAbs = InitStruct->UseSurfAbs;
 	m_dWaveConstant = m_dLambda*m_dLambda/(2.0*M_PI);
@@ -38,14 +33,14 @@ void CEDP::Init(ReflSettings* InitStruct)
 	}
 
 	//Arrays for the electron density profile and twice the electron density profile
-    m_EDP = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*m_iLayers,64);
-    m_DEDP = (MyComplex*)platform_aligned_alloc(sizeof(MyComplex)*m_iLayers,64);
-	m_fEDSpacingArray = (float*)platform_aligned_alloc(m_iLayers*sizeof(float),64);
+    m_EDP.resize(m_iLayers);
+    m_DEDP.resize(m_iLayers);
+	m_fEDSpacingArray.resize(m_iLayers);
 
 	//Create scratch arrays for the electron density calculation
-	m_fDistArray = (float*)platform_aligned_alloc((InitStruct->Boxes+2)*sizeof(float),64);
-	m_fRhoArray = (float*)platform_aligned_alloc((InitStruct->Boxes+2)*sizeof(float),64);
-	m_fImagRhoArray = (float*)platform_aligned_alloc((InitStruct->Boxes+2)*sizeof(float),64);
+	m_fDistArray.resize(InitStruct->Boxes+2);
+	m_fRhoArray.resize(InitStruct->Boxes+2);
+	m_fImagRhoArray.resize(InitStruct->Boxes+2);
 
 
 	for(int i = 0; i < m_iLayers; i++)
@@ -76,17 +71,17 @@ void CEDP::GenerateEDP(ParamVector* g)
 
 void CEDP::MakeTranparentEDP(ParamVector* g)
 {
-	float dist;
+	double dist;
 	int reflpoints = m_iLayers;
 	int refllayers = g->RealparamsSize()-1;
-	float roughness = g->getroughness();
-	float supersld = g->GetRealparams(0)*m_dRho;
+	double roughness = g->getroughness();
+	double supersld = g->GetRealparams(0)*m_dRho;
 
 
 	if(g->getroughness() < 1e-6)
 		roughness = 1e-6;
 
-	roughness = 1.0f/( roughness * sqrt(2.0f));
+	roughness = 1.0/( roughness * sqrt(2.0));
 
 
 	//Don't delete this, otherwise the reflectivity calculation won't work sometimes
@@ -94,7 +89,7 @@ void CEDP::MakeTranparentEDP(ParamVector* g)
 
 	for(int k = 0; k < refllayers; k++)
 	{
-		m_fRhoArray[k] = m_dRho*(g->GetRealparams(k+1)-g->GetRealparams(k))*0.5f;
+		m_fRhoArray[k] = m_dRho*(g->GetRealparams(k+1)-g->GetRealparams(k))*0.5;
 	}
 
 	#pragma omp parallel for private(dist)
@@ -106,10 +101,10 @@ void CEDP::MakeTranparentEDP(ParamVector* g)
 		{
 			dist = (m_fEDSpacingArray[i]-m_fDistArray[k] )*roughness;
 
-			if(dist > 6.0f)
-				m_EDP[i] += (m_fRhoArray[k])*(2.0f);
-			else if(dist > -6.0f)
-				m_EDP[i] += (m_fRhoArray[k])*(1.0f+erff(dist));
+			if(dist > 6.0)
+				m_EDP[i] += (m_fRhoArray[k])*(2.0);
+			else if(dist > -6.0)
+				m_EDP[i] += (m_fRhoArray[k])*(1.0+erf(dist));
 
 			//Make double array for the reflectivity calculation
 			m_DEDP[i] = 2.0 * m_EDP[i].real();
@@ -119,38 +114,38 @@ void CEDP::MakeTranparentEDP(ParamVector* g)
 
 void CEDP::MakeEDP(ParamVector* g)
 {
-	float dist;
+	double dist;
 	int reflpoints = m_iLayers;
 	int refllayers = g->RealparamsSize()-1;
-	float roughness = g->getroughness();
-	float supersld = g->GetRealparams(0)*m_dRho;
+	double roughness = g->getroughness();
+	double supersld = g->GetRealparams(0)*m_dRho;
 
 
 	if(g->getroughness() < 1e-6)
 		roughness = 1e-6;
 
-	roughness = 1.0f/( roughness * sqrt(2.0f));
+	roughness = 1.0/( roughness * sqrt(2.0));
 
 	#pragma omp parallel
 	{
 		#pragma omp for
 		for(int k = 0; k < refllayers; k++)
 		{
-			m_fRhoArray[k] = m_dRho*(g->GetRealparams(k+1)-g->GetRealparams(k))/2.0f;
+			m_fRhoArray[k] = m_dRho*(g->GetRealparams(k+1)-g->GetRealparams(k))/2.0;
 
 			//Imag calculation
 			if(k == 0)
 			{
-				m_fImagRhoArray[k] = (m_dBeta* g->getSurfAbs() * g->GetRealparams(k+1)/g->GetRealparams(refllayers) - m_dBeta_Sup)/2.0f;
+				m_fImagRhoArray[k] = (m_dBeta* g->getSurfAbs() * g->GetRealparams(k+1)/g->GetRealparams(refllayers) - m_dBeta_Sup)/2.0;
 			}
 			else if(k == refllayers-1)
 			{
-				m_fImagRhoArray[k] = (m_dBeta_Sub - m_dBeta * g->getSurfAbs() * g->GetRealparams(k)/g->GetRealparams(refllayers))/2.0f;
+				m_fImagRhoArray[k] = (m_dBeta_Sub - m_dBeta * g->getSurfAbs() * g->GetRealparams(k)/g->GetRealparams(refllayers))/2.0;
 			}
 			else
 			{
 				m_fImagRhoArray[k] = (m_dBeta* g->getSurfAbs() * g->GetRealparams(k+1)/g->GetRealparams(refllayers) -
-					(m_dBeta * g->getSurfAbs()* g->GetRealparams(k)/g->GetRealparams(refllayers))/2.0f);
+					(m_dBeta * g->getSurfAbs()* g->GetRealparams(k)/g->GetRealparams(refllayers))/2.0);
 			}
 		}
 
@@ -165,11 +160,11 @@ void CEDP::MakeEDP(ParamVector* g)
 
 				if(dist > 6)
 				{
-					m_EDP[i] += MyComplex((m_fRhoArray[k])*(2.0f), (m_fImagRhoArray[k])*(2.0f));
+					m_EDP[i] += MyComplex((m_fRhoArray[k])*(2.0), (m_fImagRhoArray[k])*(2.0));
 				}
 				else if (dist > -6)
 				{
-					m_EDP[i] += MyComplex((m_fRhoArray[k])*(1.0f+erff(dist)), (m_fImagRhoArray[k])*(1.0f+erff(dist)));
+					m_EDP[i] += MyComplex((m_fRhoArray[k])*(1.0+erf(dist)), (m_fImagRhoArray[k])*(1.0+erf(dist)));
 				}
 			}
 
@@ -198,11 +193,6 @@ void CEDP::WriteOutputFile(string filename)
 	rhoout.close();
 }
 
-double CEDP::Get_LayerThickness()
-{
-	return m_dDz0;
-}
-
 int CEDP::Get_EDPPointCount()
 {
 	return m_iLayers;
@@ -218,17 +208,17 @@ double CEDP::Get_Dz()
 	return m_dDz0;
 }
 
-float CEDP::Get_FilmAbs()
+double CEDP::Get_FilmAbs()
 {
 	return m_dBeta;
 }
 
-float CEDP::Get_WaveConstant()
+double CEDP::Get_WaveConstant()
 {
 	return m_dWaveConstant;
 }
 
-void CEDP::Set_FilmAbs(float abs)
+void CEDP::Set_FilmAbs(double abs)
 {
 	m_dBeta = abs*m_dWaveConstant;
 }

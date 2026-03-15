@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ActivePanel = 'data' | 'parameters' | 'fitting' | 'rho' | 'refl' | 'stoch';
+export type ActivePanel = 'data' | 'parameters' | 'mi' | 'boxmodel';
 
 interface UiState {
   activePanel: ActivePanel;

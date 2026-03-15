@@ -1,4 +1,5 @@
 import koffi from 'koffi';
+import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
 
@@ -23,6 +24,23 @@ function getLibPrefix(): string {
   return process.platform === 'win32' ? '' : 'lib';
 }
 
+function devLibPath(projectRoot: string, fileName: string): string {
+  const override = process.env.STOCHFIT_BUILD_TYPE;
+  if (override) {
+    return path.join(projectRoot, 'build', override, 'bin', fileName);
+  }
+
+  const debugPath   = path.join(projectRoot, 'build', 'Debug',   'bin', fileName);
+  const releasePath = path.join(projectRoot, 'build', 'Release', 'bin', fileName);
+
+  let debugMtime   = 0;
+  let releaseMtime = 0;
+  try { debugMtime   = fs.statSync(debugPath).mtimeMs;   } catch { /* not built */ }
+  try { releaseMtime = fs.statSync(releasePath).mtimeMs; } catch { /* not built */ }
+
+  return debugMtime > releaseMtime ? debugPath : releasePath;
+}
+
 function libPath(name: string): string {
   const ext = getLibExt();
   const prefix = getLibPrefix();
@@ -31,7 +49,7 @@ function libPath(name: string): string {
   if (app.isPackaged) {
     return path.join(process.resourcesPath, fileName);
   }
-  return path.join(__dirname, '../../../../build/bin', fileName);
+  return devLibPath(path.join(__dirname, '../../../../'), fileName);
 }
 
 export function getStochLib() {

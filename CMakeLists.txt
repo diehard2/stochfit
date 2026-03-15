@@ -19,7 +19,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Output all binaries to build/bin
+# Output all binaries to build/bin/Debug or build/bin/Release
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
@@ -29,6 +29,34 @@ if(MSVC)
     add_compile_options(/W3)
 else()
     add_compile_options(-Wall -Wextra -Wno-unused-parameter)
+endif()
+
+# ── Release optimizations ──────────────────────────────────────────────────────
+# Target: CPUs from ~2020+ (AVX2+FMA on x86, Apple Silicon on ARM)
+if(MSVC)
+    # /Oi: expand intrinsics; /fp:fast: aggressive FP reordering; /GL: whole-program opt
+    # /arch:AVX2: AVX2 + FMA (Haswell 2013+, covers all modern chips)
+    add_compile_options(
+        $<$<CONFIG:Release>:/Oi>
+        $<$<CONFIG:Release>:/fp:fast>
+        $<$<CONFIG:Release>:/GL>
+        $<$<CONFIG:Release>:/arch:AVX2>
+    )
+    add_link_options($<$<CONFIG:Release>:/LTCG>)
+else()
+    # -O3: full auto-vectorization; -ffast-math: aggressive FP; -flto: link-time opt
+    add_compile_options(
+        $<$<CONFIG:Release>:-O3>
+        $<$<CONFIG:Release>:-ffast-math>
+        $<$<CONFIG:Release>:-flto>
+    )
+    add_link_options($<$<CONFIG:Release>:-flto>)
+    # Architecture tuning — x86-64-v3 = AVX2+FMA (Haswell/Zen2+, ~2019+)
+    if(APPLE AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+        add_compile_options($<$<CONFIG:Release>:-mcpu=apple-m1>)
+    else()
+        add_compile_options($<$<CONFIG:Release>:-march=x86-64-v3>)
+    endif()
 endif()
 
 # ── Dependencies ───────────────────────────────────────────────────────────────
@@ -57,32 +85,26 @@ option(STOCHFIT_USE_CUDA "Enable CUDA GPU acceleration" ON)
 option(STOCHFIT_USE_METAL "Enable Metal GPU acceleration" ON)
 
 if(STOCHFIT_USE_CUDA AND NOT APPLE)
-    # CUDA 13.1 maxes out at C++20, so set it before enabling CUDA language
-    set(CMAKE_CUDA_STANDARD 20)
-    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    # Check for nvcc first — this result is cached, so subsequent configures are fast
+    include(CheckLanguage)
+    check_language(CUDA)
 
-    # Set unsupported compiler flag for MSVC
-    if(MSVC)
-        set(CMAKE_CUDA_FLAGS "-allow-unsupported-compiler" CACHE STRING "CUDA flags")
-    endif()
+    if(CMAKE_CUDA_COMPILER)
+        # CUDA 13.1 maxes out at C++20, so set it before enabling CUDA language
+        set(CMAKE_CUDA_STANDARD 20)
+        set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
-    # Find CUDA toolkit
-    find_package(CUDAToolkit REQUIRED)
-
-    if(CUDAToolkit_FOUND)
-        # Enable CUDA language
-        include(CheckLanguage)
-        check_language(CUDA)
-        if(CMAKE_CUDA_COMPILER)
-            enable_language(CUDA)
-            set(STOCHFIT_HAS_CUDA TRUE)
-            set(CMAKE_CUDA_RUNTIME_LIBRARY "Static")
-            message(STATUS "CUDA GPU acceleration enabled (CUDA ${CUDAToolkit_VERSION})")
-        else()
-            message(STATUS "CUDA compiler not found — GPU acceleration disabled")
+        if(MSVC)
+            set(CMAKE_CUDA_FLAGS "-allow-unsupported-compiler" CACHE STRING "CUDA flags")
         endif()
+
+        find_package(CUDAToolkit REQUIRED)
+        enable_language(CUDA)
+        set(STOCHFIT_HAS_CUDA TRUE)
+        set(CMAKE_CUDA_RUNTIME_LIBRARY "Static")
+        message(STATUS "CUDA GPU acceleration enabled (CUDA ${CUDAToolkit_VERSION})")
     else()
-        message(STATUS "CUDA toolkit not found — GPU acceleration disabled")
+        message(STATUS "CUDA compiler not found — GPU acceleration disabled")
     endif()
 endif()
 
@@ -137,8 +159,8 @@ if(OpenMP_CXX_FOUND)
     endif()
 endif()
 if(APPLE)
-    find_package(jthread CONFIG REQUIRED)
-    target_link_libraries(stochfit_core PUBLIC jthread::jthread)
+    find_path(JTHREAD_INCLUDE_DIR NAMES jthread.hpp REQUIRED)
+    target_include_directories(stochfit_core PUBLIC "${JTHREAD_INCLUDE_DIR}")
 endif()
 target_link_libraries(stochfit_core PUBLIC tl::expected)
 
@@ -256,6 +278,17 @@ elseif(MSVC)
         /WHOLEARCHIVE:$<TARGET_FILE:levmardll>)
 endif()
 target_link_libraries(levmardll_shared PRIVATE levmardll)
+
+# ── compile_commands.json ─────────────────────────────────────────────────────
+# Copy to build/ so clangd always finds it regardless of active config (Debug/Release)
+if(CMAKE_EXPORT_COMPILE_COMMANDS)
+    add_custom_target(copy_compile_commands ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/compile_commands.json"
+            "${CMAKE_BINARY_DIR}/../compile_commands.json"
+        COMMENT "Copying compile_commands.json to build/"
+    )
+endif()
 
 # ── Electron GUI ──────────────────────────────────────────────────────────────
 # cmake --build build            → C++ only (fast, default)

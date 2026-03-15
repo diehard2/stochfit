@@ -5,15 +5,64 @@ if(NOT WIN32)
   return()
 endif()
 
-# Search for vcvarsall.bat across common VS installation paths
-find_program(VCVARSALL vcvarsall.bat PATHS
-  "$ENV{ProgramFiles}/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build"
-  "$ENV{ProgramFiles}/Microsoft Visual Studio/2022/Professional/VC/Auxiliary/Build"
-  "$ENV{ProgramFiles}/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build"
-  NO_DEFAULT_PATH
-)
+# If the MSVC environment is already initialized (e.g., by ilammy/msvc-dev-cmd in CI),
+# read compiler paths directly from the environment instead of re-running vcvarsall.bat.
+if(NOT "$ENV{VCToolsInstallDir}" STREQUAL "")
+  set(_vc_tools "$ENV{VCToolsInstallDir}")
+  string(REPLACE "\\" "/" _vc_tools "${_vc_tools}")
+  string(REGEX REPLACE "[/]+$" "" _vc_tools "${_vc_tools}")
 
-if(NOT VCVARSALL)
+  # WindowsSdkVerBinPath includes the SDK version (e.g., .../bin/10.0.22621.0/)
+  # Fall back to WindowsSdkBinPath if the versioned one isn't set.
+  if(NOT "$ENV{WindowsSdkVerBinPath}" STREQUAL "")
+    set(_sdk_bin "$ENV{WindowsSdkVerBinPath}")
+  else()
+    set(_sdk_bin "$ENV{WindowsSdkBinPath}")
+  endif()
+  string(REPLACE "\\" "/" _sdk_bin "${_sdk_bin}")
+  string(REGEX REPLACE "[/]+$" "" _sdk_bin "${_sdk_bin}")
+
+  set(CMAKE_C_COMPILER   "${_vc_tools}/bin/HostX64/x64/cl.exe" CACHE FILEPATH "C compiler"   FORCE)
+  set(CMAKE_CXX_COMPILER "${_vc_tools}/bin/HostX64/x64/cl.exe" CACHE FILEPATH "C++ compiler" FORCE)
+  set(CMAKE_RC_COMPILER  "${_sdk_bin}/x64/rc.exe"              CACHE FILEPATH "RC compiler"  FORCE)
+  set(CMAKE_MT           "${_sdk_bin}/x64/mt.exe"              CACHE FILEPATH "Manifest tool" FORCE)
+
+  message(STATUS "MSVC environment ready (from existing environment)")
+  message(STATUS "  cl: ${_vc_tools}/bin/HostX64/x64/cl.exe")
+  message(STATUS "  rc: ${_sdk_bin}/x64/rc.exe")
+  return()
+endif()
+
+# Use vswhere to locate vcvarsall.bat (works for any VS version/edition)
+# Note: ProgramFiles(x86) cannot be used directly in $ENV{} due to parentheses
+set(_vs_installer "C:/Program Files (x86)/Microsoft Visual Studio/Installer")
+find_program(VSWHERE vswhere.exe PATHS "${_vs_installer}" NO_DEFAULT_PATH)
+
+if(VSWHERE)
+  execute_process(
+    COMMAND "${VSWHERE}" -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64
+            -find VC/Auxiliary/Build/vcvarsall.bat
+    OUTPUT_VARIABLE VCVARSALL
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+  )
+  string(REPLACE "\\" "/" VCVARSALL "${VCVARSALL}")
+endif()
+
+# Fallback to hardcoded paths if vswhere didn't find it
+if(NOT VCVARSALL OR NOT EXISTS "${VCVARSALL}")
+  find_program(VCVARSALL vcvarsall.bat PATHS
+    "$ENV{ProgramFiles}/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build"
+    "$ENV{ProgramFiles}/Microsoft Visual Studio/2022/Professional/VC/Auxiliary/Build"
+    "$ENV{ProgramFiles}/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build"
+    "$ENV{ProgramFiles}/Microsoft Visual Studio/18/Community/VC/Auxiliary/Build"
+    "$ENV{ProgramFiles}/Microsoft Visual Studio/18/Professional/VC/Auxiliary/Build"
+    "$ENV{ProgramFiles}/Microsoft Visual Studio/18/Enterprise/VC/Auxiliary/Build"
+    NO_DEFAULT_PATH
+  )
+endif()
+
+if(NOT VCVARSALL OR NOT EXISTS "${VCVARSALL}")
   message(FATAL_ERROR "Could not find vcvarsall.bat. Install Visual Studio with the C++ workload.")
 endif()
 

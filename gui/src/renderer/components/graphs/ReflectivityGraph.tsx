@@ -11,6 +11,8 @@ import { useSettingsStore } from '../../stores/settings-store';
 interface Props {
   data: ReflData | null;
   fitResult: FitResult | null;
+  lmRefl?: number[];
+  lmQ?: number[];
 }
 
 type LockedRange = {
@@ -18,7 +20,7 @@ type LockedRange = {
   yaxis?: { range: [number, number]; autorange: false };
 } | null;
 
-export function ReflectivityGraph({ data, fitResult }: Props) {
+export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
   const plotRef = useRef<any>(null);
   const normalizeByFresnel = useUiStore((s) => s.normalizeByFresnel);
   const settings = useSettingsStore((s) => s.settings);
@@ -73,7 +75,7 @@ export function ReflectivityGraph({ data, fitResult }: Props) {
       x: normalized.q,
       y: normalized.refl,
       error_y: data.reflError.some((e) => e > 0)
-        ? { type: 'data', array: normalized.errors, visible: true, color: COLORS.errorBar, thickness: 1, width: 3 }
+        ? { type: 'data', array: normalized.errors ?? [], visible: true, color: COLORS.errorBar, thickness: 1, width: 3 }
         : undefined,
       mode: 'markers',
       type: 'scatter',
@@ -91,6 +93,18 @@ export function ReflectivityGraph({ data, fitResult }: Props) {
       type: 'scatter',
       name: 'MI Fit',
       line: { color: COLORS.miFit, width: 2, shape: 'spline' },
+    });
+  }
+
+  if (lmRefl && lmQ && lmQ.length > 0 && lmRefl.length === lmQ.length) {
+    const normalized = applyFresnelNorm(lmQ, lmRefl);
+    traces.push({
+      x: normalized.q,
+      y: normalized.refl,
+      mode: 'lines',
+      type: 'scatter',
+      name: 'Box Model Fit',
+      line: { color: COLORS.modelFit, width: 2 },
     });
   }
 

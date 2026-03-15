@@ -2,32 +2,36 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Configure Windows Release",
+      "label": "Build Release",
       "type": "shell",
-      "command": "cmake --preset windows",
-      "problemMatcher": [],
-      "options": { "cwd": "${workspaceFolder}" }
+      "command": "cmake --build build/Release --parallel",
+      "problemMatcher": ["$msCompile", "$gcc"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "build", "isDefault": true }
     },
     {
-      "label": "Configure Windows Debug",
+      "label": "Build Debug",
       "type": "shell",
-      "command": "cmake --preset windows-debug",
-      "problemMatcher": [],
-      "options": { "cwd": "${workspaceFolder}" }
+      "command": "cmake --build build/Debug --parallel",
+      "problemMatcher": ["$msCompile", "$gcc"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build"
     },
     {
-      "label": "Configure Linux/macOS Release",
+      "label": "Configure Release",
       "type": "shell",
-      "command": "cmake --preset default",
+      "command": "cmake -B build/Release -G Ninja -DCMAKE_BUILD_TYPE=Release -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${workspaceFolder}/env/cmake/MsvcEnvironment.cmake -DVCPKG_APPLOCAL_DEPS=OFF -DCMAKE_MAKE_PROGRAM=${workspaceFolder}/env/tools/ninja.exe",
       "problemMatcher": [],
-      "options": { "cwd": "${workspaceFolder}" }
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build"
     },
     {
-      "label": "Configure Linux/macOS Debug",
+      "label": "Configure Debug",
       "type": "shell",
-      "command": "cmake --preset debug",
+      "command": "cmake -B build/Debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${workspaceFolder}/env/cmake/MsvcEnvironment.cmake -DVCPKG_APPLOCAL_DEPS=OFF -DCMAKE_MAKE_PROGRAM=${workspaceFolder}/env/tools/ninja.exe",
       "problemMatcher": [],
-      "options": { "cwd": "${workspaceFolder}" }
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build"
     }
   ]
 }

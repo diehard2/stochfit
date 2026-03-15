@@ -35,6 +35,13 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	m_bupdated = false;
 	m_bwarmedup = false;
 	m_ipriority = 2;
+	Zinc = nullptr;
+	Qinc = nullptr;
+	Rho  = nullptr;
+	Refl = nullptr;
+	params = nullptr;
+	m_icurrentiteration = 0;
+	m_itotaliterations = 0;
 
 	m_Directory = string(InitStruct->Directory);
 
@@ -118,11 +125,15 @@ tl::expected<void, std::string> StochFit::Initialize(ReflSettings* InitStruct)
 
 int StochFit::Processing(std::stop_token stop_tok)
 {
+	try
+	{
 #if STOCHFIT_HAS_GPU
-	auto gpu_info = detect_gpu();
-	if (m_initStruct.UseGpu && gpu_info.backend != GpuBackend::None) {
-		m_gpuBackend = gpu_info.backend;
-		return ProcessingGPU(stop_tok);
+	if (m_initStruct.UseGpu) {
+		auto gpu_info = detect_gpu();
+		if (gpu_info.backend != GpuBackend::None) {
+			m_gpuBackend = gpu_info.backend;
+			return ProcessingGPU(stop_tok);
+		}
 	}
 #endif
 
@@ -155,6 +166,22 @@ int StochFit::Processing(std::stop_token stop_tok)
 	UpdateFits(m_icurrentiteration);
 
 	return 0;
+	}
+	catch(const std::exception& ex)
+	{
+		std::cerr << "[StochFit] Processing() caught exception: " << ex.what() << std::endl;
+		// Set iteration to total so GetData() knows we're done
+		m_icurrentiteration = m_itotaliterations > 0 ? m_itotaliterations - 1 : 0;
+		m_bupdated = false;
+		return -1;
+	}
+	catch(...)
+	{
+		std::cerr << "[StochFit] Processing() caught unknown exception" << std::endl;
+		m_icurrentiteration = m_itotaliterations > 0 ? m_itotaliterations - 1 : 0;
+		m_bupdated = false;
+		return -1;
+	}
 }
 
 #if STOCHFIT_HAS_GPU
@@ -453,21 +480,21 @@ void StochFit::InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA)
 
 int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)
 {
-	//Sleep while we are generating our output data
-	if(m_icurrentiteration != m_itotaliterations-1)
+	// Request a data update from the worker thread, but don't block the caller
+	// indefinitely. Signal the worker, then wait up to 2 seconds for it to
+	// respond. If the worker has stalled or finished, we return the most recent
+	// available data instead of spinning forever.
+	bool done = (m_icurrentiteration >= m_itotaliterations - 1);
+	if (!done)
 	{
 		m_bupdated = true;
-
-		while(m_bupdated == true)
+		auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+		while(m_bupdated.load() && std::chrono::steady_clock::now() < deadline)
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
+		m_bupdated = false; // reset in case of timeout
 	}
-	else
-	{
-		m_bupdated = false;
-	}
-	//We only have one thread, and we're controlling access to it, so no need for fancy synchronization here
 
 	for(int i = 0; i < m_irhocount; i++)
 	{
@@ -485,8 +512,9 @@ int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, dou
 	*chisquare = m_dChiSquare;
 	*goodnessoffit = m_dGoodnessOfFit;
 
-	// Check if thread is still running
-	*isfinished = !m_thread.joinable();
+	// Finished when all iterations are done (thread may still be "joinable"
+	// until the jthread destructor runs, so check iteration count instead)
+	*isfinished = (m_icurrentiteration >= m_itotaliterations - 1) ? 1 : 0;
 
 	return m_icurrentiteration;
 }

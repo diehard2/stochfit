@@ -50,7 +50,10 @@ extern "C" EXPORT void Rhofit(BoxReflSettings* InitStruct, double parameters[], 
 	work=new double[((LM_DIF_WORKSZ(parametersize, InitStruct->ZLength)+parametersize*InitStruct->ZLength))];
 	covar=work+LM_DIF_WORKSZ(parametersize, InitStruct->ZLength);
 
-	dlevmar_dif(Rho.objective, parameters, xvec,  parametersize,InitStruct->ZLength, 1000, opts, info, work, covar,(void*)(&Rho));
+	if(InitStruct->UL == NULL)
+		dlevmar_dif(Rho.objective, parameters, xvec, parametersize, InitStruct->ZLength, 1000, opts, info, work, covar, (void*)(&Rho));
+	else
+		dlevmar_bc_dif(Rho.objective, parameters, xvec, parametersize, InitStruct->ZLength, InitStruct->LL, InitStruct->UL, 1000, opts, info, work, covar, (void*)(&Rho));
 
 
 	//Calculate the standard deviations in the parameters

@@ -8,6 +8,10 @@ import type { FitResult } from '../../lib/types';
 interface Props {
   fitResult: FitResult | null;
   boxED?: number[];
+  // Independent EDP (box model tab — no fitResult needed)
+  lmZRange?: number[];
+  lmED?: number[];
+  lmBoxED?: number[];
 }
 
 type LockedRange = {
@@ -15,7 +19,7 @@ type LockedRange = {
   yaxis?: { range: [number, number]; autorange: false };
 } | null;
 
-export function ElectronDensityGraph({ fitResult, boxED }: Props) {
+export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED }: Props) {
   const [lockedRange, setLockedRange] = useState<LockedRange>(null);
   const traces: Data[] = [];
 
@@ -38,6 +42,7 @@ export function ElectronDensityGraph({ fitResult, boxED }: Props) {
     }
   };
 
+  // MI fit EDP
   if (fitResult && fitResult.zRange.length > 0) {
     traces.push({
       x: fitResult.zRange,
@@ -49,6 +54,7 @@ export function ElectronDensityGraph({ fitResult, boxED }: Props) {
     });
   }
 
+  // MI box overlay (aligned to fitResult.zRange)
   if (boxED && fitResult && boxED.length === fitResult.zRange.length) {
     traces.push({
       x: fitResult.zRange,
@@ -56,6 +62,30 @@ export function ElectronDensityGraph({ fitResult, boxED }: Props) {
       mode: 'lines',
       type: 'scatter',
       name: 'Box Model',
+      line: { color: COLORS.boxFit, width: 1.5, shape: 'hv' },
+    });
+  }
+
+  // Box model independent EDP (smoothed)
+  if (lmED && lmZRange && lmED.length === lmZRange.length) {
+    traces.push({
+      x: lmZRange,
+      y: lmED,
+      mode: 'lines',
+      type: 'scatter',
+      name: 'EDP',
+      line: { color: COLORS.miFit, width: 2, shape: 'spline' },
+    });
+  }
+
+  // Box model independent EDP (stepped boxes)
+  if (lmBoxED && lmZRange && lmBoxED.length === lmZRange.length) {
+    traces.push({
+      x: lmZRange,
+      y: lmBoxED,
+      mode: 'lines',
+      type: 'scatter',
+      name: 'Boxes',
       line: { color: COLORS.boxFit, width: 1.5, shape: 'hv' },
     });
   }

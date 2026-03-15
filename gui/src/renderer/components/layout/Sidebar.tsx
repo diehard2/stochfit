@@ -1,29 +1,24 @@
 import React from 'react';
 import { useUiStore, type ActivePanel } from '../../stores/ui-store';
 import { useDataStore } from '../../stores/data-store';
-import { useFitStore } from '../../stores/fit-store';
 
 interface NavItem {
   id: ActivePanel;
   label: string;
   icon: string;
   requiresData?: boolean;
-  requiresFit?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'data', label: 'Data', icon: '📊' },
   { id: 'parameters', label: 'Parameters', icon: '⚙️', requiresData: true },
-  { id: 'fitting', label: 'Fitting', icon: '▶️', requiresData: true },
-  { id: 'rho', label: 'Rho Model', icon: '🔲', requiresFit: true },
-  { id: 'refl', label: 'Refl Model', icon: '〰️', requiresFit: true },
-  { id: 'stoch', label: 'Solutions', icon: '📋', requiresFit: true },
+  { id: 'mi', label: 'Model Independent', icon: '▶️', requiresData: true },
+  { id: 'boxmodel', label: 'Box Model', icon: '🔲', requiresData: true },
 ];
 
 export function Sidebar() {
   const { activePanel, setActivePanel } = useUiStore();
   const hasData = !!useDataStore((s) => s.data);
-  const hasFit = !!useFitStore((s) => s.result);
 
   return (
     <aside className="w-48 flex-shrink-0 bg-elevated border-r border-border flex flex-col">
@@ -35,7 +30,7 @@ export function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 py-2 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
-          const disabled = (item.requiresData && !hasData) || (item.requiresFit && !hasFit);
+          const disabled = item.requiresData && !hasData;
           const active = activePanel === item.id;
           return (
             <button

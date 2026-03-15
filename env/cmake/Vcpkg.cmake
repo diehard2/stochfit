@@ -61,11 +61,20 @@ endif()
 # Select triplet per platform (dynamic CRT on Windows for better compatibility)
 if(WIN32)
     if(NOT DEFINED VCPKG_TARGET_TRIPLET)
-        set(VCPKG_TARGET_TRIPLET "x64-windows" CACHE STRING "vcpkg triplet")
+        set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING "vcpkg triplet")
     endif()
 elseif(APPLE)
     if(NOT DEFINED VCPKG_TARGET_TRIPLET)
-        set(VCPKG_TARGET_TRIPLET "x64-osx" CACHE STRING "vcpkg triplet")
+        execute_process(
+            COMMAND uname -m
+            OUTPUT_VARIABLE _host_arch
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if(_host_arch STREQUAL "arm64")
+            set(VCPKG_TARGET_TRIPLET "arm64-osx" CACHE STRING "vcpkg triplet")
+        else()
+            set(VCPKG_TARGET_TRIPLET "x64-osx" CACHE STRING "vcpkg triplet")
+        endif()
     endif()
 else()
     if(NOT DEFINED VCPKG_TARGET_TRIPLET)

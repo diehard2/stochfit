@@ -33,9 +33,9 @@ const config: ForgeConfig = {
     executableName: 'stochfit',
     ignore: [],
     extraResource: [
-      `../build/bin/${libPrefix}stochfit${libExt}`,
-      `../build/bin/${libPrefix}levmardll${libExt}`,
-      ...(process.platform === 'darwin' ? ['../build/bin/libomp.dylib'] : []),
+      `../build/Release/bin/${libPrefix}stochfit${libExt}`,
+      `../build/Release/bin/${libPrefix}levmardll${libExt}`,
+      ...(process.platform === 'darwin' ? ['../build/Release/bin/libomp.dylib'] : []),
     ],
   },
   rebuildConfig: {

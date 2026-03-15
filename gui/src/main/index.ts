@@ -6,6 +6,15 @@ import { registerIpcHandlers } from './ipc-handlers';
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) app.quit();
 
+// Catch unhandled errors in the main process so they surface in the console
+// instead of silently crashing the app.
+process.on('uncaughtException', (err) => {
+  console.error('[main] uncaughtException:', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[main] unhandledRejection:', reason);
+});
+
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
 declare const MAIN_WINDOW_VITE_NAME: string;
 
@@ -40,26 +49,13 @@ function createWindow() {
 }
 
 function buildMenu() {
-  const template: Electron.MenuItemConstructorOptions[] = [
-    {
-      label: 'Edit',
-      submenu: [
-        {
-          label: 'Restore Default Settings',
-          click: () => {
-            mainWindow?.webContents.send(IPC.SETTINGS_RESET);
-          },
-        },
-      ],
-    },
-  ];
-
-  // On macOS prepend the app menu
   if (process.platform === 'darwin') {
-    template.unshift({ role: 'appMenu' });
+    // macOS needs an app menu for quit / hide / etc.
+    Menu.setApplicationMenu(Menu.buildFromTemplate([{ role: 'appMenu' }]));
+  } else {
+    // Remove the native menu bar on Windows/Linux
+    Menu.setApplicationMenu(null);
   }
-
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
 app.whenReady().then(() => {

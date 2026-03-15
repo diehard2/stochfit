@@ -21,38 +21,47 @@ import {
 } from './native/levmar-api';
 import fs from 'fs';
 
+function wrap<T>(name: string, fn: () => T): T {
+  try {
+    return fn();
+  } catch (err) {
+    console.error(`[IPC] ${name} threw:`, err);
+    throw err;
+  }
+}
+
 export function registerIpcHandlers(): void {
   // ── StochFit ────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.STOCH_INIT, (_event, settings: ReflSettingsInput) => {
-    stochInit(settings);
+    return wrap('STOCH_INIT', () => stochInit(settings));
   });
 
   ipcMain.handle(IPC.STOCH_START, (_event, iterations: number) => {
-    stochStart(iterations);
+    return wrap('STOCH_START', () => stochStart(iterations));
   });
 
   ipcMain.handle(IPC.STOCH_CANCEL, () => {
-    stochCancel();
+    return wrap('STOCH_CANCEL', () => stochCancel());
   });
 
   ipcMain.handle(IPC.STOCH_GET_DATA, () => {
-    return stochGetData();
+    return wrap('STOCH_GET_DATA', () => stochGetData());
   });
 
   ipcMain.handle(IPC.STOCH_ARRAY_SIZES, () => {
-    return stochArraySizes();
+    return wrap('STOCH_ARRAY_SIZES', () => stochArraySizes());
   });
 
   ipcMain.handle(IPC.STOCH_WARMED_UP, () => {
-    return stochWarmedUp();
+    return wrap('STOCH_WARMED_UP', () => stochWarmedUp());
   });
 
   ipcMain.handle(IPC.STOCH_SA_PARAMS, () => {
-    return stochSAParams();
+    return wrap('STOCH_SA_PARAMS', () => stochSAParams());
   });
 
   ipcMain.handle(IPC.STOCH_GPU_AVAILABLE, () => {
-    return stochGpuAvailable();
+    return wrap('STOCH_GPU_AVAILABLE', () => stochGpuAvailable());
   });
 
   // ── LevMar ──────────────────────────────────────────────────────────────

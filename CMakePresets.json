@@ -30,7 +30,8 @@
       "cacheVariables": {
         "CMAKE_MAKE_PROGRAM": "${sourceDir}/env/tools/ninja.exe",
         "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/env/cmake/MsvcEnvironment.cmake",
-        "VCPKG_APPLOCAL_DEPS": "OFF"
+        "VCPKG_APPLOCAL_DEPS": "OFF",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
       }
     },
     {

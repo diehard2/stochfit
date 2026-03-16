@@ -29,7 +29,7 @@ public:
     GpuResultSummary get_result() const override;
     void get_best_edp(float* edp_out, int count) const override;
     void get_best_reflectivity(float* refl_out, int count) const override;
-    int num_chains() const override { return m_num_chains; }
+    int num_chains() const override { return m_num_chains_val; }
     bool is_finished() const override { return m_finished; }
 
 private:

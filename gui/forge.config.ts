@@ -4,7 +4,7 @@ import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerRpm } from '@electron-forge/maker-rpm';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 
-const libExt = process.platform === 'win32' ? '.dll' : '.so';
+const libExt = process.platform === 'win32' ? '.dll' : process.platform === 'darwin' ? '.dylib' : '.so';
 const libPrefix = process.platform === 'win32' ? '' : 'lib';
 
 // MakerDMG uses appdmg which has macOS-only native binaries — load it only on
@@ -33,9 +33,9 @@ const config: ForgeConfig = {
     executableName: 'stochfit',
     ignore: [],
     extraResource: [
-      `../build/Release/bin/${libPrefix}stochfit${libExt}`,
-      `../build/Release/bin/${libPrefix}levmardll${libExt}`,
-      ...(process.platform === 'darwin' ? ['../build/Release/bin/libomp.dylib'] : []),
+      `../build/bin/${libPrefix}stochfit${libExt}`,
+      `../build/bin/${libPrefix}levmardll${libExt}`,
+      ...(process.platform === 'darwin' ? ['../build/bin/libomp.dylib'] : []),
     ],
   },
   rebuildConfig: {

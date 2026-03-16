@@ -41,12 +41,16 @@
 #endif
 
 // ── BOOL compatibility ──────────────────────────────────────────────────────
+// Skip in Objective-C/C++ translation units — ObjC runtime defines its own
+// `typedef bool BOOL` (via <objc/objc.h>) and the two definitions conflict.
+#if !defined(__OBJC__)
 using BOOL = int32_t;
 #ifndef TRUE
 #  define TRUE  1
 #endif
 #ifndef FALSE
 #  define FALSE 0
+#endif
 #endif
 
 // ── Math constants ──────────────────────────────────────────────────────────

@@ -16,7 +16,8 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     permissions:
-      packages: write   # allows vcpkg to push built packages to GitHub Packages
+      packages: write        # allows vcpkg to push built packages to GitHub Packages
+      pull-requests: write   # allows posting build failure diagnostics as PR comments
 
     steps:
       - uses: actions/checkout@v4
@@ -66,6 +67,8 @@ jobs:
         shell: bash
 
       - name: Build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BUILD_RC=0
           if [ "${{ runner.os }}" == "Windows" ]; then
@@ -78,6 +81,12 @@ jobs:
             echo '```' >> "$GITHUB_STEP_SUMMARY"
             tail -100 /tmp/build_out.txt >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              BODY=$(printf '**Build failure on %s**\n```\n%s\n```' "${{ runner.os }}" "$(tail -80 /tmp/build_out.txt)")
+              gh pr comment "${{ github.event.pull_request.number }}" \
+                --repo "${{ github.repository }}" \
+                --body "${BODY}" || true
+            fi
             exit "${BUILD_RC}"
           fi
         shell: bash

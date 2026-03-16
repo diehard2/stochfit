@@ -30,7 +30,7 @@
 #include "gpu/gpu_sa_runner.h"
 #endif
 
-StochFit::StochFit(ReflSettings* InitStruct)
+StochFit::StochFit(ReflSettings* InitStruct, StochRunState* state)
 {
 	m_bupdated = false;
 	m_bwarmedup = false;
@@ -42,10 +42,11 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	params = nullptr;
 	m_icurrentiteration = 0;
 	m_itotaliterations = 0;
+	m_irhocount = 0;
+	m_irefldatacount = 0;
 
 	m_Directory = string(InitStruct->Directory);
 
-    fnpop = m_Directory + "/pop.dat";
     fnrf  = m_Directory + "/rf.dat";
     fnrho = m_Directory + "/rho.dat";
 
@@ -55,7 +56,50 @@ StochFit::StochFit(ReflSettings* InitStruct)
 	m_isearchalgorithm = InitStruct->Algorithm;
 
 	InitializeSA(InitStruct, m_SA);
-	m_initError = Initialize(InitStruct);
+
+	// ── Initialize (inlined) ───────────────────────────────────────────────
+	if (auto r = m_cRefl.Init(InitStruct); !r) {
+		m_initError = r;
+		return;
+	}
+	m_cEDP.Init(InitStruct);
+
+	params = new ParamVector(InitStruct);
+
+	m_irhocount = m_cEDP.Get_EDPPointCount();
+	m_irefldatacount = m_cRefl.GetDataCount();
+
+	Zinc = new double[m_irhocount];
+	Qinc = new double[m_irefldatacount];
+	Rho  = new double[m_irhocount];
+	Refl = new double[m_irefldatacount];
+
+	m_bwarmedup = true;
+
+	// ── Apply run state if provided ────────────────────────────────────────
+	// filmAbsInput is the pre-multiplication value: Set_FilmAbs(x) stores x*WC.
+	// temperature is raw m_dTemp stored directly via Set_Temp (not 1/m_dTemp).
+	// surfAbs is saved independently so it is never baked into filmAbsInput.
+	if (state != nullptr && state->edCount == params->RealparamsSize()) {
+		params->setroughness(state->roughness);
+		params->SetSupphase(state->edValues[0]);
+		for (int i = 1; i < state->edCount - 1; i++)
+			params->SetMutatableParameter(i - 1, state->edValues[i]);
+		params->SetSubphase(state->edValues[state->edCount - 1]);
+		m_cEDP.Set_FilmAbs(state->filmAbsInput);  // correct: stores filmAbsInput * WC as m_dBeta
+		params->setSurfAbs(state->surfAbs);         // independent, not baked into filmAbsInput
+		m_SA->Set_Temp(state->temperature);          // direct: m_dTemp = temperature
+		params->setImpNorm(state->impNorm);
+		m_SA->Set_AveragefSTUN(state->avgfSTUN);
+	}
+
+	params->UpdateBoundaries(NULL, NULL);
+	m_SA->InitializeParameters(InitStruct, params, &m_cRefl, &m_cEDP);
+
+	if (m_SA->CheckForFailure() == true)
+		platform_error("Catastrophic error in SA - please contact the author");
+
+	m_initError = {};
 }
 
 StochFit::~StochFit()
@@ -81,47 +125,6 @@ StochFit::~StochFit()
 	}
 }
 
-tl::expected<void, std::string> StochFit::Initialize(ReflSettings* InitStruct)
-{
-	 //////////////////////////////////////////////////////////
-	 /******** Setup Variables and ReflectivityClass ********/
-	 ////////////////////////////////////////////////////////
-
-	if(auto r = m_cRefl.Init(InitStruct); !r)
-		return r;
-	m_cEDP.Init(InitStruct);
-
-
-	//Setup the params - We start with a slightly roughened ED curve
-	params = new ParamVector(InitStruct);
-
-	 /////////////////////////////////////////////////////
-     /******** Prepare Arrays for the Front End ********/
-	////////////////////////////////////////////////////
-
-	m_irhocount = m_cEDP.Get_EDPPointCount();
-	m_irefldatacount = m_cRefl.GetDataCount();
-
-	Zinc = new double[m_irhocount];
-	Qinc = new double[m_irefldatacount];
-	Rho = new double[m_irhocount];
-	Refl = new double[m_irefldatacount];
-
-	//Let the frontend know that we've set up the arrays
-	m_bwarmedup = true;
-
-	//If we have a population already, load it
-	LoadFromFile();
-
-	// Update the constraints on the params
-	params->UpdateBoundaries(NULL,NULL);
-
-	m_SA->InitializeParameters(InitStruct, params, &m_cRefl, &m_cEDP);
-
-	if(m_SA->CheckForFailure() == true)
-		platform_error("Catastrophic error in SA - please contact the author");
-	return {};
-}
 
 int StochFit::Processing(std::stop_token stop_tok)
 {
@@ -150,16 +153,6 @@ int StochFit::Processing(std::stop_token stop_tok)
 				m_dGoodnessOfFit = m_cRefl.m_dgoodnessoffit;
 			}
 		    UpdateFits(isteps);
-
-			//Write the population file every 5000 iterations
-			if((isteps+1)%5000 == 0 || isteps == m_itotaliterations-1)
-			{
-				//Write out the population file for the best minimum found so far
-				if(m_isearchalgorithm != 0 && m_SA->Get_IsIterMinimum())
-					WritetoFile((m_Directory + "/BestSASolution.txt").c_str());
-
-				WritetoFile(fnpop.c_str());
-			}
 	 }
 
 	//Update the arrays one last time
@@ -278,7 +271,7 @@ void StochFit::InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
 	// Read from CEDP's internal arrays (they are float already)
 	// We need to access them - use the public Init data
 	for (int i = 0; i < nl; i++)
-		m_fEdSpacing[i] = i * static_cast<float>(m_cEDP.Get_Dz()) - static_cast<float>(m_initStruct.Leftoffset);
+		m_fEdSpacing[i] = i * static_cast<float>(m_cEDP.Get_Dz()) - 40.0f;
 
 	int FilmSlack = 7;
 	for (int k = 0; k < gpu_params.num_boxes + 2; k++)
@@ -383,8 +376,6 @@ int StochFit::ProcessingGPU(std::stop_token stop_tok)
 
 			m_SA->Set_Temp(1.0 / (double)result.best_temperature);
 			m_SA->Set_AveragefSTUN((double)result.best_avg_fstun);
-
-			WritetoFile(fnpop.c_str());
 		}
 	}
 
@@ -406,8 +397,6 @@ int StochFit::ProcessingGPU(std::stop_token stop_tok)
 	}
 	params->setroughness(result.best_roughness);
 
-	WritetoFile(fnpop.c_str());
-
 	m_gpuRunner.reset();
 	return 0;
 }
@@ -426,7 +415,7 @@ void StochFit::UpdateFits(int currentiteration)
 
 			for(int i = 0; i<m_irhocount;i++)
 			{
-				Zinc[i] = i*m_cEDP.Get_Dz();
+				Zinc[i] = i*m_cEDP.Get_Dz() - 40.0;
 				Rho[i] =  m_cEDP.m_EDP[i].real()/m_cEDP.m_EDP[m_cEDP.Get_EDPPointCount()-1].real();
 			}
 
@@ -470,6 +459,36 @@ int StochFit::Cancel()
 		// Joining blocks the main thread and can cause UI freezes
 	}
 	return 0;
+}
+
+void StochFit::Stop()
+{
+	if(m_thread.joinable())
+	{
+		m_thread.request_stop();
+		m_thread.join(); // blocks until current iteration completes
+	}
+}
+
+void StochFit::GetRunState(double* saScalars, double* edValues, int* edCount)
+{
+	// Only safe to call after Stop() — worker must not be running.
+	// saScalars[0..8]: roughness, filmAbsInput, surfAbs, temperature,
+	//                  impNorm, avgfSTUN, bestSolution, chiSquare, goodnessOfFit
+	saScalars[0] = params->getroughness();
+	saScalars[1] = m_cEDP.Get_FilmAbsInput();
+	saScalars[2] = params->getSurfAbs();
+	saScalars[3] = m_SA->Get_RawTemp();
+	saScalars[4] = params->getImpNorm();
+	saScalars[5] = m_SA->Get_AveragefSTUN();
+	saScalars[6] = m_SA->Get_LowestEnergy();
+	saScalars[7] = m_dChiSquare;
+	saScalars[8] = m_dGoodnessOfFit;
+
+	int count = params->RealparamsSize();
+	for (int i = 0; i < count; i++)
+		edValues[i] = params->GetRealparams(i);
+	*edCount = count;
 }
 
 void StochFit::InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA)
@@ -526,98 +545,6 @@ int StochFit::Priority(int priority)
 	return 0;
 }
 
-void StochFit::WritetoFile(const char* filename)
-{
-	ofstream outfile;
-	outfile.open(filename);
-	outfile<< params->getroughness() <<' '<< m_cEDP.Get_FilmAbs()*params->getSurfAbs()/m_cEDP.Get_WaveConstant() <<
-		' '<< m_SA->Get_Temp() <<' '<< params->getImpNorm() << ' ' << m_SA->Get_AveragefSTUN() << endl;
-
-	for(int i = 0; i < params->RealparamsSize(); i++)
-	{
-		outfile<<params->GetRealparams(i)<< endl;
-	}
-
-	outfile.close();
-}
-
-void StochFit::LoadFromFile(string file)
-{
-   ParamVector params1 = *params;
-   ifstream infile;
-
-   if(file.empty())
-	 infile.open(fnpop.c_str());
-   else
-	 infile.open(file.c_str());
-
-   int size = params->RealparamsSize();
-   int counter = 0;
-   bool kk = true;
-   double beta = 0;
-   double  avgfSTUN = 0;
-   double currenttemp = 0;
-   double normfactor = 0;
-
-   int i = 0;
-
-
-   if(infile.is_open())
-   {
-       double ED, roughness;
-       infile >> roughness >> beta >> currenttemp >> normfactor >> avgfSTUN;
-
-       params1.setroughness(roughness);
-
-	   while(!infile.eof() && i < params1.RealparamsSize())
-	   {
-            if(infile>>ED)
-			{
-				if(i == 0)
-					params1.SetSupphase(ED);
-				else if (i == params1.RealparamsSize()-1)
-					params1.SetSubphase(ED);
-				else
-				    params1.SetMutatableParameter(i-1,ED);
-
-				counter++;
-				i++;
-			}
-			else
-			{
-                kk = false;
-                break;
-            }
-        }
-	   infile>>ED;
-
-    }
-    else
-	{
-		kk = false;
-	}
-
-	if(kk == true && infile.eof() == false)
-	{
-		kk = false;
-	}
-
-    if(kk == true)
-	{
-		*params = params1;
-		m_cEDP.Set_FilmAbs(beta);
-		m_SA->Set_Temp(1.0/currenttemp);
-		params->setImpNorm(normfactor);
-		m_SA->Set_AveragefSTUN(avgfSTUN);
-    }
-	infile.close();
-
-	//If we're resuming, and we were Tunneling, load the best file
-	if(kk == true && fnpop.find("BestSASolution.txt") == string::npos)
-	{
-		LoadFromFile(m_Directory + "BestSASolution.txt");
-	}
-}
 
 void StochFit::GetArraySizes(int* RhoSize, int* ReflSize)
 {

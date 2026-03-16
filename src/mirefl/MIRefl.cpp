@@ -77,13 +77,11 @@ void FillInitStruct(ReflSettings* InitStruct)
 	InitStruct->CritEdgeOffset = 0;
 	InitStruct->HighQOffset = 0;
 
-	InitStruct->Totallength = 0;
 	InitStruct->UseSurfAbs = FALSE;
 	InitStruct->SupAbs = 0;
 	InitStruct->SubAbs = 0;
 	InitStruct->FilmAbs = 0;
 	InitStruct->Boxes = 2;
-	InitStruct->Leftoffset = 40;
 	InitStruct->FilmLength = 26;
 	InitStruct->Resolution = 10;
 	InitStruct->FilmSLD = 9.38;

@@ -1,14 +1,23 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC } from '../shared/ipc-channels';
-import type { ReflSettingsInput } from '../main/native/stochfit-api';
+import type { ReflSettingsInput, StochRunStateOutput, StochSessionFile } from '../main/native/stochfit-api';
 import type { BoxReflSettingsInput } from '../main/native/levmar-api';
 
 contextBridge.exposeInMainWorld('api', {
   // StochFit
-  stochInit: (settings: ReflSettingsInput) => ipcRenderer.invoke(IPC.STOCH_INIT, settings),
+  stochInit: (settings: ReflSettingsInput, runState: StochRunStateOutput | null) =>
+    ipcRenderer.invoke(IPC.STOCH_INIT, settings, runState),
   stochStart: (iterations: number) => ipcRenderer.invoke(IPC.STOCH_START, iterations),
+  stochStop: () => ipcRenderer.invoke(IPC.STOCH_STOP),
+  stochDestroy: () => ipcRenderer.invoke(IPC.STOCH_DESTROY),
   stochCancel: () => ipcRenderer.invoke(IPC.STOCH_CANCEL),
   stochGetData: () => ipcRenderer.invoke(IPC.STOCH_GET_DATA),
+  stochGetRunState: (boxes: number) => ipcRenderer.invoke(IPC.STOCH_GET_RUN_STATE, boxes),
+  stochLoadSession: (filePath: string) => ipcRenderer.invoke(IPC.STOCH_LOAD_SESSION, filePath),
+  stochWriteSession: (filePath: string, session: StochSessionFile) =>
+    ipcRenderer.invoke(IPC.STOCH_WRITE_SESSION, filePath, session),
+  stochDeleteSession: (filePath: string) =>
+    ipcRenderer.invoke(IPC.STOCH_DELETE_SESSION, filePath),
   stochArraySizes: () => ipcRenderer.invoke(IPC.STOCH_ARRAY_SIZES),
   stochWarmedUp: () => ipcRenderer.invoke(IPC.STOCH_WARMED_UP),
   stochSAParams: () => ipcRenderer.invoke(IPC.STOCH_SA_PARAMS),

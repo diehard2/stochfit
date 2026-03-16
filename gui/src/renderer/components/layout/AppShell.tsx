@@ -13,6 +13,7 @@ import { useUiStore } from '../../stores/ui-store';
 import { useDataStore } from '../../stores/data-store';
 import { useFitStore } from '../../stores/fit-store';
 import { useBoxModelStore } from '../../stores/box-model-store';
+import { useSettingsStore } from '../../stores/settings-store';
 
 function PanelContent() {
   const panel = useUiStore((s) => s.activePanel);
@@ -27,6 +28,7 @@ function PanelContent() {
 
 export function AppShell() {
   const data = useDataStore((s) => s.data);
+  const resetSettings = useSettingsStore((s) => s.reset);
   const fitResult = useFitStore((s) => s.result);
   const miBoxED = useFitStore((s) => s.miBoxED);
   const boxModelGenRefl = useBoxModelStore((s) => s.genRefl);
@@ -64,6 +66,18 @@ export function AppShell() {
             className="text-xs text-secondary hover:text-primary transition-colors"
           >
             About
+          </button>
+          <button
+            onClick={async () => {
+              resetSettings();
+              if (data) {
+                const sessionPath = data.filePath.replace(/[^/\\]+$/, '') + 'stochfit-session.json';
+                await window.api.stochDeleteSession(sessionPath);
+              }
+            }}
+            className="text-xs text-secondary hover:text-destructive transition-colors"
+          >
+            Reset Saved Data
           </button>
         </div>
         <label className="flex items-center gap-2 cursor-pointer">

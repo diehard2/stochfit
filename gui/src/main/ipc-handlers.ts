@@ -3,13 +3,20 @@ import { IPC } from '../shared/ipc-channels';
 import {
   stochInit,
   stochStart,
+  stochStop,
+  stochDestroy,
   stochCancel,
   stochGetData,
+  stochGetRunState,
   stochArraySizes,
   stochWarmedUp,
   stochSAParams,
   stochGpuAvailable,
+  readSessionFile,
+  writeSessionFile,
   type ReflSettingsInput,
+  type StochRunStateOutput,
+  type StochSessionFile,
 } from './native/stochfit-api';
 import {
   levmarFastReflFit,
@@ -32,16 +39,42 @@ function wrap<T>(name: string, fn: () => T): T {
 
 export function registerIpcHandlers(): void {
   // ── StochFit ────────────────────────────────────────────────────────────
-  ipcMain.handle(IPC.STOCH_INIT, (_event, settings: ReflSettingsInput) => {
-    return wrap('STOCH_INIT', () => stochInit(settings));
+  ipcMain.handle(IPC.STOCH_INIT, (_event, settings: ReflSettingsInput, runState: StochRunStateOutput | null) => {
+    return wrap('STOCH_INIT', () => stochInit(settings, runState));
   });
 
   ipcMain.handle(IPC.STOCH_START, (_event, iterations: number) => {
     return wrap('STOCH_START', () => stochStart(iterations));
   });
 
+  ipcMain.handle(IPC.STOCH_STOP, () => {
+    return wrap('STOCH_STOP', () => stochStop());
+  });
+
+  ipcMain.handle(IPC.STOCH_DESTROY, () => {
+    return wrap('STOCH_DESTROY', () => stochDestroy());
+  });
+
   ipcMain.handle(IPC.STOCH_CANCEL, () => {
     return wrap('STOCH_CANCEL', () => stochCancel());
+  });
+
+  ipcMain.handle(IPC.STOCH_GET_RUN_STATE, (_event, boxes: number) => {
+    return wrap('STOCH_GET_RUN_STATE', () => stochGetRunState(boxes));
+  });
+
+  ipcMain.handle(IPC.STOCH_LOAD_SESSION, (_event, filePath: string) => {
+    return wrap('STOCH_LOAD_SESSION', () => readSessionFile(filePath));
+  });
+
+  ipcMain.handle(IPC.STOCH_WRITE_SESSION, (_event, filePath: string, session: StochSessionFile) => {
+    return wrap('STOCH_WRITE_SESSION', () => writeSessionFile(filePath, session));
+  });
+
+  ipcMain.handle(IPC.STOCH_DELETE_SESSION, (_event, filePath: string) => {
+    return wrap('STOCH_DELETE_SESSION', () => {
+      try { fs.unlinkSync(filePath); } catch { /* already gone */ }
+    });
   });
 
   ipcMain.handle(IPC.STOCH_GET_DATA, () => {

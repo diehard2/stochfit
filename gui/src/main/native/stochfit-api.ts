@@ -1,4 +1,5 @@
 import koffi from 'koffi';
+import fs from 'fs';
 import { getStochFns } from './ffi';
 
 export interface ReflSettingsInput {
@@ -17,14 +18,12 @@ export interface ReflSettingsInput {
   supAbs: number;
   wavelength: number;
   useSurfAbs: boolean;
-  leftoffset: number;
   qErr: number;
   forcenorm: boolean;
   forcesig: number;
   debug: boolean;
   xrOnly: boolean;
   resolution: number;
-  totallength: number;
   filmLength: number;
   impnorm: boolean;
   objectivefunction: number;
@@ -67,6 +66,76 @@ export interface SAParams {
   mode: number;
 }
 
+// JS representation of StochRunState returned from GetRunState() FFI.
+export interface StochRunStateOutput {
+  roughness: number;
+  filmAbsInput: number;
+  surfAbs: number;
+  temperature: number;
+  impNorm: number;
+  avgfSTUN: number;
+  bestSolution: number;
+  chiSquare: number;
+  goodnessOfFit: number;
+  iteration: number;    // filled by renderer from last iterationsCompleted
+  edValues: number[];   // length == boxes+2
+  edCount: number;
+}
+
+// Session file written to {dataDirectory}/stochfit-session.json by Electron.
+export interface StochSessionFile {
+  version: number;
+  savedAt: string;
+  dataFile: string;
+  settings: Record<string, unknown>;
+  saState: StochRunStateOutput;
+}
+
+// Retrieve current SA state from C++. Only safe to call after stochStop().
+// boxes: the current settings.boxes value (used to size the edValues buffer).
+export function stochGetRunState(boxes: number): StochRunStateOutput {
+  const fns = getStochFns();
+  const saScalars = new Float64Array(9);
+  const edValues = new Float64Array(boxes + 2);
+  const edCount = new Int32Array(1);
+  fns.GetRunState(saScalars, edValues, edCount);
+  const count = edCount[0];
+  return {
+    roughness: saScalars[0],
+    filmAbsInput: saScalars[1],
+    surfAbs: saScalars[2],
+    temperature: saScalars[3],
+    impNorm: saScalars[4],
+    avgfSTUN: saScalars[5],
+    bestSolution: saScalars[6],
+    chiSquare: saScalars[7],
+    goodnessOfFit: saScalars[8],
+    iteration: 0, // filled by caller from last iterationsCompleted
+    edValues: Array.from(edValues.slice(0, count)),
+    edCount: count,
+  };
+}
+
+// Atomically write a session JSON file (write .tmp then rename).
+export function writeSessionFile(filePath: string, session: StochSessionFile): void {
+  const tmpPath = filePath + '.tmp';
+  fs.writeFileSync(tmpPath, JSON.stringify(session, null, 2), 'utf-8');
+  fs.renameSync(tmpPath, filePath);
+}
+
+// Read and validate a session JSON file. Returns null if missing or invalid.
+export function readSessionFile(filePath: string): StochSessionFile | null {
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const data = JSON.parse(content) as StochSessionFile;
+    if (data.version !== 1) return null;
+    if (!data.saState || !Array.isArray(data.saState.edValues)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 // Native allocations kept alive for the duration of the fitting session
 let _qBuf: unknown = null;
 let _reflBuf: unknown = null;
@@ -79,7 +148,7 @@ function allocAndEncode(arr: number[]): unknown {
   return buf;
 }
 
-export function stochInit(settings: ReflSettingsInput): void {
+export function stochInit(settings: ReflSettingsInput, runState: StochRunStateOutput | null = null): void {
   const fns = getStochFns();
   const n = settings.qPoints;
 
@@ -104,14 +173,12 @@ export function stochInit(settings: ReflSettingsInput): void {
     SupAbs: settings.supAbs,
     Wavelength: settings.wavelength,
     UseSurfAbs: settings.useSurfAbs ? 1 : 0,
-    Leftoffset: settings.leftoffset,
     QErr: settings.qErr,
     Forcenorm: settings.forcenorm ? 1 : 0,
     Forcesig: settings.forcesig,
     Debug: settings.debug ? 1 : 0,
     XRonly: settings.xrOnly ? 1 : 0,
     Resolution: settings.resolution,
-    Totallength: settings.totallength,
     FilmLength: settings.filmLength,
     Impnorm: settings.impnorm ? 1 : 0,
     Objectivefunction: settings.objectivefunction,
@@ -138,7 +205,28 @@ export function stochInit(settings: ReflSettingsInput): void {
     Title: settings.title,
   };
 
-  fns.Init(s);
+  // Build StochRunState struct if provided; otherwise pass null (fresh start)
+  let stateStruct: unknown = null;
+  if (runState !== null) {
+    const edBuf = koffi.alloc('double', runState.edValues.length);
+    koffi.encode(edBuf, 'double', runState.edValues, runState.edValues.length);
+    stateStruct = {
+      roughness: runState.roughness,
+      filmAbsInput: runState.filmAbsInput,
+      surfAbs: runState.surfAbs,
+      temperature: runState.temperature,
+      impNorm: runState.impNorm,
+      avgfSTUN: runState.avgfSTUN,
+      bestSolution: runState.bestSolution,
+      chiSquare: runState.chiSquare,
+      goodnessOfFit: runState.goodnessOfFit,
+      iteration: runState.iteration ?? 0,
+      edValues: edBuf,
+      edCount: runState.edValues.length,
+    };
+  }
+
+  fns.Init(s, stateStruct);
   const errMsg: string = fns.GetInitError();
   if (errMsg) {
     throw new Error(`StochFit init failed: ${errMsg}`);
@@ -147,6 +235,14 @@ export function stochInit(settings: ReflSettingsInput): void {
 
 export function stochStart(iterations: number): void {
   getStochFns().Start(iterations);
+}
+
+export function stochStop(): void {
+  getStochFns().Stop();
+}
+
+export function stochDestroy(): void {
+  getStochFns().Destroy();
 }
 
 export function stochCancel(): void {

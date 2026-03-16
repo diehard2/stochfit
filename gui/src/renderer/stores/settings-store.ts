@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS, type ModelSettings } from '../lib/types';
 interface SettingsState {
   settings: ModelSettings;
   update: (patch: Partial<ModelSettings>) => void;
+  restore: (patch: Partial<ModelSettings>) => void;
   reset: () => void;
 }
 
@@ -23,6 +24,15 @@ const loadSettings = (): ModelSettings => {
 
 export const useSettingsStore = create<SettingsState>((set) => ({
   settings: loadSettings(),
+  restore: (patch) => set((s) => {
+    const updated = { ...s.settings, ...patch };
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.warn('Failed to save restored settings to localStorage', e);
+    }
+    return { settings: updated };
+  }),
   update: (patch) => set((s) => {
     const updated = { ...s.settings, ...patch };
     try {

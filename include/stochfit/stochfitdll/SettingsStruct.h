@@ -26,14 +26,12 @@ struct ReflSettings
         double SupAbs;
         double Wavelength;
         BOOL UseSurfAbs;
-        double Leftoffset;
         double QErr;
         BOOL Forcenorm;
         double Forcesig;
         BOOL Debug;
         BOOL XRonly;
         int Resolution;
-        double Totallength;
         double FilmLength;
         BOOL Impnorm;
         int Objectivefunction;
@@ -65,5 +63,28 @@ struct ReflSettings
 	BOOL UseGpu;
 	const char* Title;
 
+};
+#pragma pack(pop)
+
+// Session state for resuming a previous SA run.
+// Electron writes stochfit-session.json; on resume it calls GetRunState() to read
+// raw internal values then passes this struct to Init(). nullptr = fresh start.
+// filmAbsInput = m_dBeta / m_dWaveConstant (inverse of Set_FilmAbs multiplication).
+// temperature  = raw m_dTemp (not 1/m_dTemp — passed directly to SetTemp()).
+// surfAbs saved independently so it is not baked into filmAbsInput across save/load cycles.
+#pragma pack(push, 8)
+struct StochRunState {
+    double roughness;
+    double filmAbsInput;  // pre-multiplication value: Set_FilmAbs(filmAbsInput) → m_dBeta = filmAbsInput * WC
+    double surfAbs;       // params->getSurfAbs() — saved independently
+    double temperature;   // raw m_dTemp (passed directly to SetTemp())
+    double impNorm;
+    double avgfSTUN;
+    double bestSolution;
+    double chiSquare;
+    double goodnessOfFit;
+    int    iteration;
+    double* edValues;     // Boxes+2 doubles: [supphase, box1..boxN, subphase]
+    int    edCount;       // must equal Boxes+2; mismatch → fresh start
 };
 #pragma pack(pop)

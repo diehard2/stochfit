@@ -89,6 +89,7 @@ public:
 		bool EvaluateSTUN(double bestval, double curval);
 		void SetTemp(double currenttemp);
 		double GetTemp();
+		double GetRawTemp(); // returns m_dTemp directly (not 1/m_dTemp)
 		double GetLowestEnergy();
 		bool IsIterMinimum();
 		double m_daveragefstun;

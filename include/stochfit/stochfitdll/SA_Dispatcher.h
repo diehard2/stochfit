@@ -46,6 +46,7 @@ public:
 	void InitializeParameters(ReflSettings* InitStruct, ParamVector* params, CReflCalc* m_cRefl, CEDP* EDP);
 	bool Iteration(ParamVector* params);
 	double Get_Temp();
+	double Get_RawTemp(); // returns internal m_dTemp directly
 	void Set_Temp(double Temp);
 	double Get_LowestEnergy();
 	bool Get_IsIterMinimum();

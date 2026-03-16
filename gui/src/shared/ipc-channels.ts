@@ -8,6 +8,12 @@ export const IPC = {
   STOCH_WARMED_UP: 'stoch:warmedUp',
   STOCH_SA_PARAMS: 'stoch:saParams',
   STOCH_GPU_AVAILABLE: 'stoch:gpuAvailable',
+  STOCH_STOP: 'stoch:stop',
+  STOCH_DESTROY: 'stoch:destroy',
+  STOCH_GET_RUN_STATE: 'stoch:getRunState',
+  STOCH_LOAD_SESSION: 'stoch:loadSession',
+  STOCH_WRITE_SESSION: 'stoch:writeSession',
+  STOCH_DELETE_SESSION: 'stoch:deleteSession',
 
   // LevMar channels
   LM_FAST_REFL_FIT: 'lm:fastReflFit',

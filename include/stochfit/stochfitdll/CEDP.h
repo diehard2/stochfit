@@ -37,6 +37,7 @@ public:
 	int Get_EDPPointCount();
 	BOOL Get_UseABS();
 	double Get_FilmAbs();
+	double Get_FilmAbsInput(); // returns m_dBeta / m_dWaveConstant — inverse of Set_FilmAbs
 	double Get_Dz();
 	double Get_WaveConstant();
 	void Set_FilmAbs(double absorption);

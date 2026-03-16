@@ -20,14 +20,12 @@ export const ReflSettingsType = koffi.struct('ReflSettings', {
   SupAbs: 'double',
   Wavelength: 'double',
   UseSurfAbs: 'int',
-  Leftoffset: 'double',
   QErr: 'double',
   Forcenorm: 'int',
   Forcesig: 'double',
   Debug: 'int',
   XRonly: 'int',
   Resolution: 'int',
-  Totallength: 'double',
   FilmLength: 'double',
   Impnorm: 'int',
   Objectivefunction: 'int',
@@ -52,6 +50,25 @@ export const ReflSettingsType = koffi.struct('ReflSettings', {
   ChiSquare: 'double',
   UseGpu: 'int',
   Title: 'str',
+});
+
+// StochRunState — #pragma pack(8), matches SettingsStruct.h
+// Passed to Init() to resume from a previous run; null pointer = fresh start.
+// filmAbsInput = m_dBeta / m_dWaveConstant (inverse of Set_FilmAbs multiplication).
+// temperature  = raw m_dTemp stored directly (not 1/m_dTemp).
+export const StochRunStateType = koffi.struct('StochRunState', {
+  roughness: 'double',
+  filmAbsInput: 'double',
+  surfAbs: 'double',
+  temperature: 'double',
+  impNorm: 'double',
+  avgfSTUN: 'double',
+  bestSolution: 'double',
+  chiSquare: 'double',
+  goodnessOfFit: 'double',
+  iteration: 'int',
+  edValues: koffi.pointer('double'),
+  edCount: 'int',
 });
 
 // BoxReflSettings — #pragma pack(8), matches Settings.h

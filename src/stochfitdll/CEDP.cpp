@@ -9,15 +9,13 @@ void CEDP::Init(ReflSettings* InitStruct)
 	m_bUseSurfAbs = InitStruct->UseSurfAbs;
 	m_dWaveConstant = m_dLambda*m_dLambda/(2.0*M_PI);
 	m_dRho = InitStruct->FilmSLD * 1e-6 * m_dWaveConstant;
-	int FilmSlack = 7;
+	// Safe boundary offsets: 40 Å covers 5× the maximum roughness bound (8 Å).
+	// FilmSlack adds 7 Å past the last box so the substrate erf tail fully converges.
+	const double leftOffset = 40.0;
+	const double substrateOffset = 40.0;
+	const int FilmSlack = 7;
 
-	//Set the total length of our surface layer - default 40 Angstroms of superphase,
-	//7 extra Angstroms of file, and 40 Angstroms of subphase
-	if(InitStruct->Totallength > 0)
-		m_iLayers = InitStruct->Totallength;
-	else
-        m_iLayers = InitStruct->Leftoffset + InitStruct->FilmLength + FilmSlack + 40;
-
+	m_iLayers = static_cast<int>(leftOffset + InitStruct->FilmLength + FilmSlack + substrateOffset);
 	m_iLayers *= InitStruct->Resolution;
 
 
@@ -45,7 +43,7 @@ void CEDP::Init(ReflSettings* InitStruct)
 
 	for(int i = 0; i < m_iLayers; i++)
 	{
-		m_fEDSpacingArray[i] = i*m_dDz0-InitStruct->Leftoffset;
+		m_fEDSpacingArray[i] = i*m_dDz0-leftOffset;
 	}
 
 	for(int k = 0; k < InitStruct->Boxes+2; k++)
@@ -211,6 +209,13 @@ double CEDP::Get_Dz()
 double CEDP::Get_FilmAbs()
 {
 	return m_dBeta;
+}
+
+double CEDP::Get_FilmAbsInput()
+{
+	// Returns the value that, when passed to Set_FilmAbs(), reproduces m_dBeta.
+	// Set_FilmAbs(x) stores x * m_dWaveConstant, so x = m_dBeta / m_dWaveConstant.
+	return (m_dWaveConstant > 0.0) ? m_dBeta / m_dWaveConstant : 0.0;
 }
 
 double CEDP::Get_WaveConstant()

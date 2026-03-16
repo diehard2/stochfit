@@ -21,7 +21,7 @@ export function BoxParameterTable({ rows, onRowChange, oneSigma }: Props) {
             <th className="text-left pb-1 pr-2 font-medium w-6">#</th>
             <th className="text-right pb-1 pr-1 font-medium">Length (Å)</th>
             <th className="text-right pb-1 pr-1 font-medium">ρ (norm)</th>
-            {!oneSigma && <th className="text-right pb-1 font-medium">σ (Å)</th>}
+            <th className="text-right pb-1 font-medium">σ (Å){oneSigma && ' [locked]'}</th>
           </tr>
         </thead>
         <tbody>
@@ -40,14 +40,13 @@ export function BoxParameterTable({ rows, onRowChange, oneSigma }: Props) {
                   onChange={(v) => onRowChange(i, { ...row, rho: v })}
                 />
               </td>
-              {!oneSigma && (
-                <td className="py-0.5">
-                  <NumInput
-                    value={row.sigma}
-                    onChange={(v) => onRowChange(i, { ...row, sigma: v })}
-                  />
-                </td>
-              )}
+              <td className="py-0.5">
+                <NumInput
+                  value={row.sigma}
+                  onChange={(v) => onRowChange(i, { ...row, sigma: v })}
+                  disabled={oneSigma}
+                />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -56,13 +55,21 @@ export function BoxParameterTable({ rows, onRowChange, oneSigma }: Props) {
   );
 }
 
-function NumInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+function NumInput({ value, onChange, disabled }: { value: number; onChange: (v: number) => void; disabled?: boolean }) {
   const [text, setText] = React.useState(String(value));
   const focused = React.useRef(false);
 
   React.useEffect(() => {
     if (!focused.current) setText(String(value));
   }, [value]);
+
+  if (disabled) {
+    return (
+      <div className="w-full h-6 px-1 text-xs text-right bg-surface border border-border/40 rounded text-secondary/60 flex items-center justify-end">
+        {value}
+      </div>
+    );
+  }
 
   return (
     <input

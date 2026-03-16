@@ -70,8 +70,11 @@ type KoffiFn = ReturnType<ReturnType<typeof koffi.load>['func']>;
 
 let _fnInit: KoffiFn | null = null;
 let _fnStart: KoffiFn | null = null;
+let _fnStop: KoffiFn | null = null;
+let _fnDestroy: KoffiFn | null = null;
 let _fnCancel: KoffiFn | null = null;
 let _fnGetData: KoffiFn | null = null;
+let _fnGetRunState: KoffiFn | null = null;
 let _fnArraySizes: KoffiFn | null = null;
 let _fnWarmedUp: KoffiFn | null = null;
 let _fnSAparams: KoffiFn | null = null;
@@ -81,11 +84,14 @@ let _fnGpuAvailable: KoffiFn | null = null;
 export function getStochFns() {
   const lib = getStochLib();
   if (!_fnInit) {
-    _fnInit = lib.func('void Init(ReflSettings *initstruct)');
+    _fnInit = lib.func('void Init(ReflSettings *, StochRunState *)');
     _fnGetInitError = lib.func('str GetInitError()');
     _fnStart = lib.func('void Start(int iterations)');
+    _fnStop = lib.func('void Stop()');
+    _fnDestroy = lib.func('void Destroy()');
     _fnCancel = lib.func('void Cancel()');
     _fnGetData = lib.func('int GetData(double *ZRange, double *Rho, double *QRange, double *Refl, double *roughness, double *chisquare, double *goodnessoffit, int *isfinished)');
+    _fnGetRunState = lib.func('void GetRunState(double *saScalars, double *edValues, int *edCount)');
     _fnArraySizes = lib.func('void ArraySizes(int *RhoSize, int *Reflsize)');
     _fnWarmedUp = lib.func('bool WarmedUp()');
     _fnSAparams = lib.func('void SAparams(double *lowestenergy, double *temp, int *mode)');
@@ -95,8 +101,11 @@ export function getStochFns() {
     Init: _fnInit!,
     GetInitError: _fnGetInitError!,
     Start: _fnStart!,
+    Stop: _fnStop!,
+    Destroy: _fnDestroy!,
     Cancel: _fnCancel!,
     GetData: _fnGetData!,
+    GetRunState: _fnGetRunState!,
     ArraySizes: _fnArraySizes!,
     WarmedUp: _fnWarmedUp!,
     SAparams: _fnSAparams!,

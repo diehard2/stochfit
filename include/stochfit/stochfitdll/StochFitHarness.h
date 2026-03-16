@@ -22,7 +22,11 @@
 
 // Top-level SA orchestrator.
 // Manages the worker jthread, GPU dispatch (CUDA/Metal when UseGpu=true),
-// data marshaling between C++ and the FFI layer, and population file I/O.
+// and data marshaling between C++ and the FFI layer.
+// Session file I/O is now handled by Electron: Init() accepts an optional
+// StochRunState* with pre-parsed state (null = fresh start).
+// On stop: call Stop() to block until worker exits, then GetRunState() to read
+// the raw internal values, then Destroy() to clean up the object.
 // On GPU builds (STOCHFIT_HAS_GPU), ProcessingGPU() runs multi-chain SA
 // on the GPU; otherwise Processing() runs single-chain CPU SA.
 // Float buffers (m_fMeas*, m_fQspread*, m_fEdSpacing, m_fDistArray) hold
@@ -35,6 +39,7 @@
 #include "ReflCalc.h"
 #include "CEDP.h"
 #include "SA_Dispatcher.h"
+#include <stochfit/stochfitdll/SettingsStruct.h>
 
 #if STOCHFIT_HAS_GPU
 class GpuSARunner;
@@ -47,13 +52,20 @@ struct GpuEDPConfig;
 class StochFit
 {
 	public:
-		StochFit(ReflSettings* InitStruct);
+		StochFit(ReflSettings* InitStruct, StochRunState* state = nullptr);
 		~StochFit();
 		int Start(int iterations);
 		int Cancel();
+		void Stop(); // request_stop + join — blocks until worker exits
 		// ******** MAYBEDEAD ******** Priority — stores value but never acts on it
 		int Priority(int priority);
 		int GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
+		// GetRunState: fills flat output buffers with current SA state.
+		// Only call after Stop() — not safe to call while worker is running.
+		// saScalars[9]: roughness, filmAbsInput, surfAbs, temperature, impNorm, avgfSTUN, bestSolution, chiSquare, goodnessOfFit
+		// edValues[Boxes+2]: raw GetRealparams() values
+		// edCount[1]: actual count written
+		void GetRunState(double* saScalars, double* edValues, int* edCount);
 		void InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA);
 		void GetArraySizes(int* RhoSize, int* ReflSize);
 		bool GetWarmedUp();
@@ -64,10 +76,7 @@ class StochFit
 
 	private:
 		int Processing(std::stop_token stop_tok);
-		void LoadFromFile(string File = string());
-		void WritetoFile(const char* filename);
 		void UpdateFits(int currentiteration);
-	    tl::expected<void, std::string> Initialize(ReflSettings* InitStruct);
 		tl::expected<void, std::string> m_initError;
 
 #if STOCHFIT_HAS_GPU
@@ -99,7 +108,6 @@ class StochFit
 
 		//Set the output file names
 		string m_Directory;
-		string fnpop;
 		string fnrf;
 		string fnrho;
 		double m_dRoughness;

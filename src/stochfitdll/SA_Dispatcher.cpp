@@ -61,6 +61,11 @@ double SA_Dispatcher::Get_Temp()
 		return m_cSA->GetTemp();
 }
 
+double SA_Dispatcher::Get_RawTemp()
+{
+		return m_cSA->GetRawTemp();
+}
+
 void SA_Dispatcher::Set_Temp(double Temp)
 {
 		m_cSA->SetTemp(Temp);

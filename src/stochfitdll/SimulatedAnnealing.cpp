@@ -291,6 +291,11 @@ double SimAnneal::GetTemp()
 	return 1.0/m_dTemp;
 }
 
+double SimAnneal::GetRawTemp()
+{
+	return m_dTemp;
+}
+
 double SimAnneal::GetLowestEnergy()
 {
 	return m_dbestsolution;

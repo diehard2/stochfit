@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDataStore } from '../../stores/data-store';
 import { useSettingsStore } from '../../stores/settings-store';
 import { useBoxModelStore } from '../../stores/box-model-store';
@@ -11,9 +11,6 @@ function defaultRow(): BoxRow {
   return { length: 15.0, rho: 0.5, sigma: 3.0 };
 }
 
-function defaultRows(n: number): BoxRow[] {
-  return Array.from({ length: n }, defaultRow);
-}
 
 function buildFastReflParams(subRough: number, rows: BoxRow[], normFactor: number, oneSigma: boolean): number[] {
   const result = [subRough];
@@ -36,7 +33,7 @@ function parseFastReflParams(
   for (let i = 0; i < boxes; i++) {
     const length = params[idx++];
     const rho = params[idx++];
-    const sigma = oneSigma ? 0 : (params[idx++] ?? 0);
+    const sigma = oneSigma ? subRough : (params[idx++] ?? 0);
     rows.push({ length, rho, sigma });
   }
   const normFactor = params[idx] ?? 1.0;
@@ -48,6 +45,30 @@ function makeBounds(params: number[]) {
   const ll = params.map((v) => (v >= 0 ? 0 : v * 3));
   const percs = params.map(() => 10);
   return { ul, ll, percs };
+}
+
+// Compute a pure step-function box EDP in the frontend.
+// Avoids the erf midpoint artifact (erf(0)=0 → 0.5) that appears when z falls
+// exactly on an interface in the C++ RhoGenerate calculation.
+function computeBoxStepEDP(
+  zRange: number[],
+  rows: BoxRow[],
+  zOffset: number,
+  supSLD: number,
+  subSLD: number,
+): number[] {
+  const boundaries: number[] = [zOffset];
+  for (const row of rows) {
+    boundaries.push(boundaries[boundaries.length - 1] + row.length);
+  }
+  const supNorm = subSLD !== 0 ? supSLD / subSLD : 0;
+  return zRange.map(z => {
+    if (z < boundaries[0]) return supNorm;
+    for (let i = 0; i < rows.length; i++) {
+      if (z < boundaries[i + 1]) return rows[i].rho;
+    }
+    return 1.0; // subphase
+  });
 }
 
 // Convert FastReflFit params to RhoFit layout for EDP generation:
@@ -76,15 +97,14 @@ function makeZRange(rows: BoxRow[]): number[] {
 export function BoxModelPanel() {
   const { data } = useDataStore();
   const { settings } = useSettingsStore();
-  const { solutions, activeIndex, setSolutions, setActiveIndex, setGenRefl, setGenEDP } = useBoxModelStore();
+  const {
+    boxes, subRough, normFactor, oneSigma, boxRows,
+    setBoxes, setSubRough, setNormFactor, setOneSigma, setBoxRows,
+    solutions, activeIndex, setSolutions, setActiveIndex, setGenRefl, setGenEDP,
+  } = useBoxModelStore();
 
-  const [boxes, setBoxesState] = useState(3);
-  const [subRough, setSubRough] = useState(3.0);
-  const [normFactor, setNormFactor] = useState(1.0);
-  const [oneSigma, setOneSigma] = useState(false);
-  const [boxRows, setBoxRows] = useState<BoxRow[]>(defaultRows(3));
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const autoGenTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync row count when boxes changes
@@ -97,6 +117,13 @@ export function BoxModelPanel() {
       return prev.slice(0, boxes);
     });
   }, [boxes]);
+
+  // When oneSigma is active, lock all box sigmas to subRough
+  useEffect(() => {
+    if (oneSigma) {
+      setBoxRows((prev) => prev.map((r) => ({ ...r, sigma: subRough })));
+    }
+  }, [oneSigma, subRough]);
 
   // Auto-generate reflectivity + EDP whenever params change (debounced)
   useEffect(() => {
@@ -149,7 +176,8 @@ export function BoxModelPanel() {
         rhoInput.ll = rl;
         rhoInput.paramPercs = rp;
         const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoGenerateResult;
-        setGenEDP(edpRes.ed, edpRes.boxED, zRange);
+        const stepBoxED = computeBoxStepEDP(zRange, boxRows, 0, settings.supSLD, settings.subSLD);
+        setGenEDP(edpRes.ed, stepBoxED, zRange);
       } catch {
         // silently ignore auto-gen errors
       }
@@ -231,7 +259,8 @@ export function BoxModelPanel() {
         zLength: zRange.length,
       };
       const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoGenerateResult;
-      setGenEDP(edpRes.ed, edpRes.boxED, zRange);
+      const stepBoxED = computeBoxStepEDP(zRange, boxRows, 0, settings.supSLD, settings.subSLD);
+      setGenEDP(edpRes.ed, stepBoxED, zRange);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -266,7 +295,8 @@ export function BoxModelPanel() {
         zLength: zRange.length,
       };
       const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoGenerateResult;
-      setGenEDP(edpRes.ed, edpRes.boxED, zRange);
+      const stepBoxED = computeBoxStepEDP(zRange, parsed.rows, 0, settings.supSLD, settings.subSLD);
+      setGenEDP(edpRes.ed, stepBoxED, zRange);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -293,7 +323,7 @@ export function BoxModelPanel() {
             min={1}
             max={20}
             step={1}
-            onChange={(e) => setBoxesState(parseInt(e.target.value) || 1)}
+            onChange={(e) => setBoxes(parseInt(e.target.value) || 1)}
             className="h-7 px-2 text-xs bg-elevated border border-border rounded-input text-primary focus:outline-none focus:border-accent/50"
           />
         </div>

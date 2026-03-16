@@ -32,13 +32,11 @@ static void FillInitStruct(ReflSettings* s)
     s->Q                = const_cast<double*>(qrange);
     s->CritEdgeOffset   = 0;
     s->HighQOffset      = 0;
-    s->Totallength      = 0;
     s->UseSurfAbs       = FALSE;
     s->SupAbs           = 0;
     s->SubAbs           = 0;
     s->FilmAbs          = 0;
     s->Boxes            = 2;
-    s->Leftoffset       = 40;
     s->FilmLength       = 26;
     s->Resolution       = 10;
     s->FilmSLD          = 9.38;

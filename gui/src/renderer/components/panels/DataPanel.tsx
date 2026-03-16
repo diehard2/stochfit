@@ -7,10 +7,15 @@ declare global {
     api: {
       openFile: (filters?: Electron.FileFilter[]) => Promise<{ filePath: string; content: string } | null>;
       saveFile: (defaultPath: string, content: string) => Promise<boolean>;
-      stochInit: (s: unknown) => Promise<void>;
+      stochInit: (s: unknown, runState: unknown) => Promise<void>;
       stochStart: (n: number) => Promise<void>;
+      stochStop: () => Promise<void>;
+      stochDestroy: () => Promise<void>;
       stochCancel: () => Promise<void>;
       stochGetData: () => Promise<unknown>;
+      stochGetRunState: (boxes: number) => Promise<unknown>;
+      stochLoadSession: (filePath: string) => Promise<unknown>;
+      stochWriteSession: (filePath: string, session: unknown) => Promise<void>;
       stochArraySizes: () => Promise<{ rhoSize: number; reflSize: number }>;
       stochWarmedUp: () => Promise<boolean>;
       stochSAParams: () => Promise<unknown>;

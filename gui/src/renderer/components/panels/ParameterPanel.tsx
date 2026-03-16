@@ -1,107 +1,7 @@
 import React from 'react';
-import { useSettingsStore } from '../../stores/settings-store';
-import { useUiStore } from '../../stores/ui-store';
-import type { ModelSettings } from '../../lib/types';
-
-function Field({
-  label,
-  field,
-  type = 'number',
-  step,
-  tooltip,
-  disabled,
-  options,
-}: {
-  label: string;
-  field: keyof ModelSettings;
-  type?: 'number' | 'checkbox' | 'text' | 'select';
-  step?: number;
-  tooltip?: string;
-  disabled?: boolean;
-  options?: { label: string; value: number }[];
-}) {
-  const { settings, update } = useSettingsStore();
-  const value = settings[field];
-
-  if (type === 'checkbox') {
-    return (
-      <div className="group relative">
-        <label className={`flex items-center gap-2 text-xs cursor-pointer select-none ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
-          <input
-            type="checkbox"
-            checked={Boolean(value)}
-            onChange={(e) => update({ [field]: e.target.checked })}
-            disabled={disabled}
-            className="w-3.5 h-3.5 accent-accent disabled:cursor-not-allowed"
-          />
-          <span className="text-secondary">{label}</span>
-        </label>
-        {tooltip && (
-          <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block bg-elevated border border-border rounded-input p-2 text-xs text-secondary whitespace-nowrap z-10 shadow-lg">
-            {tooltip}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (type === 'select') {
-    return (
-      <div className="flex flex-col gap-0.5">
-        <label className="text-xs text-secondary">{label}</label>
-        <select
-          value={String(value)}
-          onChange={(e) => update({ [field]: parseInt(e.target.value) })}
-          disabled={disabled}
-          className={`h-7 px-2 text-xs bg-elevated border border-border rounded-input text-primary focus:outline-none focus:border-accent/50 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          {options?.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-0.5">
-      <label className="text-xs text-secondary">{label}</label>
-      <input
-        type={type}
-        value={String(value)}
-        step={step}
-        min={field === 'slope' ? '1' : undefined}
-        disabled={disabled}
-        onChange={(e) => {
-          let v = type === 'number' ? parseFloat(e.target.value) : e.target.value;
-          // Enforce minimum value for slope (must be > 1 for temp schedule to work)
-          if (field === 'slope' && typeof v === 'number' && v < 1) {
-            v = 1;
-          }
-          update({ [field]: v });
-        }}
-        className={`h-7 px-2 text-xs bg-elevated border border-border rounded-input text-primary focus:outline-none focus:border-accent/50 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-      />
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="text-xs font-semibold text-secondary uppercase tracking-wider border-b border-border pb-1">
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
+import { Field, Section } from '../shared/Field';
 
 export function ParameterPanel() {
-  const gpuAvailable = useUiStore((s) => s.gpuAvailable);
-
   return (
     <div className="flex flex-col gap-5 p-4 overflow-y-auto">
       <h2 className="text-sm font-semibold text-primary uppercase tracking-wider">Model Parameters</h2>
@@ -110,75 +10,22 @@ export function ParameterPanel() {
         <Field label="Substrate SLD (×10⁻⁶ Å⁻²)" field="subSLD" step={0.01} />
         <Field label="Film SLD (×10⁻⁶ Å⁻²)" field="filmSLD" step={0.01} />
         <Field label="Superphase SLD (×10⁻⁶ Å⁻²)" field="supSLD" step={0.01} />
-        <Field label="Boxes" field="boxes" step={1} />
         <Field label="Wavelength (Å)" field="wavelength" step={0.001} />
-        <Field label="Total Length (Å)" field="totallength" step={1} />
         <Field label="Film Length (Å)" field="filmLength" step={1} />
-        <Field label="Left Offset" field="leftoffset" step={1} />
       </Section>
 
       <Section title="Corrections">
         <Field label="Film Absorption" field="filmAbs" step={0.0001} />
         <Field label="Substrate Absorption" field="subAbs" step={0.0001} />
         <Field label="Superphase Absorption" field="supAbs" step={0.0001} />
-        <Field label="Q Spread (σ)" field="qErr" step={0.0001} />
-        <Field label="Resolution (pts/Å)" field="resolution" step={1} />
-        <Field label="Force σ" field="forcesig" step={0.1} />
-        <Field label="Crit. Edge Offset" field="critEdgeOffset" step={1} />
-        <Field label="High-Q Offset" field="highQOffset" step={1} />
-        <Field
-          label="Objective Function"
-          field="objectivefunction"
-          type="select"
-          options={[
-            { label: 'Log Difference', value: 0 },
-            { label: 'Inverse Difference', value: 1 },
-            { label: 'Log Difference with Errors', value: 2 },
-            { label: 'Inverse Difference with Errors', value: 3 },
-          ]}
-        />
-        <Field label="Use Surf. Absorption" field="useSurfAbs" type="checkbox" />
-        <Field label="Force Normalization" field="forcenorm" type="checkbox" />
-        <Field label="Improved Normalization" field="impnorm" type="checkbox" />
-        <Field label="XR Only" field="xrOnly" type="checkbox" />
-      </Section>
-
-      <Section title="Annealing">
-        <Field
-          label="Algorithm"
-          field="algorithm"
-          type="select"
-          options={[
-            { label: 'Greedy', value: 0 },
-            { label: 'Simulated Annealing', value: 1 },
-            { label: 'STUN', value: 2 },
-          ]}
-        />
-        <Field label="Initial Temp" field="inittemp" step={0.1} />
-        <Field label="Plateau Iterations" field="platiter" step={1} />
-        <Field label="Temp. Iterations" field="tempiter" step={1} />
-        <Field label="Slope" field="slope" step={0.01} />
-        <Field label="Gamma" field="gamma" step={0.01} />
-        <Field label="Gamma Decrease" field="gammadec" step={0.01} />
-        <Field label="STUN Function" field="stunFunc" step={1} />
-        <Field label="STUN Dec. Iterations" field="stunDeciter" step={10} />
-        <Field label="Param Temp" field="paramtemp" step={0.01} />
-        <Field label="Sigma Search %" field="sigmasearch" step={1} />
-        <Field label="Norm. Search %" field="normSearchPerc" step={1} />
-        <Field label="Abs. Search %" field="absSearchPerc" step={1} />
-        <Field label="Iterations" field="iterations" step={100000} />
-        <Field label="Adaptive" field="adaptive" type="checkbox" />
-        <Field
-          label="Use GPU Acceleration"
-          field="useGpu"
-          type="checkbox"
-          disabled={!gpuAvailable}
-          tooltip={gpuAvailable ? undefined : 'Requires NVIDIA RTX 20+ (compute 7.5+) or Apple Silicon Mac'}
-        />
-      </Section>
-
-      <Section title="Output">
-        <Field label="Title" field="title" type="text" />
+        <Field label="Q Spread (σ)" field="qErr" step={0.0001} tooltip="Instrument resolution: Gaussian smearing width in Q-space." />
+        <Field label="Force σ" field="forcesig" step={0.1} tooltip="Force all interfacial roughness to this value (0 = unconstrained)." />
+        <Field label="Crit. Edge Offset" field="critEdgeOffset" step={1} tooltip="Number of low-Q points to skip (removes critical edge region)." />
+        <Field label="High-Q Offset" field="highQOffset" step={1} tooltip="Number of high-Q points to skip." />
+        <Field label="Use Surf. Absorption" field="useSurfAbs" type="checkbox" tooltip="Include surface absorption in reflectivity calculation." />
+        <Field label="Force Normalization" field="forcenorm" type="checkbox" tooltip="Force reflectivity curve to normalize to 1 at Q=0." />
+        <Field label="Improved Normalization" field="impnorm" type="checkbox" tooltip="Search for optimal normalization factor during fitting." />
+        <Field label="XR Only" field="xrOnly" type="checkbox" tooltip="X-ray reflectivity mode (vs neutron)." />
       </Section>
     </div>
   );

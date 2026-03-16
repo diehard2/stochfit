@@ -31,11 +31,11 @@ StochFit* stochfit = NULL;
 
 static std::string g_last_init_error;
 
-extern "C" EXPORT void Init(ReflSettings* initstruct)
+extern "C" EXPORT void Init(ReflSettings* initstruct, StochRunState* state)
 {
 	g_last_init_error.clear();
 	delete stochfit;
-	stochfit = new StochFit(initstruct);
+	stochfit = new StochFit(initstruct, state);
 
 	if(auto r = stochfit->GetInitError(); !r)
 	{
@@ -62,14 +62,32 @@ extern "C" EXPORT void Start(int iterations)
 		stochfit->Start(iterations);
 }
 
+extern "C" EXPORT void Stop()
+{
+	if(stochfit != NULL)
+		stochfit->Stop();
+}
+
+extern "C" EXPORT void Destroy()
+{
+	delete stochfit;
+	stochfit = NULL;
+}
+
 extern "C" EXPORT void Cancel()
 {
 	if(stochfit != NULL)
 	{
-		stochfit->Cancel();
+		stochfit->Stop();
 		delete stochfit;
 		stochfit = NULL;
 	}
+}
+
+extern "C" EXPORT void GetRunState(double* saScalars, double* edValues, int* edCount)
+{
+	if(stochfit != NULL)
+		stochfit->GetRunState(saScalars, edValues, edCount);
 }
 
 

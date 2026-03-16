@@ -36,13 +36,11 @@ export interface ModelSettings {
   supAbs: number;
   wavelength: number;
   useSurfAbs: boolean;
-  leftoffset: number;
   qErr: number;
   forcenorm: boolean;
   forcesig: number;
   xrOnly: boolean;
   resolution: number;
-  totallength: number;
   filmLength: number;
   impnorm: boolean;
   objectivefunction: number;
@@ -81,20 +79,18 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   supAbs: 0.0,
   wavelength: 1.24,
   useSurfAbs: false,
-  leftoffset: 0,
   qErr: 0.0,
   forcenorm: false,
   forcesig: 0.0,
   xrOnly: true,
   resolution: 3,
-  totallength: 25.0,
   filmLength: 25.0,
   impnorm: false,
   objectivefunction: 0, // Log(R) cost
   paramtemp: 0.03, // Parameter temperature
   sigmasearch: 10,
-  normSearchPerc: 10,
-  absSearchPerc: 10,
+  normSearchPerc: 0,
+  absSearchPerc: 0,
   algorithm: 0, // Greedy
   inittemp: 10.0,
   platiter: 4000,

@@ -67,18 +67,18 @@ jobs:
 
       - name: Build
         run: |
+          BUILD_RC=0
           if [ "${{ runner.os }}" == "Windows" ]; then
-            cmake --build --preset windows --parallel 2>&1 | tee /tmp/build_out.txt || true
+            cmake --build --preset windows --parallel 2>&1 | tee /tmp/build_out.txt || BUILD_RC=$?
           else
-            cmake --build --preset default --parallel 2>&1 | tee /tmp/build_out.txt || true
+            cmake --build --preset default --parallel 2>&1 | tee /tmp/build_out.txt || BUILD_RC=$?
           fi
-          EXIT_CODE=${PIPESTATUS[0]}
-          if [ "${EXIT_CODE}" != "0" ]; then
+          if [ "${BUILD_RC}" != "0" ]; then
             echo "## Build Failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
             tail -100 /tmp/build_out.txt >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
-            exit "${EXIT_CODE}"
+            exit "${BUILD_RC}"
           fi
         shell: bash
 

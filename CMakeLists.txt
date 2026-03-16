@@ -158,10 +158,6 @@ if(OpenMP_CXX_FOUND)
         endif()
     endif()
 endif()
-if(APPLE)
-    find_path(JTHREAD_INCLUDE_DIR NAMES jthread.hpp REQUIRED)
-    target_include_directories(stochfit_core PUBLIC "${JTHREAD_INCLUDE_DIR}")
-endif()
 target_link_libraries(stochfit_core PUBLIC tl::expected)
 
 # GPU sources and libraries

@@ -3,7 +3,7 @@ import { useDataStore } from '../../stores/data-store';
 import { useSettingsStore } from '../../stores/settings-store';
 import { useBoxModelStore } from '../../stores/box-model-store';
 import { BoxParameterTable, type BoxRow } from '../shared/BoxParameterTable';
-import type { BoxReflSettingsInput, RhoGenerateResult, StochFitResult } from '../../../main/native/levmar-api';
+import type { BoxReflSettingsInput, LMFitResult, RhoGenerateResult, StochFitResult } from '../../../main/native/levmar-api';
 
 // ── Param helpers ────────────────────────────────────────────────────────────
 
@@ -101,6 +101,7 @@ export function BoxModelPanel() {
     boxes, subRough, normFactor, oneSigma, boxRows,
     setBoxes, setSubRough, setNormFactor, setOneSigma, setBoxRows,
     solutions, activeIndex, setSolutions, setActiveIndex, setGenRefl, setGenEDP,
+    lastFitReport, setLastFitReport,
   } = useBoxModelStore();
 
   const [busy, setBusy] = React.useState(false);
@@ -117,13 +118,6 @@ export function BoxModelPanel() {
       return prev.slice(0, boxes);
     });
   }, [boxes]);
-
-  // When oneSigma is active, lock all box sigmas to subRough
-  useEffect(() => {
-    if (oneSigma) {
-      setBoxRows((prev) => prev.map((r) => ({ ...r, sigma: subRough })));
-    }
-  }, [oneSigma, subRough]);
 
   // Auto-generate reflectivity + EDP whenever params change (debounced)
   useEffect(() => {
@@ -214,6 +208,27 @@ export function BoxModelPanel() {
     };
   }
 
+  async function applyParamsAndGenerate(params: number[], parsedRows: ReturnType<typeof parseFastReflParams>) {
+    const reflParams = buildFastReflParams(parsedRows.subRough, parsedRows.rows, parsedRows.normFactor, oneSigma);
+    const { ul, ll, percs } = makeBounds(reflParams);
+    const input: BoxReflSettingsInput = { ...buildInput(), ul, ll, paramPercs: percs };
+    const refl = await window.api.lmFastReflGenerate(input, reflParams) as number[];
+    setGenRefl(refl);
+
+    const zRange = makeZRange(parsedRows.rows);
+    const rhoParams = buildRhoParamsFromBoxRows(parsedRows.subRough, parsedRows.rows, oneSigma);
+    const { ul: ru, ll: rl, percs: rp } = makeBounds(rhoParams);
+    const rhoInput: BoxReflSettingsInput = {
+      ...input, ul: ru, ll: rl, paramPercs: rp,
+      miedp: new Array(zRange.length).fill(0),
+      zIncrement: zRange,
+      zLength: zRange.length,
+    };
+    const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoGenerateResult;
+    const stepBoxED = computeBoxStepEDP(zRange, parsedRows.rows, 0, settings.supSLD, settings.subSLD);
+    setGenEDP(edpRes.ed, stepBoxED, zRange);
+  }
+
   async function handleFit() {
     if (!data) return;
     setBusy(true);
@@ -221,16 +236,23 @@ export function BoxModelPanel() {
     try {
       const params = buildFastReflParams(subRough, boxRows, normFactor, oneSigma);
       const input = buildInput();
-      const res = await window.api.lmStochFit(input, params) as StochFitResult;
+      const res = await window.api.lmFastReflFit(input, params) as LMFitResult;
 
-      const p = params.length;
-      const sols = res.chiSquareArray.map((chi, i) => ({
-        params: res.paramArray.slice(i * p, (i + 1) * p),
-        chiSquare: chi,
-      }));
-      // Sort by chi-square ascending
-      sols.sort((a, b) => a.chiSquare - b.chiSquare);
-      setSolutions(sols, p);
+      const parsed = parseFastReflParams(res.parameters, boxes, oneSigma);
+      setSubRough(parsed.subRough);
+      setNormFactor(parsed.normFactor);
+      setBoxRows(parsed.rows);
+      setSolutions([], 0);
+
+      const paramNames = ['Sub σ'];
+      for (let i = 0; i < boxes; i++) {
+        paramNames.push(`Box ${i + 1} len`, `Box ${i + 1} ρ`);
+        if (!oneSigma) paramNames.push(`Box ${i + 1} σ`);
+      }
+      paramNames.push('Norm');
+      setLastFitReport({ info: res.info, covariance: res.covariance, paramCount: params.length, paramNames });
+
+      await applyParamsAndGenerate(res.parameters, parsed);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -242,25 +264,19 @@ export function BoxModelPanel() {
     if (!data) return;
     setBusy(true);
     setError(null);
+    setLastFitReport(null);
     try {
-      const reflParams = buildFastReflParams(subRough, boxRows, normFactor, oneSigma);
+      const params = buildFastReflParams(subRough, boxRows, normFactor, oneSigma);
       const input = buildInput();
-      const refl = await window.api.lmFastReflGenerate(input, reflParams) as number[];
-      setGenRefl(refl);
+      const res = await window.api.lmStochFit(input, params) as StochFitResult;
 
-      const zRange = makeZRange(boxRows);
-      const rhoParams = buildRhoParamsFromBoxRows(subRough, boxRows, oneSigma);
-      const { ul, ll, percs } = makeBounds(rhoParams);
-      const rhoInput: BoxReflSettingsInput = {
-        ...input,
-        ul, ll, paramPercs: percs,
-        miedp: new Array(zRange.length).fill(0),
-        zIncrement: zRange,
-        zLength: zRange.length,
-      };
-      const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoGenerateResult;
-      const stepBoxED = computeBoxStepEDP(zRange, boxRows, 0, settings.supSLD, settings.subSLD);
-      setGenEDP(edpRes.ed, stepBoxED, zRange);
+      const p = params.length;
+      const sols = res.chiSquareArray.map((chi, i) => ({
+        params: res.paramArray.slice(i * p, (i + 1) * p),
+        chiSquare: chi,
+      }));
+      sols.sort((a, b) => a.chiSquare - b.chiSquare);
+      setSolutions(sols, p);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -274,29 +290,11 @@ export function BoxModelPanel() {
     setNormFactor(parsed.normFactor);
     setBoxRows(parsed.rows);
 
-    // Auto-generate reflectivity + EDP for this solution
     if (!data) return;
     setBusy(true);
     setError(null);
     try {
-      const reflParams = buildFastReflParams(parsed.subRough, parsed.rows, parsed.normFactor, oneSigma);
-      const { ul, ll, percs } = makeBounds(reflParams);
-      const input: BoxReflSettingsInput = { ...buildInput(), ul, ll, paramPercs: percs };
-      const refl = await window.api.lmFastReflGenerate(input, reflParams) as number[];
-      setGenRefl(refl);
-
-      const zRange = makeZRange(parsed.rows);
-      const rhoParams = buildRhoParamsFromBoxRows(parsed.subRough, parsed.rows, oneSigma);
-      const { ul: ru, ll: rl, percs: rp } = makeBounds(rhoParams);
-      const rhoInput: BoxReflSettingsInput = {
-        ...input, ul: ru, ll: rl, paramPercs: rp,
-        miedp: new Array(zRange.length).fill(0),
-        zIncrement: zRange,
-        zLength: zRange.length,
-      };
-      const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoGenerateResult;
-      const stepBoxED = computeBoxStepEDP(zRange, parsed.rows, 0, settings.supSLD, settings.subSLD);
-      setGenEDP(edpRes.ed, stepBoxED, zRange);
+      await applyParamsAndGenerate(solutionParams, parsed);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -309,9 +307,9 @@ export function BoxModelPanel() {
       <h2 className="text-sm font-semibold text-primary uppercase tracking-wider">Box Model</h2>
 
       {/* Global params */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid gap-2 ${settings.impnorm ? 'grid-cols-2' : 'grid-cols-1'}`}>
         <LabeledInput label="Sub Rough (Å)" value={subRough} onChange={setSubRough} />
-        <LabeledInput label="Norm Factor" value={normFactor} onChange={setNormFactor} />
+        {settings.impnorm && <LabeledInput label="Norm Factor" value={normFactor} onChange={setNormFactor} />}
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -334,7 +332,7 @@ export function BoxModelPanel() {
             onChange={(e) => setOneSigma(e.target.checked)}
             className="rounded"
           />
-          <span className="text-xs text-secondary">One σ</span>
+          <span className="text-xs text-secondary">Lock Roughness</span>
         </label>
       </div>
 
@@ -368,6 +366,9 @@ export function BoxModelPanel() {
           {error}
         </div>
       )}
+
+      {/* Fit report */}
+      {lastFitReport && <FitReportPanel report={lastFitReport} />}
 
       {/* Solutions list */}
       {solutions.length > 0 && (
@@ -418,12 +419,60 @@ export function BoxModelPanel() {
   );
 }
 
+const TERMINATION_REASONS: Record<number, string> = {
+  1: 'small gradient',
+  2: 'small Δp',
+  3: 'max iterations',
+  4: 'singular matrix',
+  5: 'no further reduction',
+  6: 'small ||e||',
+  7: 'NaN/Inf in func',
+};
+
+function FitReportPanel({ report }: { report: import('../../stores/box-model-store').FitReport }) {
+  const { info, covariance, paramCount: p } = report;
+  const initialChi = info[0];
+  const finalChi = info[1];
+  const iterations = info[5];
+  const termCode = info[6];
+  const termReason = TERMINATION_REASONS[termCode] ?? `code ${termCode}`;
+
+  return (
+    <div className="rounded-card bg-elevated border border-border p-3 flex flex-col gap-1.5">
+      <div className="text-xs font-medium text-secondary">Last Fit</div>
+      <div className="font-mono text-xs text-primary grid grid-cols-2 gap-x-4 gap-y-0.5">
+        <span className="text-secondary">Initial χ²</span>
+        <span>{initialChi.toExponential(4)}</span>
+        <span className="text-secondary">Final χ²</span>
+        <span>{finalChi.toExponential(4)}</span>
+        <span className="text-secondary">Iterations</span>
+        <span>{iterations}</span>
+        <span className="text-secondary">Stopped by</span>
+        <span>{termReason}</span>
+      </div>
+      {p > 0 && (
+        <>
+          <div className="text-xs text-secondary mt-1">Parameter std errors</div>
+          <div className="font-mono text-xs text-primary grid grid-cols-2 gap-x-4 gap-y-0.5">
+            {Array.from({ length: p }, (_, i) => (
+              <React.Fragment key={i}>
+                <span className="text-secondary">{report.paramNames[i] ?? `[${i}]`}</span>
+                <span>±{covariance[i].toExponential(3)}</span>
+              </React.Fragment>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function LabeledInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
-  const [text, setText] = React.useState(String(value));
+  const [text, setText] = React.useState(value.toFixed(4));
   const focused = React.useRef(false);
 
   React.useEffect(() => {
-    if (!focused.current) setText(String(value));
+    if (!focused.current) setText(value.toFixed(4));
   }, [value]);
 
   return (
@@ -437,7 +486,7 @@ function LabeledInput({ label, value, onChange }: { label: string; value: number
         onBlur={() => {
           focused.current = false;
           const v = parseFloat(text);
-          setText(isNaN(v) ? String(value) : String(v));
+          setText(isNaN(v) ? value.toFixed(4) : v.toFixed(4));
         }}
         onChange={(e) => {
           setText(e.target.value);

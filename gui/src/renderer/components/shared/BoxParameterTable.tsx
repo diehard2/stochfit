@@ -21,7 +21,7 @@ export function BoxParameterTable({ rows, onRowChange, oneSigma }: Props) {
             <th className="text-left pb-1 pr-2 font-medium w-6">#</th>
             <th className="text-right pb-1 pr-1 font-medium">Length (Å)</th>
             <th className="text-right pb-1 pr-1 font-medium">ρ (norm)</th>
-            <th className="text-right pb-1 font-medium">σ (Å){oneSigma && ' [locked]'}</th>
+            <th className="text-right pb-1 font-medium">σ (Å)</th>
           </tr>
         </thead>
         <tbody>
@@ -56,38 +56,35 @@ export function BoxParameterTable({ rows, onRowChange, oneSigma }: Props) {
 }
 
 function NumInput({ value, onChange, disabled }: { value: number; onChange: (v: number) => void; disabled?: boolean }) {
-  const [text, setText] = React.useState(String(value));
+  const [text, setText] = React.useState(value.toFixed(4));
   const focused = React.useRef(false);
 
   React.useEffect(() => {
-    if (!focused.current) setText(String(value));
+    if (!focused.current) setText(value.toFixed(4));
   }, [value]);
-
-  if (disabled) {
-    return (
-      <div className="w-full h-6 px-1 text-xs text-right bg-surface border border-border/40 rounded text-secondary/60 flex items-center justify-end">
-        {value}
-      </div>
-    );
-  }
 
   return (
     <input
       type="text"
       inputMode="decimal"
       value={text}
+      disabled={disabled}
       onFocus={() => { focused.current = true; }}
       onBlur={() => {
         focused.current = false;
         const v = parseFloat(text);
-        setText(isNaN(v) ? String(value) : String(v));
+        setText(isNaN(v) ? value.toFixed(4) : v.toFixed(4));
       }}
       onChange={(e) => {
         setText(e.target.value);
         const v = parseFloat(e.target.value);
         if (!isNaN(v)) onChange(v);
       }}
-      className="w-full h-6 px-1 text-xs text-right bg-elevated border border-border rounded text-primary focus:outline-none focus:border-accent/50"
+      className={`w-full h-6 px-1 text-xs text-right border rounded focus:outline-none ${
+        disabled
+          ? 'bg-surface border-border/40 text-secondary/60 cursor-not-allowed'
+          : 'bg-elevated border-border text-primary focus:border-accent/50'
+      }`}
     />
   );
 }

@@ -3,6 +3,7 @@ import { useFitStore } from '../../stores/fit-store';
 import { useDataStore } from '../../stores/data-store';
 import { useSettingsStore } from '../../stores/settings-store';
 import { useUiStore } from '../../stores/ui-store';
+import { useMiEdpStore } from '../../stores/mi-edp-store';
 import type { ModelSettings } from '../../lib/types';
 import { POLLING_INTERVAL_MS } from '../../lib/constants';
 import { BoxParameterTable, type BoxRow } from '../shared/BoxParameterTable';
@@ -37,13 +38,6 @@ function computeBoxStepEDP(
   });
 }
 
-function defaultRow(): BoxRow {
-  return { length: 15.0, rho: 0.5, sigma: 3.0 };
-}
-
-function defaultRows(n: number): BoxRow[] {
-  return Array.from({ length: n }, defaultRow);
-}
 
 function buildRhoParams(subRough: number, zOffset: number, rows: BoxRow[], oneSigma: boolean): number[] {
   const result = [subRough, zOffset];
@@ -86,14 +80,13 @@ export function ModelIndependentPanel() {
   const { settings, restore: restoreSettings } = useSettingsStore();
   const { gpuAvailable, setSettingsOpen } = useUiStore();
   const {
-    status, result, saParams, pollTimer,
-    setStatus, setResult, setSAParams, setPollTimer, setMiBoxED, reset,
+    status, result, saParams, pollTimer, itPerSec,
+    setStatus, setResult, setSAParams, setPollTimer, setMiBoxED, setItPerSec, reset,
   } = useFitStore();
 
   const totalIterations = settings?.iterations ?? 0;
 
   // SA speed tracking
-  const [itPerSec, setItPerSec] = useState(0);
   const prevIterRef = React.useRef(0);
   const prevTimeRef = React.useRef(0);
   const autoBoxTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -104,13 +97,11 @@ export function ModelIndependentPanel() {
     session: StochSessionFile;
   } | null>(null);
 
-  // EDP box fitting state
-  const [boxes, setBoxesState] = useState(2);
-  const [subRough, setSubRough] = useState(3.0);
-  const [zOffset, setZOffset] = useState(0.0);
-  const [oneSigma, setOneSigma] = useState(false);
-  const [boxRows, setBoxRows] = useState<BoxRow[]>(defaultRows(3));
-  const [lmResult, setLmResult] = useState<LMFitResult | null>(null);
+  // EDP box fitting state (persisted in store)
+  const {
+    boxes, subRough, zOffset, oneSigma, boxRows, lmResult,
+    setBoxes: setBoxesState, setSubRough, setZOffset, setOneSigma, setBoxRows, setLmResult,
+  } = useMiEdpStore();
   const [lmBusy, setLmBusy] = useState(false);
   const [lmError, setLmError] = useState<string | null>(null);
 
@@ -119,18 +110,11 @@ export function ModelIndependentPanel() {
     setBoxRows((prev) => {
       if (prev.length === boxes) return prev;
       if (boxes > prev.length) {
-        return [...prev, ...Array.from({ length: boxes - prev.length }, defaultRow)];
+        return [...prev, ...Array.from({ length: boxes - prev.length }, (): BoxRow => ({ length: 15.0, rho: 0.5, sigma: 3.0 }))];
       }
       return prev.slice(0, boxes);
     });
   }, [boxes]);
-
-  // When oneSigma is active, lock all box sigmas to subRough
-  useEffect(() => {
-    if (oneSigma) {
-      setBoxRows((prev) => prev.map((r) => ({ ...r, sigma: subRough })));
-    }
-  }, [oneSigma, subRough]);
 
   // Clean up poll timer on unmount
   useEffect(() => {
@@ -342,11 +326,6 @@ export function ModelIndependentPanel() {
     return () => { if (autoBoxTimer.current) clearTimeout(autoBoxTimer.current); };
   }, [generateBoxEDP]);
 
-  function handleRhoGenerate() {
-    if (!data || !result) return;
-    generateBoxEDP();
-  }
-
   const isRunning = status === 'running';
   const hasFit = !!result;
 
@@ -411,7 +390,7 @@ export function ModelIndependentPanel() {
             { label: 'Inverse Difference + Errors', value: 3, description: <ObjFormula3 /> },
           ]}
         />
-        <Field label="Sigma Search %" field="sigmasearch" step={1} />
+        <Field label="Roughness (σ) Search %" field="sigmasearch" step={1} />
         {settings.algorithm === 2 && (
           <Field label="Adaptive Temperature" field="adaptive" type="checkbox" tooltip="Auto-adjust temperature schedule based on acceptance rate." />
         )}
@@ -462,16 +441,17 @@ export function ModelIndependentPanel() {
           {result && (
             <>
               <StatRow label="Iterations" value={`${result.iterationsCompleted.toLocaleString()} / ${totalIterations.toLocaleString()}`} />
-              <StatRow label="Speed" value={`${itPerSec.toLocaleString()} it/s`} />
               <StatRow label="χ²" value={result.chiSquare.toExponential(4)} />
-              <StatRow label="Goodness" value={result.goodnessOfFit.toFixed(4)} />
+              <StatRow label="Goodness" value={result.goodnessOfFit.toExponential(4)} />
               <StatRow label="Roughness" value={`${result.roughness.toFixed(2)} Å`} />
             </>
           )}
           {saParams && (
             <>
               <StatRow label="Temperature" value={saParams.temp.toExponential(3)} />
-              <StatRow label="Best χ²" value={saParams.lowestEnergy.toExponential(4)} />
+              {settings.algorithm !== 0 && (
+                <StatRow label="Best Goodness" value={saParams.lowestEnergy.toExponential(4)} />
+              )}
             </>
           )}
         </div>
@@ -510,7 +490,7 @@ export function ModelIndependentPanel() {
                     onChange={(e) => setOneSigma(e.target.checked)}
                     className="rounded"
                   />
-                  <span className="text-xs text-secondary">One σ</span>
+                  <span className="text-xs text-secondary">Lock Roughness</span>
                 </label>
               </div>
 
@@ -519,22 +499,13 @@ export function ModelIndependentPanel() {
                 setBoxRows((prev) => prev.map((r, idx) => idx === i ? row : r));
               }} oneSigma={oneSigma} />
 
-              <div className="flex gap-2 mt-1">
-                <button
-                  onClick={handleRhoFit}
-                  disabled={lmBusy}
-                  className="flex-1 py-2 text-xs font-medium bg-accent/20 hover:bg-accent/30 text-accent rounded-input disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  {lmBusy ? 'Fitting…' : 'Fit'}
-                </button>
-                <button
-                  onClick={handleRhoGenerate}
-                  disabled={lmBusy}
-                  className="flex-1 py-2 text-xs font-medium bg-elevated hover:bg-surface text-secondary rounded-input disabled:opacity-40 disabled:cursor-not-allowed transition-colors border border-border"
-                >
-                  Generate
-                </button>
-              </div>
+              <button
+                onClick={handleRhoFit}
+                disabled={lmBusy}
+                className="mt-1 w-full py-2 text-xs font-medium bg-accent/20 hover:bg-accent/30 text-accent rounded-input disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {lmBusy ? 'Fitting…' : 'Fit'}
+              </button>
             </div>
           </div>
 
@@ -650,11 +621,11 @@ function StatRow({ label, value }: { label: string; value: string }) {
 }
 
 function LabeledInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
-  const [text, setText] = React.useState(String(value));
+  const [text, setText] = React.useState(value.toFixed(4));
   const focused = React.useRef(false);
 
   React.useEffect(() => {
-    if (!focused.current) setText(String(value));
+    if (!focused.current) setText(value.toFixed(4));
   }, [value]);
 
   return (
@@ -668,7 +639,7 @@ function LabeledInput({ label, value, onChange }: { label: string; value: number
         onBlur={() => {
           focused.current = false;
           const v = parseFloat(text);
-          setText(isNaN(v) ? String(value) : String(v));
+          setText(isNaN(v) ? value.toFixed(4) : v.toFixed(4));
         }}
         onChange={(e) => {
           setText(e.target.value);

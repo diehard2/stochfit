@@ -51,11 +51,8 @@ export function baseLayout(overrides: Partial<Layout> = {}): Partial<Layout> {
 }
 
 export const plotlyConfig: Partial<Config> = {
-  displayModeBar: true,
-  modeBarButtonsToRemove: ['select2d', 'lasso2d'],
-  displaylogo: false,
+  displayModeBar: false,
   responsive: true,
-  toImageButtonOptions: { format: 'svg', width: 1200, height: 800 },
 };
 
 export function reflLayout(overrides: Partial<Layout> = {}): Partial<Layout> {

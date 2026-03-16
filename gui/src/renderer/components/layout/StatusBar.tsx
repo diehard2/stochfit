@@ -3,7 +3,7 @@ import { useFitStore } from '../../stores/fit-store';
 import { useDataStore } from '../../stores/data-store';
 
 export function StatusBar() {
-  const { result, saParams, status } = useFitStore();
+  const { result, itPerSec, status } = useFitStore();
   const data = useDataStore((s) => s.data);
 
   return (
@@ -26,13 +26,11 @@ export function StatusBar() {
           </span>
         </>
       )}
-      {saParams && (
-        <>
-          <span>
-            <span className="text-secondary/60">T </span>
-            {saParams.temp.toExponential(2)}
-          </span>
-        </>
+      {itPerSec > 0 && (
+        <span>
+          <span className="text-secondary/60">speed </span>
+          {itPerSec.toLocaleString()} it/s
+        </span>
       )}
       <span className="ml-auto capitalize">{status === 'idle' ? '' : status}</span>
     </div>

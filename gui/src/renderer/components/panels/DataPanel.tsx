@@ -16,6 +16,7 @@ declare global {
       stochGetRunState: (boxes: number) => Promise<unknown>;
       stochLoadSession: (filePath: string) => Promise<unknown>;
       stochWriteSession: (filePath: string, session: unknown) => Promise<void>;
+      stochDeleteSession: (filePath: string) => Promise<void>;
       stochArraySizes: () => Promise<{ rhoSize: number; reflSize: number }>;
       stochWarmedUp: () => Promise<boolean>;
       stochSAParams: () => Promise<unknown>;

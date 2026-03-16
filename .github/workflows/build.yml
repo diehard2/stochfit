@@ -68,9 +68,9 @@ jobs:
       - name: Build
         run: |
           if [ "${{ runner.os }}" == "Windows" ]; then
-            cmake --build --preset windows --parallel
+            cmake --build --preset windows --parallel --verbose
           else
-            cmake --build --preset default --parallel
+            cmake --build --preset default --parallel --verbose
           fi
         shell: bash
 

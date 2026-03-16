@@ -67,15 +67,17 @@ jobs:
 
       - name: Build
         run: |
-          set -o pipefail
           if [ "${{ runner.os }}" == "Windows" ]; then
-            cmake --build --preset windows --parallel 2>&1 | tee /tmp/build_out.txt; EXIT_CODE=${PIPESTATUS[0]}
+            cmake --build --preset windows --parallel 2>&1 | tee /tmp/build_out.txt || true
           else
-            cmake --build --preset default --parallel 2>&1 | tee /tmp/build_out.txt; EXIT_CODE=${PIPESTATUS[0]}
+            cmake --build --preset default --parallel 2>&1 | tee /tmp/build_out.txt || true
           fi
+          EXIT_CODE=${PIPESTATUS[0]}
           if [ "${EXIT_CODE}" != "0" ]; then
-            echo "::error::=== BUILD FAILURE (last 60 lines) ==="
-            tail -60 /tmp/build_out.txt | while IFS= read -r line; do echo "::error::${line}"; done
+            echo "## Build Failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            tail -100 /tmp/build_out.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
             exit "${EXIT_CODE}"
           fi
         shell: bash

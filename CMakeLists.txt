@@ -138,23 +138,26 @@ set_target_properties(stochfit_core PROPERTIES
 if(OpenMP_CXX_FOUND)
     target_link_libraries(stochfit_core PUBLIC OpenMP::OpenMP_CXX)
     
-    # On macOS, we need to redistribute libomp.dylib
+    # On macOS, we need to redistribute libomp.dylib.
+    # FindOpenMP uses compiler flags rather than IMPORTED_LOCATION, so
+    # search for the dylib directly via find_library.
     if(APPLE)
-        get_target_property(OMP_LIBRARY OpenMP::OpenMP_CXX IMPORTED_LOCATION_RELEASE)
-        if(NOT OMP_LIBRARY)
-             get_target_property(OMP_LIBRARY OpenMP::OpenMP_CXX IMPORTED_LOCATION_DEBUG)
-        endif()
-        if(NOT OMP_LIBRARY)
-             get_target_property(OMP_LIBRARY OpenMP::OpenMP_CXX IMPORTED_LOCATION)
-        endif()
-
-        if(OMP_LIBRARY)
+        find_library(LIBOMP_DYLIB NAMES omp libomp
+            HINTS
+                "${OpenMP_ROOT}/lib"
+                "/opt/homebrew/opt/libomp/lib"
+                "/usr/local/opt/libomp/lib"
+            NO_DEFAULT_PATH)
+        if(LIBOMP_DYLIB)
             add_custom_command(TARGET stochfit_core POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${OMP_LIBRARY}"
+                "${LIBOMP_DYLIB}"
                 "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/libomp.dylib"
                 COMMENT "Copying libomp.dylib to output directory"
             )
+            message(STATUS "Will bundle libomp from: ${LIBOMP_DYLIB}")
+        else()
+            message(WARNING "libomp.dylib not found — cannot bundle for redistribution")
         endif()
     endif()
 endif()

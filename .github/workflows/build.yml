@@ -109,5 +109,23 @@ jobs:
         run: npm ci
 
       - name: Package GUI (no installer)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         working-directory: gui
-        run: npm run package
+        run: |
+          PKG_RC=0
+          npm run package 2>&1 | tee /tmp/pkg_out.txt || PKG_RC=$?
+          if [ "${PKG_RC}" != "0" ]; then
+            echo "## Package GUI failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            tail -100 /tmp/pkg_out.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              BODY=$(printf '**Package GUI failure on %s**\n```\n%s\n```' "${{ runner.os }}" "$(tail -60 /tmp/pkg_out.txt)")
+              gh pr comment "${{ github.event.pull_request.number }}" \
+                --repo "${{ github.repository }}" \
+                --body "${BODY}" || true
+            fi
+            exit "${PKG_RC}"
+          fi
+        shell: bash

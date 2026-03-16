@@ -67,10 +67,16 @@ jobs:
 
       - name: Build
         run: |
+          set -o pipefail
           if [ "${{ runner.os }}" == "Windows" ]; then
-            cmake --build --preset windows --parallel --verbose
+            cmake --build --preset windows --parallel 2>&1 | tee /tmp/build_out.txt; EXIT_CODE=${PIPESTATUS[0]}
           else
-            cmake --build --preset default --parallel --verbose
+            cmake --build --preset default --parallel 2>&1 | tee /tmp/build_out.txt; EXIT_CODE=${PIPESTATUS[0]}
+          fi
+          if [ "${EXIT_CODE}" != "0" ]; then
+            echo "::error::=== BUILD FAILURE (last 60 lines) ==="
+            tail -60 /tmp/build_out.txt | while IFS= read -r line; do echo "::error::${line}"; done
+            exit "${EXIT_CODE}"
           fi
         shell: bash
 

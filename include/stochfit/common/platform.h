@@ -32,8 +32,8 @@
 #include <optional>
 #include <tl/expected.hpp>
 
-// std::jthread is available natively on macOS 14+ (our minimum deployment
-// target). No polyfill needed — the system libc++ provides it via <thread>.
+// std::jthread is NOT used — replaced with std::thread + std::atomic<bool>
+// stop flag for cross-platform portability (Apple libc++ support varies).
 
 // ── OpenMP ──────────────────────────────────────────────────────────────────
 #ifdef _OPENMP

@@ -57,7 +57,7 @@ jobs:
       - name: Configure
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MACOSX_DEPLOYMENT_TARGET: "15.0"
+          MACOSX_DEPLOYMENT_TARGET: "14.0"
         run: |
           if [ "${{ runner.os }}" == "Windows" ]; then
             cmake --preset windows

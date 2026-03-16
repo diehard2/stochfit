@@ -33,6 +33,7 @@
 StochFit::StochFit(ReflSettings* InitStruct, StochRunState* state)
 {
 	m_bupdated = false;
+	m_stop_requested = false;
 	m_bwarmedup = false;
 	m_ipriority = 2;
 	Zinc = nullptr;
@@ -107,7 +108,7 @@ StochFit::~StochFit()
 	// Stop the worker thread if it's still running
 	if(m_thread.joinable())
 	{
-		m_thread.request_stop();
+		m_stop_requested = true;
 		m_thread.join();
 	}
 
@@ -126,7 +127,7 @@ StochFit::~StochFit()
 }
 
 
-int StochFit::Processing(std::stop_token stop_tok)
+int StochFit::Processing()
 {
 	try
 	{
@@ -135,7 +136,7 @@ int StochFit::Processing(std::stop_token stop_tok)
 		auto gpu_info = detect_gpu();
 		if (gpu_info.backend != GpuBackend::None) {
 			m_gpuBackend = gpu_info.backend;
-			return ProcessingGPU(stop_tok);
+			return ProcessingGPU();
 		}
 	}
 #endif
@@ -143,7 +144,7 @@ int StochFit::Processing(std::stop_token stop_tok)
 	bool accepted = false;
 
 	//Main loop
-     for(int isteps=0;(isteps < m_itotaliterations) && !stop_tok.stop_requested();isteps++)
+     for(int isteps=0;(isteps < m_itotaliterations) && !m_stop_requested.load();isteps++)
 	 {
 			accepted = m_SA->Iteration(params);
 
@@ -295,7 +296,7 @@ void StochFit::InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
 	}
 }
 
-int StochFit::ProcessingGPU(std::stop_token stop_tok)
+int StochFit::ProcessingGPU()
 {
 	GpuSAState sa_state;
 	GpuParams gpu_params;
@@ -318,7 +319,7 @@ int StochFit::ProcessingGPU(std::stop_token stop_tok)
 	auto last_update = std::chrono::steady_clock::now();
 	constexpr auto update_interval = std::chrono::seconds(2);
 
-	for (int done = 0; done < m_itotaliterations && !stop_tok.stop_requested(); done += batch_size) {
+	for (int done = 0; done < m_itotaliterations && !m_stop_requested.load(); done += batch_size) {
 		int this_batch = std::min(batch_size, m_itotaliterations - done);
 		m_gpuRunner->run_batch(this_batch);
 		m_icurrentiteration = done + this_batch;
@@ -446,7 +447,8 @@ void StochFit::UpdateFits(int currentiteration)
 int StochFit::Start(int iterations)
 {
 	m_itotaliterations = iterations;
-	m_thread = std::jthread([this](std::stop_token stop_tok){ Processing(stop_tok); });
+	m_stop_requested = false;
+	m_thread = std::thread([this]{ Processing(); });
 	return 0;
 }
 
@@ -454,7 +456,7 @@ int StochFit::Cancel()
 {
 	if(m_thread.joinable())
 	{
-		m_thread.request_stop();
+		m_stop_requested = true;
 		// Don't join here - let the thread finish on its own
 		// Joining blocks the main thread and can cause UI freezes
 	}
@@ -465,7 +467,7 @@ void StochFit::Stop()
 {
 	if(m_thread.joinable())
 	{
-		m_thread.request_stop();
+		m_stop_requested = true;
 		m_thread.join(); // blocks until current iteration completes
 	}
 }

@@ -34,7 +34,7 @@
 
 #include <memory>
 #include <thread>
-#include <stop_token>
+#include <atomic>
 #include "ParamVector.h"
 #include "ReflCalc.h"
 #include "CEDP.h"
@@ -75,12 +75,12 @@ class StochFit
 		bool m_bwarmedup;
 
 	private:
-		int Processing(std::stop_token stop_tok);
+		int Processing();
 		void UpdateFits(int currentiteration);
 		tl::expected<void, std::string> m_initError;
 
 #if STOCHFIT_HAS_GPU
-		int ProcessingGPU(std::stop_token stop_tok);
+		int ProcessingGPU();
 		void InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
 		                 GpuMeasurement& meas, GpuEDPConfig& edp_config);
 		std::unique_ptr<GpuSARunner> m_gpuRunner;
@@ -103,8 +103,9 @@ class StochFit
 		double* Rho;
 		double* Refl;
 
-		std::jthread m_thread;
+		std::thread m_thread;
 		std::atomic<bool> m_bupdated;
+		std::atomic<bool> m_stop_requested;
 
 		//Set the output file names
 		string m_Directory;

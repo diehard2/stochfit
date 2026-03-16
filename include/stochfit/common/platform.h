@@ -33,14 +33,12 @@
 #include <tl/expected.hpp>
 
 // ── macOS jthread polyfill ──────────────────────────────────────────────────
+// On macOS 14+ with Apple Clang 15+ (Xcode 15+), std::jthread is available
+// natively via libc++. Only include the josuttis polyfill on older toolchains.
 #ifdef __APPLE__
-#  include <jthread.hpp>
-namespace std {
-    using jthread = jstd::jthread;
-    using stop_token = jstd::stop_token;
-    using stop_source = jstd::stop_source;
-    using stop_callback = jstd::stop_callback;
-}
+#  if !defined(__cpp_lib_jthread) || __cpp_lib_jthread < 201911L
+#    include <jthread.hpp>
+#  endif
 #endif
 
 // ── OpenMP ──────────────────────────────────────────────────────────────────

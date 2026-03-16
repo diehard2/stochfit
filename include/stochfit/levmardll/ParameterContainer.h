@@ -127,9 +127,9 @@ class ParameterContainer
 			return m_dinfo;
 		}
 
-		bool operator<(const ParameterContainer &param) 
-		{ 
-			return this->m_dscore < param.m_dscore; 
+		bool operator<(const ParameterContainer &param) const
+		{
+			return this->m_dscore < param.m_dscore;
 		};
 
 		ParameterContainer& operator=(const ParameterContainer& param)

@@ -426,6 +426,18 @@ export function ModelIndependentPanel() {
           disabled={!gpuAvailable || isRunning}
           tooltip={gpuAvailable ? undefined : 'Requires NVIDIA RTX 20+ (compute 7.5+) or Apple Silicon Mac'}
         />
+        {settings.useGpu && gpuAvailable && (
+          <Field
+            label="GPU Chains"
+            field="gpuChains"
+            type="number"
+            min={1}
+            max={512}
+            step={1}
+            disabled={isRunning}
+            tooltip="Parallel SA chains on GPU. 1 = single-chain (comparable to CPU speed). Higher = better parameter space exploration."
+          />
+        )}
         <button
           onClick={() => setSettingsOpen(true)}
           disabled={isRunning}

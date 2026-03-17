@@ -2,7 +2,7 @@
 
 // Cross-platform portability layer for StochFit.
 // Provides: MAX_OMP_THREADS limit, EXPORT visibility macro (dllexport / visibility("default")),
-// platform_error() stderr sink, and STOCHFIT_HAS_GPU flag (set if STOCHFIT_HAS_CUDA or STOCHFIT_HAS_METAL).
+// platform_error() stderr sink, and GpuBackend enum.
 // Use std::numbers::pi for π and std::complex<double> directly in all code.
 // All standard headers needed by the codebase are included here.
 
@@ -55,11 +55,8 @@ inline void platform_error(const char* msg) { std::cerr << msg << std::endl; }
 // ── Convenience namespaces (matching existing codebase convention) ──────────
 using namespace std;
 
-// ── GPU availability ────────────────────────────────────────────────────────
+// ── GPU backend tag ──────────────────────────────────────────────────────────
+// GpuBackend::None means no GPU was detected at runtime.
+// CUDA is probed via dynamic loading (nvcuda.dll / libcuda.so) so that
+// stochfit.dll loads on GPU-less machines without crashing.
 enum class GpuBackend : int { None, CUDA, Metal };
-
-#if defined(STOCHFIT_HAS_CUDA) || defined(STOCHFIT_HAS_METAL)
-#  define STOCHFIT_HAS_GPU 1
-#else
-#  define STOCHFIT_HAS_GPU 0
-#endif

@@ -1,8 +1,4 @@
 #pragma once
-
-#include "gpu_sa_runner.h"
-#include <memory>
-
-#if defined(STOCHFIT_HAS_CUDA)
-std::unique_ptr<GpuSARunner> create_cuda_runner();
-#endif
+// C entry point exported by stochfit_cuda_plugin.{dll,so}.
+// gpu_sa_runner.cpp loads this symbol dynamically via LoadLibrary/dlopen.
+// The function is defined in stochfit_cuda.cu.

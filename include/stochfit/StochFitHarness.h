@@ -27,8 +27,9 @@
 // StochRunState* with pre-parsed state (null = fresh start).
 // On stop: call Stop() to block until worker exits, then GetRunState() to read
 // the raw internal values, then Destroy() to clean up the object.
-// On GPU builds (STOCHFIT_HAS_GPU), ProcessingGPU() runs multi-chain SA
-// on the GPU; otherwise Processing() runs single-chain CPU SA.
+// When UseGpu=true and detect_gpu() finds a suitable device, ProcessingGPU()
+// runs multi-chain SA via the CUDA plugin (loaded at runtime); otherwise
+// Processing() runs single-chain CPU SA.
 // Float buffers (m_fMeas*, m_fQspread*, m_fEdSpacing, m_fDistArray) hold
 // double→float downsampled data for GPU transfer.
 
@@ -41,13 +42,11 @@
 #include "SA_Dispatcher.h"
 #include <stochfit/SettingsStruct.h>
 
-#if STOCHFIT_HAS_GPU
 class GpuSARunner;
 struct GpuSAState;
 struct GpuParams;
 struct GpuMeasurement;
 struct GpuEDPConfig;
-#endif
 
 class StochFit
 {
@@ -79,14 +78,13 @@ class StochFit
 		void UpdateFits(int currentiteration);
 		tl::expected<void, std::string> m_initError;
 
-#if STOCHFIT_HAS_GPU
 		int ProcessingGPU();
 		void InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
 		                 GpuMeasurement& meas, GpuEDPConfig& edp_config);
 		std::unique_ptr<GpuSARunner> m_gpuRunner;
 		GpuBackend m_gpuBackend = GpuBackend::None;
 
-		// Float buffers for GPU->host data transfer
+		// Float buffers for GPU data transfer
 		std::vector<float> m_fMeasSintheta;
 		std::vector<float> m_fMeasSinsq;
 		std::vector<float> m_fMeasQ;
@@ -96,7 +94,6 @@ class StochFit
 		std::vector<float> m_fQspreadSin2;
 		std::vector<float> m_fEdSpacing;
 		std::vector<float> m_fDistArray;
-#endif
 
 		double* Zinc;
 		double* Qinc;

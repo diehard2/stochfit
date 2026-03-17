@@ -25,10 +25,8 @@
 #include "SimulatedAnnealing.h"
 #include "StochFitHarness.h"
 
-#if STOCHFIT_HAS_GPU
 #include "gpu/gpu_detect.h"
 #include "gpu/gpu_sa_runner.h"
-#endif
 
 StochFit::StochFit(ReflSettings* InitStruct, StochRunState* state)
 {
@@ -131,7 +129,6 @@ int StochFit::Processing()
 {
 	try
 	{
-#if STOCHFIT_HAS_GPU
 	if (m_initStruct.UseGpu) {
 		auto gpu_info = detect_gpu();
 		if (gpu_info.backend != GpuBackend::None) {
@@ -139,7 +136,6 @@ int StochFit::Processing()
 			return ProcessingGPU();
 		}
 	}
-#endif
 
 	bool accepted = false;
 
@@ -178,7 +174,6 @@ int StochFit::Processing()
 	}
 }
 
-#if STOCHFIT_HAS_GPU
 void StochFit::InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
                             GpuMeasurement& meas, GpuEDPConfig& edp_config)
 {
@@ -305,7 +300,7 @@ int StochFit::ProcessingGPU()
 	InitGpuData(sa_state, gpu_params, meas, edp_config);
 
 	auto gpu_info = detect_gpu();
-	int num_chains = gpu_info.max_chains;
+	int num_chains = (m_initStruct.GpuChains > 0) ? m_initStruct.GpuChains : gpu_info.max_chains;
 
 	m_gpuRunner = GpuSARunner::create(m_gpuBackend);
 	if (!m_gpuRunner) {
@@ -429,7 +424,6 @@ int StochFit::ProcessingGPU()
 	m_gpuRunner.reset();
 	return 0;
 }
-#endif
 
 void StochFit::UpdateFits(int currentiteration)
 {

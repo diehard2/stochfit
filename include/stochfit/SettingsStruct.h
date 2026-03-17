@@ -61,6 +61,7 @@ struct ReflSettings
 
 	// GPU acceleration control
 	int32_t UseGpu;
+	int32_t GpuChains;  // number of parallel SA chains; 0 → auto (SM count × 4)
 	const char* Title;
 
 };

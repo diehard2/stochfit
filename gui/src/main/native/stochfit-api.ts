@@ -46,6 +46,7 @@ export interface ReflSettingsInput {
   iterations: number;
   title: string;
   useGpu: boolean;
+  gpuChains: number;
 }
 
 export interface FitData {
@@ -211,6 +212,7 @@ export function stochInit(settings: ReflSettingsInput, runState: StochRunStateOu
     IterationsCompleted: 0,
     ChiSquare: 0.0,
     UseGpu: settings.useGpu ? 1 : 0,
+    GpuChains: settings.gpuChains,
     Title: settings.title,
   };
 

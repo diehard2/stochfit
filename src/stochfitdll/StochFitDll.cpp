@@ -22,9 +22,7 @@
 #include "StochFitDll.h"
 #include "StochFitHarness.h"
 
-#if STOCHFIT_HAS_GPU
 #include "gpu/gpu_detect.h"
-#endif
 
 //The global stochfit class pointer
 StochFit* stochfit = NULL;
@@ -137,12 +135,7 @@ extern "C" EXPORT void SAparams(double* lowestenergy, double* temp, int* mode)
 
 extern "C" EXPORT bool GpuAvailable()
 {
-#if defined(STOCHFIT_HAS_CUDA) || defined(STOCHFIT_HAS_METAL)
 	bool avail = is_gpu_available();
 	fprintf(stderr, "[GPU] GpuAvailable() = %s\n", avail ? "true" : "false");
 	return avail;
-#else
-	fprintf(stderr, "[GPU] GpuAvailable() = false (no GPU build)\n");
-	return false;
-#endif
 }

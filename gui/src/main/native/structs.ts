@@ -49,6 +49,7 @@ export const ReflSettingsType = koffi.struct('ReflSettings', {
   IterationsCompleted: 'int',
   ChiSquare: 'double',
   UseGpu: 'int',
+  GpuChains: 'int',
   Title: 'str',
 });
 

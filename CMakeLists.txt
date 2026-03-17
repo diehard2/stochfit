@@ -126,23 +126,27 @@ if(STOCHFIT_USE_METAL AND APPLE)
     endif()
 endif()
 
-# ── stochfit_cpu (static lib — CPU only, no GPU/CUDA init) ────────────────────
-# Used by mirefl, stochfit_tests, and levmardll.  Deliberately excludes
-# StochFitHarness and all GPU sources so these binaries don't pull in the
-# CUDA static-runtime initialiser (which crashes at startup on systems
-# with no GPU driver, e.g. the GitHub Actions Windows runner).
-add_library(stochfit_cpu STATIC
+# ── stochfit_core (static lib — CPU + runtime GPU detection) ──────────────────
+# Contains all CPU code, StochFitHarness, and the GPU detection/dispatch layer.
+# CUDA is probed at runtime via LoadLibrary(nvcuda.dll)/dlopen(libcuda.so)
+# so this library — and stochfit.dll — have NO hard dependency on CUDA and
+# load cleanly on machines with no NVIDIA GPU driver.
+# The actual CUDA kernels live in stochfit_cuda_plugin.dll (see below).
+add_library(stochfit_core STATIC
     src/stochfitdll/CEDP.cpp
     src/stochfitdll/ParamVector.cpp
     src/stochfitdll/ReflCalc.cpp
     src/stochfitdll/SA_Dispatcher.cpp
     src/stochfitdll/SimulatedAnnealing.cpp
+    src/stochfitdll/StochFitHarness.cpp
+    src/stochfitdll/gpu/gpu_detect.cpp
+    src/stochfitdll/gpu/gpu_sa_runner.cpp
 )
-target_include_directories(stochfit_cpu
+target_include_directories(stochfit_core
     PUBLIC include
     PRIVATE include/stochfit src/stochfitdll)
 if(OpenMP_CXX_FOUND)
-    target_link_libraries(stochfit_cpu PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(stochfit_core PUBLIC OpenMP::OpenMP_CXX)
 
     # On macOS, we need to redistribute libomp.dylib.
     # FindOpenMP uses compiler flags rather than IMPORTED_LOCATION, so
@@ -161,43 +165,63 @@ if(OpenMP_CXX_FOUND)
         endif()
     endif()
 endif()
-target_link_libraries(stochfit_cpu PUBLIC tl::expected)
+# ${CMAKE_DL_LIBS} is empty on Windows/macOS; provides -ldl on Linux for dlopen.
+target_link_libraries(stochfit_core PUBLIC tl::expected ${CMAKE_DL_LIBS})
 
-# ── stochfit_core (static lib — full, GPU + StochFitHarness) ──────────────────
-# Used by stochfit_dll only.  Adds StochFitHarness (references GPU) and all
-# optional GPU sources on top of stochfit_cpu.
-add_library(stochfit_core STATIC
-    src/stochfitdll/StochFitHarness.cpp
-)
-target_include_directories(stochfit_core
-    PRIVATE include/stochfit src/stochfitdll)
-target_link_libraries(stochfit_core PUBLIC stochfit_cpu)
-
-# GPU sources and libraries
-set(GPU_SOURCES
-    src/stochfitdll/gpu/gpu_detect.cpp
-    src/stochfitdll/gpu/gpu_sa_runner.cpp
-)
-if(STOCHFIT_HAS_CUDA)
-    list(APPEND GPU_SOURCES src/stochfitdll/gpu/stochfit_cuda.cu)
+# ── Copy OpenMP runtime DLL on MSVC so executables run without a full VS install ─
+# vcomp140.dll lives in the VS Redist directory which is not on PATH by default.
+# Copying it to the output dir ensures mirefl, stochfit_tests, and stochfit.dll
+# all find it at runtime (CI and end-user machines alike).
+if(MSVC AND OpenMP_CXX_FOUND)
+    # VCToolsRedistDir is set by vcvarsall.bat / ilammy/msvc-dev-cmd.
+    # Derive it from VCToolsInstallDir as a fallback (.../Tools/MSVC/ -> .../Redist/MSVC/).
+    if(NOT "$ENV{VCToolsRedistDir}" STREQUAL "")
+        set(_redist "$ENV{VCToolsRedistDir}")
+    elseif(NOT "$ENV{VCToolsInstallDir}" STREQUAL "")
+        string(REPLACE "\\Tools\\MSVC\\" "\\Redist\\MSVC\\" _redist "$ENV{VCToolsInstallDir}")
+        string(REPLACE "/Tools/MSVC/"    "/Redist/MSVC/"    _redist "${_redist}")
+    endif()
+    if(DEFINED _redist)
+        file(TO_CMAKE_PATH "${_redist}" _redist)
+        find_file(VCOMP_DLL NAMES vcomp140.dll
+            PATHS
+                "${_redist}/x64/Microsoft.VC143.OPENMP"
+                "${_redist}/x64/Microsoft.VC142.OPENMP"
+            NO_DEFAULT_PATH)
+    endif()
+    if(VCOMP_DLL)
+        message(STATUS "Will copy OpenMP DLL: ${VCOMP_DLL}")
+        add_custom_command(TARGET stochfit_core POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${VCOMP_DLL}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+            COMMENT "Copying OpenMP runtime DLL (vcomp140.dll)")
+    else()
+        message(STATUS "OpenMP DLL not found in Redist — add VS Redist/x64/Microsoft.VC143.OPENMP to PATH if smoke test fails")
+    endif()
 endif()
+
 if(STOCHFIT_HAS_METAL)
-    list(APPEND GPU_SOURCES src/stochfitdll/gpu/stochfit_metal.mm)
-endif()
-
-if(STOCHFIT_HAS_CUDA OR STOCHFIT_HAS_METAL)
-    target_sources(stochfit_core PRIVATE ${GPU_SOURCES})
-endif()
-
-if(STOCHFIT_HAS_CUDA)
-    target_compile_definitions(stochfit_core PUBLIC STOCHFIT_HAS_CUDA)
-    target_link_libraries(stochfit_core PUBLIC CUDA::cudart)
-    set_source_files_properties(src/stochfitdll/gpu/stochfit_cuda.cu
-        PROPERTIES CUDA_ARCHITECTURES "75;86;89;100")
-endif()
-if(STOCHFIT_HAS_METAL)
+    target_sources(stochfit_core PRIVATE src/stochfitdll/gpu/stochfit_metal.mm)
     target_compile_definitions(stochfit_core PUBLIC STOCHFIT_HAS_METAL)
     target_link_libraries(stochfit_core PUBLIC ${METAL_FRAMEWORK} ${FOUNDATION_FRAMEWORK})
+endif()
+
+# ── stochfit_cuda_plugin (shared DLL — CUDA kernels only, loaded at runtime) ──
+# Loaded lazily by gpu_sa_runner.cpp via LoadLibrary/dlopen after detect_gpu()
+# confirms a suitable CUDA GPU is present.  Because stochfit.dll never links
+# this target, CUDA static initializers cannot run at DLL-load time on
+# machines without an NVIDIA driver.
+if(STOCHFIT_HAS_CUDA)
+    add_library(stochfit_cuda_plugin SHARED
+        src/stochfitdll/gpu/stochfit_cuda.cu
+    )
+    target_include_directories(stochfit_cuda_plugin
+        PRIVATE include include/stochfit src/stochfitdll)
+    target_compile_definitions(stochfit_cuda_plugin PRIVATE STOCHFIT_HAS_CUDA)
+    set_target_properties(stochfit_cuda_plugin PROPERTIES
+        OUTPUT_NAME stochfit_cuda_plugin
+        CUDA_ARCHITECTURES "75;86;89;100")
+    target_link_libraries(stochfit_cuda_plugin PRIVATE CUDA::cudart tl::expected)
 endif()
 
 # ── stochfit_dll (shared lib — FFI exports only, loaded by Electron) ──────────
@@ -258,40 +282,23 @@ set_target_properties(levmardll PROPERTIES
     OUTPUT_NAME levmardll
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON)
-target_link_libraries(levmardll PUBLIC stochfit_cpu levmar)
+target_link_libraries(levmardll PUBLIC stochfit_core levmar)
 
 # ── mirefl (console executable) ───────────────────────────────────────────────
-# Compile the three required source files directly — no stochfit_cpu, no OpenMP,
-# no CUDA.  On Windows CI (no GPU driver, vcomp140.dll not on PATH) any of those
-# dependencies crash the process before main() runs.  Single-threaded is fine
-# for a 10-iteration smoke test.
-add_executable(mirefl
-    tests/MIRefl.cpp
-    src/stochfitdll/CEDP.cpp
-    src/stochfitdll/ParamVector.cpp
-    src/stochfitdll/ReflCalc.cpp
-)
-target_include_directories(mirefl PRIVATE include include/stochfit src/stochfitdll)
-target_link_libraries(mirefl PRIVATE tl::expected)
+add_executable(mirefl tests/MIRefl.cpp)
+target_include_directories(mirefl PRIVATE include/stochfit src/stochfitdll)
+target_link_libraries(mirefl PRIVATE stochfit_core)
 
-add_executable(stochfit_tests
-    tests/test_reflectivity.cpp
-    src/stochfitdll/CEDP.cpp
-    src/stochfitdll/ParamVector.cpp
-    src/stochfitdll/ReflCalc.cpp
-)
-target_include_directories(stochfit_tests PRIVATE include include/stochfit src/stochfitdll)
-target_link_libraries(stochfit_tests PRIVATE tl::expected GTest::gtest GTest::gtest_main)
+add_executable(stochfit_tests tests/test_reflectivity.cpp)
+target_link_libraries(stochfit_tests PRIVATE stochfit_core GTest::gtest GTest::gtest_main)
 target_compile_features(stochfit_tests PRIVATE cxx_std_20)
 add_test(NAME stochfit_tests COMMAND stochfit_tests)
 
 # ── MSVC Release optimizations ────────────────────────────────────────────────
-# Applied here instead of add_compile_options to prevent /arch:AVX2 from leaking
-# into nvcc's CUDA host compilation.  CMake feeds directory/target COMPILE_OPTIONS
-# to nvcc as CUDA host flags (evaluating COMPILE_LANGUAGE:CXX guards as true), and
-# nvcc on Windows intercepts /arch as --gpu-architecture, causing a fatal error.
-# Source-file COMPILE_OPTIONS are evaluated per-file and are NOT aggregated into
-# CUDA host flags, so set_source_files_properties is safe for stochfit_core.
+# stochfit_core has no CUDA sources so target_compile_options is safe on it.
+# stochfit_cuda_plugin contains only the .cu file; /arch:AVX2 etc. must be
+# applied per-source-file via set_source_files_properties because CMake
+# aggregates target COMPILE_OPTIONS into nvcc host flags on Windows.
 if(MSVC)
     set(_msvc_opts
         /W3
@@ -300,19 +307,13 @@ if(MSVC)
         $<$<CONFIG:Release>:/GL>
         $<$<CONFIG:Release>:/arch:AVX2>
     )
-    # Targets without CUDA sources: target_compile_options is safe
-    target_compile_options(stochfit_cpu   PRIVATE ${_msvc_opts})
+    target_compile_options(stochfit_core  PRIVATE ${_msvc_opts})
     target_compile_options(stochfit_dll   PRIVATE ${_msvc_opts})
     target_compile_options(levmardll      PRIVATE ${_msvc_opts})
     target_compile_options(mirefl         PRIVATE ${_msvc_opts})
     target_compile_options(stochfit_tests PRIVATE ${_msvc_opts})
-    # stochfit_core contains CUDA sources: apply per CXX source file only
-    set_source_files_properties(
-        src/stochfitdll/StochFitHarness.cpp
-        src/stochfitdll/gpu/gpu_detect.cpp
-        src/stochfitdll/gpu/gpu_sa_runner.cpp
-        PROPERTIES COMPILE_OPTIONS "${_msvc_opts}"
-    )
+    # stochfit_cuda_plugin (.cu only) intentionally omitted: nvcc has its own
+    # Release optimizations and interprets MSVC-style /flags as input file paths.
 endif()
 
 # ── compile_commands.json ─────────────────────────────────────────────────────

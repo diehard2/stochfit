@@ -1,4 +1,5 @@
-#include "stochfit_cuda.h"
+#include "gpu_sa_runner.h"
+#include "gpu_types.h"
 
 #if defined(STOCHFIT_HAS_CUDA)
 
@@ -1111,8 +1112,8 @@ void CudaSARunner::get_best_reflectivity(float* refl_out, int count) const {
     CUDA_CHECK(cudaMemcpy(refl_out, d_chain_refl + offset, n * sizeof(float), cudaMemcpyDeviceToHost));
 }
 
-std::unique_ptr<GpuSARunner> create_cuda_runner() {
-    return std::make_unique<CudaSARunner>();
+extern "C" EXPORT GpuSARunner* stochfit_cuda_create_runner() {
+    return new CudaSARunner();
 }
 
 #endif // STOCHFIT_HAS_CUDA

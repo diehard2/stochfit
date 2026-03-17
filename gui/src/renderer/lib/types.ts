@@ -67,6 +67,7 @@ export interface ModelSettings {
 
   // GPU acceleration
   useGpu: boolean;
+  gpuChains: number;  // parallel SA chains; lower = easier to compare with CPU
 }
 
 export const DEFAULT_SETTINGS: ModelSettings = {
@@ -105,7 +106,8 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   highQOffset: 0,
   iterations: 5000000,
   title: 'StochFit',
-  useGpu: false, // Opt-in, not default enabled
+  useGpu: false,
+  gpuChains: 1,
 };
 
 export interface BoxLMSettings {

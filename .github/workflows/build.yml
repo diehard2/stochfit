@@ -139,6 +139,21 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Copy OpenMP runtime DLL (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $dll = Get-ChildItem "C:\Program Files\Microsoft Visual Studio" `
+            -Recurse -Filter "vcomp140.dll" -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match "x64" } |
+            Select-Object -First 1
+          if ($dll) {
+            Write-Host "Copying $($dll.FullName) to build\bin\"
+            Copy-Item $dll.FullName build\bin\
+          } else {
+            Write-Warning "vcomp140.dll not found — test may fail due to missing OpenMP runtime"
+          }
+
       - name: Test (mirefl smoke test — Windows)
         if: runner.os == 'Windows'
         run: |

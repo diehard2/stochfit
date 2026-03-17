@@ -38,7 +38,7 @@ m_iroughness_index(-1)
 		m_dparameter_size++;
 	}
 
-	if(InitStruct->Impnorm == TRUE)
+	if(InitStruct->Impnorm)
 	{
 		m_bfiximpnorm = true;
 		m_iimpnorm_index = m_dparameter_size;

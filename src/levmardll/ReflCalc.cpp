@@ -72,7 +72,6 @@ void Reflcalc::init(double xraylambda,int boxes, double subSLD, double* paramete
 void Reflcalc::MakeTheta(double* QRange, int QRangesize)
 {
 	m_idatapoints = QRangesize;
-	double holder;
 
 	sinthetai.resize(QRangesize);
 	sinsquaredthetai.resize(QRangesize);
@@ -80,7 +79,7 @@ void Reflcalc::MakeTheta(double* QRange, int QRangesize)
 
 	for(int i = 0; i< m_idatapoints; i++)
 	{
-		sinthetai[i] = QRange[i]*lambda/(4*M_PI);
+		sinthetai[i] = QRange[i]*lambda/(4*std::numbers::pi);
 	}
 
 	for (int l = 0; l < m_idatapoints; l++)
@@ -109,7 +108,7 @@ int Reflcalc::CalculateZLength()
 			}
 
 			totallength = 100 + (int)totallength + 100;
-            return totallength;
+            return static_cast<int>(totallength);
 }
 
  void Reflcalc::objective(double* par, double* x, int m, int n, void* data)
@@ -195,10 +194,6 @@ void Reflcalc::Rhocalc(double SubRough, double* LengthArray, double* RhoArray, d
 
 	// This allows OpenMP to choose the appropriate number of threads
 	// The algorithm should now scale with the number of processors in a system
-
-	#ifdef OMP_PARALLEL
-		omp_set_dynamic(TRUE);
-	#endif
 
 	#pragma omp parallel for schedule(guided)
 	for(int j = 0; j < loopcount;j++)
@@ -301,16 +296,12 @@ double Reflcalc::myrf()
 	int counter = m_idatapoints;
 	//Complex constants
 
-	MyComplex k0((2.0*M_PI/lambda),0.0);
+	std::complex<double> k0(2.0*std::numbers::pi/lambda, 0.0);
 
 
 
 	// This allows OpenMP to choose the appropriate number of threads
 	// The algorithm should now scale with the number of processors in a system
-
-	#ifdef OMP_PARALLEL
-	omp_set_dynamic(TRUE);
-	#endif
 
 	#pragma omp parallel for schedule(guided)
 	for(int l = 0; l<counter;l++)
@@ -319,11 +310,11 @@ double Reflcalc::myrf()
 		//Arrays and temporary variables for the loop - these must be declared inside the
 		//loop for OpenMP
 		//
-		MyComplex lengthmultiplier = -1.0*MyComplex(0.0,1.0)*dz0/2.0 ;
-		vector<MyComplex> kk(nl);
-		vector<MyComplex> ak(nl);
-		vector<MyComplex> rj(nl);
-		vector<MyComplex> Rj(nl);
+		std::complex<double> lengthmultiplier = -1.0*std::complex<double>(0.0,1.0)*dz0/2.0 ;
+		vector<std::complex<double>> kk(nl);
+		vector<std::complex<double>> ak(nl);
+		vector<std::complex<double>> rj(nl);
+		vector<std::complex<double>> Rj(nl);
 		//In order to vectorize loops, you cannot use global variables
 		int nlminone = nl-1;
 		int numlay =  nl;
@@ -332,7 +323,7 @@ double Reflcalc::myrf()
 		//to simplify OpenMP operations
 
 		double holder;
-		MyComplex cholder;
+		std::complex<double> cholder;
 
 		/********Boundary conditions********/
 		//No reflection in the last layer
@@ -386,7 +377,7 @@ double Reflcalc::myrf()
 
 double Reflcalc::CalcQc(double dSLD)
 {
-    return 4 * sqrt(M_PI * SubSLD * 1e-6);
+    return 4 * sqrt(std::numbers::pi * SubSLD * 1e-6);
 }
 
 double Reflcalc::CalcFresnelPoint(double Q, double Qc)

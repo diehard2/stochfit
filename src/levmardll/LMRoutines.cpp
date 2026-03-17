@@ -20,7 +20,8 @@
 
 #include <stochfit/common/platform.h>
 #include "LevMardll.h"
-#include "lm.h"
+#undef LINSOLVERS_RETAIN_MEMORY
+#include <levmar/levmar.h>
 
 extern "C" EXPORT int dlevmardif(
       void (*func)(double *p, double *hx, int m, int n, void *adata),
@@ -48,7 +49,7 @@ extern "C" EXPORT int dlevmar_bcder(
        double *p, double *x, int m, int n, double *lb, double *ub,
        int itmax, double *opts, double *info, double *work, double *covar, double *adata)
 {
-	int ret=dlevmar_bc_der(func, jacf, p, x, m, n, lb, ub, itmax, opts, info, NULL, NULL, NULL); // with analytic jacobian
+	int ret=dlevmar_bc_der(func, jacf, p, x, m, n, lb, ub, NULL, itmax, opts, info, NULL, NULL, NULL); // with analytic jacobian; NULL = no diagonal scaling
 	return ret;
 }
 
@@ -57,7 +58,7 @@ extern "C" EXPORT int dlevmar_bcdif(
        double *p, double *x, int m, int n, double *lb, double *ub,
        int itmax, double *opts, double *info, double *work, double *covar, double *adata)
 {
-	int ret=dlevmar_bc_dif(func, p, x, m, n, lb, ub, itmax, opts, info, NULL, NULL, NULL); // with analytic jacobian
+	int ret=dlevmar_bc_dif(func, p, x, m, n, lb, ub, nullptr, itmax, opts, info, NULL, NULL, NULL); // with analytic jacobian
 	return ret;
 }
 

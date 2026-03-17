@@ -38,7 +38,7 @@ extern "C" EXPORT void Stop();
 extern "C" EXPORT void Destroy();
 // Cancel: Stop + Destroy combined (for cases where state save is not needed).
 extern "C" EXPORT void Cancel();
-extern "C" EXPORT int GetData(double ZRange[],double Rho[],double QRange[], double Refl[] ,double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
+extern "C" EXPORT int GetData(double ZRange[],double Rho[],double QRange[], double Refl[] ,double* roughness, double* chisquare, double* goodnessoffit, int32_t* isfinished);
 // GetRunState: fills flat output buffers. Only call after Stop().
 // saScalars[9]: roughness, filmAbsInput, surfAbs, temperature, impNorm, avgfSTUN, bestSolution, chiSquare, goodnessOfFit
 extern "C" EXPORT void GetRunState(double* saScalars, double* edValues, int* edCount);

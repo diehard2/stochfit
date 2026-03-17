@@ -286,7 +286,7 @@ void StochFit::InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
 	edp_config.dist_array = m_fDistArray.data();
 	edp_config.rho = static_cast<float>(m_initStruct.FilmSLD * 1e-6) * waveConst;
 	edp_config.dz = static_cast<float>(m_cEDP.Get_Dz());
-	edp_config.k0 = 2.0f * static_cast<float>(M_PI) / lambda;
+	edp_config.k0 = 2.0f * std::numbers::pi_v<float> / lambda;
 	edp_config.num_layers = nl;
 	edp_config.use_abs = m_initStruct.UseSurfAbs;
 	if (m_initStruct.UseSurfAbs) {
@@ -499,7 +499,7 @@ void StochFit::InitializeSA(ReflSettings* InitStruct, SA_Dispatcher* SA)
 	SA->Initialize_Subsytem(InitStruct);
 }
 
-int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)
+int StochFit::GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, int32_t* isfinished)
 {
 	// Request a data update from the worker thread, but don't block the caller
 	// indefinitely. Signal the worker, then wait up to 2 seconds for it to

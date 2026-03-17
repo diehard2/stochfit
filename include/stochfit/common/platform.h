@@ -1,10 +1,9 @@
 #pragma once
 
 // Cross-platform portability layer for StochFit.
-// Provides: BOOL/TRUE/FALSE compatibility (int32_t), M_PI via <numbers>,
-// MAX_OMP_THREADS limit, EXPORT visibility macro (dllexport / visibility("default")),
-// platform_error() stderr sink, MyComplex alias (std::complex<double>),
-// and STOCHFIT_HAS_GPU flag (set if STOCHFIT_HAS_CUDA or STOCHFIT_HAS_METAL).
+// Provides: MAX_OMP_THREADS limit, EXPORT visibility macro (dllexport / visibility("default")),
+// platform_error() stderr sink, and STOCHFIT_HAS_GPU flag (set if STOCHFIT_HAS_CUDA or STOCHFIT_HAS_METAL).
+// Use std::numbers::pi for π and std::complex<double> directly in all code.
 // All standard headers needed by the codebase are included here.
 
 // Cross-platform replacement for stdafx.h — all Windows-specific constructs
@@ -36,27 +35,7 @@
 // stop flag for cross-platform portability (Apple libc++ support varies).
 
 // ── OpenMP ──────────────────────────────────────────────────────────────────
-#ifdef _OPENMP
-#  include <omp.h>
-#endif
-
-// ── BOOL compatibility ──────────────────────────────────────────────────────
-// Skip in Objective-C/C++ translation units — ObjC runtime defines its own
-// `typedef bool BOOL` (via <objc/objc.h>) and the two definitions conflict.
-#if !defined(__OBJC__)
-using BOOL = int32_t;
-#ifndef TRUE
-#  define TRUE  1
-#endif
-#ifndef FALSE
-#  define FALSE 0
-#endif
-#endif
-
-// ── Math constants ──────────────────────────────────────────────────────────
-#ifndef M_PI
-#  define M_PI std::numbers::pi
-#endif
+#include <omp.h>
 
 // ── OMP thread limit ────────────────────────────────────────────────────────
 #ifndef MAX_OMP_THREADS
@@ -75,9 +54,6 @@ inline void platform_error(const char* msg) { std::cerr << msg << std::endl; }
 
 // ── Convenience namespaces (matching existing codebase convention) ──────────
 using namespace std;
-
-// ── Complex number type ──────────────────────────────────────────────────────
-using MyComplex = std::complex<double>;
 
 // ── GPU availability ────────────────────────────────────────────────────────
 enum class GpuBackend : int { None, CUDA, Metal };

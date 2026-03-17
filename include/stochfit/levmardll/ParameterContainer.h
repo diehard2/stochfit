@@ -19,6 +19,7 @@
  */
 #pragma once
 #include <stochfit/common/platform.h>
+#include <levmar/levmar.h>
 
 class ParameterContainer
 {
@@ -30,7 +31,7 @@ class ParameterContainer
 		double m_dcovararray[40];
 		bool m_bonesigma;
 		double m_dcutoff;
-		double m_dinfo[9];
+		double m_dinfo[LM_INFO_SZ];
 
 	public:
 
@@ -52,7 +53,7 @@ class ParameterContainer
 			if(m_iparamlength > 0)
 			{
 				memcpy(m_dparamarray, params, m_iparamlength*sizeof(double));
-			    memcpy(m_dinfo, info, 9 * sizeof(double));
+			    memcpy(m_dinfo, info, LM_INFO_SZ * sizeof(double));
 				//Calculate the standard deviations in the parameters
 				for(int i = 0; i< paramlength;i++)
 				{
@@ -78,7 +79,7 @@ class ParameterContainer
 			{
 				memcpy(m_dparamarray, p.m_dparamarray, sizeof(double)*p.m_iparamlength);
 				memcpy(m_dcovararray, p.m_dcovararray, sizeof(double)*p.m_iparamlength);
-				memcpy(m_dinfo, p.m_dinfo, sizeof(double)*9);
+				memcpy(m_dinfo, p.m_dinfo, LM_INFO_SZ * sizeof(double));
 			}
         };
 
@@ -92,7 +93,7 @@ class ParameterContainer
 			if(m_iparamlength > 0)
 			{
 				memcpy(m_dparamarray, params, paramlength*sizeof(double));
-				memcpy(m_dinfo, info, 9 * sizeof(double));
+				memcpy(m_dinfo, info, LM_INFO_SZ * sizeof(double));
 				//Calculate the standard deviations in the parameters
 				for(int i = 0; i< paramlength;i++)
 				{
@@ -141,7 +142,7 @@ class ParameterContainer
 			{
 				memcpy(m_dparamarray, param.m_dparamarray, m_iparamlength*sizeof(double));
 				memcpy(m_dcovararray, param.m_dcovararray, m_iparamlength*sizeof(double));
-				memcpy(m_dinfo, param.m_dinfo, sizeof(double)*9);
+				memcpy(m_dinfo, param.m_dinfo, LM_INFO_SZ * sizeof(double));
 			}
 			
 			return *this;

@@ -67,14 +67,14 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
 
 	for(int i = 0; i< m_idatapoints; i++)
 	{
-		sinthetai[i] = QRange[i]*lambda/(4.0*M_PI);
+		sinthetai[i] = QRange[i]*lambda/(4.0*std::numbers::pi);
 	}
 
 
 	//Calculate the qspread sinthetai's for resolution smearing
 	if(QError != NULL)
 	{
-		double holder = lambda/(4.0*M_PI);
+		double holder = lambda/(4.0*std::numbers::pi);
 
 		for(int i = 0; i < m_idatapoints; i++)
 		{
@@ -136,7 +136,7 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
   FastReflcalc* reflinst = (FastReflcalc*)data;
 
 
-  if(reflinst->onesigma == TRUE)
+  if(reflinst->onesigma)
 	  reflinst->mkdensityonesigma(par,m);
   else
 	  reflinst->mkdensity(par,m);
@@ -159,7 +159,7 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
 void FastReflcalc::mkdensityonesigma(double* p, int plength)
 {
 	//Move our parameters into individual arrays so they're easier to deal with
-	double rhofactor = 1e-6*lambda*lambda/(2.0*M_PI);
+	double rhofactor = 1e-6*lambda*lambda/(2.0*std::numbers::pi);
 	double SubRough = p[0];
 
 	RhoArray[0] = m_dsupsld*rhofactor;
@@ -180,9 +180,8 @@ void FastReflcalc::mkdensityonesigma(double* p, int plength)
 void FastReflcalc::mkdensity(double* p, int plength)
 {
 	//Move our parameters into individual arrays so they're easier to deal with
-    double rhofactor = 1e-6*lambda*lambda/(2.*M_PI);
+    double rhofactor = 1e-6*lambda*lambda/(2.*std::numbers::pi);
 
-	double sigfake[20];
 	RhoArray[0] = m_dsupsld*rhofactor;
 	LengthArray[0] = 0.0;
 	for(int i = 1; i< boxnumber+1;i++)
@@ -208,8 +207,8 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 {
 	//Generate the Parratt reflectivity layers
 	int nl = boxnumber+2;
-	double k0 = 2.0*M_PI/lambda;
-	MyComplex imaginary(0.0,1.0);
+	double k0 = 2.0*std::numbers::pi/lambda;
+	std::complex<double> imaginary(0.0,1.0);
 	int offset = 0;
 
 	double suprefindex = 1-RhoArray[0];
@@ -239,29 +238,29 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 		}
 	}
 
-	MyComplex  lengthmultiplier = -2.0 * MyComplex (0.0,1.0) ;
-	MyComplex  kk[20];
+	std::complex<double>  lengthmultiplier = -2.0 * std::complex<double> (0.0,1.0) ;
+	std::complex<double>  kk[20];
 	double dkk[20];
-	MyComplex  ak[20];
+	std::complex<double>  ak[20];
 	double drj[20];
-	MyComplex  rj[20];
-	MyComplex  Rj[20];
+	std::complex<double>  rj[20];
+	std::complex<double>  Rj[20];
 	double dQj[20];
-	MyComplex  Qj[20];
+	std::complex<double>  Qj[20];
 
 	//Boundary conditions
 	Rj[nl-1] = 0.0;
 	ak[0] = 1.0;
 	ak[nl-1] = 1.0;
 
-	MyComplex  doublenk[20];
-	MyComplex  lengthcalc[20];
+	std::complex<double>  doublenk[20];
+	std::complex<double>  lengthcalc[20];
 
 
 	//Move some calcs out of the loop
 	for(int i = 0; i<nl;i++)
 	{
-		doublenk[i]=-2.0*MyComplex (RhoArray[i],0);
+		doublenk[i]=-2.0*std::complex<double> (RhoArray[i],0);
 		lengthcalc[i] = lengthmultiplier*LengthArray[i];
 		sigmacalc[i] = -2.0*SigmaArray[i]*SigmaArray[i];
 	}
@@ -426,7 +425,7 @@ void FastReflcalc::Rhocalculate(double Zoffset,double* ZIncrement, double* Lengt
 
 double FastReflcalc::CalcQc(double dSLD)
 {
-    return 4 * sqrt(M_PI * (subphaseSLD - m_dsupsld) * 1e-6);
+    return 4 * sqrt(std::numbers::pi * (subphaseSLD - m_dsupsld) * 1e-6);
 }
 
 double FastReflcalc::CalcFresnelPoint(double Q, double Qc)
@@ -479,7 +478,7 @@ void FastReflcalc::myrfdispatch()
 		QsmearRf(qspreadreflpt.data(), reflpt.data(), m_idatapoints);
 	}
 
-	if(m_bImpNorm == TRUE)
+	if(m_bImpNorm)
 	{
 		ImpNorm(reflpt.data(), m_idatapoints);
 	}

@@ -7,7 +7,7 @@ void CEDP::Init(ReflSettings* InitStruct)
     m_dDz0 = 1.0/InitStruct->Resolution;
 	m_dLambda = InitStruct->Wavelength;
 	m_bUseSurfAbs = InitStruct->UseSurfAbs;
-	m_dWaveConstant = m_dLambda*m_dLambda/(2.0*M_PI);
+	m_dWaveConstant = m_dLambda*m_dLambda/(2.0*std::numbers::pi);
 	m_dRho = InitStruct->FilmSLD * 1e-6 * m_dWaveConstant;
 	// Safe boundary offsets: 40 Å covers 5× the maximum roughness bound (8 Å).
 	// FilmSlack adds 7 Å past the last box so the substrate erf tail fully converges.
@@ -19,7 +19,7 @@ void CEDP::Init(ReflSettings* InitStruct)
 	m_iLayers *= InitStruct->Resolution;
 
 
-	if(InitStruct->UseSurfAbs == TRUE)
+	if(InitStruct->UseSurfAbs != 0)
 	{
 		m_dBeta = InitStruct->FilmAbs * m_dWaveConstant;
 		m_dBeta_Sub = InitStruct->SubAbs * m_dWaveConstant;
@@ -54,7 +54,7 @@ void CEDP::Init(ReflSettings* InitStruct)
 
 void CEDP::GenerateEDP(ParamVector* g)
 {
-	if(m_bUseSurfAbs == FALSE)
+	if(!m_bUseSurfAbs)
 		MakeTranparentEDP(g);
 	else
 		MakeEDP(g);
@@ -150,7 +150,7 @@ void CEDP::MakeEDP(ParamVector* g)
 		#pragma omp for private(dist)
 		for(int i = 0; i < reflpoints; i++)
  		{
-			m_EDP[i] = MyComplex(supersld, m_dBeta);
+			m_EDP[i] = std::complex<double>(supersld, m_dBeta);
 
 			for(int k = 0; k < refllayers; k++)
 			{
@@ -158,11 +158,11 @@ void CEDP::MakeEDP(ParamVector* g)
 
 				if(dist > 6)
 				{
-					m_EDP[i] += MyComplex((m_fRhoArray[k])*(2.0), (m_fImagRhoArray[k])*(2.0));
+					m_EDP[i] += std::complex<double>((m_fRhoArray[k])*(2.0), (m_fImagRhoArray[k])*(2.0));
 				}
 				else if (dist > -6)
 				{
-					m_EDP[i] += MyComplex((m_fRhoArray[k])*(1.0+erf(dist)), (m_fImagRhoArray[k])*(1.0+erf(dist)));
+					m_EDP[i] += std::complex<double>((m_fRhoArray[k])*(1.0+erf(dist)), (m_fImagRhoArray[k])*(1.0+erf(dist)));
 				}
 			}
 
@@ -180,7 +180,7 @@ void CEDP::WriteOutputFile(string filename)
 	{
 		rhoout << z << ' ' << m_EDP[j].real()/m_EDP[m_iLayers-1].real() << ' ' ;
 
-		if(m_bUseSurfAbs == TRUE)
+		if(m_bUseSurfAbs)
 			rhoout << m_EDP[j].imag()/m_EDP[m_iLayers-1].imag();
 
 		rhoout << endl;
@@ -196,7 +196,7 @@ int CEDP::Get_EDPPointCount()
 	return m_iLayers;
 }
 
-BOOL CEDP::Get_UseABS()
+bool CEDP::Get_UseABS()
 {
 	return m_bUseSurfAbs;
 }

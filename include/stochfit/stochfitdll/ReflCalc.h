@@ -37,10 +37,10 @@ private:
 	//Variables
 	double totalsize;
     double lambda,k0;
-	BOOL m_bforcenorm;
-	BOOL m_bImpNorm;
+	bool m_bforcenorm;
+	bool m_bImpNorm;
 	int m_iuseableprocessors;
-	vector<MyComplex> m_ckk, m_cak, m_crj, m_cRj;
+	vector<std::complex<double>> m_ckk, m_cak, m_crj, m_cRj;
 	vector<double> m_dkk, m_drj;
 	vector<double> tsinsquaredthetai, qspreadreflpt;
 
@@ -51,12 +51,12 @@ private:
 	void QsmearRf(double* qspreadreflpt, double* reflpt, int datapoints);
 	void MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
 	bool CheckDensity(CEDP* EDP);
-	void GetOffSets(int& HighOffset, int& LowOffset, MyComplex* EDP, int EDPoints);
+	void GetOffSets(int& HighOffset, int& LowOffset, std::complex<double>* EDP, int EDPoints);
 	void InitializeScratchArrays(int EDPoints);
  
 
 	bool m_bXRonly;
-	BOOL m_bReflInitialized;
+	bool m_bReflInitialized;
 public:
 
 	//Variables

@@ -23,11 +23,11 @@
 class Reflcalc
 {
 private:
-   vector<MyComplex> doublenk;
+   vector<std::complex<double>> doublenk;
    vector<double> sinthetai, sinsquaredthetai;
 public:
 
-	vector<MyComplex> nk, nkb;
+	vector<std::complex<double>> nk, nkb;
 	double* Realrefl, *Realreflerrors; int realrefllength;
 	//Variables
 
@@ -76,8 +76,8 @@ public:
 	bool onesigma;
 	void setbulk(double a, double b)
 	{
-        nk[nl-1]= MyComplex(a*1e-6*lambda*lambda/(2.*M_PI),-b);
-		nkb[nl-1] = MyComplex(a*1e-6*lambda*lambda/(2.*M_PI),-b);
+        nk[nl-1]= std::complex<double>(a*1e-6*lambda*lambda/(2.*std::numbers::pi),-b);
+		nkb[nl-1] = std::complex<double>(a*1e-6*lambda*lambda/(2.*std::numbers::pi),-b);
     };
 
 	

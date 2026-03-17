@@ -92,7 +92,7 @@ extern "C" EXPORT void GetRunState(double* saScalars, double* edValues, int* edC
 
 
 
-extern "C" EXPORT int GetData(double ZRange[],double Rho[],double QRange[], double Refl[] ,double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished)
+extern "C" EXPORT int GetData(double ZRange[],double Rho[],double QRange[], double Refl[] ,double* roughness, double* chisquare, double* goodnessoffit, int32_t* isfinished)
 {
 	int iter = -1;
 	if(stochfit != NULL)

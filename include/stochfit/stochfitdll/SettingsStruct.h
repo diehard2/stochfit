@@ -25,15 +25,15 @@ struct ReflSettings
         double SubAbs;
         double SupAbs;
         double Wavelength;
-        BOOL UseSurfAbs;
+        int32_t UseSurfAbs;   // int32 for koffi FFI ('int' in structs.ts)
         double QErr;
-        BOOL Forcenorm;
+        int32_t Forcenorm;
         double Forcesig;
-        BOOL Debug;
-        BOOL XRonly;
+        int32_t Debug;
+        int32_t XRonly;
         int Resolution;
         double FilmLength;
-        BOOL Impnorm;
+        int32_t Impnorm;
         int Objectivefunction;
 		double Paramtemp;
 
@@ -47,7 +47,7 @@ struct ReflSettings
 		double Slope;
 		double Gamma;
 		int STUNfunc;
-		BOOL Adaptive;
+		int32_t Adaptive;
 		int Tempiter;
 		int STUNdeciter;
 		double Gammadec;
@@ -60,7 +60,7 @@ struct ReflSettings
 		double ChiSquare;
 
 	// GPU acceleration control
-	BOOL UseGpu;
+	int32_t UseGpu;
 	const char* Title;
 
 };

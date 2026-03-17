@@ -26,7 +26,7 @@ private:
 
 	int m_iLayers;
 
-	BOOL m_bUseSurfAbs;
+	bool m_bUseSurfAbs;
 
 	void MakeTranparentEDP(ParamVector* g);
 	void MakeEDP(ParamVector* g);
@@ -35,7 +35,7 @@ public:
 	void Init(ReflSettings* InitStruct);
 	void GenerateEDP(ParamVector* g);
 	int Get_EDPPointCount();
-	BOOL Get_UseABS();
+	bool Get_UseABS();
 	double Get_FilmAbs();
 	double Get_FilmAbsInput(); // returns m_dBeta / m_dWaveConstant — inverse of Set_FilmAbs
 	double Get_Dz();
@@ -43,6 +43,6 @@ public:
 	void Set_FilmAbs(double absorption);
 	void WriteOutputFile(string filename);
 
-	vector<MyComplex> m_EDP;
-	vector<MyComplex> m_DEDP;
+	vector<std::complex<double>> m_EDP;
+	vector<std::complex<double>> m_DEDP;
 };

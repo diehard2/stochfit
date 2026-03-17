@@ -59,7 +59,7 @@ class StochFit
 		void Stop(); // request_stop + join — blocks until worker exits
 		// ******** MAYBEDEAD ******** Priority — stores value but never acts on it
 		int Priority(int priority);
-		int GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, BOOL* isfinished);
+		int GetData(double* Z, double* RhoOut, double* Q, double* ReflOut, double* roughness, double* chisquare, double* goodnessoffit, int32_t* isfinished);
 		// GetRunState: fills flat output buffers with current SA state.
 		// Only call after Stop() — not safe to call while worker is running.
 		// saScalars[9]: roughness, filmAbsInput, surfAbs, temperature, impNorm, avgfSTUN, bestSolution, chiSquare, goodnessOfFit

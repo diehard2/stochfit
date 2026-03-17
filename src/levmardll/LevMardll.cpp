@@ -29,7 +29,8 @@
 #include "ParameterContainer.h"
 #include <random>
 #include "Settings.h"
-#include "lm.h"
+#undef LINSOLVERS_RETAIN_MEMORY
+#include <levmar/levmar.h>
 
 extern "C" EXPORT void Rhofit(BoxReflSettings* InitStruct, double parameters[], double covariance[], int parametersize, double info[])
 {
@@ -53,7 +54,7 @@ extern "C" EXPORT void Rhofit(BoxReflSettings* InitStruct, double parameters[], 
 	if(InitStruct->UL == NULL)
 		dlevmar_dif(Rho.objective, parameters, xvec, parametersize, InitStruct->ZLength, 1000, opts, info, work, covar, (void*)(&Rho));
 	else
-		dlevmar_bc_dif(Rho.objective, parameters, xvec, parametersize, InitStruct->ZLength, InitStruct->LL, InitStruct->UL, 1000, opts, info, work, covar, (void*)(&Rho));
+		dlevmar_bc_dif(Rho.objective, parameters, xvec, parametersize, InitStruct->ZLength, InitStruct->LL, InitStruct->UL, nullptr, 1000, opts, info, work, covar, (void*)(&Rho));
 
 
 	//Calculate the standard deviations in the parameters
@@ -106,7 +107,7 @@ extern "C" EXPORT void FastReflfit(BoxReflSettings* InitStruct, double params[],
 	if(InitStruct->UL == NULL)
 		dlevmar_dif(Refl.objective,params, xvec, paramsize,InitStruct->QPoints, 1000, opts, info, work, covar,(void*)(&Refl));
 	else
-		dlevmar_bc_dif(Refl.objective, params, xvec,  paramsize,InitStruct->QPoints, InitStruct->LL,InitStruct->UL,1000, opts, info, work, covar,(void*)(&Refl));
+		dlevmar_bc_dif(Refl.objective, params, xvec,  paramsize,InitStruct->QPoints, InitStruct->LL,InitStruct->UL, nullptr, 1000, opts, info, work, covar,(void*)(&Refl));
 
 	for(int i = 0; i< paramsize;i++)
 	{
@@ -143,7 +144,7 @@ extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[]
 	double* origguess = new double[paramsize];
 	memcpy(origguess, parameters, sizeof(double)*paramsize);
 
-	if(InitStruct->OneSigma == TRUE)
+	if(InitStruct->OneSigma == true)
 		Refl.mkdensityonesigma(parameters, paramsize);
 	else
 		Refl.mkdensity(parameters, paramsize);
@@ -156,10 +157,10 @@ extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[]
 		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]))*(log(Refl.reflpt[i])-log(Reflectivity[i]));
 	}
 
-	double tempinfoarray[9];
+	double tempinfoarray[LM_INFO_SZ];
 	tempinfoarray[1] = bestchisquare;
 	double* tempcovararray = new double[paramsize*paramsize];
-	memset(tempcovararray,0.0, sizeof(double)*paramsize*paramsize);
+	memset(tempcovararray, 0, sizeof(double)*paramsize*paramsize);
 	ParameterContainer original(parameters, tempcovararray, paramsize,InitStruct->OneSigma,
 		tempinfoarray, parampercs[6]);
 	delete[] tempcovararray;
@@ -189,7 +190,7 @@ extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[]
 		int veccount = 0;
 		ParameterContainer* vec = (ParameterContainer*)malloc(vecsize*sizeof(ParameterContainer));
 
-		double locinfo[9];
+		double locinfo[LM_INFO_SZ];
 
 		//Allocate workspace - these will be private to each thread
 
@@ -204,7 +205,7 @@ extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[]
 			locparameters[0] = IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
 			for(int k = 0; k< InitStruct->Boxes; k++)
 			{
-				if(InitStruct->OneSigma == TRUE)
+				if(InitStruct->OneSigma == true)
 				{
 					locparameters[2*k+1] = IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
 					locparameters[2*k+2] = IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
@@ -223,7 +224,7 @@ extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[]
 			if(InitStruct->UL == NULL)
 				dlevmar_dif(locRefl.objective, locparameters, xvec,  paramsize, InitStruct->QPoints, 500, opts, locinfo, work,covar,(void*)(&locRefl));
 			else
-				dlevmar_bc_dif(locRefl.objective, locparameters, xvec, paramsize, InitStruct->QPoints, InitStruct->LL, InitStruct->UL,
+				dlevmar_bc_dif(locRefl.objective, locparameters, xvec, paramsize, InitStruct->QPoints, InitStruct->LL, InitStruct->UL, nullptr,
 					500, opts, locinfo, work,covar,(void*)(&locRefl));
 
 			localanswer.SetContainer(locparameters,covar,paramsize,InitStruct->OneSigma,locinfo, parampercs[6]);
@@ -278,12 +279,12 @@ extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[]
 	vector<ParameterContainer> allsolutions;
 	allsolutions.reserve(6000);
 
-	int tempsize = temp.size();
+	int tempsize = static_cast<int>(temp.size());
 	allsolutions.push_back(temp[0]);
 
 	for(int i = 1; i < tempsize; i++)
 	{
-		int allsolutionssize = allsolutions.size();
+		int allsolutionssize = static_cast<int>(allsolutions.size());
 		for(int j = 0; j < allsolutionssize;j++)
 			{
 				if(temp[i] == allsolutions[j])
@@ -310,8 +311,8 @@ extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[]
 			covararray[(i)*paramsize+j] = (allsolutions.at(i).GetCovarArray())[j];
 		}
 
-		memcpy(info, allsolutions.at(i).GetInfoArray(), 9* sizeof(double));
-		info += 9;
+		memcpy(info, allsolutions.at(i).GetInfoArray(), LM_INFO_SZ * sizeof(double));
+		info += LM_INFO_SZ;
 
 		chisquarearray[i] = (allsolutions.at(i).GetScore());
 	}

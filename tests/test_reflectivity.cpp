@@ -25,14 +25,14 @@ static const double qrange[] = {
 static void FillInitStruct(ReflSettings* s)
 {
     s->Wavelength       = 1.24;
-    s->Forcenorm        = FALSE;
+    s->Forcenorm        = false;
     s->QErr             = 0;
-    s->XRonly           = FALSE;
-    s->Impnorm          = FALSE;
+    s->XRonly           = false;
+    s->Impnorm          = false;
     s->Q                = const_cast<double*>(qrange);
     s->CritEdgeOffset   = 0;
     s->HighQOffset      = 0;
-    s->UseSurfAbs       = FALSE;
+    s->UseSurfAbs       = false;
     s->SupAbs           = 0;
     s->SubAbs           = 0;
     s->FilmAbs          = 0;

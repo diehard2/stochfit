@@ -5,7 +5,7 @@
 // EDP generation will cause a failure here.
 
 #include <gtest/gtest.h>
-#include <stochfit/stochfitdll/ReflCalc.h> 
+#include <stochfit/ReflCalc.h> 
 #include <cmath>
 
 // Identical to the qrange in src/mirefl/MIRefl.cpp

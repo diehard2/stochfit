@@ -39,7 +39,10 @@ export function AppShell() {
 
   useEffect(() => {
     window.api.stochGpuAvailable().then((available) => {
+      console.log('[GPU] GpuAvailable() =', available);
       setGpuAvailable(available);
+    }).catch((err) => {
+      console.error('[GPU] stochGpuAvailable failed:', err);
     });
   }, [setGpuAvailable]);
 

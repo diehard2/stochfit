@@ -395,6 +395,7 @@ export function ModelIndependentPanel() {
           label="Algorithm"
           field="algorithm"
           type="select"
+          disabled={isRunning}
           tooltip="Greedy: fast, no uphill moves. SA: accepts worse solutions to escape local minima. STUN: stochastic tunneling."
           options={[
             { label: 'Greedy', value: 0 },
@@ -406,6 +407,7 @@ export function ModelIndependentPanel() {
           label="Objective Function"
           field="objectivefunction"
           type="select"
+          disabled={isRunning}
           options={[
             { label: 'Log Difference', value: 0, description: <ObjFormula0 /> },
             { label: 'Inverse Difference', value: 1, description: <ObjFormula1 /> },
@@ -413,20 +415,21 @@ export function ModelIndependentPanel() {
             { label: 'Inverse Difference + Errors', value: 3, description: <ObjFormula3 /> },
           ]}
         />
-        <Field label="Roughness (σ) Search %" field="sigmasearch" step={1} />
+        <Field label="Roughness (σ) Search %" field="sigmasearch" step={1} disabled={isRunning} />
         {settings.algorithm === 2 && (
-          <Field label="Adaptive Temperature" field="adaptive" type="checkbox" tooltip="Auto-adjust temperature schedule based on acceptance rate." />
+          <Field label="Adaptive Temperature" field="adaptive" type="checkbox" disabled={isRunning} tooltip="Auto-adjust temperature schedule based on acceptance rate." />
         )}
         <Field
           label="Use GPU Acceleration"
           field="useGpu"
           type="checkbox"
-          disabled={!gpuAvailable}
+          disabled={!gpuAvailable || isRunning}
           tooltip={gpuAvailable ? undefined : 'Requires NVIDIA RTX 20+ (compute 7.5+) or Apple Silicon Mac'}
         />
         <button
           onClick={() => setSettingsOpen(true)}
-          className="mt-1 py-1.5 text-xs text-secondary hover:text-primary border border-border rounded-input transition-colors bg-elevated hover:bg-surface"
+          disabled={isRunning}
+          className="mt-1 py-1.5 text-xs text-secondary hover:text-primary border border-border rounded-input transition-colors bg-elevated hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Advanced…
         </button>

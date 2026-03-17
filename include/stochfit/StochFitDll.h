@@ -24,8 +24,8 @@
 // Cancel (no save):    Init() → Start() → [GetData() polling] → Cancel()
 // GpuAvailable() is called at startup to determine if UseGpu can be enabled.
 
-#include <stochfit/common/platform.h>
-#include <stochfit/stochfitdll/SettingsStruct.h>
+#include "platform.h"
+#include <stochfit/SettingsStruct.h>
 
 extern "C" EXPORT void Init(ReflSettings* initstruct, StochRunState* state);
 extern "C" EXPORT const char* GetInitError();

@@ -20,7 +20,8 @@
 
 #include "ReflCalc.h"
 #include "ParamVector.h"
-#include <stochfit/common/platform.h>
+#include "platform.h"
+#include "QSmear.h"
 
 
 // Multilayer reflection and transmission
@@ -97,55 +98,11 @@ tl::expected<void, std::string> CReflCalc::SetupRef(ReflSettings *InitStruct) {
                    (4 * std::numbers::pi);
   }
 
-  // Calculate the qspread sinthetai's for resolution smearing - the first case
-  // deals with user supplied errors, the second handles a constant error in q
-  if (InitStruct->QError != NULL) {
-    double holder = lambda / (4.0 * std::numbers::pi);
-    double qholder;
-    double qerrorholder;
-    for (int i = 0; i < m_idatapoints; i++) {
-      qholder = InitStruct->Q[i];
-      qerrorholder = InitStruct->QError[i];
-
-      qspreadsinthetai[13 * i] = sinthetai[i];
-      qspreadsinthetai[13 * i + 1] = holder * (qholder + 1.2 * qerrorholder);
-      qspreadsinthetai[13 * i + 2] = holder * (qholder - 1.2 * qerrorholder);
-      qspreadsinthetai[13 * i + 3] = holder * (qholder + 1.0 * qerrorholder);
-      qspreadsinthetai[13 * i + 4] = holder * (qholder - 1.0 * qerrorholder);
-      qspreadsinthetai[13 * i + 5] = holder * (qholder + 0.8 * qerrorholder);
-      qspreadsinthetai[13 * i + 6] = holder * (qholder - 0.8 * qerrorholder);
-      qspreadsinthetai[13 * i + 7] = holder * (qholder + 0.6 * qerrorholder);
-      qspreadsinthetai[13 * i + 8] = holder * (qholder - 0.6 * qerrorholder);
-      qspreadsinthetai[13 * i + 9] = holder * (qholder + 0.4 * qerrorholder);
-      qspreadsinthetai[13 * i + 10] = holder * (qholder - 0.4 * qerrorholder);
-      qspreadsinthetai[13 * i + 11] = holder * (qholder + 0.2 * qerrorholder);
-      qspreadsinthetai[13 * i + 12] = holder * (qholder - 0.2 * qerrorholder);
-
-      if (qspreadsinthetai[13 * i + 1] < 0.0)
-        platform_error("Error in QSpread please contact the author - the "
-                       "program will now crash :(");
-    }
-  } else {
-    for (int i = 0; i < m_idatapoints; i++) {
-      qspreadsinthetai[13 * i] = sinthetai[i];
-      qspreadsinthetai[13 * i + 1] = sinthetai[i] * (1 + 1.2 * m_dQSpread);
-      qspreadsinthetai[13 * i + 2] = sinthetai[i] * (1 - 1.2 * m_dQSpread);
-      qspreadsinthetai[13 * i + 3] = sinthetai[i] * (1 + 1.0 * m_dQSpread);
-      qspreadsinthetai[13 * i + 4] = sinthetai[i] * (1 - 1.0 * m_dQSpread);
-      qspreadsinthetai[13 * i + 5] = sinthetai[i] * (1 + 0.8 * m_dQSpread);
-      qspreadsinthetai[13 * i + 6] = sinthetai[i] * (1 - 0.8 * m_dQSpread);
-      qspreadsinthetai[13 * i + 7] = sinthetai[i] * (1 + 0.6 * m_dQSpread);
-      qspreadsinthetai[13 * i + 8] = sinthetai[i] * (1 - 0.6 * m_dQSpread);
-      qspreadsinthetai[13 * i + 9] = sinthetai[i] * (1 + 0.4 * m_dQSpread);
-      qspreadsinthetai[13 * i + 10] = sinthetai[i] * (1 - 0.4 * m_dQSpread);
-      qspreadsinthetai[13 * i + 11] = sinthetai[i] * (1 + 0.2 * m_dQSpread);
-      qspreadsinthetai[13 * i + 12] = sinthetai[i] * (1 - 0.2 * m_dQSpread);
-
-      if (qspreadsinthetai[13 * i + 1] < 0.0)
-        platform_error("Error in QSpread please contact the author - the "
-                       "program will now crash :(");
-    }
-  }
+  // Calculate the qspread sinthetai's for resolution smearing
+  QSmear::BuildArrays(m_idatapoints, lambda, m_dQSpread,
+                      sinthetai.data(),
+                      exi.has_value() ? exi->data() : nullptr,
+                      qspreadsinthetai.data(), qspreadsinsquaredthetai.data());
 
   // Now, create our q's for plotting, but mix-in the actual data points
   double x0 = InitStruct->Q[0];
@@ -197,9 +154,6 @@ tl::expected<void, std::string> CReflCalc::SetupRef(ReflSettings *InitStruct) {
     tsinsquaredthetai[l] = tsinthetai[l] * tsinthetai[l];
   }
 
-  for (int l = 0; l < m_idatapoints * 13; l++) {
-    qspreadsinsquaredthetai[l] = qspreadsinthetai[l] * qspreadsinthetai[l];
-  }
   return {};
 }
 
@@ -711,24 +665,7 @@ void CReflCalc::InitializeScratchArrays(int EDPoints) {
 }
 
 void CReflCalc::QsmearRf(double *qspreadreflpt, double *refl, int datapoints) {
-  double calcholder;
-  for (int i = 0; i < datapoints; i++) {
-    calcholder = qspreadreflpt[13 * i];
-    calcholder += 0.056 * qspreadreflpt[13 * i + 1];
-    calcholder += 0.056 * qspreadreflpt[13 * i + 2];
-    calcholder += 0.135 * qspreadreflpt[13 * i + 3];
-    calcholder += 0.135 * qspreadreflpt[13 * i + 4];
-    calcholder += 0.278 * qspreadreflpt[13 * i + 5];
-    calcholder += 0.278 * qspreadreflpt[13 * i + 6];
-    calcholder += 0.487 * qspreadreflpt[13 * i + 7];
-    calcholder += 0.487 * qspreadreflpt[13 * i + 8];
-    calcholder += 0.726 * qspreadreflpt[13 * i + 9];
-    calcholder += 0.726 * qspreadreflpt[13 * i + 10];
-    calcholder += 0.923 * qspreadreflpt[13 * i + 11];
-    calcholder += 0.923 * qspreadreflpt[13 * i + 12];
-
-    refl[i] = calcholder / 6.211;
-  }
+  QSmear::Apply(qspreadreflpt, refl, datapoints);
 }
 
 int CReflCalc::GetDataCount() {

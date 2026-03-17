@@ -24,10 +24,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 
-# Warnings
-if(MSVC)
-    add_compile_options(/W3)
-else()
+# Warnings — for MSVC, /W3 is applied per-target/per-source-file below.
+# add_compile_options(/W3) would leak into nvcc's CUDA FLAGS; in CUDA 13.1,
+# nvcc treats bare /flag-style arguments as input file paths (since they look
+# like absolute paths on Windows), triggering "single input file required".
+if(NOT MSVC)
     add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 endif()
 
@@ -36,12 +37,12 @@ endif()
 if(MSVC)
     # /Oi: expand intrinsics; /fp:fast: aggressive FP reordering; /GL: whole-program opt
     # /arch:AVX2: AVX2 + FMA (Haswell 2013+, covers all modern chips)
-    add_compile_options(
-        $<$<CONFIG:Release>:/Oi>
-        $<$<CONFIG:Release>:/fp:fast>
-        $<$<CONFIG:Release>:/GL>
-        $<$<CONFIG:Release>:/arch:AVX2>
-    )
+    # NOTE: These flags are NOT added here via add_compile_options.
+    # CMake aggregates directory/target COMPILE_OPTIONS as CUDA host flags, so any
+    # flag with $<COMPILE_LANGUAGE:CXX> still leaks into nvcc's host compilation.
+    # nvcc on Windows intercepts /arch as --gpu-architecture, making /arch:AVX2 fatal.
+    # Instead, apply these per-target and per-source-file — see the MSVC Release
+    # optimizations block below (after all targets are defined).
     add_link_options($<$<CONFIG:Release>:/LTCG>)
 else()
     # -O3: full auto-vectorization; -ffast-math: aggressive FP; -flto: link-time opt
@@ -85,23 +86,29 @@ option(STOCHFIT_USE_CUDA "Enable CUDA GPU acceleration" ON)
 option(STOCHFIT_USE_METAL "Enable Metal GPU acceleration" ON)
 
 if(STOCHFIT_USE_CUDA AND NOT APPLE)
-    # Check for nvcc first — this result is cached, so subsequent configures are fast
-    include(CheckLanguage)
-    check_language(CUDA)
+    # Set flags BEFORE enabling CUDA so the compiler test succeeds on new MSVC.
+    if(MSVC)
+        set(CMAKE_CUDA_FLAGS "-allow-unsupported-compiler" CACHE STRING "CUDA flags")
+    endif()
+
+    if(NOT CMAKE_CUDA_COMPILER)
+        find_program(CMAKE_CUDA_COMPILER nvcc)
+    endif()
 
     if(CMAKE_CUDA_COMPILER)
         # CUDA 13.1 maxes out at C++20, so set it before enabling CUDA language
         set(CMAKE_CUDA_STANDARD 20)
         set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
-        if(MSVC)
-            set(CMAKE_CUDA_FLAGS "-allow-unsupported-compiler" CACHE STRING "CUDA flags")
-        endif()
-
         find_package(CUDAToolkit REQUIRED)
         enable_language(CUDA)
         set(STOCHFIT_HAS_CUDA TRUE)
         set(CMAKE_CUDA_RUNTIME_LIBRARY "Static")
+        if(MSVC)
+            # Pass /W3 wrapped via -Xcompiler so nvcc forwards it to cl.exe
+            # rather than interpreting it as an input file path (CUDA 13.1 behavior)
+            set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=/W3")
+        endif()
         message(STATUS "CUDA GPU acceleration enabled (CUDA ${CUDAToolkit_VERSION})")
     else()
         message(STATUS "CUDA compiler not found — GPU acceleration disabled")
@@ -130,7 +137,7 @@ add_library(stochfit_core STATIC
 )
 target_include_directories(stochfit_core
     PUBLIC include
-    PRIVATE include/stochfit/stochfitdll src/stochfitdll)
+    PRIVATE include/stochfit src/stochfitdll)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(stochfit_core PUBLIC OpenMP::OpenMP_CXX)
     
@@ -191,7 +198,7 @@ add_library(stochfit_dll SHARED
     src/stochfitdll/StochFitDll.cpp
 )
 target_include_directories(stochfit_dll
-    PRIVATE include/stochfit/stochfitdll src/stochfitdll)
+    PRIVATE include/stochfit src/stochfitdll)
 set_target_properties(stochfit_dll PROPERTIES
     OUTPUT_NAME stochfit
     CXX_VISIBILITY_PRESET hidden
@@ -223,14 +230,13 @@ endif()
 # ── levmardll (shared lib) ────────────────────────────────────────────────────
 add_library(levmardll SHARED
     src/levmardll/FastReflCalc.cpp
-    src/levmardll/LMRoutines.cpp
     src/levmardll/LevMardll.cpp
     src/levmardll/ReflCalc.cpp
     src/levmardll/RhoCalc.cpp
 )
 target_include_directories(levmardll
     PUBLIC include
-    PRIVATE include/stochfit/levmardll)
+    PRIVATE include/levmar)
 set_target_properties(levmardll PROPERTIES
     OUTPUT_NAME levmardll
     CXX_VISIBILITY_PRESET hidden
@@ -242,16 +248,50 @@ add_executable(mirefl
     tests/MIRefl.cpp
 )
 # CEDP and CReflCalc come from stochfit_core (which transitively brings OpenMP).
-# include/stochfit/stochfitdll resolves the bare "CEDP.h" / "ReflCalc.h" includes.
-target_include_directories(mirefl PRIVATE include include/stochfit/stochfitdll)
+# include/stochfit resolves the bare "CEDP.h" / "ReflCalc.h" includes.
+target_include_directories(mirefl PRIVATE include include/stochfit)
 target_link_libraries(mirefl PRIVATE stochfit_core)
 
 add_executable(stochfit_tests
     tests/test_reflectivity.cpp)
-target_include_directories(stochfit_tests PRIVATE include include/stochfit/stochfitdll)
+target_include_directories(stochfit_tests PRIVATE include include/stochfit)
 target_link_libraries(stochfit_tests PRIVATE stochfit_core GTest::gtest GTest::gtest_main)
 target_compile_features(stochfit_tests PRIVATE cxx_std_20)
 add_test(NAME stochfit_tests COMMAND stochfit_tests)
+
+# ── MSVC Release optimizations ────────────────────────────────────────────────
+# Applied here instead of add_compile_options to prevent /arch:AVX2 from leaking
+# into nvcc's CUDA host compilation.  CMake feeds directory/target COMPILE_OPTIONS
+# to nvcc as CUDA host flags (evaluating COMPILE_LANGUAGE:CXX guards as true), and
+# nvcc on Windows intercepts /arch as --gpu-architecture, causing a fatal error.
+# Source-file COMPILE_OPTIONS are evaluated per-file and are NOT aggregated into
+# CUDA host flags, so set_source_files_properties is safe for stochfit_core.
+if(MSVC)
+    set(_msvc_opts
+        /W3
+        $<$<CONFIG:Release>:/Oi>
+        $<$<CONFIG:Release>:/fp:fast>
+        $<$<CONFIG:Release>:/GL>
+        $<$<CONFIG:Release>:/arch:AVX2>
+    )
+    # Non-CUDA targets: target_compile_options is fine (no CUDA host flag leakage)
+    target_compile_options(stochfit_dll   PRIVATE ${_msvc_opts})
+    target_compile_options(levmardll      PRIVATE ${_msvc_opts})
+    target_compile_options(mirefl         PRIVATE ${_msvc_opts})
+    target_compile_options(stochfit_tests PRIVATE ${_msvc_opts})
+    # stochfit_core contains CUDA sources: apply per CXX source file only
+    set_source_files_properties(
+        src/stochfitdll/CEDP.cpp
+        src/stochfitdll/ParamVector.cpp
+        src/stochfitdll/ReflCalc.cpp
+        src/stochfitdll/SA_Dispatcher.cpp
+        src/stochfitdll/SimulatedAnnealing.cpp
+        src/stochfitdll/StochFitHarness.cpp
+        src/stochfitdll/gpu/gpu_detect.cpp
+        src/stochfitdll/gpu/gpu_sa_runner.cpp
+        PROPERTIES COMPILE_OPTIONS "${_msvc_opts}"
+    )
+endif()
 
 # ── compile_commands.json ─────────────────────────────────────────────────────
 # Copy to build/ so clangd always finds it regardless of active config (Debug/Release)

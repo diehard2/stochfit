@@ -18,7 +18,7 @@
  *
  */
 #pragma once
-#include <stochfit/common/platform.h>
+#include "platform.h"
 #include <levmar/levmar.h>
 
 class ParameterContainer
@@ -233,16 +233,6 @@ class ParameterContainer
 						}
 					
 					}
-					#ifndef GIXOS
-					for(int i = 0; i < m_iparamlength; i++)
-					{
-						if((m_dcovararray[i] > m_dcutoff*m_dparamarray[i]) && m_dcutoff > 0)
-						{
-							isreasonable = false;
-							break;
-						}
-					}
-					#endif
 					return isreasonable;
 				}
 

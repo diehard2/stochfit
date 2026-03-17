@@ -2,16 +2,19 @@
 
 #if defined(STOCHFIT_HAS_CUDA)
 
+// WIN32_LEAN_AND_MEAN prevents inclusion of COM/OLE/RPC headers (rpcndr.h etc.)
+// which trigger cudafe++ assertion failures with Windows SDK 10.0.26100.0+.
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include "gpu_types.h"
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
-#include <cooperative_groups.h>
 #include <cstdio>
 #include <cmath>
 #include <algorithm>
 #include <atomic>
-
-namespace cg = cooperative_groups;
 
 // ── Complex float helpers ──────────────────────────────────────────────────
 

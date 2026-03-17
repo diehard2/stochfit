@@ -26,7 +26,7 @@
 // absorption, and imperfect-normalization factor. Enforces clamped bounds
 // on all mutations. All public API uses double.
 
-#include <stochfit/common/platform.h>
+#include "platform.h"
 #include "SettingsStruct.h"
 
 class ParamVector 

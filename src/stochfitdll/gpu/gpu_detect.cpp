@@ -17,9 +17,11 @@ GpuInfo detect_gpu()
 #if defined(STOCHFIT_HAS_CUDA)
     int device_count = 0;
     cudaError_t err = cudaGetDeviceCount(&device_count);
+    fprintf(stderr, "[GPU] cudaGetDeviceCount: err=%d, count=%d\n", (int)err, device_count);
     if (err == cudaSuccess && device_count > 0) {
         cudaDeviceProp prop;
         cudaGetDeviceProperties(&prop, 0);
+        fprintf(stderr, "[GPU] Device: %s, compute %d.%d\n", prop.name, prop.major, prop.minor);
 
         // Require compute capability >= 7.5 (Turing+)
         if (prop.major > 7 || (prop.major == 7 && prop.minor >= 5)) {
@@ -32,6 +34,8 @@ GpuInfo detect_gpu()
             // Heuristic: 2 chains per SM, capped at 128
             info.max_chains = std::min(prop.multiProcessorCount * 2, 128);
             return info;
+        } else {
+            fprintf(stderr, "[GPU] Compute %d.%d < 7.5 required, GPU disabled\n", prop.major, prop.minor);
         }
     }
 #endif

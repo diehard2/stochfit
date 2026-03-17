@@ -1,7 +1,7 @@
 // MIRefl.cpp : Defines the entry point for the console application.
 //
 
-#include <stochfit/common/platform.h>
+#include "platform.h"
 #include "CEDP.h"
 #include "ReflCalc.h"
 #include "ParamVector.h"

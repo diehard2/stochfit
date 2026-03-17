@@ -6,7 +6,7 @@
 // 8-byte pointer Title). Algorithm: 0=Greedy, 1=SA, 2=STUN. UseGpu enables
 // GPU-accelerated SA when a compatible device is available.
 
-#include <stochfit/common/platform.h>
+#include "platform.h"
 
 #pragma pack(push, 8)
 struct ReflSettings

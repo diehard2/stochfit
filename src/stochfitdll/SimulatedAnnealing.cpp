@@ -18,7 +18,7 @@
  *
  */
 
-#include <stochfit/common/platform.h>
+#include "platform.h"
 #include "SimulatedAnnealing.h"
 #include <iomanip>
 

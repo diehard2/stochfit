@@ -18,7 +18,7 @@
  *
  */
 
-#include <stochfit/common/platform.h>
+#include "platform.h"
 #include "SA_Dispatcher.h"
 
 SA_Dispatcher::SA_Dispatcher()

@@ -18,9 +18,10 @@
  *
  */
 
-#include <stochfit/common/platform.h>
+#include "platform.h"
 #include "FastReflCalc.h"
 #include "Settings.h"
+#include "stochfit/QSmear.h"
 
 FastReflcalc::~FastReflcalc()
 {
@@ -71,63 +72,13 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
 	}
 
 
-	//Calculate the qspread sinthetai's for resolution smearing
-	if(QError != NULL)
-	{
-		double holder = lambda/(4.0*std::numbers::pi);
-
-		for(int i = 0; i < m_idatapoints; i++)
-		{
-			qspreadsinthetai[13*i] = sinthetai[i];
-			qspreadsinthetai[13*i+1] = holder*(QRange[i]+1.2*QError[i]);
-			qspreadsinthetai[13*i+2] = holder*(QRange[i]-1.2*QError[i]);
-			qspreadsinthetai[13*i+3] = holder*(QRange[i]+1.0*QError[i]);
-			qspreadsinthetai[13*i+4] = holder*(QRange[i]-1.0*QError[i]);
-			qspreadsinthetai[13*i+5] = holder*(QRange[i]+0.8*QError[i]);
-			qspreadsinthetai[13*i+6] = holder*(QRange[i]-0.8*QError[i]);
-			qspreadsinthetai[13*i+7] = holder*(QRange[i]+0.6*QError[i]);
-			qspreadsinthetai[13*i+8] = holder*(QRange[i]-0.6*QError[i]);
-			qspreadsinthetai[13*i+9] = holder*(QRange[i]+0.4*QError[i]);
-			qspreadsinthetai[13*i+10] = holder*(QRange[i]-0.4*QError[i]);
-			qspreadsinthetai[13*i+11] = holder*(QRange[i]+0.2*QError[i]);
-			qspreadsinthetai[13*i+12] = holder*(QRange[i]-0.2*QError[i]);
-
-			if(qspreadsinthetai[13*i+1] < 0.0)
-				platform_error("Error in QSpread please contact the author - the program will now crash :(");
-		}
-	}
-	else
-	{
-		for(int i = 0; i < m_idatapoints; i++)
-		{
-			qspreadsinthetai[13*i] = sinthetai[i];
-			qspreadsinthetai[13*i+1] = sinthetai[i]*(1+1.2*m_dQSpread);
-			qspreadsinthetai[13*i+2] = sinthetai[i]*(1-1.2*m_dQSpread);
-			qspreadsinthetai[13*i+3] = sinthetai[i]*(1+1.0*m_dQSpread);
-			qspreadsinthetai[13*i+4] = sinthetai[i]*(1-1.0*m_dQSpread);
-			qspreadsinthetai[13*i+5] = sinthetai[i]*(1+0.8*m_dQSpread);
-			qspreadsinthetai[13*i+6] = sinthetai[i]*(1-0.8*m_dQSpread);
-			qspreadsinthetai[13*i+7] = sinthetai[i]*(1+0.6*m_dQSpread);
-			qspreadsinthetai[13*i+8] = sinthetai[i]*(1-0.6*m_dQSpread);
-			qspreadsinthetai[13*i+9] = sinthetai[i]*(1+0.4*m_dQSpread);
-			qspreadsinthetai[13*i+10] = sinthetai[i]*(1-0.4*m_dQSpread);
-			qspreadsinthetai[13*i+11] = sinthetai[i]*(1+0.2*m_dQSpread);
-			qspreadsinthetai[13*i+12] = sinthetai[i]*(1-0.2*m_dQSpread);
-
-			if(qspreadsinthetai[13*i+2] < 0.0)
-				platform_error("Error in QSpread please contact the author");
-		}
-	}
-
 	for (int l = 0; l < m_idatapoints; l++)
-	{
 		sinsquaredthetai[l] = sinthetai[l]*sinthetai[l];
-	}
 
-	for (int l = 0; l < 13*m_idatapoints; l++)
-	{
-		qspreadsinsquaredthetai[l] = qspreadsinthetai[l]*qspreadsinthetai[l];
-	}
+	// Calculate the qspread sinthetai's for resolution smearing
+	QSmear::BuildArrays(m_idatapoints, lambda, m_dQSpread,
+	                    sinthetai.data(), QError,
+	                    qspreadsinthetai.data(), qspreadsinsquaredthetai.data());
 }
 
 
@@ -442,28 +393,7 @@ double FastReflcalc::CalcFresnelPoint(double Q, double Qc)
 
 void FastReflcalc::QsmearRf(double* qspreadrefl, double* refl, int datapoints)
 {
-	double calcholder;
-
-
-	for(int i = 0; i < datapoints; i++)
-	{
-		calcholder = 0;
-		calcholder = qspreadrefl[13*i];
-		calcholder += 0.056*qspreadrefl[13*i+1];
-		calcholder += 0.056*qspreadrefl[13*i+2];
-		calcholder += 0.135*qspreadrefl[13*i+3];
-		calcholder += 0.135*qspreadrefl[13*i+4];
-		calcholder += 0.278*qspreadrefl[13*i+5];
-		calcholder += 0.278*qspreadrefl[13*i+6];
-		calcholder += 0.487*qspreadrefl[13*i+7];
-		calcholder += 0.487*qspreadrefl[13*i+8];
-		calcholder += 0.726*qspreadrefl[13*i+9];
-		calcholder += 0.726*qspreadrefl[13*i+10];
-		calcholder += 0.923*qspreadrefl[13*i+11];
-		calcholder += 0.923*qspreadrefl[13*i+12];
-
-		refl[i] = calcholder/6.211;
-	}
+	QSmear::Apply(qspreadrefl, refl, datapoints);
 }
 
 void FastReflcalc::myrfdispatch()

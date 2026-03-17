@@ -1,5 +1,5 @@
 #pragma once
-#include <stochfit/common/platform.h>
+#include "platform.h"
 
 #pragma pack(push, 8)
 struct BoxReflSettings

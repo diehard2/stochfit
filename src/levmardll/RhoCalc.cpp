@@ -18,7 +18,7 @@
  *
  */
 
-#include <stochfit/common/platform.h>
+#include "platform.h"
 #include "RhoCalc.h"
 #include "Settings.h"
 

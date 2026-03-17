@@ -22,14 +22,13 @@
 // LevMardll.cpp : Defines the entry point for the DLL application.
 //
 
-#include <stochfit/common/platform.h>
+#include "platform.h"
 #include "LevMardll.h"
 #include "FastReflCalc.h"
 #include "RhoCalc.h"
 #include "ParameterContainer.h"
 #include <random>
 #include "Settings.h"
-#undef LINSOLVERS_RETAIN_MEMORY
 #include <levmar/levmar.h>
 
 extern "C" EXPORT void Rhofit(BoxReflSettings* InitStruct, double parameters[], double covariance[], int parametersize, double info[])
@@ -144,7 +143,7 @@ extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[]
 	double* origguess = new double[paramsize];
 	memcpy(origguess, parameters, sizeof(double)*paramsize);
 
-	if(InitStruct->OneSigma == true)
+	if(InitStruct->OneSigma != 0)
 		Refl.mkdensityonesigma(parameters, paramsize);
 	else
 		Refl.mkdensity(parameters, paramsize);
@@ -185,7 +184,6 @@ extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[]
 		ParameterContainer localanswer;
 		double locparameters[20];
 		double locbestchisquare = bestchisquare;
-		double bestparam[20];
 		int vecsize = 1000;
 		int veccount = 0;
 		ParameterContainer* vec = (ParameterContainer*)malloc(vecsize*sizeof(ParameterContainer));
@@ -205,7 +203,7 @@ extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[]
 			locparameters[0] = IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
 			for(int k = 0; k< InitStruct->Boxes; k++)
 			{
-				if(InitStruct->OneSigma == true)
+				if(InitStruct->OneSigma != 0)
 				{
 					locparameters[2*k+1] = IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
 					locparameters[2*k+2] = IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);

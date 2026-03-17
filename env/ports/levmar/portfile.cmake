@@ -35,6 +35,7 @@ vcpkg_cmake_configure(
         -DHAVE_LAPACK=ON
         -DHAVE_PLASMA=OFF
         -DBUILD_DEMO=OFF
+        -DLINSOLVERS_RETAIN_MEMORY=OFF
 )
 
 vcpkg_cmake_install()

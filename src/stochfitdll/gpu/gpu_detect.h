@@ -9,7 +9,7 @@
 
 #include <string>
 #include <cstddef>
-#include <stochfit/common/platform.h>
+#include "platform.h"
 
 struct GpuInfo {
     GpuBackend backend = GpuBackend::None;

@@ -19,7 +19,7 @@
  */
 
 
-#include <stochfit/common/platform.h>
+#include "platform.h"
 #include "ParamVector.h"
 #include "ReflCalc.h"
 #include "SimulatedAnnealing.h"

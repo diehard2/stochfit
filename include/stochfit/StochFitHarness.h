@@ -39,7 +39,7 @@
 #include "ReflCalc.h"
 #include "CEDP.h"
 #include "SA_Dispatcher.h"
-#include <stochfit/stochfitdll/SettingsStruct.h>
+#include <stochfit/SettingsStruct.h>
 
 #if STOCHFIT_HAS_GPU
 class GpuSARunner;

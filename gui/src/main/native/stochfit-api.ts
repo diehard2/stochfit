@@ -116,11 +116,20 @@ export function stochGetRunState(boxes: number): StochRunStateOutput {
   };
 }
 
-// Atomically write a session JSON file (write .tmp then rename).
+// Write a session JSON file. Attempts atomic rename; falls back to direct write
+// if rename fails (e.g. OneDrive holds a lock on the file during sync).
 export function writeSessionFile(filePath: string, session: StochSessionFile): void {
+  const json = JSON.stringify(session, null, 2);
   const tmpPath = filePath + '.tmp';
-  fs.writeFileSync(tmpPath, JSON.stringify(session, null, 2), 'utf-8');
-  fs.renameSync(tmpPath, filePath);
+  fs.writeFileSync(tmpPath, json, 'utf-8');
+  try {
+    fs.renameSync(tmpPath, filePath);
+  } catch (e: unknown) {
+    // OneDrive (and some antivirus) can lock files, causing EPERM on rename.
+    // Fall back to direct write so the session is still saved.
+    try { fs.unlinkSync(tmpPath); } catch { /* ignore */ }
+    fs.writeFileSync(filePath, json, 'utf-8');
+  }
 }
 
 // Read and validate a session JSON file. Returns null if missing or invalid.

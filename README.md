@@ -1,5 +1,70 @@
 # stochfit
 
+## Building
+
+### Prerequisites
+
+- **Windows:** Visual Studio 2022 (with C++ workload) — detected automatically via `vswhere`
+- **macOS:** Xcode 16+ command-line tools, macOS 14+
+- **All platforms:** CMake 3.21+, Git, Node.js 18+ (for the GUI)
+
+vcpkg is bootstrapped automatically on first configure — no manual install needed.
+
+---
+
+### VS Code (recommended)
+
+Install the [CMake Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) extension. The repo includes `.vscode/settings.json` that configures everything automatically:
+
+- Presets are **disabled** (`cmake.useCMakePresets: never`) — CMake Tools uses its own settings instead
+- On Windows, `MsvcEnvironment.cmake` is chain-loaded to locate and activate MSVC without needing a Developer Command Prompt
+- Build output goes to `build/`
+
+Open the repo folder, let CMake Tools configure, then build via the status bar or **Ctrl+Shift+P → CMake: Build**.
+
+---
+
+### Command Line
+
+**Windows (Release):**
+```bash
+cmake -S . -B build -G Ninja \
+  -DCMAKE_MAKE_PROGRAM=env/tools/ninja.exe \
+  -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=env/cmake/MsvcEnvironment.cmake \
+  -DVCPKG_APPLOCAL_DEPS=OFF \
+  -DVCPKG_TARGET_TRIPLET=x64-windows-static-md \
+  -DCMAKE_BUILD_TYPE=Release
+
+cmake --build build --config Release --target stochfit_shared
+```
+
+These same options are encoded as named presets in `CMakePresets.json` as a convenience:
+```bash
+cmake --preset windows
+cmake --build --preset windows --target stochfit_shared
+```
+
+**macOS / Linux (Release):**
+```bash
+cmake --preset default
+cmake --build --preset default --target stochfit_shared
+```
+
+**Debug builds:** use `windows-debug` / `debug` presets, or replace `-DCMAKE_BUILD_TYPE=Release` with `Debug`.
+
+---
+
+### GUI
+
+```bash
+cd gui
+npm install
+npm start        # dev mode (hot reload)
+npm run make     # package distributable
+```
+
+---
+
 StochFit utilizes stochastic fitting methods to model specular x-ray reflectivity or neutron reflectivity data. It provides an easy to use graphical user interface for both model dependent and model independent methods. Please use the forums for questions, bug reports, or feature requests. You will need a SourceForge user id to access the forums.
 
 

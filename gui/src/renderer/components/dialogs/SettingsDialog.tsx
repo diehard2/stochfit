@@ -31,6 +31,7 @@ export function SettingsDialog() {
           <Field label="Resolution (pts/Å)" field="resolution" step={1} tooltip="EDP sampling density. Higher = smoother profile, slower computation." />
           <Field label="Norm. Search %" field="normSearchPerc" step={1} tooltip="Search range for normalization (active with Improved Normalization)." />
           <Field label="Abs. Search %" field="absSearchPerc" step={1} tooltip="Search range for absorption (active with Surface Absorption)." />
+          <Field label="Force σ" field="forcesig" step={0.1} tooltip="Force all interfacial roughness to this value (0 = unconstrained)." />
 
           {/* SA + STUN params */}
           {algorithm >= 1 && (

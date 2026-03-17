@@ -1,10 +1,27 @@
 import { app, BrowserWindow, Menu, nativeTheme } from 'electron';
 import { IPC } from '../shared/ipc-channels';
 import path from 'path';
+import fs from 'fs';
 import { registerIpcHandlers } from './ipc-handlers';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) app.quit();
+
+function installSampleData() {
+  const docsBase = process.platform === 'linux'
+    ? app.getPath('home')
+    : app.getPath('documents');
+  const dest = path.join(docsBase, 'StochFit', 'TestReflectivity');
+  const destFile = path.join(dest, 'test1refl.txt');
+  if (fs.existsSync(destFile)) return;
+  const src = path.join(
+    app.isPackaged ? process.resourcesPath : path.join(__dirname, '../../../resources'),
+    'test1refl.txt'
+  );
+  if (!fs.existsSync(src)) return;
+  fs.mkdirSync(dest, { recursive: true });
+  fs.copyFileSync(src, destFile);
+}
 
 // Catch unhandled errors in the main process so they surface in the console
 // instead of silently crashing the app.
@@ -62,6 +79,7 @@ app.whenReady().then(() => {
   // Force dark theme
   nativeTheme.themeSource = 'dark';
 
+  installSampleData();
   registerIpcHandlers();
   createWindow();
   buildMenu();

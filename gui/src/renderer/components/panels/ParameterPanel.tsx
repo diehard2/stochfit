@@ -19,8 +19,7 @@ export function ParameterPanel() {
         <Field label="Substrate Absorption" field="subAbs" step={0.0001} />
         <Field label="Superphase Absorption" field="supAbs" step={0.0001} />
         <Field label="Q Spread (σ)" field="qErr" step={0.0001} tooltip="Instrument resolution: Gaussian smearing width in Q-space." />
-        <Field label="Force σ" field="forcesig" step={0.1} tooltip="Force all interfacial roughness to this value (0 = unconstrained)." />
-        <Field label="Crit. Edge Offset" field="critEdgeOffset" step={1} tooltip="Number of low-Q points to skip (removes critical edge region)." />
+<Field label="Crit. Edge Offset" field="critEdgeOffset" step={1} tooltip="Number of low-Q points to skip (removes critical edge region)." />
         <Field label="High-Q Offset" field="highQOffset" step={1} tooltip="Number of high-Q points to skip." />
         <Field label="Use Surf. Absorption" field="useSurfAbs" type="checkbox" tooltip="Include surface absorption in reflectivity calculation." />
         <Field label="Force Normalization" field="forcenorm" type="checkbox" tooltip="Force reflectivity curve to normalize to 1 at Q=0." />

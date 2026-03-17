@@ -35,7 +35,7 @@ export function AppShell() {
   const boxModelGenED = useBoxModelStore((s) => s.genED);
   const boxModelGenBoxED = useBoxModelStore((s) => s.genBoxED);
   const boxModelGenZRange = useBoxModelStore((s) => s.genZRange);
-  const { activePanel, setSettingsOpen, setAboutOpen, normalizeByFresnel, setNormalizeByFresnel, setGpuAvailable } = useUiStore();
+  const { activePanel, setAboutOpen, normalizeByFresnel, setNormalizeByFresnel, setGpuAvailable } = useUiStore();
 
   useEffect(() => {
     window.api.stochGpuAvailable().then((available) => {
@@ -55,12 +55,6 @@ export function AppShell() {
       {/* Top menu bar */}
       <div className="h-9 flex items-center justify-between px-4 border-b border-border bg-elevated flex-shrink-0">
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="text-xs text-secondary hover:text-primary transition-colors"
-          >
-            Settings
-          </button>
           <button
             onClick={() => setAboutOpen(true)}
             className="text-xs text-secondary hover:text-primary transition-colors"

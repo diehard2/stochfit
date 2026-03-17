@@ -116,10 +116,64 @@ export function ModelIndependentPanel() {
     });
   }, [boxes]);
 
-  // Clean up poll timer on unmount
+  // Start polling for fit updates. Extracted so doStart and the remount effect can share it.
+  const startPolling = useCallback((runDirectory: string, runDataFile: string) => {
+    const timer = setInterval(async () => {
+      let fitData: FitResult;
+      let saData: SAParams;
+      try {
+        [fitData, saData] = await Promise.all([
+          window.api.stochGetData() as Promise<FitResult>,
+          window.api.stochSAParams() as Promise<SAParams>,
+        ]);
+      } catch (e) {
+        console.error('[MI] poll error:', e);
+        return;
+      }
+      setResult(fitData);
+      setSAParams(saData);
+
+      const now = Date.now();
+      const elapsed = (now - prevTimeRef.current) / 1000;
+      if (elapsed > 0) {
+        setItPerSec(Math.round((fitData.iterationsCompleted - prevIterRef.current) / elapsed));
+      }
+      prevIterRef.current = fitData.iterationsCompleted;
+      prevTimeRef.current = now;
+
+      if (fitData.isFinished) {
+        clearInterval(timer);
+        setPollTimer(null);
+        await saveSession(runDirectory, runDataFile, fitData.iterationsCompleted);
+        setStatus('completed');
+      }
+    }, POLLING_INTERVAL_MS);
+
+    setPollTimer(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // On remount: if a fit was running when we switched away, restart polling.
   useEffect(() => {
-    return () => { if (pollTimer) clearInterval(pollTimer); };
-  }, [pollTimer]);
+    if (status === 'running' && !pollTimer && data) {
+      prevTimeRef.current = Date.now();
+      startPolling(
+        data.filePath.replace(/[^/\\]+$/, ''),
+        data.filePath,
+      );
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Clean up poll timer on unmount and null it in the store so remount detects it's gone.
+  useEffect(() => {
+    return () => {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        setPollTimer(null);
+      }
+    };
+  }, [pollTimer, setPollTimer]);
 
   // ── SA Fitting ─────────────────────────────────────────────────────────────
 
@@ -176,38 +230,7 @@ export function ModelIndependentPanel() {
       return;
     }
 
-    const timer = setInterval(async () => {
-      let fitData: FitResult;
-      let saData: SAParams;
-      try {
-        [fitData, saData] = await Promise.all([
-          window.api.stochGetData() as Promise<FitResult>,
-          window.api.stochSAParams() as Promise<SAParams>,
-        ]);
-      } catch (e) {
-        console.error('[MI] poll error:', e);
-        return;
-      }
-      setResult(fitData);
-      setSAParams(saData);
-
-      const now = Date.now();
-      const elapsed = (now - prevTimeRef.current) / 1000;
-      if (elapsed > 0) {
-        setItPerSec(Math.round((fitData.iterationsCompleted - prevIterRef.current) / elapsed));
-      }
-      prevIterRef.current = fitData.iterationsCompleted;
-      prevTimeRef.current = now;
-
-      if (fitData.isFinished) {
-        clearInterval(timer);
-        setPollTimer(null);
-        await saveSession(runDirectory, runDataFile, fitData.iterationsCompleted);
-        setStatus('completed');
-      }
-    }, POLLING_INTERVAL_MS);
-
-    setPollTimer(timer);
+    startPolling(runDirectory, runDataFile);
   }
 
   async function saveSession(directory: string, dataFile: string, iteration: number) {

@@ -261,19 +261,27 @@ set_target_properties(levmardll PROPERTIES
 target_link_libraries(levmardll PUBLIC stochfit_cpu levmar)
 
 # ── mirefl (console executable) ───────────────────────────────────────────────
+# Compile the three required source files directly — no stochfit_cpu, no OpenMP,
+# no CUDA.  On Windows CI (no GPU driver, vcomp140.dll not on PATH) any of those
+# dependencies crash the process before main() runs.  Single-threaded is fine
+# for a 10-iteration smoke test.
 add_executable(mirefl
     tests/MIRefl.cpp
+    src/stochfitdll/CEDP.cpp
+    src/stochfitdll/ParamVector.cpp
+    src/stochfitdll/ReflCalc.cpp
 )
-# CEDP and CReflCalc come from stochfit_cpu (which transitively brings OpenMP).
-# Linking stochfit_cpu (not stochfit_core) avoids pulling in the CUDA static
-# runtime initialiser, which crashes on systems without a GPU driver.
-target_include_directories(mirefl PRIVATE include include/stochfit)
-target_link_libraries(mirefl PRIVATE stochfit_cpu)
+target_include_directories(mirefl PRIVATE include include/stochfit src/stochfitdll)
+target_link_libraries(mirefl PRIVATE tl::expected)
 
 add_executable(stochfit_tests
-    tests/test_reflectivity.cpp)
-target_include_directories(stochfit_tests PRIVATE include include/stochfit)
-target_link_libraries(stochfit_tests PRIVATE stochfit_cpu GTest::gtest GTest::gtest_main)
+    tests/test_reflectivity.cpp
+    src/stochfitdll/CEDP.cpp
+    src/stochfitdll/ParamVector.cpp
+    src/stochfitdll/ReflCalc.cpp
+)
+target_include_directories(stochfit_tests PRIVATE include include/stochfit src/stochfitdll)
+target_link_libraries(stochfit_tests PRIVATE tl::expected GTest::gtest GTest::gtest_main)
 target_compile_features(stochfit_tests PRIVATE cxx_std_20)
 add_test(NAME stochfit_tests COMMAND stochfit_tests)
 

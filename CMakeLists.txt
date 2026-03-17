@@ -152,12 +152,6 @@ if(OpenMP_CXX_FOUND)
                 "/usr/local/opt/libomp/lib"
             NO_DEFAULT_PATH)
         if(LIBOMP_DYLIB)
-            add_custom_command(TARGET stochfit_dll POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${LIBOMP_DYLIB}"
-                "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/libomp.dylib"
-                COMMENT "Copying libomp.dylib to output directory"
-            )
             message(STATUS "Will bundle libomp from: ${LIBOMP_DYLIB}")
         else()
             message(WARNING "libomp.dylib not found — cannot bundle for redistribution")
@@ -204,6 +198,16 @@ set_target_properties(stochfit_dll PROPERTIES
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON)
 target_link_libraries(stochfit_dll PRIVATE stochfit_core)
+
+# Bundle libomp.dylib alongside the DLL so Electron can load it on macOS
+if(APPLE AND LIBOMP_DYLIB)
+    add_custom_command(TARGET stochfit_dll POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${LIBOMP_DYLIB}"
+        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/libomp.dylib"
+        COMMENT "Copying libomp.dylib to output directory"
+    )
+endif()
 
 # ── levmar (from vcpkg overlay port) ─────────────────────────────────────────
 # The port doesn't generate a CMake config file, so we create an imported

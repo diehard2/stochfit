@@ -118,12 +118,48 @@ jobs:
         shell: bash
 
       - name: Test (mirefl smoke test)
-        run: build/bin/mirefl
         if: runner.os != 'Windows'
+        run: |
+          TEST_RC=0
+          build/bin/mirefl 2>&1 | tee /tmp/test_out.txt || TEST_RC=$?
+          if [ "${TEST_RC}" != "0" ]; then
+            echo "## Smoke Test Failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            cat /tmp/test_out.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              BODY=$(printf '**Smoke test failure on %s**\n```\n%s\n```' "${{ runner.os }}" "$(cat /tmp/test_out.txt)")
+              gh pr comment "${{ github.event.pull_request.number }}" \
+                --repo "${{ github.repository }}" \
+                --body "${BODY}" || true
+            fi
+            exit "${TEST_RC}"
+          fi
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Test (mirefl smoke test — Windows)
-        run: build\bin\mirefl.exe
         if: runner.os == 'Windows'
+        run: |
+          TEST_RC=0
+          build/bin/mirefl.exe 2>&1 | tee /tmp/test_out.txt || TEST_RC=$?
+          if [ "${TEST_RC}" != "0" ]; then
+            echo "## Smoke Test Failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            cat /tmp/test_out.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              BODY=$(printf '**Smoke test failure on %s**\n```\n%s\n```' "${{ runner.os }}" "$(cat /tmp/test_out.txt)")
+              gh pr comment "${{ github.event.pull_request.number }}" \
+                --repo "${{ github.repository }}" \
+                --body "${BODY}" || true
+            fi
+            exit "${TEST_RC}"
+          fi
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

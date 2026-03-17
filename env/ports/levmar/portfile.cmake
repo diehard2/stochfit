@@ -10,6 +10,13 @@ vcpkg_extract_source_archive(
     PATCHES add-install.patch
 )
 
+# Fix: replace deprecated finite() with C99 isfinite() — finite() was removed
+# from the macOS SDK in Xcode 15+ / macOS 14+, causing implicit-declaration errors.
+# isfinite() is the ISO C99 standard replacement and works on all platforms.
+file(READ "${SOURCE_PATH}/compiler.h" _lm_compiler_h)
+string(REPLACE "#define LM_FINITE finite" "#define LM_FINITE isfinite" _lm_compiler_h "${_lm_compiler_h}")
+file(WRITE "${SOURCE_PATH}/compiler.h" "${_lm_compiler_h}")
+
 # Append clapack linkage — levmar's own LAPACK finding doesn't handle vcpkg's
 # clapack CONFIG package. We append rather than patch to avoid depending on
 # levmar's exact CMakeLists line numbers.

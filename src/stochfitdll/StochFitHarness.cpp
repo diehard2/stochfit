@@ -305,7 +305,7 @@ int StochFit::ProcessingGPU()
 	InitGpuData(sa_state, gpu_params, meas, edp_config);
 
 	auto gpu_info = detect_gpu();
-	int num_chains = std::min(gpu_info.max_chains, 64);
+	int num_chains = gpu_info.max_chains;
 
 	m_gpuRunner = GpuSARunner::create(m_gpuBackend);
 	if (!m_gpuRunner) {
@@ -319,10 +319,15 @@ int StochFit::ProcessingGPU()
 	auto last_update = std::chrono::steady_clock::now();
 	constexpr auto update_interval = std::chrono::seconds(2);
 
-	for (int done = 0; done < m_itotaliterations && !m_stop_requested.load(); done += batch_size) {
-		int this_batch = std::min(batch_size, m_itotaliterations - done);
+	// Scale total iterations so the displayed it/sec reflects total Parratt
+	// recursions (outer_iters × chains), making it comparable to the CPU counter.
+	int outer_total = m_itotaliterations;
+	m_itotaliterations = outer_total * num_chains;
+
+	for (int done = 0; done < outer_total && !m_stop_requested.load(); done += batch_size) {
+		int this_batch = std::min(batch_size, outer_total - done);
 		m_gpuRunner->run_batch(this_batch);
-		m_icurrentiteration = done + this_batch;
+		m_icurrentiteration = (done + this_batch) * num_chains;
 
 		auto now = std::chrono::steady_clock::now();
 		bool time_for_update = (now - last_update) >= update_interval;
@@ -331,35 +336,9 @@ int StochFit::ProcessingGPU()
 			GpuResultSummary result = m_gpuRunner->get_result();
 
 			m_dRoughness = static_cast<double>(result.best_roughness);
-			m_dChiSquare = static_cast<double>(result.best_chi_square);
 			m_dGoodnessOfFit = static_cast<double>(result.best_gof);
 
-			// Update EDP arrays for frontend
-			std::vector<float> edp_buf(m_irhocount);
-			m_gpuRunner->get_best_edp(edp_buf.data(), m_irhocount);
-			float edp_last = edp_buf[m_irhocount - 1];
-			for (int i = 0; i < m_irhocount; i++) {
-				Zinc[i] = i * m_cEDP.Get_Dz();
-				Rho[i] = (edp_last != 0.0f) ? static_cast<double>(edp_buf[i] / edp_last) : 0.0;
-			}
-
-			// Update reflectivity arrays for frontend
-			int refl_count = m_cRefl.m_idatapoints;
-			std::vector<float> refl_buf(refl_count);
-			m_gpuRunner->get_best_reflectivity(refl_buf.data(), refl_count);
-
-			// For GetData, we need Q values and reflectivity
-			// Use the measurement Q values directly
-			int out_count = std::min(m_irefldatacount, refl_count);
-			for (int i = 0; i < out_count; i++) {
-				Qinc[i] = static_cast<double>(m_fMeasQ[i]);
-				Refl[i] = static_cast<double>(refl_buf[i]);
-			}
-
-			m_bupdated = false;
-			last_update = now;
-
-			// Copy best params back to ParamVector for file writing
+			// Copy best params back to ParamVector
 			int rps = params->RealparamsSize();
 			for (int i = 0; i < rps && i < (int)(GPU_MAX_BOXES + 2); i++) {
 				if (i == 0)
@@ -377,16 +356,41 @@ int StochFit::ProcessingGPU()
 
 			m_SA->Set_Temp(1.0 / (double)result.best_temperature);
 			m_SA->Set_AveragefSTUN((double)result.best_avg_fstun);
+
+			// Regenerate EDP and reflectivity on CPU for display — same as
+			// UpdateFits(). This gives the correct z-offset (-40 Å) and
+			// fills the full interpolated Q-array (tarraysize ≈ 3000 pts).
+			m_cEDP.GenerateEDP(params);
+			m_cEDP.WriteOutputFile(fnrho);
+			m_cRefl.ParamsRF(&m_cEDP, fnrf);
+			m_dChiSquare = m_cRefl.m_dChiSquare;
+
+			for (int i = 0; i < m_irhocount; i++) {
+				Zinc[i] = i * m_cEDP.Get_Dz() - 40.0;
+				Rho[i] = m_cEDP.m_EDP[i].real() / m_cEDP.m_EDP[m_cEDP.Get_EDPPointCount()-1].real();
+			}
+
+			for (int i = 0; i < m_irefldatacount; i++) {
+				if (m_cRefl.m_dQSpread > 0.0) {
+					Refl[i] = m_cRefl.reflpt[i];
+					Qinc[i] = m_cRefl.xi[i];
+				} else {
+					Refl[i] = m_cRefl.dataout[i];
+					Qinc[i] = m_cRefl.qarray[i];
+				}
+			}
+
+			m_bupdated = false;
+			last_update = now;
 		}
 	}
 
-	// Final update
+	// Final update — params already synced in last in-loop update;
+	// regenerate once more to ensure output files and display arrays are current.
 	GpuResultSummary result = m_gpuRunner->get_result();
 	m_dRoughness = (double)result.best_roughness;
-	m_dChiSquare = (double)result.best_chi_square;
 	m_dGoodnessOfFit = (double)result.best_gof;
 
-	// Copy final params back
 	int rps = params->RealparamsSize();
 	for (int i = 0; i < rps && i < (int)(GPU_MAX_BOXES + 2); i++) {
 		if (i == 0)
@@ -397,6 +401,30 @@ int StochFit::ProcessingGPU()
 			params->SetMutatableParameter(i - 1, result.best_params[i]);
 	}
 	params->setroughness(result.best_roughness);
+	if (params->Get_UseSurfAbs())
+		params->setSurfAbs(result.best_surf_abs);
+	if (params->Get_FixImpNorm())
+		params->setImpNorm(result.best_imp_norm);
+
+	m_cEDP.GenerateEDP(params);
+	m_cEDP.WriteOutputFile(fnrho);
+	m_cRefl.ParamsRF(&m_cEDP, fnrf);
+	m_dChiSquare = m_cRefl.m_dChiSquare;
+
+	for (int i = 0; i < m_irhocount; i++) {
+		Zinc[i] = i * m_cEDP.Get_Dz() - 40.0;
+		Rho[i] = m_cEDP.m_EDP[i].real() / m_cEDP.m_EDP[m_cEDP.Get_EDPPointCount()-1].real();
+	}
+
+	for (int i = 0; i < m_irefldatacount; i++) {
+		if (m_cRefl.m_dQSpread > 0.0) {
+			Refl[i] = m_cRefl.reflpt[i];
+			Qinc[i] = m_cRefl.xi[i];
+		} else {
+			Refl[i] = m_cRefl.dataout[i];
+			Qinc[i] = m_cRefl.qarray[i];
+		}
+	}
 
 	m_gpuRunner.reset();
 	return 0;

@@ -14,7 +14,18 @@
 #include <cstdio>
 #include <cmath>
 #include <algorithm>
-#include <atomic>
+
+// Q-spread weights as device constant (GPU_QSPREAD_WEIGHTS in gpu_types.h is
+// constexpr host-only; CUDA device code needs __constant__ for array access)
+__constant__ float kQSpreadWeights[13] = {
+    1.000f,
+    0.056f, 0.056f,
+    0.135f, 0.135f,
+    0.278f, 0.278f,
+    0.487f, 0.487f,
+    0.726f, 0.726f,
+    0.923f, 0.923f,
+};
 
 // ── Complex float helpers ──────────────────────────────────────────────────
 
@@ -66,6 +77,69 @@ __device__ __forceinline__ cmat2 cmat2_mul(cmat2 L, cmat2 R) {
         cf_add(cf_mul(L.c, R.a), cf_mul(L.d, R.c)),
         cf_add(cf_mul(L.c, R.b), cf_mul(L.d, R.d)),
     };
+}
+
+// ── Single Q-point Parratt reflectivity (for use inside persistent kernel) ─
+
+__device__ float device_parratt_single(
+    const float* dedp, int num_layers,
+    float sintheta_val, float sinsq_val,
+    float k0, float dz)
+{
+    float dedp0 = dedp[0];
+    float indexsup_re = 1.0f - dedp0 / 2.0f;
+    float indexsup2_re = indexsup_re * indexsup_re;
+    cfloat length_mult = cf_make(0.0f, -2.0f * dz);
+
+    int low_offset = 0;
+    for (int i = 0; i < num_layers; i++) {
+        if (dedp[i] == dedp0) low_offset++;
+        else break;
+    }
+    int high_offset = num_layers;
+    float dedp_last = dedp[num_layers - 1];
+    for (int i = num_layers - 1; i > 0; i--) {
+        if (dedp[i] == dedp_last) high_offset = i;
+        else break;
+    }
+
+    cfloat kk_sup = cf_make(k0 * indexsup_re * sintheta_val, 0.0f);
+    cfloat kk_low_arg = cf_make(indexsup2_re * sinsq_val - dedp[1] + dedp0, 0.0f);
+    cfloat kk_low = cf_scale(cf_sqrt(kk_low_arg), k0);
+    cfloat kk_high_arg = cf_make(indexsup2_re * sinsq_val - dedp_last + dedp0, 0.0f);
+    cfloat kk_high = cf_scale(cf_sqrt(kk_high_arg), k0);
+    cfloat ak_low = cf_exp(cf_mul(length_mult, kk_low));
+    cfloat ak_high = cf_exp(cf_mul(length_mult, kk_high));
+
+    cmat2 M = cmat2_identity();
+    cfloat kk_prev = kk_sup;
+
+    for (int i = 0; i < num_layers - 1; i++) {
+        cfloat kk_cur;
+        if (i + 1 <= low_offset) kk_cur = kk_low;
+        else if (i + 1 >= high_offset) kk_cur = kk_high;
+        else {
+            cfloat arg = cf_make(indexsup2_re * sinsq_val - dedp[i + 1] + dedp0, 0.0f);
+            kk_cur = cf_scale(cf_sqrt(arg), k0);
+        }
+
+        cfloat ak_i;
+        if (i == 0 || i == num_layers - 1) ak_i = cf_make(1.0f, 0.0f);
+        else if (i <= low_offset) ak_i = ak_low;
+        else if (i >= high_offset) ak_i = ak_high;
+        else ak_i = cf_exp(cf_mul(length_mult, kk_prev));
+
+        cfloat sum = cf_add(kk_prev, kk_cur);
+        cfloat diff = cf_sub(kk_prev, kk_cur);
+        cfloat rj_i = cf_abs2(sum) > 1e-30f ? cf_div(diff, sum) : cf_make(0.0f, 0.0f);
+
+        cmat2 layer = {ak_i, cf_mul(ak_i, rj_i), rj_i, cf_make(1.0f, 0.0f)};
+        M = cmat2_mul(M, layer);
+        kk_prev = kk_cur;
+    }
+
+    cfloat R0 = cf_div(M.b, M.d);
+    return cf_abs2(R0);
 }
 
 // ── Device-side SA helper functions ────────────────────────────────────────
@@ -547,7 +621,6 @@ __global__ void kernel_sa_step(
 __global__ void kernel_find_best(
     const GpuSAState* __restrict__ chain_states,
     const GpuParams* __restrict__ chain_params,
-    const float* __restrict__ chain_chi2,
     GpuResultSummary* __restrict__ result,
     int num_chains)
 {
@@ -567,7 +640,7 @@ __global__ void kernel_find_best(
     result->best_chain = best_idx;
     result->best_roughness = chain_params[best_idx].roughness;
     result->best_gof = chain_states[best_idx].best_solution;
-    result->best_chi_square = chain_chi2[best_idx];
+    result->best_chi_square = 0.0f; // recomputed on CPU for double precision
     result->best_imp_norm = chain_params[best_idx].imp_norm;
     result->best_surf_abs = chain_params[best_idx].surf_abs;
     result->best_temperature = chain_states[best_idx].temperature;
@@ -584,6 +657,213 @@ __global__ void kernel_init_rng(curandState* states, unsigned long long seed, in
     int id = blockIdx.x * blockDim.x + threadIdx.x;
     if (id < n)
         curand_init(seed, id, 0, &states[id]);
+}
+
+// ── Persistent SA kernel ──────────────────────────────────────────────────
+// One thread block per chain.  All SA iterations run inside the kernel,
+// eliminating per-iteration kernel launch overhead and keeping the EDP
+// profile in fast shared memory.
+
+__global__ void kernel_sa_persistent(
+    GpuSAState* __restrict__ chain_states,
+    GpuParams* __restrict__ chain_params,
+    const GpuEDPConfig edp,
+    const GpuMeasurement meas,
+    curandState* __restrict__ rng_states,
+    volatile int* __restrict__ cancel_flag,
+    int num_iterations)
+{
+    const int chain_id = blockIdx.x;
+    const int tid = threadIdx.x;
+    const int nthreads = blockDim.x;
+    const int nl = edp.num_layers;
+    const int nd = meas.num_datapoints;
+
+    // Dynamic shared memory: s_dedp[nl] | s_rho[66] | s_gof[nthreads] | s_chi2[nthreads]
+    extern __shared__ float smem[];
+    float* s_dedp = smem;
+    float* s_rho  = s_dedp + nl;
+    float* s_gof  = s_rho + (GPU_MAX_BOXES + 2);
+    float* s_chi2 = s_gof + nthreads;
+
+    __shared__ GpuParams  s_backup;
+    __shared__ GpuSAState s_state;
+    __shared__ float  s_norm;
+    __shared__ int    s_xr_fail;
+    __shared__ int    s_cancel;
+
+    if (tid == 0) {
+        s_state  = chain_states[chain_id];
+        s_cancel = 0;
+    }
+    __syncthreads();
+
+    GpuParams* params = &chain_params[chain_id];
+    const float k0 = edp.k0;
+    const float dz = edp.dz;
+    const float* sin_arr   = meas.use_qspread ? meas.qspread_sintheta  : meas.sintheta;
+    const float* sinsq_arr = meas.use_qspread ? meas.qspread_sin2theta : meas.sinsquaredtheta;
+
+    curandState local_rng;
+    if (tid == 0) local_rng = rng_states[chain_id];
+
+    for (int iter = 0; iter < num_iterations; iter++) {
+
+        // ── Cancellation check (every 1024 iterations) ──────────────
+        if ((iter & 0x3FF) == 0) {
+            if (tid == 0) s_cancel = *cancel_flag;
+            __syncthreads();
+            if (s_cancel) break;
+        }
+
+        // ── Phase 0: backup + mutate (thread 0) ─────────────────────
+        if (tid == 0) {
+            s_backup = *params;
+            device_mutate(params, &local_rng, &s_state);
+        }
+        __syncthreads();
+
+        // ── Phase 1: generate EDP → shared memory ───────────────────
+        float rough = params->roughness;
+        if (rough < 1e-6f) rough = 1e-6f;
+        float inv_rough = 1.0f / (rough * sqrtf(2.0f));
+        float supersld  = params->sld_values[0] * edp.rho;
+        int   refllayers = params->real_params_size - 1;
+
+        for (int k = tid; k < refllayers; k += nthreads)
+            s_rho[k] = edp.rho * (params->sld_values[k + 1] - params->sld_values[k]) * 0.5f;
+        __syncthreads();
+
+        for (int idx = tid; idx < nl; idx += nthreads) {
+            float val = supersld;
+            for (int k = 0; k < refllayers; k++) {
+                float dist = (edp.ed_spacing[idx] - edp.dist_array[k]) * inv_rough;
+                if (dist > 6.0f)       val += s_rho[k] * 2.0f;
+                else if (dist > -6.0f) val += s_rho[k] * (1.0f + erff(dist));
+            }
+            s_dedp[idx] = 2.0f * val;
+        }
+        __syncthreads();
+
+        // ── XR density check ─────────────────────────────────────────
+        if (meas.xr_only) {
+            if (tid == 0) {
+                s_xr_fail = 0;
+                for (int i = 0; i < nl; i++) {
+                    if (s_dedp[i] < 0.0f) { s_xr_fail = 1; break; }
+                }
+                if (s_xr_fail) *params = s_backup;
+            }
+            __syncthreads();
+            if (s_xr_fail) continue;
+        }
+
+        // ── Phase 2: normalization factor (force_norm) ───────────────
+        if (meas.force_norm) {
+            if (tid == 0) {
+                float r0;
+                if (meas.use_qspread) {
+                    r0 = 0.0f;
+                    for (int j = 0; j < 13; j++)
+                        r0 += kQSpreadWeights[j] *
+                              device_parratt_single(s_dedp, nl,
+                                  sin_arr[j], sinsq_arr[j], k0, dz);
+                    r0 /= GPU_QSPREAD_NORM;
+                } else {
+                    r0 = device_parratt_single(
+                        s_dedp, nl, sin_arr[0], sinsq_arr[0], k0, dz);
+                }
+                s_norm = (r0 > 1e-30f) ? (1.0f / r0) : 1.0f;
+            }
+            __syncthreads();
+        }
+
+        float norm = meas.force_norm ? s_norm : 1.0f;
+        if (meas.imp_norm) norm *= params->imp_norm;
+
+        // ── Phase 3: Parratt + objective (fused, parallel over Q) ────
+        float p_gof  = 0.0f;
+        float p_chi2 = 0.0f;
+        int   obj    = meas.objective_function;
+
+        for (int qi = tid; qi < nd; qi += nthreads) {
+            float ri;
+            if (meas.use_qspread) {
+                ri = 0.0f;
+                for (int j = 0; j < 13; j++) {
+                    int qidx = qi * 13 + j;
+                    ri += kQSpreadWeights[j] *
+                          device_parratt_single(s_dedp, nl,
+                              sin_arr[qidx], sinsq_arr[qidx], k0, dz);
+                }
+                ri /= GPU_QSPREAD_NORM;
+            } else {
+                ri = device_parratt_single(
+                    s_dedp, nl, sin_arr[qi], sinsq_arr[qi], k0, dz);
+            }
+            ri *= norm;
+
+            float yi  = meas.refl_values[qi];
+            float eyi = meas.refl_errors[qi];
+
+            if (obj == 0) {
+                float d = logf(yi) - logf(ri);
+                p_gof += d * d;
+            } else if (obj == 1) {
+                float ratio = yi / ri;
+                if (ratio < 1.0f) ratio = 1.0f / ratio;
+                p_gof += (1.0f - ratio) * (1.0f - ratio);
+            } else if (obj == 2) {
+                float d = logf(yi) - logf(ri);
+                p_gof += d * d / fabsf(logf(eyi));
+            } else {
+                float ratio = yi / ri;
+                if (ratio < 1.0f) ratio = 1.0f / ratio;
+                float em = (yi / eyi) * (yi / eyi);
+                p_gof += (1.0f - ratio) * (1.0f - ratio) * em;
+            }
+
+            float diff = yi - ri;
+            p_chi2 += (diff * diff) / (eyi * eyi);
+        }
+
+        // ── Parallel reduction ───────────────────────────────────────
+        s_gof[tid]  = p_gof;
+        s_chi2[tid] = p_chi2;
+        __syncthreads();
+        for (int s = nthreads / 2; s > 0; s >>= 1) {
+            if (tid < s) {
+                s_gof[tid]  += s_gof[tid + s];
+                s_chi2[tid] += s_chi2[tid + s];
+            }
+            __syncthreads();
+        }
+
+        // ── Phase 4: accept / reject (thread 0) ─────────────────────
+        if (tid == 0) {
+            float new_energy = s_gof[0] / (float)(nd + 1);
+
+            bool accepted = false;
+            if (s_state.algorithm == 0)
+                accepted = device_evaluate_greedy(&s_state, new_energy);
+            else if (s_state.algorithm == 1)
+                accepted = device_evaluate_sa(&s_state, new_energy, &local_rng);
+            else
+                accepted = device_evaluate_stun(&s_state, new_energy, &local_rng);
+
+            if (accepted)
+                s_state.current_energy = new_energy;
+            else
+                *params = s_backup;
+        }
+        __syncthreads();
+    }
+
+    // ── Write back final state ───────────────────────────────────────
+    if (tid == 0) {
+        chain_states[chain_id] = s_state;
+        rng_states[chain_id]   = local_rng;
+    }
 }
 
 // ── CUDA error checking ───────────────────────────────────────────────────
@@ -625,8 +905,10 @@ private:
     int m_num_datapoints = 0;
     int m_num_q_per_call = 0;
     bool m_use_qspread = false;
-    std::atomic<bool> m_cancelled{false};
     bool m_finished = false;
+
+    // Cancel flag: managed memory visible to both host and device
+    int* m_cancel_flag = nullptr;
 
     // Device memory
     GpuSAState* d_chain_states = nullptr;
@@ -684,10 +966,12 @@ void CudaSARunner::cleanup() {
     cudaFree(d_edp_dist);
     cudaFree(d_result);
     if (h_result) cudaFreeHost(h_result);
+    if (m_cancel_flag) cudaFree(m_cancel_flag);
 
     d_chain_states = nullptr;
     d_chain_params = nullptr;
     h_result = nullptr;
+    m_cancel_flag = nullptr;
 }
 
 void CudaSARunner::initialize(
@@ -704,8 +988,11 @@ void CudaSARunner::initialize(
     m_num_datapoints = measurement.num_datapoints;
     m_use_qspread = measurement.use_qspread != 0;
     m_num_q_per_call = m_use_qspread ? m_num_datapoints * 13 : m_num_datapoints;
-    m_cancelled = false;
     m_finished = false;
+
+    // Managed-memory cancel flag (visible to both host and device)
+    CUDA_CHECK(cudaMallocManaged(&m_cancel_flag, sizeof(int)));
+    *m_cancel_flag = 0;
 
     // Allocate per-chain state arrays
     CUDA_CHECK(cudaMalloc(&d_chain_states, num_chains * sizeof(GpuSAState)));
@@ -782,66 +1069,20 @@ void CudaSARunner::initialize(
 void CudaSARunner::run_batch(int iterations) {
     int nc = m_num_chains;
     int nl = m_num_layers;
-    int nq = m_num_q_per_call;
-    int nd = m_num_datapoints;
+    int nthreads = 256;
 
-    // Kernel launch configurations
-    int edp_threads = 256;
-    int edp_blocks_x = (nl + edp_threads - 1) / edp_threads;
-    dim3 edp_grid(edp_blocks_x, nc);
+    // Dynamic shared memory: s_dedp[nl] + s_rho[66] + s_gof[256] + s_chi2[256]
+    size_t smem_bytes = (nl + (GPU_MAX_BOXES + 2) + nthreads + nthreads) * sizeof(float);
 
-    int parratt_threads = 256;
-    int parratt_blocks_x = (nq + parratt_threads - 1) / parratt_threads;
-    dim3 parratt_grid(parratt_blocks_x, nc);
-
-    int sa_blocks = (nc + 255) / 256;
-    int sa_threads = std::min(nc, 256);
-
-    dim3 obj_grid(nc);
-    int obj_threads = 256;
-
-    for (int iter = 0; iter < iterations && !m_cancelled.load(std::memory_order_relaxed); iter++) {
-        // Phase 0: Backup params and mutate
-        kernel_sa_step<<<sa_blocks, sa_threads>>>(
-            d_chain_states, d_chain_params, d_chain_params_backup,
-            d_chain_gof, d_chain_chi2, d_rng_states, nc, 0);
-
-        // Phase 1: Generate EDP
-        kernel_generate_edp<<<edp_grid, edp_threads>>>(
-            d_edp_struct, d_chain_params, d_chain_edp, d_chain_dedp,
-            d_chain_rho_arr, nc);
-
-        // Phase 2: Parratt reflectivity
-        if (m_use_qspread) {
-            // Compute reflectivity at all 13*nd Q-points
-            kernel_parratt<<<parratt_grid, parratt_threads>>>(
-                d_edp_struct, d_meas_struct, d_chain_params, d_chain_dedp,
-                d_chain_qspread_refl, nc, nq);
-
-            // Q-smearing reduction
-            int qsmear_blocks_x = (nd + 255) / 256;
-            dim3 qsmear_grid(qsmear_blocks_x, nc);
-            kernel_qsmear<<<qsmear_grid, 256>>>(
-                d_chain_qspread_refl, d_chain_refl, nd, nc);
-        } else {
-            kernel_parratt<<<parratt_grid, parratt_threads>>>(
-                d_edp_struct, d_meas_struct, d_chain_params, d_chain_dedp,
-                d_chain_refl, nc, nq);
-        }
-
-        // Phase 3: Objective function
-        kernel_objective<<<obj_grid, obj_threads>>>(
-            d_meas_struct, d_chain_params, d_chain_refl,
-            d_chain_gof, d_chain_chi2, d_chain_edp, nl, nc);
-
-        // Phase 4: Accept/reject
-        kernel_sa_step<<<sa_blocks, sa_threads>>>(
-            d_chain_states, d_chain_params, d_chain_params_backup,
-            d_chain_gof, d_chain_chi2, d_rng_states, nc, 1);
-    }
+    // One block per chain — all iterations run inside the kernel
+    kernel_sa_persistent<<<nc, nthreads, smem_bytes>>>(
+        d_chain_states, d_chain_params,
+        d_edp_struct, d_meas_struct,
+        d_rng_states, m_cancel_flag,
+        iterations);
 
     // Find global best across all chains
-    kernel_find_best<<<1, 1>>>(d_chain_states, d_chain_params, d_chain_chi2, d_result, nc);
+    kernel_find_best<<<1, 1>>>(d_chain_states, d_chain_params, d_result, nc);
 
     // Copy result to pinned host memory
     CUDA_CHECK(cudaMemcpy(h_result, d_result, sizeof(GpuResultSummary), cudaMemcpyDeviceToHost));
@@ -849,7 +1090,7 @@ void CudaSARunner::run_batch(int iterations) {
 }
 
 void CudaSARunner::cancel() {
-    m_cancelled.store(true, std::memory_order_relaxed);
+    if (m_cancel_flag) *m_cancel_flag = 1;
 }
 
 GpuResultSummary CudaSARunner::get_result() const {

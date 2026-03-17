@@ -31,8 +31,8 @@ GpuInfo detect_gpu()
             info.compute_capability_major = prop.major;
             info.compute_capability_minor = prop.minor;
             info.sm_count = prop.multiProcessorCount;
-            // Heuristic: 2 chains per SM, capped at 128
-            info.max_chains = std::min(prop.multiProcessorCount * 2, 128);
+            // Heuristic: 4 chains per SM for persistent-kernel occupancy, capped at 512
+            info.max_chains = std::min(prop.multiProcessorCount * 4, 512);
             return info;
         } else {
             fprintf(stderr, "[GPU] Compute %d.%d < 7.5 required, GPU disabled\n", prop.major, prop.minor);

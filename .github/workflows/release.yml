@@ -31,6 +31,11 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install ninja libomp
 
+      - name: Setup dotnet (enables vcpkg NuGet binary cache on all platforms)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0'
+
       - name: Install Ninja (Windows)
         if: runner.os == 'Windows'
         uses: seanmiddleditch/gha-setup-ninja@v5
@@ -51,9 +56,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build/vcpkg_installed
-          key: vcpkg-installed-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'env/vcpkg-version.txt') }}
-          restore-keys: |
-            vcpkg-installed-${{ runner.os }}-
+          key: vcpkg-installed-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'env/vcpkg-version.txt', 'env/ports/**') }}
 
       - name: Configure
         env:

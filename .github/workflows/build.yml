@@ -32,6 +32,11 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install ninja libomp
 
+      - name: Setup dotnet (enables vcpkg NuGet binary cache on all platforms)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0'
+
       - name: Install Ninja (Windows)
         if: runner.os == 'Windows'
         uses: seanmiddleditch/gha-setup-ninja@v5
@@ -58,19 +63,32 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build/vcpkg_installed
-          key: vcpkg-installed-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'env/vcpkg-version.txt') }}
-          restore-keys: |
-            vcpkg-installed-${{ runner.os }}-
+          key: vcpkg-installed-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'env/vcpkg-version.txt', 'env/ports/**') }}
 
       - name: Configure
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MACOSX_DEPLOYMENT_TARGET: "14.0"
         run: |
+          CFG_RC=0
           if [ "${{ runner.os }}" == "Windows" ]; then
-            cmake --preset windows
+            cmake --preset windows 2>&1 | tee /tmp/cfg_out.txt || CFG_RC=$?
           else
-            cmake --preset default
+            cmake --preset default 2>&1 | tee /tmp/cfg_out.txt || CFG_RC=$?
+          fi
+          if [ "${CFG_RC}" != "0" ]; then
+            echo "## Configure Failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            tail -100 /tmp/cfg_out.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              BODY=$(printf '**Configure failure on %s**\n```\n%s\n```' "${{ runner.os }}" "$(tail -80 /tmp/cfg_out.txt)")
+              gh pr comment "${{ github.event.pull_request.number }}" \
+                --repo "${{ github.repository }}" \
+                --body "${BODY}" || true
+            fi
+            exit "${CFG_RC}"
           fi
         shell: bash
 

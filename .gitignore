@@ -16,6 +16,7 @@ obj/
 
 # CMake / vcpkg (build/ already listed above covers vcpkg inside build/)
 vcpkg_installed/
+compile_commands.json
 
 # Electron GUI — generated artifacts (node_modules must stay next to package.json per npm convention)
 gui/node_modules/

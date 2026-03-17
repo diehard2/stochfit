@@ -119,22 +119,18 @@ if(STOCHFIT_USE_METAL AND APPLE)
     endif()
 endif()
 
-# ── stochfit_core (static lib — StochFitdll sources) ──────────────────────────
+# ── stochfit_core (static lib — implementation, no FFI exports) ───────────────
 add_library(stochfit_core STATIC
     src/stochfitdll/CEDP.cpp
     src/stochfitdll/ParamVector.cpp
     src/stochfitdll/ReflCalc.cpp
     src/stochfitdll/SA_Dispatcher.cpp
     src/stochfitdll/SimulatedAnnealing.cpp
-    src/stochfitdll/StochFitDll.cpp
     src/stochfitdll/StochFitHarness.cpp
 )
 target_include_directories(stochfit_core
     PUBLIC include
     PRIVATE include/stochfit/stochfitdll src/stochfitdll)
-set_target_properties(stochfit_core PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN ON)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(stochfit_core PUBLIC OpenMP::OpenMP_CXX)
     
@@ -149,7 +145,7 @@ if(OpenMP_CXX_FOUND)
                 "/usr/local/opt/libomp/lib"
             NO_DEFAULT_PATH)
         if(LIBOMP_DYLIB)
-            add_custom_command(TARGET stochfit_core POST_BUILD
+            add_custom_command(TARGET stochfit_dll POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "${LIBOMP_DYLIB}"
                 "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/libomp.dylib"
@@ -190,25 +186,42 @@ if(STOCHFIT_HAS_METAL)
     target_link_libraries(stochfit_core PUBLIC ${METAL_FRAMEWORK} ${FOUNDATION_FRAMEWORK})
 endif()
 
-# ── levmar (static lib — pure C Lourakis library) ─────────────────────────────
-# Axb_core.c, lm_core.c, etc. are #include'd by the non-_core files — do NOT
-# add them as compilation units.
-add_library(levmar STATIC
-    src/levmar/Axb.c
-    src/levmar/lm.c
-    src/levmar/lmbc.c
-    src/levmar/lmblec.c
-    src/levmar/lmlec.c
-    src/levmar/misc.c
+# ── stochfit_dll (shared lib — FFI exports only, loaded by Electron) ──────────
+add_library(stochfit_dll SHARED
+    src/stochfitdll/StochFitDll.cpp
 )
-target_compile_definitions(levmar PRIVATE HAVE_LAPACK)
-target_include_directories(levmar
-    PUBLIC include
-    PRIVATE include/stochfit/levmar)
-target_link_libraries(levmar PRIVATE ${LAPACK_LIBRARIES})
+target_include_directories(stochfit_dll
+    PRIVATE include/stochfit/stochfitdll src/stochfitdll)
+set_target_properties(stochfit_dll PROPERTIES
+    OUTPUT_NAME stochfit
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON)
+target_link_libraries(stochfit_dll PRIVATE stochfit_core)
 
-# ── levmardll (static lib) ────────────────────────────────────────────────────
-add_library(levmardll STATIC
+# ── levmar (from vcpkg overlay port) ─────────────────────────────────────────
+# The port doesn't generate a CMake config file, so we create an imported
+# target manually from the vcpkg-installed artifacts.
+find_path(LEVMAR_INCLUDE_DIR levmar.h PATH_SUFFIXES levmar REQUIRED)
+find_library(LEVMAR_LIBRARY_RELEASE NAMES levmar
+    PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib"
+    NO_DEFAULT_PATH REQUIRED)
+find_library(LEVMAR_LIBRARY_DEBUG NAMES levmar
+    PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib"
+    NO_DEFAULT_PATH)
+
+add_library(levmar STATIC IMPORTED GLOBAL)
+set_target_properties(levmar PROPERTIES
+    IMPORTED_LOCATION           "${LEVMAR_LIBRARY_RELEASE}"
+    IMPORTED_LOCATION_RELEASE   "${LEVMAR_LIBRARY_RELEASE}"
+    INTERFACE_INCLUDE_DIRECTORIES "${LEVMAR_INCLUDE_DIR}"
+    INTERFACE_LINK_LIBRARIES    "${LAPACK_LIBRARIES}"
+)
+if(LEVMAR_LIBRARY_DEBUG)
+    set_target_properties(levmar PROPERTIES IMPORTED_LOCATION_DEBUG "${LEVMAR_LIBRARY_DEBUG}")
+endif()
+
+# ── levmardll (shared lib) ────────────────────────────────────────────────────
+add_library(levmardll SHARED
     src/levmardll/FastReflCalc.cpp
     src/levmardll/LMRoutines.cpp
     src/levmardll/LevMardll.cpp
@@ -217,41 +230,21 @@ add_library(levmardll STATIC
 )
 target_include_directories(levmardll
     PUBLIC include
-    PRIVATE include/stochfit/levmardll include/stochfit/levmar)
+    PRIVATE include/stochfit/levmardll)
 set_target_properties(levmardll PROPERTIES
+    OUTPUT_NAME levmardll
     CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN ON
-    ARCHIVE_OUTPUT_NAME levmardll_core)
+    VISIBILITY_INLINES_HIDDEN ON)
 target_link_libraries(levmardll PUBLIC stochfit_core levmar)
 
 # ── mirefl (console executable) ───────────────────────────────────────────────
 add_executable(mirefl
-    src/mirefl/MIRefl.cpp
+    tests/MIRefl.cpp
 )
 # CEDP and CReflCalc come from stochfit_core (which transitively brings OpenMP).
-# src/mirefl is on the include path for MDParamVec.h / targetver.h.
 # include/stochfit/stochfitdll resolves the bare "CEDP.h" / "ReflCalc.h" includes.
-target_include_directories(mirefl PRIVATE src/mirefl include include/stochfit/stochfitdll)
+target_include_directories(mirefl PRIVATE include include/stochfit/stochfitdll)
 target_link_libraries(mirefl PRIVATE stochfit_core)
-
-# ── Shared library shims ───────────────────────────────────────────────────────
-add_library(stochfit_shared SHARED src/shim/stochfit_shim.cpp)
-set_target_properties(stochfit_shared PROPERTIES
-    OUTPUT_NAME stochfit
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN ON)
-target_include_directories(stochfit_shared PRIVATE include)
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_options(stochfit_shared PRIVATE
-        -Wl,--whole-archive $<TARGET_FILE:stochfit_core> -Wl,--no-whole-archive)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    target_link_options(stochfit_shared PRIVATE
-        -Wl,-force_load,$<TARGET_FILE:stochfit_core>)
-elseif(MSVC)
-    target_link_options(stochfit_shared PRIVATE
-        /WHOLEARCHIVE:$<TARGET_FILE:stochfit_core>)
-endif()
-target_link_libraries(stochfit_shared PRIVATE stochfit_core)
 
 add_executable(stochfit_tests
     tests/test_reflectivity.cpp)
@@ -259,24 +252,6 @@ target_include_directories(stochfit_tests PRIVATE include include/stochfit/stoch
 target_link_libraries(stochfit_tests PRIVATE stochfit_core GTest::gtest GTest::gtest_main)
 target_compile_features(stochfit_tests PRIVATE cxx_std_20)
 add_test(NAME stochfit_tests COMMAND stochfit_tests)
-
-add_library(levmardll_shared SHARED src/shim/levmardll_shim.cpp)
-set_target_properties(levmardll_shared PROPERTIES
-    OUTPUT_NAME levmardll
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN ON)
-target_include_directories(levmardll_shared PRIVATE include)
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_options(levmardll_shared PRIVATE
-        -Wl,--whole-archive $<TARGET_FILE:levmardll> -Wl,--no-whole-archive)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    target_link_options(levmardll_shared PRIVATE
-        -Wl,-force_load,$<TARGET_FILE:levmardll>)
-elseif(MSVC)
-    target_link_options(levmardll_shared PRIVATE
-        /WHOLEARCHIVE:$<TARGET_FILE:levmardll>)
-endif()
-target_link_libraries(levmardll_shared PRIVATE levmardll)
 
 # ── compile_commands.json ─────────────────────────────────────────────────────
 # Copy to build/ so clangd always finds it regardless of active config (Debug/Release)
@@ -317,8 +292,8 @@ if(NPM)
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/gui
         DEPENDS
             ${CMAKE_SOURCE_DIR}/gui/node_modules/.package-lock.json
-            stochfit_shared
-            levmardll_shared
+            stochfit_dll
+            levmardll
         COMMENT "Packaging Electron GUI → build/electron/"
         VERBATIM
     )

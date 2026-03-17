@@ -2,8 +2,8 @@
   "name": "stochfit",
   "version-string": "1.0.0",
   "dependencies": [
-    "clapack",
     "gtest",
+    "levmar",
     {
       "name": "cuda",
       "platform": "!osx"

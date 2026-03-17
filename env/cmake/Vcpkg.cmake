@@ -6,7 +6,7 @@
 file(READ "${CMAKE_CURRENT_LIST_DIR}/../vcpkg-version.txt" VCPKG_VERSION)
 string(STRIP "${VCPKG_VERSION}" VCPKG_VERSION)
 
-set(VCPKG_DIR "${CMAKE_BINARY_DIR}/vcpkg")
+set(VCPKG_DIR "${CMAKE_SOURCE_DIR}/build/vcpkg")
 # Stamp lives inside VCPKG_DIR so it is included when build/vcpkg is cached
 set(VCPKG_STAMP "${VCPKG_DIR}/.bootstrap-stamp")
 
@@ -82,10 +82,14 @@ else()
     endif()
 endif()
 
+# Overlay ports — must be set before the toolchain is loaded
+set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/../ports"
+    CACHE STRING "vcpkg overlay ports" FORCE)
+
 # Wire vcpkg toolchain and installed dir into the build tree
 set(CMAKE_TOOLCHAIN_FILE "${VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake"
     CACHE STRING "vcpkg toolchain" FORCE)
-set(VCPKG_INSTALLED_DIR "${CMAKE_BINARY_DIR}/vcpkg_installed"
+set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/build/vcpkg_installed"
     CACHE STRING "vcpkg install dir" FORCE)
 
 # ── Optional GitHub Packages binary cache ─────────────────────────────────────

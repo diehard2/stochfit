@@ -126,21 +126,24 @@ if(STOCHFIT_USE_METAL AND APPLE)
     endif()
 endif()
 
-# ── stochfit_core (static lib — implementation, no FFI exports) ───────────────
-add_library(stochfit_core STATIC
+# ── stochfit_cpu (static lib — CPU only, no GPU/CUDA init) ────────────────────
+# Used by mirefl, stochfit_tests, and levmardll.  Deliberately excludes
+# StochFitHarness and all GPU sources so these binaries don't pull in the
+# CUDA static-runtime initialiser (which crashes at startup on systems
+# with no GPU driver, e.g. the GitHub Actions Windows runner).
+add_library(stochfit_cpu STATIC
     src/stochfitdll/CEDP.cpp
     src/stochfitdll/ParamVector.cpp
     src/stochfitdll/ReflCalc.cpp
     src/stochfitdll/SA_Dispatcher.cpp
     src/stochfitdll/SimulatedAnnealing.cpp
-    src/stochfitdll/StochFitHarness.cpp
 )
-target_include_directories(stochfit_core
+target_include_directories(stochfit_cpu
     PUBLIC include
     PRIVATE include/stochfit src/stochfitdll)
 if(OpenMP_CXX_FOUND)
-    target_link_libraries(stochfit_core PUBLIC OpenMP::OpenMP_CXX)
-    
+    target_link_libraries(stochfit_cpu PUBLIC OpenMP::OpenMP_CXX)
+
     # On macOS, we need to redistribute libomp.dylib.
     # FindOpenMP uses compiler flags rather than IMPORTED_LOCATION, so
     # search for the dylib directly via find_library.
@@ -158,7 +161,17 @@ if(OpenMP_CXX_FOUND)
         endif()
     endif()
 endif()
-target_link_libraries(stochfit_core PUBLIC tl::expected)
+target_link_libraries(stochfit_cpu PUBLIC tl::expected)
+
+# ── stochfit_core (static lib — full, GPU + StochFitHarness) ──────────────────
+# Used by stochfit_dll only.  Adds StochFitHarness (references GPU) and all
+# optional GPU sources on top of stochfit_cpu.
+add_library(stochfit_core STATIC
+    src/stochfitdll/StochFitHarness.cpp
+)
+target_include_directories(stochfit_core
+    PRIVATE include/stochfit src/stochfitdll)
+target_link_libraries(stochfit_core PUBLIC stochfit_cpu)
 
 # GPU sources and libraries
 set(GPU_SOURCES
@@ -245,21 +258,22 @@ set_target_properties(levmardll PROPERTIES
     OUTPUT_NAME levmardll
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON)
-target_link_libraries(levmardll PUBLIC stochfit_core levmar)
+target_link_libraries(levmardll PUBLIC stochfit_cpu levmar)
 
 # ── mirefl (console executable) ───────────────────────────────────────────────
 add_executable(mirefl
     tests/MIRefl.cpp
 )
-# CEDP and CReflCalc come from stochfit_core (which transitively brings OpenMP).
-# include/stochfit resolves the bare "CEDP.h" / "ReflCalc.h" includes.
+# CEDP and CReflCalc come from stochfit_cpu (which transitively brings OpenMP).
+# Linking stochfit_cpu (not stochfit_core) avoids pulling in the CUDA static
+# runtime initialiser, which crashes on systems without a GPU driver.
 target_include_directories(mirefl PRIVATE include include/stochfit)
-target_link_libraries(mirefl PRIVATE stochfit_core)
+target_link_libraries(mirefl PRIVATE stochfit_cpu)
 
 add_executable(stochfit_tests
     tests/test_reflectivity.cpp)
 target_include_directories(stochfit_tests PRIVATE include include/stochfit)
-target_link_libraries(stochfit_tests PRIVATE stochfit_core GTest::gtest GTest::gtest_main)
+target_link_libraries(stochfit_tests PRIVATE stochfit_cpu GTest::gtest GTest::gtest_main)
 target_compile_features(stochfit_tests PRIVATE cxx_std_20)
 add_test(NAME stochfit_tests COMMAND stochfit_tests)
 
@@ -278,18 +292,14 @@ if(MSVC)
         $<$<CONFIG:Release>:/GL>
         $<$<CONFIG:Release>:/arch:AVX2>
     )
-    # Non-CUDA targets: target_compile_options is fine (no CUDA host flag leakage)
+    # Targets without CUDA sources: target_compile_options is safe
+    target_compile_options(stochfit_cpu   PRIVATE ${_msvc_opts})
     target_compile_options(stochfit_dll   PRIVATE ${_msvc_opts})
     target_compile_options(levmardll      PRIVATE ${_msvc_opts})
     target_compile_options(mirefl         PRIVATE ${_msvc_opts})
     target_compile_options(stochfit_tests PRIVATE ${_msvc_opts})
     # stochfit_core contains CUDA sources: apply per CXX source file only
     set_source_files_properties(
-        src/stochfitdll/CEDP.cpp
-        src/stochfitdll/ParamVector.cpp
-        src/stochfitdll/ReflCalc.cpp
-        src/stochfitdll/SA_Dispatcher.cpp
-        src/stochfitdll/SimulatedAnnealing.cpp
         src/stochfitdll/StochFitHarness.cpp
         src/stochfitdll/gpu/gpu_detect.cpp
         src/stochfitdll/gpu/gpu_sa_runner.cpp

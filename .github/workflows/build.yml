@@ -139,31 +139,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Diagnose and fix runtime DLLs (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Write-Host "=== DLLs currently in build\bin\ ==="
-          Get-ChildItem build\bin\ -Filter "*.dll" | Select-Object Name
-          Write-Host "=== mirefl.exe direct dependencies ==="
-          dumpbin /dependents build\bin\mirefl.exe 2>&1 | Select-String -Pattern "\.dll" -CaseSensitive:$false
-          Write-Host "=== Copying required runtime DLLs ==="
-          @("vcomp140.dll", "vcomp140d.dll") | ForEach-Object {
-            $f = $_
-            $dll = Get-ChildItem "C:\Program Files\Microsoft Visual Studio" `
-              -Recurse -Filter $f -ErrorAction SilentlyContinue |
-              Where-Object { $_.FullName -match "x64" } |
-              Select-Object -First 1
-            if ($dll) {
-              Write-Host "Copying $($dll.FullName)"
-              Copy-Item $dll.FullName build\bin\
-            } else {
-              Write-Warning "$f not found"
-            }
-          }
-          Write-Host "=== Final DLLs in build\bin\ ==="
-          Get-ChildItem build\bin\ -Filter "*.dll" | Select-Object Name
-
       - name: Test (mirefl smoke test — Windows)
         if: runner.os == 'Windows'
         run: |

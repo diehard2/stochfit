@@ -20,7 +20,7 @@ function opt(...paths: string[]): string[] {
 const makers: ForgeConfig['makers'] = [
   new MakerSquirrel({ authors: 'StochFit Contributors' }),
   new MakerDeb({}),
-  new MakerRpm({}),
+  new MakerRpm({ options: { bin: 'stochfit' } }),
 ];
 
 if (process.platform === 'darwin') {

@@ -28,7 +28,7 @@
 // The calculation scheme used can be found in
 // L. G. Parratt, Phys. Rev. 95(2), 359(1954)
 
-CReflCalc::CReflCalc() : m_bReflInitialized(false) {}
+CReflCalc::CReflCalc() : m_bReflInitialized(false), m_idatapoints(0), tarraysize(0) {}
 
 tl::expected<void, std::string> CReflCalc::Init(ReflSettings *InitStruct) {
   lambda = InitStruct->Wavelength;

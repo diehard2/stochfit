@@ -1,0 +1,13 @@
+{
+  "name": "stochfit",
+  "version-string": "1.0.0",
+  "dependencies": [
+    "gtest",
+    "levmar",
+    {
+      "name": "cuda",
+      "platform": "!osx"
+    },
+"tl-expected"
+  ]
+}

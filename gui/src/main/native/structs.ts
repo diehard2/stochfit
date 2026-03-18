@@ -1,0 +1,102 @@
+import koffi from 'koffi';
+
+// koffi follows standard C ABI alignment automatically — no manual padding needed.
+// BOOL is typedef'd to int in platform.h.
+
+// ReflSettings — #pragma pack(8), matches SettingsStruct.h
+export const ReflSettingsType = koffi.struct('ReflSettings', {
+  Directory: 'str',
+  Q: koffi.pointer('double'),
+  Refl: koffi.pointer('double'),
+  ReflError: koffi.pointer('double'),
+  QError: koffi.pointer('double'),
+  QPoints: 'int',
+  SubSLD: 'double',
+  FilmSLD: 'double',
+  SupSLD: 'double',
+  Boxes: 'int',
+  FilmAbs: 'double',
+  SubAbs: 'double',
+  SupAbs: 'double',
+  Wavelength: 'double',
+  UseSurfAbs: 'int',
+  QErr: 'double',
+  Forcenorm: 'int',
+  Forcesig: 'double',
+  Debug: 'int',
+  XRonly: 'int',
+  Resolution: 'int',
+  FilmLength: 'double',
+  Impnorm: 'int',
+  Objectivefunction: 'int',
+  Paramtemp: 'double',
+  Sigmasearch: 'int',
+  NormalizationSearchPerc: 'int',
+  AbsorptionSearchPerc: 'int',
+  Algorithm: 'int',
+  Inittemp: 'double',
+  Platiter: 'int',
+  Slope: 'double',
+  Gamma: 'double',
+  STUNfunc: 'int',
+  Adaptive: 'int',
+  Tempiter: 'int',
+  STUNdeciter: 'int',
+  Gammadec: 'double',
+  CritEdgeOffset: 'int',
+  HighQOffset: 'int',
+  Iterations: 'int',
+  IterationsCompleted: 'int',
+  ChiSquare: 'double',
+  UseGpu: 'int',
+  GpuChains: 'int',
+  Title: 'str',
+});
+
+// StochRunState — #pragma pack(8), matches SettingsStruct.h
+// Passed to Init() to resume from a previous run; null pointer = fresh start.
+// filmAbsInput = m_dBeta / m_dWaveConstant (inverse of Set_FilmAbs multiplication).
+// temperature  = raw m_dTemp stored directly (not 1/m_dTemp).
+export const StochRunStateType = koffi.struct('StochRunState', {
+  roughness: 'double',
+  filmAbsInput: 'double',
+  surfAbs: 'double',
+  temperature: 'double',
+  impNorm: 'double',
+  avgfSTUN: 'double',
+  bestSolution: 'double',
+  chiSquare: 'double',
+  goodnessOfFit: 'double',
+  iteration: 'int',
+  edValues: koffi.pointer('double'),
+  edCount: 'int',
+});
+
+// BoxReflSettings — #pragma pack(8), matches Settings.h
+export const BoxReflSettingsType = koffi.struct('BoxReflSettings', {
+  Directory: 'str',
+  Q: koffi.pointer('double'),
+  Refl: koffi.pointer('double'),
+  ReflError: koffi.pointer('double'),
+  QError: koffi.pointer('double'),
+  UL: koffi.pointer('double'),
+  LL: koffi.pointer('double'),
+  ParamPercs: koffi.pointer('double'),
+  QPoints: 'int',
+  OneSigma: 'int',
+  WriteFiles: 'int',
+  SubSLD: 'double',
+  SupSLD: 'double',
+  Boxes: 'int',
+  Wavelength: 'double',
+  QSpread: 'double',
+  Forcenorm: 'int',
+  ImpNorm: 'int',
+  FitFunc: 'int',
+  LowQOffset: 'int',
+  HighQOffset: 'int',
+  Iterations: 'int',
+  MIEDP: koffi.pointer('double'),
+  ZIncrement: koffi.pointer('double'),
+  ZLength: 'int',
+});

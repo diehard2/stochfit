@@ -1,0 +1,18 @@
+{
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/build",
+    "--header-insertion=never",
+    "--clang-tidy"
+  ],
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "cmake.useCMakePresets": "never",
+  "cmake.generator": "Ninja",
+  "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
+  "cmake.configureSettings": {
+    "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${workspaceFolder}/env/cmake/MsvcEnvironment.cmake",
+    "VCPKG_APPLOCAL_DEPS": "OFF",
+    "CMAKE_MAKE_PROGRAM": "${workspaceFolder}/env/tools/ninja.exe"
+  },
+  "cmake.configureOnOpen": true,
+  "cmake.options.statusBarVisibility": "visible"
+}

@@ -1,0 +1,37 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Release",
+      "type": "shell",
+      "command": "cmake --build build/Release --parallel",
+      "problemMatcher": ["$msCompile", "$gcc"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "Build Debug",
+      "type": "shell",
+      "command": "cmake --build build/Debug --parallel",
+      "problemMatcher": ["$msCompile", "$gcc"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build"
+    },
+    {
+      "label": "Configure Release",
+      "type": "shell",
+      "command": "cmake -B build/Release -G Ninja -DCMAKE_BUILD_TYPE=Release -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${workspaceFolder}/env/cmake/MsvcEnvironment.cmake -DVCPKG_APPLOCAL_DEPS=OFF -DCMAKE_MAKE_PROGRAM=${workspaceFolder}/env/tools/ninja.exe",
+      "problemMatcher": [],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build"
+    },
+    {
+      "label": "Configure Debug",
+      "type": "shell",
+      "command": "cmake -B build/Debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${workspaceFolder}/env/cmake/MsvcEnvironment.cmake -DVCPKG_APPLOCAL_DEPS=OFF -DCMAKE_MAKE_PROGRAM=${workspaceFolder}/env/tools/ninja.exe",
+      "problemMatcher": [],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build"
+    }
+  ]
+}

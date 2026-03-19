@@ -35,6 +35,8 @@ const config: ForgeConfig = {
     asar: false,
     name: 'StochFit',
     executableName: 'stochfit',
+    osxSign: false,
+    osxNotarize: false,
     ignore: [],
     extraResource: [
       // Core native libraries

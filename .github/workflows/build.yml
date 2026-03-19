@@ -231,9 +231,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: installer-linux
-          path: |
-            build/electron/out/make/deb/**/*.deb
-            build/electron/out/make/zip/linux/**/*.zip
+          path: build/electron/out/make/zip/linux/**/*.zip
 
   release:
     name: Create GitHub Release

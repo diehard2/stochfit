@@ -1,7 +1,7 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerDeb } from '@electron-forge/maker-deb';
-import { MakerRpm } from '@electron-forge/maker-rpm';
+import { MakerZip } from '@electron-forge/maker-zip';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
@@ -20,7 +20,7 @@ function opt(...paths: string[]): string[] {
 const makers: ForgeConfig['makers'] = [
   new MakerSquirrel({ authors: 'StochFit Contributors' }),
   new MakerDeb({ options: { bin: 'stochfit' } }),
-  new MakerRpm({ options: { bin: 'stochfit', license: 'GPL-2.0' } }),
+  new MakerZip({}, ['linux']),
 ];
 
 if (process.platform === 'darwin') {

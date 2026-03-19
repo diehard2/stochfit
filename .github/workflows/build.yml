@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [macos-latest]
 
     permissions:
       packages: write        # allows vcpkg to push built packages to GitHub Packages
@@ -182,31 +182,7 @@ jobs:
         working-directory: gui
         run: npm ci
 
-      - name: Package GUI (no installer)
-        if: "!startsWith(github.ref, 'refs/tags/') && github.event_name != 'workflow_dispatch'"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        working-directory: gui
-        run: |
-          PKG_RC=0
-          npm run package 2>&1 | tee /tmp/pkg_out.txt || PKG_RC=$?
-          if [ "${PKG_RC}" != "0" ]; then
-            echo "## Package GUI failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            tail -100 /tmp/pkg_out.txt >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            if [ "${{ github.event_name }}" == "pull_request" ]; then
-              BODY=$(printf '**Package GUI failure on %s**\n```\n%s\n```' "${{ runner.os }}" "$(tail -60 /tmp/pkg_out.txt)")
-              gh pr comment "${{ github.event.pull_request.number }}" \
-                --repo "${{ github.repository }}" \
-                --body "${BODY}" || true
-            fi
-            exit "${PKG_RC}"
-          fi
-        shell: bash
-
-      - name: Make installers (release)
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+      - name: Make installers
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         working-directory: gui
@@ -218,12 +194,18 @@ jobs:
             echo '```' >> "$GITHUB_STEP_SUMMARY"
             tail -100 /tmp/pkg_out.txt >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              BODY=$(printf '**Make installers failure on %s**\n```\n%s\n```' "${{ runner.os }}" "$(tail -60 /tmp/pkg_out.txt)")
+              gh pr comment "${{ github.event.pull_request.number }}" \
+                --repo "${{ github.repository }}" \
+                --body "${BODY}" || true
+            fi
             exit "${PKG_RC}"
           fi
         shell: bash
 
       - name: Upload Windows installer
-        if: runner.os == 'Windows' && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch')
+        if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: installer-windows
@@ -231,7 +213,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload macOS installer
-        if: runner.os == 'macOS' && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch')
+        if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
           name: installer-macos

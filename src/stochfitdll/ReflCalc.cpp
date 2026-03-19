@@ -224,8 +224,8 @@ double CReflCalc::Objective(CEDP *EDP) {
 
   if (m_dQSpread == 0.0 || !exi.has_value()) {
     if (!EDP->Get_UseABS())
-      MyTransparentRF(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints,
-                      reflpt.data(), EDP);
+        MyTransparentRF(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints,
+                        reflpt.data(), EDP);
     else
       MyRF(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints,
            reflpt.data(), EDP);
@@ -329,6 +329,13 @@ void CReflCalc::MyRF(double *sintheta, double *sinsquaredtheta, int datapoints,
                      double *refl, CEDP *EDP) {
   std::complex<double> *DEDP = EDP->m_DEDP.data();
   int EDPoints = EDP->Get_EDPPointCount();
+
+  // Re-apply thread limit on the calling thread — omp_set_num_threads() in Init()
+  // runs on the Electron main thread, but Processing() runs on a std::thread whose
+  // OMP nthreads-var ICV defaults to all CPUs (e.g. 10 on M1 Pro).  Without this
+  // call the parallel region may spawn more threads than m_iuseableprocessors,
+  // causing threadnum * EDPoints to exceed the pre-allocated scratch arrays.
+  omp_set_num_threads(m_iuseableprocessors);
 
   if (!m_bReflInitialized) {
     InitializeScratchArrays(EDP->Get_EDPPointCount());
@@ -449,6 +456,9 @@ void CReflCalc::MyTransparentRF(double *sintheta, double *sinsquaredtheta,
                                 int datapoints, double *refl, CEDP *EDP) {
   std::complex<double> *DEDP = EDP->m_DEDP.data();
   int EDPoints = EDP->Get_EDPPointCount();
+
+  // Re-apply thread limit on the calling (worker) thread — see MyRF for rationale.
+  omp_set_num_threads(m_iuseableprocessors);
 
   if (!m_bReflInitialized) {
     InitializeScratchArrays(EDP->Get_EDPPointCount());

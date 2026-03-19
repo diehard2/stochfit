@@ -19,7 +19,7 @@ function opt(...paths: string[]): string[] {
 // macOS so that `npm install` succeeds on Windows/Linux (optionalDependency).
 const makers: ForgeConfig['makers'] = [
   new MakerSquirrel({ authors: 'StochFit Contributors' }),
-  new MakerDeb({}),
+  new MakerDeb({ options: { bin: 'stochfit' } }),
   new MakerRpm({ options: { bin: 'stochfit' } }),
 ];
 

@@ -217,7 +217,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: installer-windows
-          path: build/electron/out/make/**/*.exe
+          path: build/electron/make/**/*.exe
           if-no-files-found: error
 
       - name: Upload macOS installer
@@ -225,7 +225,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: installer-macos
-          path: build/electron/out/make/**/*.dmg
+          path: build/electron/make/**/*.dmg
           if-no-files-found: error
 
       - name: Upload Linux installers
@@ -233,7 +233,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: installer-linux
-          path: build/electron/out/make/zip/linux/**/*.zip
+          path: build/electron/make/zip/linux/**/*.zip
 
   release:
     name: Create GitHub Release

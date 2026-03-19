@@ -119,6 +119,16 @@ jobs:
           fi
         shell: bash
 
+      - name: Fix libomp rpath (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          LIBOMP=$(otool -L build/bin/libstochfit.dylib | awk '/libomp/{print $1}')
+          if [ -n "$LIBOMP" ]; then
+            echo "Rewriting libomp reference: $LIBOMP -> @loader_path/libomp.dylib"
+            install_name_tool -change "$LIBOMP" "@loader_path/libomp.dylib" build/bin/libstochfit.dylib
+          fi
+        shell: bash
+
       - name: Test (mirefl smoke test)
         if: runner.os != 'Windows'
         run: |

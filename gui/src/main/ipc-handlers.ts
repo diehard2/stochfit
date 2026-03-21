@@ -1,4 +1,4 @@
-import { ipcMain, dialog } from 'electron';
+import { ipcMain, dialog, shell } from 'electron';
 import { IPC } from '../shared/ipc-channels';
 import {
   stochInit,
@@ -27,6 +27,7 @@ import {
   type BoxReflSettingsInput,
 } from './native/levmar-api';
 import fs from 'fs';
+import path from 'path';
 
 function wrap<T>(name: string, fn: () => T): T {
   try {
@@ -135,5 +136,17 @@ export function registerIpcHandlers(): void {
     if (result.canceled || !result.filePath) return false;
     fs.writeFileSync(result.filePath, content, 'utf-8');
     return true;
+  });
+
+  ipcMain.handle(IPC.FS_OPEN_PDF, async (_event, dir: string, baseName: string, data: Uint8Array) => {
+    // Auto-increment filename so we never overwrite a previous report (mirrors C# behavior)
+    let filePath = path.join(dir, `${baseName}.pdf`);
+    let counter = 1;
+    while (fs.existsSync(filePath)) {
+      filePath = path.join(dir, `${baseName}${counter++}.pdf`);
+    }
+    fs.writeFileSync(filePath, Buffer.from(data));
+    await shell.openPath(filePath);
+    return filePath;
   });
 }

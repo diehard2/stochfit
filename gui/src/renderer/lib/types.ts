@@ -36,13 +36,12 @@ export interface ModelSettings {
   supAbs: number;
   wavelength: number;
   useSurfAbs: boolean;
-  qErr: number;
+  qSpread: number;
   forcenorm: boolean;
   forcesig: number;
-  xrOnly: boolean;
+  neutron: boolean;
   resolution: number;
   filmLength: number;
-  impnorm: boolean;
   objectivefunction: number;
 
   // SA algorithm
@@ -80,13 +79,12 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   supAbs: 0.0,
   wavelength: 1.24,
   useSurfAbs: false,
-  qErr: 0.0,
+  qSpread: 0.0,
   forcenorm: false,
   forcesig: 0.0,
-  xrOnly: true,
+  neutron: false,
   resolution: 3,
   filmLength: 25.0,
-  impnorm: false,
   objectivefunction: 0, // Log(R) cost
   paramtemp: 0.03, // Parameter temperature
   sigmasearch: 10,

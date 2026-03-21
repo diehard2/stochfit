@@ -25,6 +25,7 @@ export const IPC = {
   // File system channels
   FS_OPEN_FILE: 'fs:openFile',
   FS_SAVE_FILE: 'fs:saveFile',
+  FS_OPEN_PDF: 'fs:openPdf',
 
   // Progress events (main → renderer)
   FIT_PROGRESS: 'fit:progress',

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Plot from 'react-plotly.js';
+import Plot from './Plot';
 import type { Data } from 'plotly.js';
 import { edpLayout, plotlyConfig } from './graph-config';
 import { COLORS } from '../../lib/constants';

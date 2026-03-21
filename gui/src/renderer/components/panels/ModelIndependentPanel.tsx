@@ -189,8 +189,9 @@ export function ModelIndependentPanel() {
       qPoints: data.q.length,
       debug: false,
       ...settings,
-      normSearchPerc: settings.impnorm ? settings.normSearchPerc : 0,
+      normSearchPerc: settings.normSearchPerc,
       absSearchPerc: settings.useSurfAbs ? settings.absSearchPerc : 0,
+      impnorm: settings.normSearchPerc > 0,
     };
 
     const sessionPath = input.directory + 'stochfit-session.json';
@@ -289,9 +290,9 @@ export function ModelIndependentPanel() {
       supSLD: settings.supSLD,
       boxes,
       wavelength: settings.wavelength,
-      qSpread: settings.qErr,
+      qSpread: settings.qSpread,
       forcenorm: settings.forcenorm,
-      impNorm: settings.impnorm,
+      impNorm: settings.normSearchPerc > 0,
       fitFunc: 0,
       lowQOffset: 0,
       highQOffset: settings.highQOffset,

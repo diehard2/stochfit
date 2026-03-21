@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import Plot from 'react-plotly.js';
+import React, { useEffect, useState } from 'react';
+import Plot from './Plot';
 import type { Data } from 'plotly.js';
 import { reflLayout, plotlyConfig } from './graph-config';
 import { COLORS, calcQc, calcFresnelPoint } from '../../lib/constants';
@@ -21,7 +21,6 @@ type LockedRange = {
 } | null;
 
 export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
-  const plotRef = useRef<any>(null);
   const normalizeByFresnel = useUiStore((s) => s.normalizeByFresnel);
   const settings = useSettingsStore((s) => s.settings);
   const [lockedRange, setLockedRange] = useState<LockedRange>(null);
@@ -30,9 +29,6 @@ export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
   // Reset zoom when Fresnel normalization toggles (axes change scale/meaning)
   useEffect(() => {
     setLockedRange(null);
-    if (plotRef.current?.el) {
-      plotRef.current.el.Plotly?.redraw?.();
-    }
   }, [normalizeByFresnel]);
 
   const handleRelayout = (e: Readonly<Plotly.PlotRelayoutEvent>) => {
@@ -123,7 +119,6 @@ export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
 
   return (
     <Plot
-      ref={plotRef}
       data={traces}
       layout={layout}
       config={plotlyConfig}

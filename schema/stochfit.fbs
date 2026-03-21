@@ -1,0 +1,182 @@
+// StochFit FlatBuffers schema
+// namespace StochFitProto avoids clashing with the C++ StochFit class and
+// StochRunState struct that live in the global namespace.
+
+namespace StochFitProto;
+
+// ── Inputs ────────────────────────────────────────────────────────────────────
+
+table ReflSettings {
+  directory:                  string;
+  q:                          [double];
+  refl:                       [double];
+  refl_error:                 [double];
+  q_error:                    [double];
+  q_points:                   int32;
+  sub_sld:                    double;
+  film_sld:                   double;
+  sup_sld:                    double;
+  boxes:                      int32;
+  film_abs:                   double;
+  sub_abs:                    double;
+  sup_abs:                    double;
+  wavelength:                 double;
+  use_surf_abs:               int32;
+  q_err:                      double;
+  forcenorm:                  int32;
+  forcesig:                   double;
+  debug:                      int32;
+  xr_only:                    int32;
+  resolution:                 int32;
+  film_length:                double;
+  impnorm:                    int32;
+  objectivefunction:          int32;
+  paramtemp:                  double;
+  sigmasearch:                int32;
+  normalization_search_perc:  int32;
+  absorption_search_perc:     int32;
+  algorithm:                  int32;
+  inittemp:                   double;
+  platiter:                   int32;
+  slope:                      double;
+  gamma:                      double;
+  stun_func:                  int32;
+  adaptive:                   int32;
+  tempiter:                   int32;
+  stun_dec_iter:              int32;
+  gammadec:                   double;
+  crit_edge_offset:           int32;
+  high_q_offset:              int32;
+  iterations:                 int32;
+  iterations_completed:       int32;
+  chi_square:                 double;
+  use_gpu:                    int32;
+  gpu_chains:                 int32;
+  title:                      string;
+}
+
+// Passed inside InitRequest to resume a previous run; absent = fresh start.
+// film_abs_input = m_dBeta / m_dWaveConstant (inverse of Set_FilmAbs multiply).
+// temperature    = raw m_dTemp passed directly to Set_Temp() — NOT inverted.
+table StochRunState {
+  roughness:        double;
+  film_abs_input:   double;
+  surf_abs:         double;
+  temperature:      double;
+  imp_norm:         double;
+  avg_f_stun:       double;
+  best_solution:    double;
+  chi_square:       double;
+  goodness_of_fit:  double;
+  iteration:        int32;
+  ed_values:        [double];  // length must equal boxes+2
+}
+
+table InitRequest {
+  settings: ReflSettings (required);
+  state:    StochRunState;  // absent = fresh start
+}
+
+table BoxReflSettings {
+  directory:      string;
+  q:              [double];
+  refl:           [double];
+  refl_error:     [double];
+  q_error:        [double];
+  ul:             [double];
+  ll:             [double];
+  param_percs:    [double];
+  q_points:       int32;
+  one_sigma:      int32;
+  write_files:    int32;
+  sub_sld:        double;
+  sup_sld:        double;
+  boxes:          int32;
+  wavelength:     double;
+  q_spread:       double;
+  forcenorm:      int32;
+  imp_norm:       int32;
+  fit_func:       int32;
+  low_q_offset:   int32;
+  high_q_offset:  int32;
+  iterations:     int32;
+  miedp:          [double];
+  z_increment:    [double];
+  z_length:       int32;
+}
+
+table LevMarRequest {
+  settings:   BoxReflSettings (required);
+  parameters: [double];
+}
+
+// ── Outputs ───────────────────────────────────────────────────────────────────
+
+table GetDataResult {
+  z_range:              [double];
+  rho:                  [double];
+  q_range:              [double];
+  refl:                 [double];
+  roughness:            double;
+  chi_square:           double;
+  goodness_of_fit:      double;
+  is_finished:          bool;
+  iterations_completed: int32;
+}
+
+table GetRunStateResult {
+  roughness:        double;
+  film_abs_input:   double;
+  surf_abs:         double;
+  temperature:      double;
+  imp_norm:         double;
+  avg_f_stun:       double;
+  best_solution:    double;
+  chi_square:       double;
+  goodness_of_fit:  double;
+  ed_values:        [double];
+  iteration:        int32;
+}
+
+table ArraySizesResult {
+  rho_size:  int32;
+  refl_size: int32;
+}
+
+table SaParamsResult {
+  lowest_energy:  double;
+  temp:           double;
+  mode:           int32;
+}
+
+table ReflFitResult {
+  parameters: [double];
+  covar:      [double];
+  info:       [double];
+}
+
+table ReflGenerateResult {
+  reflectivity: [double];
+}
+
+table RhoFitResult {
+  parameters: [double];
+  covar:      [double];
+  info:       [double];
+}
+
+table RhoGenerateResult {
+  ed:     [double];
+  box_ed: [double];
+}
+
+table BoxStochFitResult {
+  parameters:       [double];
+  covar_array:      [double];
+  info:             [double];
+  param_array:      [double];
+  chisquare_array:  [double];
+  param_array_size: int32;
+}
+
+root_type InitRequest;

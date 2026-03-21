@@ -18,6 +18,10 @@ obj/
 vcpkg_installed/
 compile_commands.json
 
+# FlatBuffers generated code
+schema/generated/
+gui/src/main/native/generated/
+
 # Electron GUI — generated artifacts (node_modules must stay next to package.json per npm convention)
 gui/node_modules/
 gui/.vite/

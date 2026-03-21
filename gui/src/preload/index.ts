@@ -39,6 +39,8 @@ contextBridge.exposeInMainWorld('api', {
   openFile: (filters?: Electron.FileFilter[]) => ipcRenderer.invoke(IPC.FS_OPEN_FILE, filters),
   saveFile: (defaultPath: string, content: string) =>
     ipcRenderer.invoke(IPC.FS_SAVE_FILE, defaultPath, content),
+  openPdf: (dir: string, baseName: string, data: Uint8Array) =>
+    ipcRenderer.invoke(IPC.FS_OPEN_PDF, dir, baseName, data),
 
   // Progress events (main → renderer)
   onFitProgress: (callback: (data: unknown) => void) => {

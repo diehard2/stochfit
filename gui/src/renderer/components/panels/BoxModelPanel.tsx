@@ -3,7 +3,7 @@ import { useDataStore } from '../../stores/data-store';
 import { useSettingsStore } from '../../stores/settings-store';
 import { useBoxModelStore } from '../../stores/box-model-store';
 import { BoxParameterTable, type BoxRow } from '../shared/BoxParameterTable';
-import type { BoxReflSettingsInput, LMFitResult, RhoGenerateResult, StochFitResult } from '../../../main/native/levmar-api';
+import type { BoxReflSettingsInput, LMFitResult, RhoEDPResult, StochFitResult } from '../../../main/native/levmar-api';
 
 // ── Param helpers ────────────────────────────────────────────────────────────
 
@@ -98,8 +98,8 @@ export function BoxModelPanel() {
   const { data } = useDataStore();
   const { settings } = useSettingsStore();
   const {
-    boxes, subRough, normFactor, oneSigma, boxRows,
-    setBoxes, setSubRough, setNormFactor, setOneSigma, setBoxRows,
+    boxes, subRough, normFactor, oneSigma, impNorm, boxRows,
+    setBoxes, setSubRough, setNormFactor, setOneSigma, setImpNorm, setBoxRows,
     solutions, activeIndex, setSolutions, setActiveIndex, setGenRefl, setGenEDP,
     lastFitReport, setLastFitReport,
   } = useBoxModelStore();
@@ -143,9 +143,9 @@ export function BoxModelPanel() {
           supSLD: settings.supSLD,
           boxes,
           wavelength: settings.wavelength,
-          qSpread: settings.qErr,
+          qSpread: settings.qSpread,
           forcenorm: settings.forcenorm,
-          impNorm: settings.impnorm,
+          impNorm: impNorm,
           fitFunc: 0,
           lowQOffset: settings.critEdgeOffset,
           highQOffset: settings.highQOffset,
@@ -169,7 +169,7 @@ export function BoxModelPanel() {
         rhoInput.ul = ru;
         rhoInput.ll = rl;
         rhoInput.paramPercs = rp;
-        const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoGenerateResult;
+        const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoEDPResult;
         const stepBoxED = computeBoxStepEDP(zRange, boxRows, 0, settings.supSLD, settings.subSLD);
         setGenEDP(edpRes.ed, stepBoxED, zRange);
       } catch {
@@ -198,9 +198,9 @@ export function BoxModelPanel() {
       supSLD: settings.supSLD,
       boxes,
       wavelength: settings.wavelength,
-      qSpread: settings.qErr,
+      qSpread: settings.qSpread,
       forcenorm: settings.forcenorm,
-      impNorm: settings.impnorm,
+      impNorm: impNorm,
       fitFunc: 0,
       lowQOffset: settings.critEdgeOffset,
       highQOffset: settings.highQOffset,
@@ -224,7 +224,7 @@ export function BoxModelPanel() {
       zIncrement: zRange,
       zLength: zRange.length,
     };
-    const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoGenerateResult;
+    const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoEDPResult;
     const stepBoxED = computeBoxStepEDP(zRange, parsedRows.rows, 0, settings.supSLD, settings.subSLD);
     setGenEDP(edpRes.ed, stepBoxED, zRange);
   }
@@ -249,8 +249,8 @@ export function BoxModelPanel() {
         paramNames.push(`Box ${i + 1} len`, `Box ${i + 1} ρ`);
         if (!oneSigma) paramNames.push(`Box ${i + 1} σ`);
       }
-      paramNames.push('Norm');
-      setLastFitReport({ info: res.info, covariance: res.covariance, paramCount: params.length, paramNames });
+      if (impNorm) paramNames.push('Norm');
+      setLastFitReport({ info: res.info, covariance: res.covariance, paramCount: paramNames.length, paramNames });
 
       await applyParamsAndGenerate(res.parameters, parsed);
     } catch (e) {
@@ -306,34 +306,35 @@ export function BoxModelPanel() {
     <div className="flex flex-col gap-4 p-4">
       <h2 className="text-sm font-semibold text-primary uppercase tracking-wider">Box Model</h2>
 
-      {/* Global params */}
-      <div className={`grid gap-2 ${settings.impnorm ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        <LabeledInput label="Sub Rough (Å)" value={subRough} onChange={setSubRough} />
-        {settings.impnorm && <LabeledInput label="Norm Factor" value={normFactor} onChange={setNormFactor} />}
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-secondary">Boxes</label>
-          <input
-            type="number"
-            value={boxes}
-            min={1}
-            max={20}
-            step={1}
-            onChange={(e) => setBoxes(parseInt(e.target.value) || 1)}
-            className="h-7 px-2 text-xs bg-elevated border border-border rounded-input text-primary focus:outline-none focus:border-accent/50"
-          />
+      <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-secondary">Boxes</label>
+            <input
+              type="number"
+              value={boxes}
+              min={1}
+              max={20}
+              step={1}
+              onChange={(e) => setBoxes(parseInt(e.target.value) || 1)}
+              className="h-7 px-2 text-xs bg-elevated border border-border rounded-input text-primary focus:outline-none focus:border-accent/50"
+            />
+          </div>
+          <LabeledInput label="Substrate σ (Å)" value={subRough} onChange={setSubRough} />
         </div>
-        <label className="flex items-center gap-1.5 mt-4 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={oneSigma}
-            onChange={(e) => setOneSigma(e.target.checked)}
-            className="rounded"
-          />
-          <span className="text-xs text-secondary">Lock Roughness</span>
-        </label>
+        {impNorm && (
+          <LabeledInput label="Norm Factor" value={normFactor} onChange={setNormFactor} />
+        )}
+        <div className="flex gap-4">
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked={oneSigma} onChange={(e) => setOneSigma(e.target.checked)} className="rounded" />
+            <span className="text-xs text-secondary">Lock Roughness (σ)</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked={impNorm} onChange={(e) => setImpNorm(e.target.checked)} className="rounded" />
+            <span className="text-xs text-secondary">Norm. Search</span>
+          </label>
+        </div>
       </div>
 
       {/* Box table */}

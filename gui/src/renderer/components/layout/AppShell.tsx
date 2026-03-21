@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { DataPanel } from '../panels/DataPanel';
@@ -9,11 +9,15 @@ import { ReflectivityGraph } from '../graphs/ReflectivityGraph';
 import { ElectronDensityGraph } from '../graphs/ElectronDensityGraph';
 import { SettingsDialog } from '../dialogs/SettingsDialog';
 import { AboutDialog } from '../dialogs/AboutDialog';
+import { SLDCalculatorDialog } from '../dialogs/SLDCalculatorDialog';
 import { useUiStore } from '../../stores/ui-store';
 import { useDataStore } from '../../stores/data-store';
 import { useFitStore } from '../../stores/fit-store';
 import { useBoxModelStore } from '../../stores/box-model-store';
 import { useSettingsStore } from '../../stores/settings-store';
+import { exportSVG } from '../graphs/export-utils';
+import { MasterGraphDialog } from '../graphs/MasterPane';
+import { generateReport } from '../../lib/report-generator';
 
 function PanelContent() {
   const panel = useUiStore((s) => s.activePanel);
@@ -35,7 +39,42 @@ export function AppShell() {
   const boxModelGenED = useBoxModelStore((s) => s.genED);
   const boxModelGenBoxED = useBoxModelStore((s) => s.genBoxED);
   const boxModelGenZRange = useBoxModelStore((s) => s.genZRange);
-  const { activePanel, setAboutOpen, normalizeByFresnel, setNormalizeByFresnel, setGpuAvailable } = useUiStore();
+  const { activePanel, setAboutOpen, normalizeByFresnel, setNormalizeByFresnel, setGpuAvailable, setMasterGraphOpen } = useUiStore();
+  const boxModelStore = useBoxModelStore();
+  const settings = useSettingsStore((s) => s.settings);
+  const [reportBusy, setReportBusy] = useState(false);
+
+  const handleGenerateReport = useCallback(async () => {
+    setReportBusy(true);
+    try {
+      const pdfBytes = await generateReport({
+        data,
+        fitResult,
+        settings,
+        boxes: boxModelStore.boxes,
+        subRough: boxModelStore.subRough,
+        normFactor: boxModelStore.normFactor,
+        oneSigma: boxModelStore.oneSigma,
+        impNorm: boxModelStore.impNorm,
+        boxRows: boxModelStore.boxRows,
+        solutions: boxModelStore.solutions,
+        lastFitReport: boxModelStore.lastFitReport,
+        genRefl: boxModelStore.genRefl,
+        genED: boxModelStore.genED,
+        genBoxED: boxModelStore.genBoxED,
+        genZRange: boxModelStore.genZRange,
+        miBoxED,
+        normalizeByFresnel,
+      });
+      const dir = data ? data.filePath.replace(/[^/\\]+$/, '') : '';
+      const baseName = data ? data.fileName.replace(/\.[^.]+$/, '') + '-report' : 'stochfit-report';
+      await window.api.openPdf(dir, baseName, pdfBytes);
+    } catch (e) {
+      console.error('Report generation failed:', e);
+    } finally {
+      setReportBusy(false);
+    }
+  }, [data, fitResult, settings, boxModelStore, miBoxED, normalizeByFresnel]);
 
   useEffect(() => {
     window.api.stochGpuAvailable().then((available) => {
@@ -53,6 +92,16 @@ export function AppShell() {
   const lmRefl = isBoxModel ? (boxModelGenRefl ?? undefined) : undefined;
   const lmQ = isBoxModel ? (data?.q ?? undefined) : undefined;
 
+  type CtxMenu = { x: number; y: number; graphId: string; filename: string } | null;
+  const [ctxMenu, setCtxMenu] = useState<CtxMenu>(null);
+
+  const onContextMenu = useCallback((e: React.MouseEvent, graphId: string, filename: string) => {
+    e.preventDefault();
+    setCtxMenu({ x: e.clientX, y: e.clientY, graphId, filename });
+  }, []);
+
+  const closeMenu = useCallback(() => setCtxMenu(null), []);
+
   return (
     <div className="flex flex-col h-screen bg-bg text-primary overflow-hidden">
       {/* Top menu bar */}
@@ -63,6 +112,19 @@ export function AppShell() {
             className="text-xs text-secondary hover:text-primary transition-colors"
           >
             About
+          </button>
+          <button
+            onClick={() => setMasterGraphOpen(true)}
+            className="text-xs text-secondary hover:text-primary transition-colors"
+          >
+            Master Graph
+          </button>
+          <button
+            onClick={handleGenerateReport}
+            disabled={reportBusy || (!fitResult && !boxModelStore.lastFitReport)}
+            className="text-xs text-secondary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {reportBusy ? 'Generating…' : 'Generate Report'}
           </button>
           <button
             onClick={async () => {
@@ -98,11 +160,13 @@ export function AppShell() {
         </div>
 
         {/* Graph area */}
-        <div className="flex-1 flex flex-col overflow-hidden p-3 gap-3">
-          <div id="refl-graph" className="flex-1 rounded-card bg-surface border border-border overflow-hidden min-h-0">
+        <div className="flex-1 flex flex-col overflow-hidden p-3 gap-3" onClick={closeMenu}>
+          <div id="refl-graph" className="flex-1 rounded-card bg-surface border border-border overflow-hidden min-h-0"
+            onContextMenu={(e) => onContextMenu(e, 'refl-graph', 'stochfit-reflectivity')}>
             <ReflectivityGraph data={data} fitResult={graphFitResult} lmRefl={lmRefl} lmQ={lmQ} />
           </div>
-          <div id="edp-graph" className="flex-1 rounded-card bg-surface border border-border overflow-hidden min-h-0">
+          <div id="edp-graph" className="flex-1 rounded-card bg-surface border border-border overflow-hidden min-h-0"
+            onContextMenu={(e) => onContextMenu(e, 'edp-graph', 'stochfit-edp')}>
             <ElectronDensityGraph
               fitResult={graphFitResult}
               boxED={graphBoxED}
@@ -114,11 +178,27 @@ export function AppShell() {
         </div>
       </div>
 
+      {ctxMenu && (
+        <div
+          className="fixed z-50 bg-elevated border border-border rounded shadow-lg py-1 text-xs"
+          style={{ left: ctxMenu.x, top: ctxMenu.y }}
+        >
+          <button
+            className="block w-full text-left px-4 py-1.5 text-secondary hover:text-primary hover:bg-surface transition-colors"
+            onClick={() => { exportSVG(ctxMenu.graphId, ctxMenu.filename); closeMenu(); }}
+          >
+            Export SVG
+          </button>
+        </div>
+      )}
+
       <StatusBar />
 
       {/* Dialogs (portaled to root) */}
       <SettingsDialog />
       <AboutDialog />
+      <SLDCalculatorDialog />
+      <MasterGraphDialog />
     </div>
   );
 }

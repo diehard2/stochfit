@@ -1,6 +1,105 @@
 import type { Layout, Config } from 'plotly.js';
 import { COLORS, FONTS } from '../../lib/constants';
 
+// ---- Publication / master graph options ----
+
+export interface PubOptions {
+  colorMode: 'bw' | 'color';
+  fontSize: number;
+  lineWidth: number;
+  showLegend: boolean;
+}
+
+export const defaultPubOptions: PubOptions = {
+  colorMode: 'bw',
+  fontSize: 13,
+  lineWidth: 2,
+  showLegend: true,
+};
+
+export function pubColors(opts: PubOptions) {
+  if (opts.colorMode === 'bw') {
+    return {
+      measured: '#000000',
+      miFit: '#333333',
+      modelFit: '#666666',
+      boxFit: '#999999',
+      errorBar: 'rgba(0,0,0,0.4)',
+    };
+  }
+  return {
+    measured: COLORS.measured,
+    miFit: COLORS.miFit,
+    modelFit: COLORS.modelFit,
+    boxFit: COLORS.boxFit,
+    errorBar: COLORS.errorBar,
+  };
+}
+
+function pubBaseLayout(opts: PubOptions): Partial<Layout> {
+  const axisBase = {
+    gridcolor: 'rgba(0,0,0,0.12)',
+    linecolor: '#000000',
+    linewidth: 1.5,
+    showline: true,
+    ticks: 'outside' as const,
+    tickcolor: '#000000',
+    tickwidth: 1,
+    mirror: true as const,
+    zeroline: false,
+  };
+  return {
+    paper_bgcolor: 'white',
+    plot_bgcolor: 'white',
+    font: { family: FONTS.publication, size: opts.fontSize, color: '#000000' },
+    margin: { l: 70, r: 30, t: 30, b: 65 },
+    showlegend: opts.showLegend,
+    legend: {
+      x: 0.5, y: -0.2,
+      xanchor: 'center',
+      orientation: 'h',
+      font: { size: opts.fontSize - 1 },
+      bgcolor: 'transparent',
+    },
+    xaxis: axisBase,
+    yaxis: axisBase,
+  };
+}
+
+export function pubReflLayout(opts: PubOptions, fresnelNorm: boolean, qc: number): Partial<Layout> {
+  const base = pubBaseLayout(opts);
+  const xText = (fresnelNorm && qc !== 0) ? 'Q / Q<sub>c</sub>' : 'Q (Å⁻¹)';
+  const yText = (fresnelNorm && qc !== 0) ? 'Intensity / Fresnel' : 'Intensity';
+  return {
+    ...base,
+    xaxis: {
+      ...(base.xaxis as any),
+      title: { text: xText, font: { size: opts.fontSize + 1 } },
+      type: 'linear',
+    },
+    yaxis: {
+      ...(base.yaxis as any),
+      title: { text: yText, font: { size: opts.fontSize + 1 } },
+      type: 'log',
+    },
+  };
+}
+
+export function pubEdpLayout(opts: PubOptions): Partial<Layout> {
+  const base = pubBaseLayout(opts);
+  return {
+    ...base,
+    xaxis: {
+      ...(base.xaxis as any),
+      title: { text: 'Z (Å)', font: { size: opts.fontSize + 1 } },
+    },
+    yaxis: {
+      ...(base.yaxis as any),
+      title: { text: 'Electron Density (norm.)', font: { size: opts.fontSize + 1 } },
+    },
+  };
+}
+
 export const darkTemplate = {
   layout: {
     paper_bgcolor: 'transparent',

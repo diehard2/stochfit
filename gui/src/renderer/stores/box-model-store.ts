@@ -26,6 +26,7 @@ interface PersistedParams {
   subRough: number;
   normFactor: number;
   oneSigma: boolean;
+  impNorm: boolean;
   boxRows: BoxRow[];
 }
 
@@ -34,7 +35,7 @@ function loadParams(): PersistedParams {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) return JSON.parse(stored) as PersistedParams;
   } catch { /* ignore */ }
-  return { boxes: 2, subRough: 3.0, normFactor: 1.0, oneSigma: false, boxRows: [defaultRow(), defaultRow()] };
+  return { boxes: 2, subRough: 3.0, normFactor: 1.0, oneSigma: false, impNorm: false, boxRows: [defaultRow(), defaultRow()] };
 }
 
 function saveParams(p: PersistedParams) {
@@ -49,6 +50,7 @@ interface BoxModelState {
   subRough: number;
   normFactor: number;
   oneSigma: boolean;
+  impNorm: boolean;
   boxRows: BoxRow[];
 
   // Fit results
@@ -65,6 +67,7 @@ interface BoxModelState {
   setSubRough: (v: number) => void;
   setNormFactor: (v: number) => void;
   setOneSigma: (v: boolean) => void;
+  setImpNorm: (v: boolean) => void;
   setBoxRows: (rows: BoxRow[] | ((prev: BoxRow[]) => BoxRow[])) => void;
   setSolutions: (solutions: BoxModelSolution[], paramsPerSolution: number) => void;
   setActiveIndex: (i: number) => void;
@@ -90,28 +93,32 @@ export const useBoxModelStore = create<BoxModelState>((set, get) => ({
 
   setBoxes: (boxes) => {
     const s = get();
-    const p = { boxes, subRough: s.subRough, normFactor: s.normFactor, oneSigma: s.oneSigma, boxRows: s.boxRows };
-    saveParams(p);
+    saveParams({ boxes, subRough: s.subRough, normFactor: s.normFactor, oneSigma: s.oneSigma, impNorm: s.impNorm, boxRows: s.boxRows });
     set({ boxes });
   },
   setSubRough: (subRough) => {
     const s = get();
-    saveParams({ boxes: s.boxes, subRough, normFactor: s.normFactor, oneSigma: s.oneSigma, boxRows: s.boxRows });
+    saveParams({ boxes: s.boxes, subRough, normFactor: s.normFactor, oneSigma: s.oneSigma, impNorm: s.impNorm, boxRows: s.boxRows });
     set({ subRough });
   },
   setNormFactor: (normFactor) => {
     const s = get();
-    saveParams({ boxes: s.boxes, subRough: s.subRough, normFactor, oneSigma: s.oneSigma, boxRows: s.boxRows });
+    saveParams({ boxes: s.boxes, subRough: s.subRough, normFactor, oneSigma: s.oneSigma, impNorm: s.impNorm, boxRows: s.boxRows });
     set({ normFactor });
   },
   setOneSigma: (oneSigma) => {
     const s = get();
-    saveParams({ boxes: s.boxes, subRough: s.subRough, normFactor: s.normFactor, oneSigma, boxRows: s.boxRows });
+    saveParams({ boxes: s.boxes, subRough: s.subRough, normFactor: s.normFactor, oneSigma, impNorm: s.impNorm, boxRows: s.boxRows });
     set({ oneSigma });
+  },
+  setImpNorm: (impNorm) => {
+    const s = get();
+    saveParams({ boxes: s.boxes, subRough: s.subRough, normFactor: s.normFactor, oneSigma: s.oneSigma, impNorm, boxRows: s.boxRows });
+    set({ impNorm });
   },
   setBoxRows: (rows) => set((s) => {
     const boxRows = typeof rows === 'function' ? rows(s.boxRows) : rows;
-    saveParams({ boxes: s.boxes, subRough: s.subRough, normFactor: s.normFactor, oneSigma: s.oneSigma, boxRows });
+    saveParams({ boxes: s.boxes, subRough: s.subRough, normFactor: s.normFactor, oneSigma: s.oneSigma, impNorm: s.impNorm, boxRows });
     return { boxRows };
   }),
   setSolutions: (solutions, paramsPerSolution) => set({ solutions, paramsPerSolution, activeIndex: 0 }),
@@ -122,7 +129,7 @@ export const useBoxModelStore = create<BoxModelState>((set, get) => ({
   reset: () => {
     try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
     set({
-      boxes: 2, subRough: 3.0, normFactor: 1.0, oneSigma: false,
+      boxes: 2, subRough: 3.0, normFactor: 1.0, oneSigma: false, impNorm: false,
       boxRows: [defaultRow(), defaultRow()],
       solutions: [], activeIndex: 0, genRefl: null, genED: null, genBoxED: null, genZRange: null, paramsPerSolution: 0, lastFitReport: null,
     });

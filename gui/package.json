@@ -10,32 +10,39 @@
     "lint": "eslint src"
   },
   "optionalDependencies": {
-    "@electron-forge/maker-dmg": "^7.6.0"
+    "@electron-forge/maker-dmg": "^7.11.1"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^7.6.0",
-    "@electron-forge/maker-squirrel": "^7.6.0",
-    "@electron-forge/maker-zip": "^7.6.0",
-    "@electron-forge/plugin-vite": "^7.6.0",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "@types/react-plotly.js": "^2.6.3",
-    "@vitejs/plugin-react": "^4.3.3",
-    "autoprefixer": "^10.4.20",
-    "electron": "^35.7.5",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.16",
-    "typescript": "^5.7.2",
-    "vite": "^5.4.11"
+    "@electron-forge/cli": "^7.11.1",
+    "@electron-forge/maker-squirrel": "^7.11.1",
+    "@electron-forge/maker-zip": "^7.11.1",
+    "@electron-forge/plugin-vite": "^7.11.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/react-plotly.js": "^2.6.4",
+    "@vitejs/plugin-react": "^6.0.1",
+    "autoprefixer": "^10.4.27",
+    "electron": "^41.0.3",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.1"
+  },
+  "overrides": {
+    "@tootallnate/once": "^3.0.1"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
     "electron-squirrel-startup": "^1.0.1",
     "flatbuffers": "25.9.23",
-    "koffi": "^2.9.0",
-    "plotly.js": "^2.35.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "koffi": "^2.15.2",
+    "plotly.js": "^3.4.0",
+    "plotly.js-dist-min": "^3.4.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "react-plotly.js": "^2.6.0",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.12"
   }
 }

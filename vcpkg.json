@@ -2,12 +2,13 @@
   "name": "stochfit",
   "version-string": "1.0.0",
   "dependencies": [
+    "flatbuffers",
     "gtest",
     "levmar",
     {
       "name": "cuda",
       "platform": "!osx"
     },
-"tl-expected"
+    "tl-expected"
   ]
 }

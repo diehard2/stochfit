@@ -79,7 +79,48 @@ endif()
 find_package(OpenMP)
 find_package(GTest REQUIRED)
 find_package(tl-expected CONFIG REQUIRED)
+find_package(flatbuffers CONFIG REQUIRED)
 enable_testing()
+
+# ── FlatBuffers code generation ────────────────────────────────────────────────
+# flatbuffers CONFIG sets FLATBUFFERS_FLATC_EXECUTABLE; fall back to find_program
+# if the variable is empty (vcpkg installs flatc under the host triplet's tools/).
+if(NOT FLATBUFFERS_FLATC_EXECUTABLE)
+    find_program(FLATBUFFERS_FLATC_EXECUTABLE flatc
+        HINTS
+            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/flatbuffers"
+            "${VCPKG_INSTALLED_DIR}/x64-windows/tools/flatbuffers"
+            "${VCPKG_INSTALLED_DIR}/x64-windows-static-md/tools/flatbuffers"
+            "${VCPKG_INSTALLED_DIR}/x64-osx/tools/flatbuffers"
+            "${VCPKG_INSTALLED_DIR}/arm64-osx/tools/flatbuffers"
+            "${VCPKG_INSTALLED_DIR}/x64-linux/tools/flatbuffers"
+    )
+endif()
+if(NOT FLATBUFFERS_FLATC_EXECUTABLE)
+    message(FATAL_ERROR "flatc compiler not found. Run 'cmake --preset <preset>' to let vcpkg install flatbuffers first.")
+endif()
+set(FLATC "${FLATBUFFERS_FLATC_EXECUTABLE}")
+
+set(FBS_SCHEMA  "${CMAKE_SOURCE_DIR}/schema/stochfit.fbs")
+set(FBS_CPP_OUT "${CMAKE_SOURCE_DIR}/schema/generated")
+set(FBS_TS_OUT  "${CMAKE_SOURCE_DIR}/gui/src/main/native/generated")
+
+file(MAKE_DIRECTORY "${FBS_CPP_OUT}")
+file(MAKE_DIRECTORY "${FBS_TS_OUT}")
+
+add_custom_command(
+    OUTPUT  "${FBS_CPP_OUT}/stochfit_generated.h"
+            "${FBS_TS_OUT}/stoch-fit-proto/init-request.ts"
+    COMMAND "${FLATC}" --cpp -o "${FBS_CPP_OUT}" "${FBS_SCHEMA}"
+    COMMAND "${FLATC}" --ts  -o "${FBS_TS_OUT}" "${FBS_SCHEMA}"
+    DEPENDS "${FBS_SCHEMA}"
+    COMMENT "Generating FlatBuffers code from schema/stochfit.fbs"
+    VERBATIM
+)
+add_custom_target(flatbuffers_gen
+    DEPENDS "${FBS_CPP_OUT}/stochfit_generated.h"
+            "${FBS_TS_OUT}/stoch-fit-proto/init-request.ts"
+)
 
 # ── Optional GPU support ──────────────────────────────────────────────────────
 option(STOCHFIT_USE_CUDA "Enable CUDA GPU acceleration" ON)
@@ -222,19 +263,26 @@ if(STOCHFIT_HAS_CUDA)
         OUTPUT_NAME stochfit_cuda_plugin
         CUDA_ARCHITECTURES "75;86;89;100")
     target_link_libraries(stochfit_cuda_plugin PRIVATE CUDA::cudart tl::expected)
+    if(MSVC)
+        # Thrust/CCCL requires the standard-conforming preprocessor; pass it
+        # via -Xcompiler so nvcc forwards it to cl.exe.
+        target_compile_options(stochfit_cuda_plugin PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/Zc:preprocessor>)
+    endif()
 endif()
 
 # ── stochfit_dll (shared lib — FFI exports only, loaded by Electron) ──────────
 add_library(stochfit_dll SHARED
     src/stochfitdll/StochFitDll.cpp
 )
+add_dependencies(stochfit_dll flatbuffers_gen)
 target_include_directories(stochfit_dll
-    PRIVATE include/stochfit src/stochfitdll)
+    PRIVATE include/stochfit src/stochfitdll "${CMAKE_SOURCE_DIR}/schema")
 set_target_properties(stochfit_dll PROPERTIES
     OUTPUT_NAME stochfit
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON)
-target_link_libraries(stochfit_dll PRIVATE stochfit_core)
+target_link_libraries(stochfit_dll PRIVATE stochfit_core flatbuffers::flatbuffers)
 
 # Bundle libomp.dylib alongside the DLL so Electron can load it on macOS
 if(APPLE AND LIBOMP_DYLIB)
@@ -275,14 +323,15 @@ add_library(levmardll SHARED
     src/levmardll/ReflCalc.cpp
     src/levmardll/RhoCalc.cpp
 )
+add_dependencies(levmardll flatbuffers_gen)
 target_include_directories(levmardll
     PUBLIC include
-    PRIVATE include/levmar)
+    PRIVATE include/levmar "${CMAKE_SOURCE_DIR}/schema")
 set_target_properties(levmardll PROPERTIES
     OUTPUT_NAME levmardll
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON)
-target_link_libraries(levmardll PUBLIC stochfit_core levmar)
+target_link_libraries(levmardll PUBLIC stochfit_core levmar flatbuffers::flatbuffers)
 
 # ── mirefl (console executable) ───────────────────────────────────────────────
 add_executable(mirefl tests/MIRefl.cpp)

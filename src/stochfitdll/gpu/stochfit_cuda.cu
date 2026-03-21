@@ -12,6 +12,7 @@
 #include "gpu_types.h"
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
+#include <thrust/complex.h>
 #include <cstdio>
 #include <cmath>
 #include <algorithm>
@@ -28,38 +29,9 @@ __constant__ float kQSpreadWeights[13] = {
     0.923f, 0.923f,
 };
 
-// ── Complex float helpers ──────────────────────────────────────────────────
+// ── Complex float type ─────────────────────────────────────────────────────
 
-struct cfloat { float re, im; };
-
-__device__ __forceinline__ cfloat cf_make(float r, float i) { return {r, i}; }
-__device__ __forceinline__ cfloat cf_add(cfloat a, cfloat b) { return {a.re+b.re, a.im+b.im}; }
-__device__ __forceinline__ cfloat cf_sub(cfloat a, cfloat b) { return {a.re-b.re, a.im-b.im}; }
-__device__ __forceinline__ cfloat cf_mul(cfloat a, cfloat b) {
-    return {a.re*b.re - a.im*b.im, a.re*b.im + a.im*b.re};
-}
-__device__ __forceinline__ cfloat cf_div(cfloat a, cfloat b) {
-    float denom = b.re*b.re + b.im*b.im;
-    return {(a.re*b.re + a.im*b.im)/denom, (a.im*b.re - a.re*b.im)/denom};
-}
-__device__ __forceinline__ float cf_abs2(cfloat a) { return a.re*a.re + a.im*a.im; }
-__device__ __forceinline__ cfloat cf_scale(cfloat a, float s) { return {a.re*s, a.im*s}; }
-
-// sqrt of complex number
-__device__ __forceinline__ cfloat cf_sqrt(cfloat z) {
-    float r = sqrtf(cf_abs2(z));
-    float t = sqrtf(0.5f * (r + z.re));
-    float s = (z.im >= 0.f ? 1.f : -1.f) * sqrtf(0.5f * (r - z.re));
-    return {t, s};
-}
-
-// exp of complex number: e^(a+bi) = e^a * (cos b + i sin b)
-__device__ __forceinline__ cfloat cf_exp(cfloat z) {
-    float ea = expf(z.re);
-    float s, c;
-    sincosf(z.im, &s, &c);
-    return {ea*c, ea*s};
-}
+using cfloat = thrust::complex<float>;
 
 // ── 2x2 complex matrix helpers for transfer matrix method ──────────────────
 
@@ -68,15 +40,15 @@ struct cmat2 {
 };
 
 __device__ __forceinline__ cmat2 cmat2_identity() {
-    return {{1,0},{0,0},{0,0},{1,0}};
+    return {cfloat(1,0), cfloat(0,0), cfloat(0,0), cfloat(1,0)};
 }
 
 __device__ __forceinline__ cmat2 cmat2_mul(cmat2 L, cmat2 R) {
     return {
-        cf_add(cf_mul(L.a, R.a), cf_mul(L.b, R.c)),
-        cf_add(cf_mul(L.a, R.b), cf_mul(L.b, R.d)),
-        cf_add(cf_mul(L.c, R.a), cf_mul(L.d, R.c)),
-        cf_add(cf_mul(L.c, R.b), cf_mul(L.d, R.d)),
+        L.a * R.a + L.b * R.c,
+        L.a * R.b + L.b * R.d,
+        L.c * R.a + L.d * R.c,
+        L.c * R.b + L.d * R.d,
     };
 }
 
@@ -90,7 +62,7 @@ __device__ float device_parratt_single(
     float dedp0 = dedp[0];
     float indexsup_re = 1.0f - dedp0 / 2.0f;
     float indexsup2_re = indexsup_re * indexsup_re;
-    cfloat length_mult = cf_make(0.0f, -2.0f * dz);
+    cfloat length_mult(0.0f, -2.0f * dz);
 
     int low_offset = 0;
     for (int i = 0; i < num_layers; i++) {
@@ -104,13 +76,13 @@ __device__ float device_parratt_single(
         else break;
     }
 
-    cfloat kk_sup = cf_make(k0 * indexsup_re * sintheta_val, 0.0f);
-    cfloat kk_low_arg = cf_make(indexsup2_re * sinsq_val - dedp[1] + dedp0, 0.0f);
-    cfloat kk_low = cf_scale(cf_sqrt(kk_low_arg), k0);
-    cfloat kk_high_arg = cf_make(indexsup2_re * sinsq_val - dedp_last + dedp0, 0.0f);
-    cfloat kk_high = cf_scale(cf_sqrt(kk_high_arg), k0);
-    cfloat ak_low = cf_exp(cf_mul(length_mult, kk_low));
-    cfloat ak_high = cf_exp(cf_mul(length_mult, kk_high));
+    cfloat kk_sup(k0 * indexsup_re * sintheta_val, 0.0f);
+    cfloat kk_low_arg(indexsup2_re * sinsq_val - dedp[1] + dedp0, 0.0f);
+    cfloat kk_low = thrust::sqrt(kk_low_arg) * k0;
+    cfloat kk_high_arg(indexsup2_re * sinsq_val - dedp_last + dedp0, 0.0f);
+    cfloat kk_high = thrust::sqrt(kk_high_arg) * k0;
+    cfloat ak_low = thrust::exp(length_mult * kk_low);
+    cfloat ak_high = thrust::exp(length_mult * kk_high);
 
     cmat2 M = cmat2_identity();
     cfloat kk_prev = kk_sup;
@@ -120,27 +92,27 @@ __device__ float device_parratt_single(
         if (i + 1 <= low_offset) kk_cur = kk_low;
         else if (i + 1 >= high_offset) kk_cur = kk_high;
         else {
-            cfloat arg = cf_make(indexsup2_re * sinsq_val - dedp[i + 1] + dedp0, 0.0f);
-            kk_cur = cf_scale(cf_sqrt(arg), k0);
+            cfloat arg(indexsup2_re * sinsq_val - dedp[i + 1] + dedp0, 0.0f);
+            kk_cur = thrust::sqrt(arg) * k0;
         }
 
         cfloat ak_i;
-        if (i == 0 || i == num_layers - 1) ak_i = cf_make(1.0f, 0.0f);
+        if (i == 0 || i == num_layers - 1) ak_i = cfloat(1.0f, 0.0f);
         else if (i <= low_offset) ak_i = ak_low;
         else if (i >= high_offset) ak_i = ak_high;
-        else ak_i = cf_exp(cf_mul(length_mult, kk_prev));
+        else ak_i = thrust::exp(length_mult * kk_prev);
 
-        cfloat sum = cf_add(kk_prev, kk_cur);
-        cfloat diff = cf_sub(kk_prev, kk_cur);
-        cfloat rj_i = cf_abs2(sum) > 1e-30f ? cf_div(diff, sum) : cf_make(0.0f, 0.0f);
+        cfloat sum = kk_prev + kk_cur;
+        cfloat diff = kk_prev - kk_cur;
+        cfloat rj_i = thrust::norm(sum) > 1e-30f ? diff / sum : cfloat(0.0f, 0.0f);
 
-        cmat2 layer = {ak_i, cf_mul(ak_i, rj_i), rj_i, cf_make(1.0f, 0.0f)};
+        cmat2 layer = {ak_i, ak_i * rj_i, rj_i, cfloat(1.0f, 0.0f)};
         M = cmat2_mul(M, layer);
         kk_prev = kk_cur;
     }
 
-    cfloat R0 = cf_div(M.b, M.d);
-    return cf_abs2(R0);
+    cfloat R0 = M.b / M.d;
+    return thrust::norm(R0);
 }
 
 // ── Device-side SA helper functions ────────────────────────────────────────
@@ -345,7 +317,7 @@ __global__ void kernel_parratt(
     float indexsup2_re = indexsup_re * indexsup_re;
 
     // Length multiplier for phase factor: -2*i*dz
-    cfloat length_mult = cf_make(0.0f, -2.0f * dz);
+    cfloat length_mult(0.0f, -2.0f * dz);
 
     // Compute wavevectors, phase factors, and Fresnel coefficients
     // Then do Parratt recursion from bottom to top
@@ -371,17 +343,17 @@ __global__ void kernel_parratt(
     }
 
     // kk[0]: superphase wavevector
-    cfloat kk_sup = cf_make(k0 * indexsup_re * sintheta_val, 0.0f);
+    cfloat kk_sup(k0 * indexsup_re * sintheta_val, 0.0f);
     // kk for uniform low region
-    cfloat kk_low_arg = cf_make(indexsup2_re * sinsq_val - dedp[1] + dedp0, 0.0f);
-    cfloat kk_low = cf_scale(cf_sqrt(kk_low_arg), k0);
+    cfloat kk_low_arg(indexsup2_re * sinsq_val - dedp[1] + dedp0, 0.0f);
+    cfloat kk_low = thrust::sqrt(kk_low_arg) * k0;
     // kk for uniform high region
-    cfloat kk_high_arg = cf_make(indexsup2_re * sinsq_val - dedp_last + dedp0, 0.0f);
-    cfloat kk_high = cf_scale(cf_sqrt(kk_high_arg), k0);
+    cfloat kk_high_arg(indexsup2_re * sinsq_val - dedp_last + dedp0, 0.0f);
+    cfloat kk_high = thrust::sqrt(kk_high_arg) * k0;
 
     // Phase factors for uniform regions
-    cfloat ak_low = cf_exp(cf_mul(length_mult, kk_low));
-    cfloat ak_high = cf_exp(cf_mul(length_mult, kk_high));
+    cfloat ak_low = thrust::exp(length_mult * kk_low);
+    cfloat ak_high = thrust::exp(length_mult * kk_high);
 
     // Process layer 0 (superphase boundary)
     cfloat kk_prev = kk_sup;
@@ -394,42 +366,37 @@ __global__ void kernel_parratt(
         } else if (i + 1 >= high_offset) {
             kk_cur = kk_high;
         } else {
-            cfloat arg = cf_make(indexsup2_re * sinsq_val - dedp[i + 1] + dedp0, 0.0f);
-            kk_cur = cf_scale(cf_sqrt(arg), k0);
+            cfloat arg(indexsup2_re * sinsq_val - dedp[i + 1] + dedp0, 0.0f);
+            kk_cur = thrust::sqrt(arg) * k0;
         }
 
         // Phase factor ak[i]
         cfloat ak_i;
         if (i == 0 || i == num_layers - 1) {
-            ak_i = cf_make(1.0f, 0.0f);  // boundary layers are infinite
+            ak_i = cfloat(1.0f, 0.0f);  // boundary layers are infinite
         } else if (i <= low_offset) {
             ak_i = ak_low;
         } else if (i >= high_offset) {
             ak_i = ak_high;
         } else {
-            ak_i = cf_exp(cf_mul(length_mult, kk_prev));
+            ak_i = thrust::exp(length_mult * kk_prev);
         }
 
         // Fresnel coefficient rj[i]
-        cfloat sum = cf_add(kk_prev, kk_cur);
-        cfloat diff = cf_sub(kk_prev, kk_cur);
-        cfloat rj_i;
-        if (cf_abs2(sum) > 1e-30f) {
-            rj_i = cf_div(diff, sum);
-        } else {
-            rj_i = cf_make(0.0f, 0.0f);
-        }
+        cfloat sum = kk_prev + kk_cur;
+        cfloat diff = kk_prev - kk_cur;
+        cfloat rj_i = thrust::norm(sum) > 1e-30f ? diff / sum : cfloat(0.0f, 0.0f);
 
         // Build transfer matrix for layer i: [[ak_i, ak_i*rj_i], [rj_i, 1]]
-        cmat2 layer = {ak_i, cf_mul(ak_i, rj_i), rj_i, cf_make(1.0f, 0.0f)};
+        cmat2 layer = {ak_i, ak_i * rj_i, rj_i, cfloat(1.0f, 0.0f)};
         M = cmat2_mul(M, layer);
 
         kk_prev = kk_cur;
     }
 
     // Extract reflectivity: R = |M.b / M.d|^2
-    cfloat R0 = cf_div(M.b, M.d);
-    float refl_val = cf_abs2(R0);
+    cfloat R0 = M.b / M.d;
+    float refl_val = thrust::norm(R0);
 
     chain_refl[chain_id * num_q_per_call + q_idx] = refl_val;
 }

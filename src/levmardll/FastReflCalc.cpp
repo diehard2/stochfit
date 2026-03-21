@@ -99,12 +99,8 @@ void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
   {
 		x[i] = (log(reflinst->reflpt[i])-log(reflinst->Realrefl[i]));
 
-		// NaN guard: clang -ffast-math/-ffinite-math-only eliminates "x != x" checks,
-		// letting NaN propagate into levmar's JtJ matrix and crash dsytf2.
-		// Use a bit-level check that is immune to finite-math-only optimizations.
-		std::uint64_t bits;
-		std::memcpy(&bits, &x[i], sizeof(bits));
-		if ((bits & 0x7FFFFFFFFFFFFFFFULL) > 0x7FF0000000000000ULL)
+		//Sometimes we get NAN. We make that solution unpalatable until I can find a workaround
+		if(x[i] != x[i])
 		{
 			x[i] = 1e6;
 		}

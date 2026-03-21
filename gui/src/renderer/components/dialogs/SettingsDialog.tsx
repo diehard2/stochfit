@@ -32,8 +32,7 @@ export function SettingsDialog() {
           <Field label="Param Temp" field="paramtemp" step={0.01} tooltip="Step size for parameter perturbation. Lower = finer search, slower convergence." disabled={isRunning} />
           <Field label="Boxes" field="boxes" step={1} disabled={isRunning} />
           <Field label="Resolution (pts/Å)" field="resolution" step={1} tooltip="EDP sampling density. Higher = smoother profile, slower computation." disabled={isRunning} />
-          <Field label="Norm. Search %" field="normSearchPerc" step={1} tooltip="Search range for normalization (active with Improved Normalization)." disabled={isRunning} />
-          <Field label="Abs. Search %" field="absSearchPerc" step={1} tooltip="Search range for absorption (active with Surface Absorption)." disabled={isRunning} />
+          <Field label="Norm. Search %" field="normSearchPerc" step={1} tooltip="Search range for normalization factor during SA fitting. Set to 0 to disable." disabled={isRunning} />
           <Field label="Force σ" field="forcesig" step={0.1} tooltip="Force all interfacial roughness to this value (0 = unconstrained)." disabled={isRunning} />
 
           {/* SA + STUN params */}

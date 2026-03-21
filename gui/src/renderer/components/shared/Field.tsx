@@ -103,6 +103,8 @@ export function Field({
   field,
   type = 'number',
   step,
+  min,
+  max,
   tooltip,
   disabled,
   options,
@@ -111,6 +113,8 @@ export function Field({
   field: keyof ModelSettings;
   type?: 'number' | 'checkbox' | 'text' | 'select';
   step?: number;
+  min?: number;
+  max?: number;
   tooltip?: string;
   disabled?: boolean;
   options?: SelectOption[];
@@ -176,7 +180,8 @@ export function Field({
         type={type}
         value={String(value)}
         step={step}
-        min={field === 'slope' ? '1' : undefined}
+        min={min !== undefined ? String(min) : field === 'slope' ? '1' : undefined}
+        max={max !== undefined ? String(max) : undefined}
         disabled={disabled}
         onChange={(e) => {
           let v: string | number = type === 'number' ? parseFloat(e.target.value) : e.target.value;

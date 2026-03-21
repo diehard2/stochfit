@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
+    "flatbuffers": "25.9.23",
     "koffi": "^2.9.0",
     "plotly.js": "^2.35.2",
     "react": "^18.3.1",

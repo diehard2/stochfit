@@ -31,14 +31,14 @@ export function ParameterPanel() {
       </Section>
 
       <Section title="Corrections">
+        <Field label="Force Normalization" field="forcenorm" type="checkbox" tooltip="Force reflectivity curve to normalize to 1 at Q=0." disabled={isRunning} />
         <Field label="Absorption" field="useSurfAbs" type="checkbox" tooltip="Include absorption in reflectivity calculation." disabled={isRunning} />
+        <Field label="Crit. Edge Offset" field="critEdgeOffset" step={1} tooltip="Number of low-Q points to skip (removes critical edge region)." disabled={isRunning} />
+        <Field label="High-Q Offset" field="highQOffset" step={1} tooltip="Number of high-Q points to skip." disabled={isRunning} />
         {isUseSurfAbs && <Field label="Film Absorption" field="filmAbs" step={0.0001} disabled={isRunning} />}
         {isUseSurfAbs && <Field label="Substrate Absorption" field="subAbs" step={0.0001} disabled={isRunning} />}
         {isUseSurfAbs && <Field label="Superphase Absorption" field="supAbs" step={0.0001} disabled={isRunning} />}
         {isUseSurfAbs && <Field label="Abs. Search %" field="absSearchPerc" step={1} tooltip="Search range for absorption during fitting." disabled={isRunning} />}
-        <Field label="Crit. Edge Offset" field="critEdgeOffset" step={1} tooltip="Number of low-Q points to skip (removes critical edge region)." disabled={isRunning} />
-        <Field label="High-Q Offset" field="highQOffset" step={1} tooltip="Number of high-Q points to skip." disabled={isRunning} />
-        <Field label="Force Normalization" field="forcenorm" type="checkbox" tooltip="Force reflectivity curve to normalize to 1 at Q=0." disabled={isRunning} />
         {isNeutron && <Field label="% Error in Q" field="qSpread" step={1} tooltip="Instrument Q resolution: percent error for Gaussian smearing. Enter 5 for 5%." disabled={isRunning} />}
       </Section>
     </div>

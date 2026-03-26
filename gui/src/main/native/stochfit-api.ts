@@ -93,8 +93,35 @@ export interface StochRunStateOutput {
   edCount: number;
 }
 
+export interface StochFitOutput {
+  version: 2;
+  savedAt: string;
+  dataFile: string;
+  settings: Record<string, unknown>;
+  saState: StochRunStateOutput;
+  fitResult: {
+    zRange: number[];
+    rho: number[];
+    qRange: number[];
+    refl: number[];
+    roughness: number;
+    chiSquare: number;
+    goodnessOfFit: number;
+    iterationsCompleted: number;
+  };
+  boxModel?: {
+    boxes: number;
+    subRough: number;
+    zOffset: number;
+    oneSigma: boolean;
+    boxRows: { length: number; rho: number; sigma: number }[];
+    lmResult?: { parameters: number[]; covariance: number[]; info: number[] };
+  };
+}
+
+/** @deprecated Use StochFitOutput (version 2). Kept for backward-compat read. */
 export interface StochSessionFile {
-  version: number;
+  version: 1;
   savedAt: string;
   dataFile: string;
   settings: Record<string, unknown>;
@@ -298,10 +325,15 @@ export function stochGpuAvailable(): boolean {
   return Boolean(getStochFns()['GpuAvailable']());
 }
 
-// ── Session file I/O ──────────────────────────────────────────────────────────
+// ── Output file I/O ───────────────────────────────────────────────────────────
 
-export function writeSessionFile(filePath: string, session: StochSessionFile): void {
-  const json = JSON.stringify(session, null, 2);
+/** Returns the output file path for a given data file path. */
+export function outputFilePath(dataFilePath: string): string {
+  return dataFilePath + '.stochfit.json';
+}
+
+export function writeOutputFile(filePath: string, output: StochFitOutput): void {
+  const json = JSON.stringify(output, null, 2);
   const tmpPath = filePath + '.tmp';
   fs.writeFileSync(tmpPath, json, 'utf-8');
   try {
@@ -312,11 +344,12 @@ export function writeSessionFile(filePath: string, session: StochSessionFile): v
   }
 }
 
-export function readSessionFile(filePath: string): StochSessionFile | null {
+export function readOutputFile(filePath: string): StochFitOutput | null {
   try {
-    const data = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as StochSessionFile;
-    if (data.version !== 1) return null;
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as StochFitOutput;
+    if (data.version !== 2) return null;  // ignore old v1 session files
     if (!data.saState || !Array.isArray(data.saState.edValues)) return null;
+    if (!data.fitResult) return null;
     return data;
   } catch {
     return null;

@@ -7,6 +7,7 @@ import { calcQc, calcFresnelPoint } from './constants';
 import type { FitResult, ModelSettings } from './types';
 import type { FitReport, BoxModelSolution } from '../stores/box-model-store';
 import type { ReflData } from './types';
+import type { GraphMode } from '../stores/ui-store';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -29,7 +30,7 @@ export interface ReportInput {
   genZRange: number[] | null;
   miBoxED: number[] | null;
   // Display
-  normalizeByFresnel: boolean;
+  graphMode: GraphMode;
 }
 
 // ── Graph rendering ───────────────────────────────────────────────────────────
@@ -105,11 +106,11 @@ function sci(v: number): string {
 // ── Main entry ────────────────────────────────────────────────────────────────
 
 export async function generateReport(input: ReportInput): Promise<Uint8Array> {
-  const { data, fitResult, settings, normalizeByFresnel } = input;
+  const { data, fitResult, settings, graphMode } = input;
   const opts = defaultPubOptions;
   const c = pubColors(opts);
   const qc = calcQc(settings.subSLD, settings.supSLD);
-  const fresnelActive = normalizeByFresnel && qc !== 0;
+  const fresnelActive = graphMode === 'fresnel' && qc !== 0;
 
   // ── Render graphs ───────────────────────────────────────────────────────────
 

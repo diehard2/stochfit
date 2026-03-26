@@ -21,15 +21,17 @@ type LockedRange = {
 } | null;
 
 export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
-  const normalizeByFresnel = useUiStore((s) => s.normalizeByFresnel);
+  const graphMode = useUiStore((s) => s.graphMode);
+  const normalizeByFresnel = graphMode === 'fresnel';
+  const rq4Mode = graphMode === 'rq4';
   const settings = useSettingsStore((s) => s.settings);
   const [lockedRange, setLockedRange] = useState<LockedRange>(null);
   const traces: Data[] = [];
 
-  // Reset zoom when Fresnel normalization toggles (axes change scale/meaning)
+  // Reset zoom when display mode changes (axes change scale/meaning)
   useEffect(() => {
     setLockedRange(null);
-  }, [normalizeByFresnel]);
+  }, [graphMode]);
 
   const handleRelayout = (e: Readonly<Plotly.PlotRelayoutEvent>) => {
     if (e['xaxis.autorange'] === true) {
@@ -50,23 +52,29 @@ export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
     }
   };
 
-  const applyFresnelNorm = (q: number[], refl: number[], errors?: number[]) => {
-    if (!normalizeByFresnel || !settings) {
-      return { q, refl, errors };
+  const applyTransform = (q: number[], refl: number[], errors?: number[]) => {
+    if (rq4Mode) {
+      return {
+        q,
+        refl: refl.map((r, i) => r * Math.pow(q[i], 4)),
+        errors: errors?.map((e, i) => e * Math.pow(q[i], 4)),
+      };
     }
-
-    const Qc = calcQc(settings.subSLD, settings.supSLD);
-    if (Qc === 0) return { q, refl, errors };
-
-    return {
-      q: q.map((qi) => qi / Qc),
-      refl: refl.map((ri, i) => ri / calcFresnelPoint(q[i], Qc)),
-      errors: errors?.map((e, i) => e / calcFresnelPoint(q[i], Qc)),
-    };
+    if (normalizeByFresnel && settings) {
+      const Qc = calcQc(settings.subSLD, settings.supSLD);
+      if (Qc !== 0) {
+        return {
+          q: q.map((qi) => qi / Qc),
+          refl: refl.map((ri, i) => ri / calcFresnelPoint(q[i], Qc)),
+          errors: errors?.map((e, i) => e / calcFresnelPoint(q[i], Qc)),
+        };
+      }
+    }
+    return { q, refl, errors };
   };
 
   if (data) {
-    const normalized = applyFresnelNorm(data.q, data.refl, data.reflError);
+    const normalized = applyTransform(data.q, data.refl, data.reflError);
     traces.push({
       x: normalized.q,
       y: normalized.refl,
@@ -77,11 +85,12 @@ export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
       type: 'scatter',
       name: 'Measured',
       marker: { color: COLORS.measured, size: 3, opacity: 0.7 },
+      hovertemplate: 'Q: %{x:.4e}<br>R: %{y:.4e}<extra></extra>',
     });
   }
 
   if (fitResult && fitResult.qRange.length > 0) {
-    const normalized = applyFresnelNorm(fitResult.qRange, fitResult.refl);
+    const normalized = applyTransform(fitResult.qRange, fitResult.refl);
     traces.push({
       x: normalized.q,
       y: normalized.refl,
@@ -89,11 +98,12 @@ export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
       type: 'scatter',
       name: 'MI Fit',
       line: { color: COLORS.miFit, width: 2, shape: 'spline' },
+      hovertemplate: 'Q: %{x:.4e}<br>R: %{y:.4e}<extra></extra>',
     });
   }
 
   if (lmRefl && lmQ && lmQ.length > 0 && lmRefl.length === lmQ.length) {
-    const normalized = applyFresnelNorm(lmQ, lmRefl);
+    const normalized = applyTransform(lmQ, lmRefl);
     traces.push({
       x: normalized.q,
       y: normalized.refl,
@@ -101,10 +111,16 @@ export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
       type: 'scatter',
       name: 'Box Model Fit',
       line: { color: COLORS.modelFit, width: 2 },
+      hovertemplate: 'Q: %{x:.4e}<br>R: %{y:.4e}<extra></extra>',
     });
   }
 
-  const baseLayout = normalizeByFresnel && settings && calcQc(settings.subSLD, settings.supSLD) !== 0
+  const baseLayout = rq4Mode
+    ? reflLayout({
+        xaxis: { title: { text: 'Q (Å⁻¹)', font: { size: 12 } }, type: 'linear', gridcolor: 'rgba(100, 100, 100, 0.15)' },
+        yaxis: { title: { text: 'R·Q⁴ (Å⁻⁴)', font: { size: 12 } }, type: 'log', gridcolor: 'rgba(100, 100, 100, 0.15)' },
+      })
+    : normalizeByFresnel && settings && calcQc(settings.subSLD, settings.supSLD) !== 0
     ? reflLayout({
         xaxis: { title: { text: 'Q / Q<sub>c</sub>', font: { size: 12 } }, type: 'linear', gridcolor: 'rgba(100, 100, 100, 0.15)' },
         yaxis: { title: { text: 'Intensity / Fresnel', font: { size: 12 } }, type: 'log', gridcolor: 'rgba(100, 100, 100, 0.15)' },

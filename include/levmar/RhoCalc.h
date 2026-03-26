@@ -55,7 +55,6 @@ public:
 	void mkdensityboxmodel(double* p, int plenght);
     void mkdensity(double* p, int plength);	
     static void objective(double *p, double *x, int m, int n, void *data);
-	void writefiles(const char* filename);
 
 	vector<double> nk;
 	vector<double> nkb;

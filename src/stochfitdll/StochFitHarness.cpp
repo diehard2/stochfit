@@ -46,9 +46,6 @@ StochFit::StochFit(ReflSettings* InitStruct, StochRunState* state)
 
 	m_Directory = string(InitStruct->Directory);
 
-    fnrf  = m_Directory + "/rf.dat";
-    fnrho = m_Directory + "/rho.dat";
-
 	m_SA = new SA_Dispatcher();
 
 	m_initStruct = *InitStruct;
@@ -356,8 +353,7 @@ int StochFit::ProcessingGPU()
 			// UpdateFits(). This gives the correct z-offset (-40 Å) and
 			// fills the full interpolated Q-array (tarraysize ≈ 3000 pts).
 			m_cEDP.GenerateEDP(params);
-			m_cEDP.WriteOutputFile(fnrho);
-			m_cRefl.ParamsRF(&m_cEDP, fnrf);
+			m_cRefl.ComputeRF(&m_cEDP);
 			m_dChiSquare = m_cRefl.m_dChiSquare;
 
 			for (int i = 0; i < m_irhocount; i++) {
@@ -402,8 +398,7 @@ int StochFit::ProcessingGPU()
 		params->setImpNorm(result.best_imp_norm);
 
 	m_cEDP.GenerateEDP(params);
-	m_cEDP.WriteOutputFile(fnrho);
-	m_cRefl.ParamsRF(&m_cEDP, fnrf);
+	m_cRefl.ComputeRF(&m_cEDP);
 	m_dChiSquare = m_cRefl.m_dChiSquare;
 
 	for (int i = 0; i < m_irhocount; i++) {
@@ -431,8 +426,7 @@ void StochFit::UpdateFits(int currentiteration)
 		{
 			//Check to see if we're updating
 			m_cEDP.GenerateEDP(params);
-			m_cEDP.WriteOutputFile(fnrho);
-			m_cRefl.ParamsRF(&m_cEDP, fnrf);
+			m_cRefl.ComputeRF(&m_cEDP);
 			m_dRoughness = params->getroughness();
 
 

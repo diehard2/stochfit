@@ -60,8 +60,7 @@ int main(int argc, char* argv[])
 	cout << calculations << " calculations in: " << (((static_cast<float>(t_off - t_on))/(CLOCKS_PER_SEC)))*(1000000) << " microseconds\n\n";
 	cout << calculations/(((static_cast<float>(t_off - t_on))/(CLOCKS_PER_SEC))) << " calcuations per second\n\n";
 	cout << "1 calculation in: " << (((static_cast<float>(t_off - t_on))/(CLOCKS_PER_SEC)))*(1E6)/calculations << " microseconds\n\n";
-	EDPGen.WriteOutputFile("EDP.txt");
-	Refl.ParamsRF(&EDPGen, "refl.txt");
+	Refl.ComputeRF(&EDPGen);
 
 	return 0;
 }

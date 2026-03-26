@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC } from '../shared/ipc-channels';
-import type { ReflSettingsInput, StochRunStateOutput, StochSessionFile } from '../main/native/stochfit-api';
+import type { ReflSettingsInput, StochRunStateOutput, StochFitOutput } from '../main/native/stochfit-api';
 import type { BoxReflSettingsInput } from '../main/native/levmar-api';
 
 contextBridge.exposeInMainWorld('api', {
@@ -13,11 +13,11 @@ contextBridge.exposeInMainWorld('api', {
   stochCancel: () => ipcRenderer.invoke(IPC.STOCH_CANCEL),
   stochGetData: () => ipcRenderer.invoke(IPC.STOCH_GET_DATA),
   stochGetRunState: (boxes: number) => ipcRenderer.invoke(IPC.STOCH_GET_RUN_STATE, boxes),
-  stochLoadSession: (filePath: string) => ipcRenderer.invoke(IPC.STOCH_LOAD_SESSION, filePath),
-  stochWriteSession: (filePath: string, session: StochSessionFile) =>
-    ipcRenderer.invoke(IPC.STOCH_WRITE_SESSION, filePath, session),
-  stochDeleteSession: (filePath: string) =>
-    ipcRenderer.invoke(IPC.STOCH_DELETE_SESSION, filePath),
+  stochLoadOutput: (filePath: string) => ipcRenderer.invoke(IPC.STOCH_LOAD_OUTPUT, filePath),
+  stochWriteOutput: (filePath: string, output: StochFitOutput) =>
+    ipcRenderer.invoke(IPC.STOCH_WRITE_OUTPUT, filePath, output),
+  stochDeleteOutput: (filePath: string) =>
+    ipcRenderer.invoke(IPC.STOCH_DELETE_OUTPUT, filePath),
   stochArraySizes: () => ipcRenderer.invoke(IPC.STOCH_ARRAY_SIZES),
   stochWarmedUp: () => ipcRenderer.invoke(IPC.STOCH_WARMED_UP),
   stochSAParams: () => ipcRenderer.invoke(IPC.STOCH_SA_PARAMS),
@@ -36,6 +36,7 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke(IPC.LM_STOCH_FIT, input, params),
 
   // File system
+  openDataFile: () => ipcRenderer.invoke(IPC.FS_OPEN_DATA_FILE),
   openFile: (filters?: Electron.FileFilter[]) => ipcRenderer.invoke(IPC.FS_OPEN_FILE, filters),
   saveFile: (defaultPath: string, content: string) =>
     ipcRenderer.invoke(IPC.FS_SAVE_FILE, defaultPath, content),
@@ -51,6 +52,9 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on(IPC.FIT_COMPLETE, (_event, data) => callback(data));
     return () => ipcRenderer.removeAllListeners(IPC.FIT_COMPLETE);
   },
+
+  // Shell
+  openExternal: (url: string) => ipcRenderer.invoke(IPC.SHELL_OPEN_EXTERNAL, url),
 
   // Settings events (main → renderer)
   onSettingsReset: (callback: () => void) => {

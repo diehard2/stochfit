@@ -11,9 +11,9 @@ export const IPC = {
   STOCH_STOP: 'stoch:stop',
   STOCH_DESTROY: 'stoch:destroy',
   STOCH_GET_RUN_STATE: 'stoch:getRunState',
-  STOCH_LOAD_SESSION: 'stoch:loadSession',
-  STOCH_WRITE_SESSION: 'stoch:writeSession',
-  STOCH_DELETE_SESSION: 'stoch:deleteSession',
+  STOCH_LOAD_OUTPUT: 'stoch:loadOutput',
+  STOCH_WRITE_OUTPUT: 'stoch:writeOutput',
+  STOCH_DELETE_OUTPUT: 'stoch:deleteOutput',
 
   // LevMar channels
   LM_FAST_REFL_FIT: 'lm:fastReflFit',
@@ -24,12 +24,16 @@ export const IPC = {
 
   // File system channels
   FS_OPEN_FILE: 'fs:openFile',
+  FS_OPEN_DATA_FILE: 'fs:openDataFile',
   FS_SAVE_FILE: 'fs:saveFile',
   FS_OPEN_PDF: 'fs:openPdf',
 
   // Progress events (main → renderer)
   FIT_PROGRESS: 'fit:progress',
   FIT_COMPLETE: 'fit:complete',
+
+  // Shell
+  SHELL_OPEN_EXTERNAL: 'shell:openExternal',
 
   // Settings events (main → renderer)
   SETTINGS_RESET: 'settings:reset',

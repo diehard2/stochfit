@@ -27,6 +27,16 @@ function applyFresnelNorm(
   };
 }
 
+function applyRq4(
+  q: number[], refl: number[], errors?: number[]
+): { q: number[]; refl: number[]; errors?: number[] } {
+  return {
+    q,
+    refl: refl.map((r, i) => r * Math.pow(q[i], 4)),
+    errors: errors?.map((e, i) => e * Math.pow(q[i], 4)),
+  };
+}
+
 function Empty({ label }: { label: string }) {
   return (
     <div className="w-full h-full flex items-center justify-center text-sm select-none"
@@ -38,16 +48,17 @@ function Empty({ label }: { label: string }) {
 
 // ── Graph 1: Reflectivity (measured + MI fit) ─────────────────────────────────
 
-function PubReflGraph({ opts, fresnelNorm, qc }: { opts: PubOptions; fresnelNorm: boolean; qc: number }) {
+function PubReflGraph({ opts, fresnelNorm, qc, rq4Mode }: { opts: PubOptions; fresnelNorm: boolean; qc: number; rq4Mode: boolean }) {
   const data = useDataStore((s) => s.data);
   const fitResult = useFitStore((s) => s.result);
   const c = pubColors(opts);
   const traces: Data[] = [];
 
+  const applyNorm = (q: number[], refl: number[], errors?: number[]) =>
+    rq4Mode ? applyRq4(q, refl, errors) : fresnelNorm ? applyFresnelNorm(q, refl, qc, errors) : { q, refl, errors };
+
   if (data) {
-    const norm = fresnelNorm
-      ? applyFresnelNorm(data.q, data.refl, qc, data.reflError)
-      : { q: data.q, refl: data.refl, errors: data.reflError };
+    const norm = applyNorm(data.q, data.refl, data.reflError);
     traces.push({
       x: norm.q, y: norm.refl,
       error_y: data.reflError.some((e) => e > 0)
@@ -59,9 +70,7 @@ function PubReflGraph({ opts, fresnelNorm, qc }: { opts: PubOptions; fresnelNorm
   }
 
   if (fitResult && fitResult.qRange.length > 0) {
-    const norm = fresnelNorm
-      ? applyFresnelNorm(fitResult.qRange, fitResult.refl, qc)
-      : { q: fitResult.qRange, refl: fitResult.refl };
+    const norm = applyNorm(fitResult.qRange, fitResult.refl);
     traces.push({
       x: norm.q, y: norm.refl,
       mode: 'lines', type: 'scatter', name: 'MI Fit',
@@ -72,7 +81,7 @@ function PubReflGraph({ opts, fresnelNorm, qc }: { opts: PubOptions; fresnelNorm
   if (traces.length === 0) return <Empty label="No reflectivity data" />;
 
   return (
-    <Plot data={traces} layout={pubReflLayout(opts, fresnelNorm, qc)}
+    <Plot data={traces} layout={pubReflLayout(opts, fresnelNorm, qc, rq4Mode)}
       config={plotlyConfig} style={{ width: '100%', height: '100%' }} useResizeHandler />
   );
 }
@@ -144,16 +153,17 @@ function PubBoxEdpGraph({ opts }: { opts: PubOptions }) {
 
 // ── Graph 4: Box Model Reflectivity ───────────────────────────────────────────
 
-function PubBoxReflGraph({ opts, fresnelNorm, qc }: { opts: PubOptions; fresnelNorm: boolean; qc: number }) {
+function PubBoxReflGraph({ opts, fresnelNorm, qc, rq4Mode }: { opts: PubOptions; fresnelNorm: boolean; qc: number; rq4Mode: boolean }) {
   const data = useDataStore((s) => s.data);
   const genRefl = useBoxModelStore((s) => s.genRefl);
   const c = pubColors(opts);
   const traces: Data[] = [];
 
+  const applyNorm = (q: number[], refl: number[], errors?: number[]) =>
+    rq4Mode ? applyRq4(q, refl, errors) : fresnelNorm ? applyFresnelNorm(q, refl, qc, errors) : { q, refl, errors };
+
   if (data) {
-    const norm = fresnelNorm
-      ? applyFresnelNorm(data.q, data.refl, qc, data.reflError)
-      : { q: data.q, refl: data.refl, errors: data.reflError };
+    const norm = applyNorm(data.q, data.refl, data.reflError);
     traces.push({
       x: norm.q, y: norm.refl,
       error_y: data.reflError.some((e) => e > 0)
@@ -165,9 +175,7 @@ function PubBoxReflGraph({ opts, fresnelNorm, qc }: { opts: PubOptions; fresnelN
   }
 
   if (data && genRefl && genRefl.length === data.q.length) {
-    const norm = fresnelNorm
-      ? applyFresnelNorm(data.q, genRefl, qc)
-      : { q: data.q, refl: genRefl };
+    const norm = applyNorm(data.q, genRefl);
     traces.push({
       x: norm.q, y: norm.refl,
       mode: 'lines', type: 'scatter', name: 'Box Model Fit',
@@ -178,7 +186,7 @@ function PubBoxReflGraph({ opts, fresnelNorm, qc }: { opts: PubOptions; fresnelN
   if (traces.length === 0) return <Empty label="No box model fit — open Box Model panel" />;
 
   return (
-    <Plot data={traces} layout={pubReflLayout(opts, fresnelNorm, qc)}
+    <Plot data={traces} layout={pubReflLayout(opts, fresnelNorm, qc, rq4Mode)}
       config={plotlyConfig} style={{ width: '100%', height: '100%' }} useResizeHandler />
   );
 }
@@ -265,7 +273,9 @@ function GraphPanel({
 // ── Dialog ────────────────────────────────────────────────────────────────────
 
 export function MasterGraphDialog() {
-  const { masterGraphOpen, setMasterGraphOpen, normalizeByFresnel, setNormalizeByFresnel } = useUiStore();
+  const { masterGraphOpen, setMasterGraphOpen, graphMode, setGraphMode } = useUiStore();
+  const normalizeByFresnel = graphMode === 'fresnel';
+  const rq4Mode = graphMode === 'rq4';
   const settings = useSettingsStore((s) => s.settings);
   const [opts, setOpts] = useState<PubOptions>(defaultPubOptions);
 
@@ -293,7 +303,7 @@ export function MasterGraphDialog() {
 
   const btnClass = 'px-2 py-0.5 text-xs bg-surface border border-border rounded text-secondary hover:text-primary transition-colors';
   const sectionLabel = 'text-xs font-semibold text-secondary uppercase tracking-wider mb-2';
-  const reflProps = { opts, fresnelNorm: normalizeByFresnel, qc };
+  const reflProps = { opts, fresnelNorm: normalizeByFresnel, qc, rq4Mode };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-elevated">
@@ -376,12 +386,23 @@ export function MasterGraphDialog() {
                   className="rounded accent-accent" />
                 <span className="text-xs text-secondary">Show Legend</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={normalizeByFresnel}
-                  onChange={(e) => setNormalizeByFresnel(e.target.checked)}
-                  className="rounded accent-accent" />
-                <span className="text-xs text-secondary">Fresnel Norm.</span>
-              </label>
+            </div>
+          </div>
+
+          <div>
+            <p className={sectionLabel}>Graph Mode</p>
+            <div className="flex flex-col gap-1.5">
+              {(['standard', 'fresnel', 'rq4'] as const).map((mode) => (
+                <label key={mode} className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="masterGraphMode" value={mode}
+                    checked={graphMode === mode}
+                    onChange={() => setGraphMode(mode)}
+                    className="accent-accent" />
+                  <span className="text-xs text-secondary">
+                    {mode === 'standard' ? 'Standard' : mode === 'fresnel' ? 'Fresnel Norm.' : 'R·Q⁴'}
+                  </span>
+                </label>
+              ))}
             </div>
           </div>
 

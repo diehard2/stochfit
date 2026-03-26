@@ -1,3 +1,8 @@
+export interface ReflDataMeta {
+  label: string;
+  value: string;
+}
+
 export interface ReflData {
   q: number[];
   refl: number[];
@@ -5,6 +10,8 @@ export interface ReflData {
   qError: number[];
   filePath: string;
   fileName: string;
+  /** Optional metadata extracted from the file header (ORSO YAML, NeXus attrs, etc.) */
+  metadata?: ReflDataMeta[];
 }
 
 export interface FitResult {
@@ -107,6 +114,49 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   useGpu: false,
   gpuChains: 1,
 };
+
+// Inlined from stochfit-api / levmar-api to avoid main-process import in renderer
+export interface SARunState {
+  roughness: number;
+  filmAbsInput: number;
+  surfAbs: number;
+  temperature: number;
+  impNorm: number;
+  avgfSTUN: number;
+  bestSolution: number;
+  chiSquare: number;
+  goodnessOfFit: number;
+  iteration: number;
+  edValues: number[];
+  edCount: number;
+}
+
+// Re-exported from BoxParameterTable for use in StochFitOutput
+import type { BoxRow } from '../components/shared/BoxParameterTable';
+export type { BoxRow };
+
+export interface LMResult {
+  parameters: number[];
+  covariance: number[];
+  info: number[];
+}
+
+export interface StochFitOutput {
+  version: 2;
+  savedAt: string;
+  dataFile: string;
+  settings: ModelSettings;
+  saState: SARunState;
+  fitResult: Omit<FitResult, 'isFinished'>;
+  boxModel?: {
+    boxes: number;
+    subRough: number;
+    zOffset: number;
+    oneSigma: boolean;
+    boxRows: BoxRow[];
+    lmResult?: LMResult;
+  };
+}
 
 export interface BoxLMSettings {
   subSLD: number;

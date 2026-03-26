@@ -22,6 +22,17 @@
   --shadow-subtle: 0 1px 2px rgba(0,0,0,0.3);
 }
 
+/* Light theme overrides */
+[data-theme="light"] {
+  --color-bg: #F2F2F7;
+  --color-surface: #FFFFFF;
+  --color-elevated: #E8E8F0;
+  --color-border: rgba(0,0,0,0.1);
+  --color-primary: #1A1A2E;
+  --color-secondary: #5A5A72;
+  --color-accent: #6366F1;
+}
+
 @layer base {
   html, body, #root {
     height: 100%;
@@ -31,6 +42,13 @@
     color: #EDEDEF;
     font-family: Inter, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+  }
+
+  [data-theme="light"],
+  [data-theme="light"] body,
+  [data-theme="light"] #root {
+    background-color: #F2F2F7;
+    color: #1A1A2E;
   }
 
   * {
@@ -51,6 +69,13 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(255,255,255,0.2);
+  }
+
+  [data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.15);
+  }
+  [data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.25);
   }
 
   /* Remove number input spinners */

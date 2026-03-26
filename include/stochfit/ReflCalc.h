@@ -79,7 +79,7 @@ public:
     tl::expected<void, std::string> Init(ReflSettings* InitStruct);
 	tl::expected<void, std::string> SetupRef(ReflSettings* InitStruct);
 	double Objective(CEDP* EDP);
-    void ParamsRF(CEDP* EDP, string reflfile);
+    void ComputeRF(CEDP* EDP);
 	void CalculateReflectivity(CEDP* EDP);
 
 	int objectivefunction;

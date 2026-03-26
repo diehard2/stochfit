@@ -35,6 +35,7 @@
     "@tailwindcss/postcss": "^4.2.2",
     "electron-squirrel-startup": "^1.0.1",
     "flatbuffers": "25.9.23",
+    "h5wasm": "^0.10.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "koffi": "^2.15.2",

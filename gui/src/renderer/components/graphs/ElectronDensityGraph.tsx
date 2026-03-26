@@ -51,6 +51,7 @@ export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED
       type: 'scatter',
       name: 'EDP',
       line: { color: COLORS.miFit, width: 2, shape: 'spline' },
+      hovertemplate: 'Z: %{x:.2f} Å<br>ρ: %{y:.4f}<extra></extra>',
     });
   }
 
@@ -63,6 +64,7 @@ export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED
       type: 'scatter',
       name: 'Box Model',
       line: { color: COLORS.boxFit, width: 1.5, shape: 'hv' },
+      hovertemplate: 'Z: %{x:.2f} Å<br>ρ: %{y:.4f}<extra></extra>',
     });
   }
 
@@ -75,6 +77,7 @@ export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED
       type: 'scatter',
       name: 'EDP',
       line: { color: COLORS.miFit, width: 2, shape: 'spline' },
+      hovertemplate: 'Z: %{x:.2f} Å<br>ρ: %{y:.4f}<extra></extra>',
     });
   }
 
@@ -87,6 +90,7 @@ export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED
       type: 'scatter',
       name: 'Boxes',
       line: { color: COLORS.boxFit, width: 1.5, shape: 'hv' },
+      hovertemplate: 'Z: %{x:.2f} Å<br>ρ: %{y:.4f}<extra></extra>',
     });
   }
 

@@ -157,10 +157,8 @@ tl::expected<void, std::string> CReflCalc::SetupRef(ReflSettings *InitStruct) {
   return {};
 }
 
-// Write output files
-void CReflCalc::ParamsRF(CEDP *EDP, string reflfile) {
-  ofstream reflout(reflfile.c_str());
-
+// Compute the fitted reflectivity on the dense Q grid (no file output).
+void CReflCalc::ComputeRF(CEDP *EDP) {
   if (m_dQSpread == 0.0 || !exi.has_value()) {
     if (EDP->Get_UseABS() == false)
       MyTransparentRF(tsinthetai.data(), tsinsquaredthetai.data(), tarraysize,
@@ -186,18 +184,6 @@ void CReflCalc::ParamsRF(CEDP *EDP, string reflfile) {
   if (m_bImpNorm) {
     impnorm(dataout.data(), tarraysize, true);
   }
-
-#ifndef CHECKREFLCALC
-  for (int i = 0; i < tarraysize; i++) {
-    reflout << qarray[i] << " " << dataout[i] << endl;
-  }
-#else
-  for (int i = 0; i < m_idatapoints; i++) {
-    reflout << xi[i] << " " << reflpt[i] << endl;
-  }
-#endif
-
-  reflout.close();
 }
 
 // Check to see if there is any negative electron density for the XR case, false

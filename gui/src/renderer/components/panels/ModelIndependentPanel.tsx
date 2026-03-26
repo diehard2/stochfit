@@ -9,7 +9,7 @@ import { POLLING_INTERVAL_MS } from '../../lib/constants';
 import { BoxParameterTable, type BoxRow } from '../shared/BoxParameterTable';
 import { Field } from '../shared/Field';
 import type { FitResult, SAParams } from '../../lib/types';
-import type { ReflSettingsInput, StochRunStateOutput, StochSessionFile } from '../../../main/native/stochfit-api';
+import type { ReflSettingsInput, StochRunStateOutput, StochFitOutput } from '../../../main/native/stochfit-api';
 import type { BoxReflSettingsInput, LMFitResult } from '../../../main/native/levmar-api';
 
 // ── Param helpers ────────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ export function ModelIndependentPanel() {
   // Resume dialog
   const [resumePending, setResumePending] = useState<{
     input: ReflSettingsInput;
-    session: StochSessionFile;
+    savedOutput: StochFitOutput;
   } | null>(null);
 
   // EDP box fitting state (persisted in store)
@@ -117,7 +117,7 @@ export function ModelIndependentPanel() {
   }, [boxes]);
 
   // Start polling for fit updates. Extracted so doStart and the remount effect can share it.
-  const startPolling = useCallback((runDirectory: string, runDataFile: string) => {
+  const startPolling = useCallback((_runDirectory: string, runDataFile: string) => {
     const timer = setInterval(async () => {
       let fitData: FitResult;
       let saData: SAParams;
@@ -144,7 +144,7 @@ export function ModelIndependentPanel() {
       if (fitData.isFinished) {
         clearInterval(timer);
         setPollTimer(null);
-        await saveSession(runDirectory, runDataFile, fitData.iterationsCompleted);
+        await saveOutput(runDataFile, fitData.iterationsCompleted);
         setStatus('completed');
       }
     }, POLLING_INTERVAL_MS);
@@ -194,10 +194,10 @@ export function ModelIndependentPanel() {
       impnorm: settings.normSearchPerc > 0,
     };
 
-    const sessionPath = input.directory + 'stochfit-session.json';
-    const session = await window.api.stochLoadSession(sessionPath) as StochSessionFile | null;
-    if (session && session.saState.edCount === settings.boxes + 2) {
-      setResumePending({ input, session });
+    const outputPath = data!.filePath + '.stochfit.json';
+    const savedOutput = await window.api.stochLoadOutput(outputPath) as StochFitOutput | null;
+    if (savedOutput && savedOutput.saState.edCount === settings.boxes + 2) {
+      setResumePending({ input, savedOutput });
       return;
     }
 
@@ -234,21 +234,52 @@ export function ModelIndependentPanel() {
     startPolling(runDirectory, runDataFile);
   }
 
-  async function saveSession(directory: string, dataFile: string, iteration: number) {
+  async function saveOutput(dataFile: string, iteration: number) {
     try {
       await window.api.stochStop();
       const saState = await window.api.stochGetRunState(settings.boxes) as StochRunStateOutput;
       saState.iteration = iteration;
-      const session: StochSessionFile = {
-        version: 1,
+
+      // Capture current fit result (may be null if no data yet)
+      const currentResult = useFitStore.getState().result;
+      if (!currentResult) {
+        await window.api.stochDestroy();
+        return;
+      }
+
+      // Capture current box model state
+      const miEdp = useMiEdpStore.getState();
+
+      const output: StochFitOutput = {
+        version: 2,
         savedAt: new Date().toISOString(),
         dataFile,
         settings: { ...settings } as Record<string, unknown>,
         saState,
+        fitResult: {
+          zRange: currentResult.zRange,
+          rho: currentResult.rho,
+          qRange: currentResult.qRange,
+          refl: currentResult.refl,
+          roughness: currentResult.roughness,
+          chiSquare: currentResult.chiSquare,
+          goodnessOfFit: currentResult.goodnessOfFit,
+          iterationsCompleted: currentResult.iterationsCompleted,
+        },
+        ...(miEdp.boxRows.length > 0 && {
+          boxModel: {
+            boxes: miEdp.boxes,
+            subRough: miEdp.subRough,
+            zOffset: miEdp.zOffset,
+            oneSigma: miEdp.oneSigma,
+            boxRows: miEdp.boxRows,
+            ...(miEdp.lmResult && { lmResult: miEdp.lmResult }),
+          },
+        }),
       };
-      await window.api.stochWriteSession(directory + 'stochfit-session.json', session);
+      await window.api.stochWriteOutput(dataFile + '.stochfit.json', output);
     } catch (e) {
-      console.error('[MI] saveSession failed:', e);
+      console.error('[MI] saveOutput failed:', e);
     } finally {
       await window.api.stochDestroy();
     }
@@ -260,8 +291,7 @@ export function ModelIndependentPanel() {
       setPollTimer(null);
     }
     if (data) {
-      const directory = data.filePath.replace(/[^/\\]+$/, '');
-      await saveSession(directory, data.filePath, result?.iterationsCompleted ?? 0);
+      await saveOutput(data.filePath, result?.iterationsCompleted ?? 0);
     } else {
       await window.api.stochCancel();
     }
@@ -367,8 +397,8 @@ export function ModelIndependentPanel() {
                 onClick={() => {
                   const p = resumePending;
                   setResumePending(null);
-                  restoreSettings(p.session.settings as unknown as Partial<ModelSettings>);
-                  doStart(p.input, p.session.saState);
+                  restoreSettings(p.savedOutput.settings as unknown as Partial<ModelSettings>);
+                  doStart(p.input, p.savedOutput.saState);
                 }}
                 className="flex-1 py-2 text-xs font-medium bg-accent/20 hover:bg-accent/30 text-accent rounded-input transition-colors"
               >
@@ -453,14 +483,14 @@ export function ModelIndependentPanel() {
         <button
           onClick={handleStart}
           disabled={isRunning || !data}
-          className="flex-1 py-2 text-xs font-medium bg-success/20 hover:bg-success/30 text-success rounded-input disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="flex-1 py-2 text-xs font-semibold bg-success hover:bg-success/85 text-white rounded-input disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           {isRunning ? 'Running…' : 'Start Fit'}
         </button>
         <button
           onClick={handleCancel}
           disabled={!isRunning}
-          className="flex-1 py-2 text-xs font-medium bg-destructive/20 hover:bg-destructive/30 text-destructive rounded-input disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="flex-1 py-2 text-xs font-semibold bg-destructive hover:bg-destructive/85 text-white rounded-input disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           Cancel
         </button>
@@ -505,7 +535,7 @@ export function ModelIndependentPanel() {
             <div className="flex flex-col gap-2">
               {/* Global params */}
               <div className="grid grid-cols-2 gap-2">
-                <LabeledInput label="Sub Rough (Å)" value={subRough} onChange={setSubRough} />
+                <LabeledInput label="Substrate σ (Å)" value={subRough} onChange={setSubRough} />
                 <LabeledInput label="Z Offset (Å)" value={zOffset} onChange={setZOffset} />
               </div>
 

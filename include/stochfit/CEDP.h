@@ -41,8 +41,6 @@ public:
 	double Get_Dz();
 	double Get_WaveConstant();
 	void Set_FilmAbs(double absorption);
-	void WriteOutputFile(string filename);
-
 	vector<std::complex<double>> m_EDP;
 	vector<std::complex<double>> m_DEDP;
 };

@@ -12,11 +12,12 @@ import {
   stochWarmedUp,
   stochSAParams,
   stochGpuAvailable,
-  readSessionFile,
-  writeSessionFile,
+  readOutputFile,
+  writeOutputFile,
+  outputFilePath,
   type ReflSettingsInput,
   type StochRunStateOutput,
-  type StochSessionFile,
+  type StochFitOutput,
 } from './native/stochfit-api';
 import {
   levmarFastReflFit,
@@ -28,6 +29,7 @@ import {
 } from './native/levmar-api';
 import fs from 'fs';
 import path from 'path';
+import { parseDataFile } from './parsers';
 
 function wrap<T>(name: string, fn: () => T): T {
   try {
@@ -64,16 +66,16 @@ export function registerIpcHandlers(): void {
     return wrap('STOCH_GET_RUN_STATE', () => stochGetRunState(boxes));
   });
 
-  ipcMain.handle(IPC.STOCH_LOAD_SESSION, (_event, filePath: string) => {
-    return wrap('STOCH_LOAD_SESSION', () => readSessionFile(filePath));
+  ipcMain.handle(IPC.STOCH_LOAD_OUTPUT, (_event, filePath: string) => {
+    return wrap('STOCH_LOAD_OUTPUT', () => readOutputFile(filePath));
   });
 
-  ipcMain.handle(IPC.STOCH_WRITE_SESSION, (_event, filePath: string, session: StochSessionFile) => {
-    return wrap('STOCH_WRITE_SESSION', () => writeSessionFile(filePath, session));
+  ipcMain.handle(IPC.STOCH_WRITE_OUTPUT, (_event, filePath: string, output: StochFitOutput) => {
+    return wrap('STOCH_WRITE_OUTPUT', () => writeOutputFile(filePath, output));
   });
 
-  ipcMain.handle(IPC.STOCH_DELETE_SESSION, (_event, filePath: string) => {
-    return wrap('STOCH_DELETE_SESSION', () => {
+  ipcMain.handle(IPC.STOCH_DELETE_OUTPUT, (_event, filePath: string) => {
+    return wrap('STOCH_DELETE_OUTPUT', () => {
       try { fs.unlinkSync(filePath); } catch { /* already gone */ }
     });
   });
@@ -120,6 +122,21 @@ export function registerIpcHandlers(): void {
   });
 
   // ── File System ──────────────────────────────────────────────────────────
+  ipcMain.handle(IPC.FS_OPEN_DATA_FILE, async (_event) => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: [
+        { name: 'All supported', extensions: ['txt', 'dat', 'csv', 'ort', 'nxs', 'h5', 'hdf5', 'hdf'] },
+        { name: 'Text data', extensions: ['txt', 'dat', 'csv'] },
+        { name: 'ORSO (.ort)', extensions: ['ort'] },
+        { name: 'NeXus / HDF5', extensions: ['nxs', 'h5', 'hdf5', 'hdf'] },
+        { name: 'All files', extensions: ['*'] },
+      ],
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    return parseDataFile(result.filePaths[0]);
+  });
+
   ipcMain.handle(IPC.FS_OPEN_FILE, async (_event, filters?: Electron.FileFilter[]) => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
@@ -148,5 +165,9 @@ export function registerIpcHandlers(): void {
     fs.writeFileSync(filePath, Buffer.from(data));
     await shell.openPath(filePath);
     return filePath;
+  });
+
+  ipcMain.handle(IPC.SHELL_OPEN_EXTERNAL, (_event, url: string) => {
+    shell.openExternal(url);
   });
 }

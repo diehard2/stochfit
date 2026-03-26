@@ -66,21 +66,31 @@ function pubBaseLayout(opts: PubOptions): Partial<Layout> {
   };
 }
 
-export function pubReflLayout(opts: PubOptions, fresnelNorm: boolean, qc: number): Partial<Layout> {
+export function pubReflLayout(opts: PubOptions, fresnelNorm: boolean, qc: number, rq4Mode = false): Partial<Layout> {
   const base = pubBaseLayout(opts);
-  const xText = (fresnelNorm && qc !== 0) ? 'Q / Q<sub>c</sub>' : 'Q (Å⁻¹)';
-  const yText = (fresnelNorm && qc !== 0) ? 'Intensity / Fresnel' : 'Intensity';
+  let xText = 'Q (Å⁻¹)';
+  let yText = 'Intensity';
+  let xType: 'linear' | 'log' = 'linear';
+  let yType: 'linear' | 'log' = 'log';
+  if (rq4Mode) {
+    xText = 'Q (Å⁻¹)';
+    yText = 'R·Q⁴ (Å⁻⁴)';
+    yType = 'log';
+  } else if (fresnelNorm && qc !== 0) {
+    xText = 'Q / Q<sub>c</sub>';
+    yText = 'Intensity / Fresnel';
+  }
   return {
     ...base,
     xaxis: {
       ...(base.xaxis as any),
       title: { text: xText, font: { size: opts.fontSize + 1 } },
-      type: 'linear',
+      type: xType,
     },
     yaxis: {
       ...(base.yaxis as any),
       title: { text: yText, font: { size: opts.fontSize + 1 } },
-      type: 'log',
+      type: yType,
     },
   };
 }

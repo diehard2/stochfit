@@ -104,10 +104,7 @@ class StochFit
 		std::atomic<bool> m_bupdated;
 		std::atomic<bool> m_stop_requested;
 
-		//Set the output file names
 		string m_Directory;
-		string fnrf;
-		string fnrho;
 		double m_dRoughness;
 		double m_dChiSquare;
 		double m_dGoodnessOfFit;

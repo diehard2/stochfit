@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { DataPanel } from '../panels/DataPanel';
@@ -18,6 +18,67 @@ import { useSettingsStore } from '../../stores/settings-store';
 import { exportSVG } from '../graphs/export-utils';
 import { MasterGraphDialog } from '../graphs/MasterPane';
 import { generateReport } from '../../lib/report-generator';
+import { Toast } from '../shared/Toast';
+
+const GITHUB_URL = 'https://github.com/diehard2/stochfit';
+
+function MenuDropdown({ label, children }: { label: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="text-xs text-secondary hover:text-primary transition-colors flex items-center gap-1"
+      >
+        {label} <span className="opacity-50 text-[10px]">▾</span>
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 bg-elevated border border-border rounded shadow-lg py-1 min-w-40 text-xs">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MenuItem({
+  children,
+  onClick,
+  disabled,
+  href,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  href?: string;
+}) {
+  const cls =
+    'block w-full text-left px-4 py-1.5 text-secondary hover:text-primary hover:bg-surface transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
+  if (href) {
+    return (
+      <button className={cls} onClick={() => window.api.openExternal(href)}>
+        {children}
+      </button>
+    );
+  }
+  return (
+    <button disabled={disabled} onClick={onClick} className={cls}>
+      {children}
+    </button>
+  );
+}
+
+function MenuSeparator() {
+  return <div className="my-1 border-t border-border" />;
+}
 
 function PanelContent() {
   const panel = useUiStore((s) => s.activePanel);
@@ -39,7 +100,8 @@ export function AppShell() {
   const boxModelGenED = useBoxModelStore((s) => s.genED);
   const boxModelGenBoxED = useBoxModelStore((s) => s.genBoxED);
   const boxModelGenZRange = useBoxModelStore((s) => s.genZRange);
-  const { activePanel, setAboutOpen, normalizeByFresnel, setNormalizeByFresnel, setGpuAvailable, setMasterGraphOpen } = useUiStore();
+  const { activePanel, setAboutOpen, graphMode, setGraphMode, darkMode, setDarkMode, setGpuAvailable, setMasterGraphOpen } = useUiStore();
+  const normalizeByFresnel = graphMode === 'fresnel';
   const boxModelStore = useBoxModelStore();
   const settings = useSettingsStore((s) => s.settings);
   const [reportBusy, setReportBusy] = useState(false);
@@ -64,7 +126,7 @@ export function AppShell() {
         genBoxED: boxModelStore.genBoxED,
         genZRange: boxModelStore.genZRange,
         miBoxED,
-        normalizeByFresnel,
+        graphMode,
       });
       const dir = data ? data.filePath.replace(/[^/\\]+$/, '') : '';
       const baseName = data ? data.fileName.replace(/\.[^.]+$/, '') + '-report' : 'stochfit-report';
@@ -74,7 +136,7 @@ export function AppShell() {
     } finally {
       setReportBusy(false);
     }
-  }, [data, fitResult, settings, boxModelStore, miBoxED, normalizeByFresnel]);
+  }, [data, fitResult, settings, boxModelStore, miBoxED, graphMode]);
 
   useEffect(() => {
     window.api.stochGpuAvailable().then((available) => {
@@ -84,6 +146,10 @@ export function AppShell() {
       console.error('[GPU] stochGpuAvailable failed:', err);
     });
   }, [setGpuAvailable]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
 
   // Contextual graph data based on active panel
   const isBoxModel = activePanel === 'boxmodel';
@@ -107,47 +173,52 @@ export function AppShell() {
       {/* Top menu bar */}
       <div className="h-9 flex items-center justify-between px-4 border-b border-border bg-elevated flex-shrink-0">
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => setAboutOpen(true)}
-            className="text-xs text-secondary hover:text-primary transition-colors"
-          >
-            About
-          </button>
-          <button
-            onClick={() => setMasterGraphOpen(true)}
-            className="text-xs text-secondary hover:text-primary transition-colors"
-          >
-            Master Graph
-          </button>
-          <button
-            onClick={handleGenerateReport}
-            disabled={reportBusy || (!fitResult && !boxModelStore.lastFitReport)}
-            className="text-xs text-secondary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {reportBusy ? 'Generating…' : 'Generate Report'}
-          </button>
-          <button
-            onClick={async () => {
-              resetSettings();
-              if (data) {
-                const sessionPath = data.filePath.replace(/[^/\\]+$/, '') + 'stochfit-session.json';
-                await window.api.stochDeleteSession(sessionPath);
-              }
-            }}
-            className="text-xs text-secondary hover:text-destructive transition-colors"
-          >
-            Reset Saved Data
-          </button>
+          <MenuDropdown label="Reporting">
+            <MenuItem onClick={() => setMasterGraphOpen(true)}>Master Graph</MenuItem>
+            <MenuItem
+              onClick={handleGenerateReport}
+              disabled={reportBusy || (!fitResult && !boxModelStore.lastFitReport)}
+            >
+              {reportBusy ? 'Generating…' : 'Generate Report'}
+            </MenuItem>
+          </MenuDropdown>
+
+          <MenuDropdown label="Display">
+            {(['standard', 'fresnel', 'rq4'] as const).map((mode) => (
+              <MenuItem key={mode} onClick={() => setGraphMode(mode)}>
+                <span className="flex items-center gap-2">
+                  <span className="w-3 text-accent">{graphMode === mode ? '✓' : ''}</span>
+                  {mode === 'standard' ? 'Standard' : mode === 'fresnel' ? 'Fresnel Normalized' : 'R·Q⁴'}
+                </span>
+              </MenuItem>
+            ))}
+            <MenuSeparator />
+            <MenuItem onClick={() => setDarkMode(!darkMode)}>
+              <span className="flex items-center gap-2">
+                <span className="w-3 text-accent">{!darkMode ? '✓' : ''}</span>
+                Light Mode
+              </span>
+            </MenuItem>
+          </MenuDropdown>
+
+          <MenuDropdown label="Help">
+            <MenuItem href={`${GITHUB_URL}/discussions`}>GitHub Discussions</MenuItem>
+            <MenuItem href={`${GITHUB_URL}/issues`}>Report an Issue</MenuItem>
+            <MenuSeparator />
+            <MenuItem
+              onClick={async () => {
+                resetSettings();
+                if (data) {
+                  await window.api.stochDeleteOutput(data.filePath + '.stochfit.json');
+                }
+              }}
+            >
+              <span className="text-destructive">Reset Saved Data</span>
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem onClick={() => setAboutOpen(true)}>About StochFit</MenuItem>
+          </MenuDropdown>
         </div>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={normalizeByFresnel}
-            onChange={(e) => setNormalizeByFresnel(e.target.checked)}
-            className="rounded"
-          />
-          <span className="text-xs text-secondary hover:text-primary transition-colors">Normalize by Fresnel</span>
-        </label>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -199,6 +270,7 @@ export function AppShell() {
       <AboutDialog />
       <SLDCalculatorDialog />
       <MasterGraphDialog />
+      <Toast />
     </div>
   );
 }

@@ -171,26 +171,6 @@ void CEDP::MakeEDP(ParamVector* g)
 	}
 }
 
-void CEDP::WriteOutputFile(string filename)
-{
-	double z = 0;
-	ofstream rhoout(filename.c_str());
-
-	for(int j = 0; j < m_iLayers; j++)
-	{
-		rhoout << z << ' ' << m_EDP[j].real()/m_EDP[m_iLayers-1].real() << ' ' ;
-
-		if(m_bUseSurfAbs)
-			rhoout << m_EDP[j].imag()/m_EDP[m_iLayers-1].imag();
-
-		rhoout << endl;
-
-		z += m_dDz0;
-	}
-
-	rhoout.close();
-}
-
 int CEDP::Get_EDPPointCount()
 {
 	return m_iLayers;

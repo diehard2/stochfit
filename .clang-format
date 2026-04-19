@@ -1,0 +1,58 @@
+---
+Language: Cpp
+Standard: c++23
+BasedOnStyle: LLVM
+
+# Indentation
+IndentWidth: 4
+UseTab: Never
+TabWidth: 4
+IndentCaseLabels: true
+IndentGotoLabels: true
+IndentPPDirectives: BeforeHash
+
+# Spacing
+SpaceAfterCStyleCast: true
+SpacesBeforeTrailingComments: 2
+ColumnLimit: 140
+
+# Braces
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterFunction: true
+  AfterStruct: true
+  BeforeLambdaBody: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# Pointers and references
+PointerAlignment: Right
+DereferenceBindsToType: true
+ReferenceAlignment: Pointer
+
+# Line breaks
+ReflowComments: true
+AlignTrailingComments: true
+
+# Include sorting
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<.*\.h>'
+    Priority: 1
+  - Regex: '^<[^/]*>'
+    Priority: 2
+  - Regex: '.*'
+    Priority: 3
+
+# Constructor initialization
+ConstructorInitializerAllOnOneLineIfFitsOnLine: false
+ConstructorInitializerIndentWidth: 4
+
+# Penalty adjustments
+PenaltyReturnTypeOnItsOwnLine: 200
+PenaltyBreakBeforeFirstCallParameter: 100

@@ -42,41 +42,18 @@ static std::vector<double> copy_fbs_vec(const flatbuffers::Vector<double>* v)
 }
 
 // Populate a BoxReflSettings from a FlatBuffer table.
-// Pointer fields are set to data() of the caller-owned vectors.
-static void fill_box_settings(const StochFitProto::BoxReflSettings* s,
-                               BoxReflSettings& rs,
-                               std::vector<double>& q,
-                               std::vector<double>& refl,
-                               std::vector<double>& reflErr,
-                               std::vector<double>& qErr,
-                               std::vector<double>& ul,
-                               std::vector<double>& ll,
-                               std::vector<double>& paramPercs,
-                               std::vector<double>& miedp,
-                               std::vector<double>& zInc,
-                               std::string& dir)
+static void fill_box_settings(const StochFitProto::BoxReflSettings* s, BoxReflSettings& rs)
 {
-    q         = copy_fbs_vec(s->q());
-    refl      = copy_fbs_vec(s->refl());
-    reflErr   = copy_fbs_vec(s->refl_error());
-    qErr      = copy_fbs_vec(s->q_error());
-    ul        = copy_fbs_vec(s->ul());
-    ll        = copy_fbs_vec(s->ll());
-    paramPercs= copy_fbs_vec(s->param_percs());
-    miedp     = copy_fbs_vec(s->miedp());
-    zInc      = copy_fbs_vec(s->z_increment());
-    dir       = s->directory() ? s->directory()->str() : "";
-
-    rs.Directory  = dir.c_str();
-    rs.Q          = q.empty()        ? nullptr : q.data();
-    rs.Refl       = refl.empty()     ? nullptr : refl.data();
-    rs.ReflError  = reflErr.empty()  ? nullptr : reflErr.data();
-    rs.QError     = qErr.empty()     ? nullptr : qErr.data();
-    rs.UL         = ul.empty()       ? nullptr : ul.data();
-    rs.LL         = ll.empty()       ? nullptr : ll.data();
-    rs.ParamPercs = paramPercs.empty()? nullptr : paramPercs.data();
-    rs.MIEDP      = miedp.empty()    ? nullptr : miedp.data();
-    rs.ZIncrement = zInc.empty()     ? nullptr : zInc.data();
+    rs.Directory  = s->directory() ? s->directory()->str() : "";
+    rs.Q          = copy_fbs_vec(s->q());
+    rs.Refl       = copy_fbs_vec(s->refl());
+    rs.ReflError  = copy_fbs_vec(s->refl_error());
+    rs.QError     = copy_fbs_vec(s->q_error());
+    rs.UL         = copy_fbs_vec(s->ul());
+    rs.LL         = copy_fbs_vec(s->ll());
+    rs.ParamPercs = copy_fbs_vec(s->param_percs());
+    rs.MIEDP      = copy_fbs_vec(s->miedp());
+    rs.ZIncrement = copy_fbs_vec(s->z_increment());
     rs.QPoints    = s->q_points();
     rs.OneSigma   = s->one_sigma();
     rs.WriteFiles = s->write_files();
@@ -112,10 +89,8 @@ extern "C" EXPORT int FastReflfit(const uint8_t* inBuf, int /*inLen*/, uint8_t* 
 {
     auto* req = flatbuffers::GetRoot<StochFitProto::LevMarRequest>(inBuf);
 
-    std::vector<double> q, refl, reflErr, qErr, ul, ll, paramPercs, miedp, zInc;
-    std::string dir;
     BoxReflSettings rs{};
-    fill_box_settings(req->settings(), rs, q, refl, reflErr, qErr, ul, ll, paramPercs, miedp, zInc, dir);
+    fill_box_settings(req->settings(), rs);
 
     std::vector<double> params = copy_fbs_vec(req->parameters());
     int paramsize = static_cast<int>(params.size());
@@ -123,19 +98,19 @@ extern "C" EXPORT int FastReflfit(const uint8_t* inBuf, int /*inLen*/, uint8_t* 
     double opts[LM_OPTS_SZ] = { LM_INIT_MU, 1e-15, 1e-15, 1e-20, -LM_DIFF_DELTA };
 
     FastReflcalc Refl;
-    Refl.init(&rs);
+    Refl.init(rs);
 
     std::vector<double> xvec(rs.QPoints, 0.0);
     std::vector<double> work(LM_DIF_WORKSZ(paramsize, rs.QPoints) + paramsize * rs.QPoints);
     double* covarRaw = work.data() + LM_DIF_WORKSZ(paramsize, rs.QPoints);
     std::vector<double> info(LM_INFO_SZ, 0.0);
 
-    if (rs.UL == nullptr)
+    if (rs.UL.empty())
         dlevmar_dif(Refl.objective, params.data(), xvec.data(), paramsize, rs.QPoints,
                     1000, opts, info.data(), work.data(), covarRaw, (void*)(&Refl));
     else
         dlevmar_bc_dif(Refl.objective, params.data(), xvec.data(), paramsize, rs.QPoints,
-                       rs.LL, rs.UL, nullptr, 1000, opts, info.data(), work.data(), covarRaw,
+                       rs.LL.data(), rs.UL.data(), nullptr, 1000, opts, info.data(), work.data(), covarRaw,
                        (void*)(&Refl));
 
     std::vector<double> covar(paramsize);
@@ -156,20 +131,18 @@ extern "C" EXPORT int FastReflGenerate(const uint8_t* inBuf, int /*inLen*/, uint
 {
     auto* req = flatbuffers::GetRoot<StochFitProto::LevMarRequest>(inBuf);
 
-    std::vector<double> q, refl, reflErr, qErr, ul, ll, paramPercs, miedp, zInc;
-    std::string dir;
     BoxReflSettings rs{};
-    fill_box_settings(req->settings(), rs, q, refl, reflErr, qErr, ul, ll, paramPercs, miedp, zInc, dir);
+    fill_box_settings(req->settings(), rs);
 
     std::vector<double> params = copy_fbs_vec(req->parameters());
 
     FastReflcalc FastRefl;
-    FastRefl.init(&rs);
+    FastRefl.init(rs);
 
     if (rs.OneSigma)
-        FastRefl.mkdensityonesigma(params.data(), static_cast<int>(params.size()));
+        FastRefl.mkdensityonesigma(params);
     else
-        FastRefl.mkdensity(params.data(), static_cast<int>(params.size()));
+        FastRefl.mkdensity(params);
 
     FastRefl.SetOffsets(0, 0);
     FastRefl.myrfdispatch();
@@ -187,10 +160,8 @@ extern "C" EXPORT int Rhofit(const uint8_t* inBuf, int /*inLen*/, uint8_t* outBu
 {
     auto* req = flatbuffers::GetRoot<StochFitProto::LevMarRequest>(inBuf);
 
-    std::vector<double> q, refl, reflErr, qErr, ul, ll, paramPercs, miedp, zInc;
-    std::string dir;
     BoxReflSettings rs{};
-    fill_box_settings(req->settings(), rs, q, refl, reflErr, qErr, ul, ll, paramPercs, miedp, zInc, dir);
+    fill_box_settings(req->settings(), rs);
 
     std::vector<double> params = copy_fbs_vec(req->parameters());
     int paramsize = static_cast<int>(params.size());
@@ -198,19 +169,19 @@ extern "C" EXPORT int Rhofit(const uint8_t* inBuf, int /*inLen*/, uint8_t* outBu
     double opts[LM_OPTS_SZ] = { LM_INIT_MU, 1e-15, 1e-15, 1e-20, -LM_DIFF_DELTA };
 
     RhoCalc Rho;
-    Rho.init(&rs);
+    Rho.init(rs);
 
     std::vector<double> xvec(rs.ZLength, 0.0);
     std::vector<double> work(LM_DIF_WORKSZ(paramsize, rs.ZLength) + paramsize * rs.ZLength);
     double* covarRaw = work.data() + LM_DIF_WORKSZ(paramsize, rs.ZLength);
     std::vector<double> info(LM_INFO_SZ, 0.0);
 
-    if (rs.UL == nullptr)
+    if (rs.UL.empty())
         dlevmar_dif(Rho.objective, params.data(), xvec.data(), paramsize, rs.ZLength,
                     1000, opts, info.data(), work.data(), covarRaw, (void*)(&Rho));
     else
         dlevmar_bc_dif(Rho.objective, params.data(), xvec.data(), paramsize, rs.ZLength,
-                       rs.LL, rs.UL, nullptr, 1000, opts, info.data(), work.data(), covarRaw,
+                       rs.LL.data(), rs.UL.data(), nullptr, 1000, opts, info.data(), work.data(), covarRaw,
                        (void*)(&Rho));
 
     std::vector<double> covar(paramsize);
@@ -231,17 +202,15 @@ extern "C" EXPORT int RhoGenerate(const uint8_t* inBuf, int /*inLen*/, uint8_t* 
 {
     auto* req = flatbuffers::GetRoot<StochFitProto::LevMarRequest>(inBuf);
 
-    std::vector<double> q, refl, reflErr, qErr, ul, ll, paramPercs, miedp, zInc;
-    std::string dir;
     BoxReflSettings rs{};
-    fill_box_settings(req->settings(), rs, q, refl, reflErr, qErr, ul, ll, paramPercs, miedp, zInc, dir);
+    fill_box_settings(req->settings(), rs);
 
     std::vector<double> params = copy_fbs_vec(req->parameters());
 
     RhoCalc Rho;
-    Rho.init(&rs);
-    Rho.mkdensity(params.data(), static_cast<int>(params.size()));
-    Rho.mkdensityboxmodel(params.data(), static_cast<int>(params.size()));
+    Rho.init(rs);
+    Rho.mkdensity(params);
+    Rho.mkdensityboxmodel(params);
 
     std::vector<double> ed(Rho.nk.begin(), Rho.nk.begin() + rs.ZLength);
     std::vector<double> boxED(Rho.nkb.begin(), Rho.nkb.begin() + rs.ZLength);
@@ -259,35 +228,32 @@ extern "C" EXPORT int StochFitBoxModel(const uint8_t* inBuf, int /*inLen*/, uint
 {
     auto* req = flatbuffers::GetRoot<StochFitProto::LevMarRequest>(inBuf);
 
-    std::vector<double> q, refl, reflErr, qErr, ul, ll, paramPercs, miedp, zInc;
-    std::string dir;
     BoxReflSettings rs{};
-    fill_box_settings(req->settings(), rs, q, refl, reflErr, qErr, ul, ll, paramPercs, miedp, zInc, dir);
+    fill_box_settings(req->settings(), rs);
 
     std::vector<double> params = copy_fbs_vec(req->parameters());
     int paramsize = static_cast<int>(params.size());
     int QSize = rs.QPoints;
-    double* parampercs = rs.ParamPercs;
 
     double opts[LM_OPTS_SZ] = { LM_INIT_MU, 1e-15, 1e-15, 1e-20, -LM_DIFF_DELTA };
 
     FastReflcalc Refl;
-    Refl.init(&rs);
+    Refl.init(rs);
 
     std::vector<double> xvec(QSize, 0.0);
 
     std::vector<double> origguess(params);
 
     if (rs.OneSigma)
-        Refl.mkdensityonesigma(params.data(), paramsize);
+        Refl.mkdensityonesigma(params);
     else
-        Refl.mkdensity(params.data(), paramsize);
+        Refl.mkdensity(params);
     Refl.myrfdispatch();
 
     double bestchisquare = 0;
     for (int i = 0; i < QSize; i++)
     {
-        double diff = std::log(Refl.reflpt[i]) - std::log(refl[i]);
+        double diff = std::log(Refl.reflpt[i]) - std::log(rs.Refl[i]);
         bestchisquare += diff * diff;
     }
 
@@ -295,7 +261,7 @@ extern "C" EXPORT int StochFitBoxModel(const uint8_t* inBuf, int /*inLen*/, uint
     tempinfoarray[1] = bestchisquare;
     std::vector<double> tempcovar(static_cast<size_t>(paramsize * paramsize), 0.0);
     ParameterContainer original(params.data(), tempcovar.data(), paramsize,
-                                rs.OneSigma, tempinfoarray.data(), parampercs[6]);
+                                rs.OneSigma, tempinfoarray.data(), rs.ParamPercs[6]);
 
     std::vector<ParameterContainer> temp;
     temp.reserve(6000);
@@ -305,7 +271,7 @@ extern "C" EXPORT int StochFitBoxModel(const uint8_t* inBuf, int /*inLen*/, uint
     #pragma omp parallel
     {
         FastReflcalc locRefl;
-        locRefl.init(&rs);
+        locRefl.init(rs);
 
         std::mt19937 randgen(std::random_device{}() + omp_get_thread_num());
         auto IRandom = [&](double max, double min) {
@@ -326,33 +292,33 @@ extern "C" EXPORT int StochFitBoxModel(const uint8_t* inBuf, int /*inLen*/, uint
         #pragma omp for schedule(runtime)
         for (int i = 0; i < rs.Iterations; i++)
         {
-            locparameters[0] = IRandom(origguess[0] * parampercs[4], origguess[0] * parampercs[5]);
+            locparameters[0] = IRandom(origguess[0] * rs.ParamPercs[4], origguess[0] * rs.ParamPercs[5]);
             for (int k = 0; k < rs.Boxes; k++)
             {
                 if (rs.OneSigma)
                 {
-                    locparameters[2*k+1] = IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
-                    locparameters[2*k+2] = IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
+                    locparameters[2*k+1] = IRandom(origguess[2*k+1]*rs.ParamPercs[0], origguess[2*k+1]*rs.ParamPercs[1]);
+                    locparameters[2*k+2] = IRandom(origguess[2*k+2]*rs.ParamPercs[2], origguess[2*k+2]*rs.ParamPercs[3]);
                 }
                 else
                 {
-                    locparameters[3*k+1] = IRandom(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
-                    locparameters[3*k+2] = IRandom(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
-                    locparameters[3*k+3] = IRandom(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
+                    locparameters[3*k+1] = IRandom(origguess[3*k+1]*rs.ParamPercs[0], origguess[3*k+1]*rs.ParamPercs[1]);
+                    locparameters[3*k+2] = IRandom(origguess[3*k+2]*rs.ParamPercs[2], origguess[3*k+2]*rs.ParamPercs[3]);
+                    locparameters[3*k+3] = IRandom(origguess[3*k+3]*rs.ParamPercs[4], origguess[3*k+3]*rs.ParamPercs[5]);
                 }
             }
             locparameters[paramsize-1] = origguess[paramsize-1];
 
-            if (rs.UL == nullptr)
+            if (rs.UL.empty())
                 dlevmar_dif(locRefl.objective, locparameters.data(), xvec.data(), paramsize, QSize,
                             500, opts, locinfo.data(), work.data(), covarRaw, (void*)(&locRefl));
             else
                 dlevmar_bc_dif(locRefl.objective, locparameters.data(), xvec.data(), paramsize, QSize,
-                               rs.LL, rs.UL, nullptr, 500, opts, locinfo.data(), work.data(), covarRaw,
+                               rs.LL.data(), rs.UL.data(), nullptr, 500, opts, locinfo.data(), work.data(), covarRaw,
                                (void*)(&locRefl));
 
             localanswer.SetContainer(locparameters.data(), covarRaw, paramsize,
-                                     rs.OneSigma, locinfo.data(), parampercs[6]);
+                                     rs.OneSigma, locinfo.data(), rs.ParamPercs[6]);
 
             if (locinfo[1] < bestchisquare && localanswer.IsReasonable())
             {

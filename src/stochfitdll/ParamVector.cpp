@@ -21,34 +21,33 @@
 #include "platform.h"
 #include "ParamVector.h"
 
-ParamVector::ParamVector(ReflSettings* InitStruct):m_bfixroughness(false),
-m_busesurfabs(false), m_bfiximpnorm(false), m_binitialized(false), m_isurfabs_index(-1), m_iimpnorm_index(-1),
-m_iroughness_index(-1)
+ParamVector::ParamVector(const ReflSettings& InitStruct):m_binitialized(false),
+m_bfixroughness(false), m_busesurfabs(false), m_bfiximpnorm(false), m_iroughness_index(-1), m_isurfabs_index(-1),
+m_iimpnorm_index(-1), m_roughness_max(InitStruct.RoughnessMax)
 {
 	m_binitialized = true;
-	m_busesurfabs = InitStruct->UseSurfAbs;
-	m_bfiximpnorm = InitStruct->Impnorm;
-	
-	length = m_dparameter_size = InitStruct->Boxes;
-	
-	if(m_busesurfabs == true)
+	m_busesurfabs = InitStruct.UseSurfAbs;
+	m_bfiximpnorm = InitStruct.Impnorm;
+
+	length = m_dparameter_size = InitStruct.Boxes;
+
+	if(m_busesurfabs)
 	{
-		m_busesurfabs = true;
 		m_isurfabs_index = m_dparameter_size;
 		m_dparameter_size++;
 	}
 
-	if(InitStruct->Impnorm)
+	if(InitStruct.Impnorm)
 	{
 		m_bfiximpnorm = true;
 		m_iimpnorm_index = m_dparameter_size;
 		m_dparameter_size++;
 	}
 
-	if(InitStruct->Forcesig > 0.0)
+	if(InitStruct.Forcesig > 0.0)
 	{
 		m_bfixroughness = true;
-		roughness = InitStruct->Forcesig;
+		roughness = InitStruct.Forcesig;
 	}
 	else
 	{
@@ -68,37 +67,33 @@ m_iroughness_index(-1)
 	}
 
     gnome.resize(length+2); //Add in 2 layers for superphase and subphase
-	
+
 	setImpNorm(1.0);
 	setSurfAbs(1.0);
 
-	SetSupphase(InitStruct->SupSLD/InitStruct->FilmSLD);
-	SetSubphase(InitStruct->SubSLD/InitStruct->FilmSLD);
-	
+	SetSupphase(InitStruct.SupSLD/InitStruct.FilmSLD);
+	SetSubphase(InitStruct.SubSLD/InitStruct.FilmSLD);
 
 	setroughness(2.0);
 
-	for(int i = 0 ; i < InitStruct->Boxes; i++)
+	for(int i = 0 ; i < InitStruct.Boxes; i++)
 		SetMutatableParameter(i,1.0);
 }
 
-ParamVector::ParamVector():m_bfixroughness(false),m_busesurfabs(false), m_bfiximpnorm(false), m_binitialized(false)
-{
-	m_binitialized = false;
-}
+// ParamVector::ParamVector():m_binitialized(false),m_bfixroughness(false), m_busesurfabs(false), m_bfiximpnorm(false)
+// {
+// 	m_binitialized = false;
+// }
 
 void ParamVector::SetBounds(double lowrough, double highrough, double highimp, double highabs)
 {
 	if(m_binitialized)
 	{
 		//For annealing, we need to provide more reasonable restriction on boundary heights
-		for(int i = 0; i < length ; i++)
-		{
-			data_params_high_val[i] = 5.0;
-			data_params_low_val[i] = -5.0;
-		}
-
-		if(m_bfixroughness == false)
+		std::ranges::fill(data_params_high_val, 5.0);
+		std::ranges::fill(data_params_low_val, -5.0);
+	
+		if(!m_bfixroughness)
 		{
 			data_params_high_val.at(m_iroughness_index) = highrough;
 			data_params_low_val.at(m_iroughness_index) = lowrough;
@@ -118,22 +113,9 @@ void ParamVector::SetBounds(double lowrough, double highrough, double highimp, d
 	}
 }
 
-void ParamVector::UpdateBoundaries(double* high, double* low)
+void ParamVector::UpdateBoundaries()
 {
-	SetBounds(0.1,8.0,10000,10000);
-
-	if(high != NULL && low != NULL)
-	{
-		for(int i = 0; i < m_dparameter_size; i++)
-		{
-			high[i] = GetUpperBounds(i);
-			low[i] = GetLowerBounds(i);
-		}
-	}
-	else
-	{
-	}
-	
+	SetBounds(0.1, m_roughness_max, 10000, 10000);
 }
 int ParamVector::RealparamsSize()
 {
@@ -344,23 +326,3 @@ int ParamVector::setSurfAbs(double surfabs)
 }
 
 
-bool ParamVector::CopyArraytoGene(double* myarray)
-{
-	bool succeeded = true;
-
-	if(m_binitialized)
-	{
-		for(int i = 0; i < ParamCount(); i++)
-		{
-			if(SetMutatableParameter(i, myarray[i]) == -1)
-				succeeded = false;
-		}
-
-		if(succeeded)
-			return true;
-		else
-			return false;
-	}
-	return false;
-
-}

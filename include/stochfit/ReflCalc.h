@@ -1,19 +1,19 @@
-/* 
+/*
  *	Copyright (C) 2008 Stephen Danauskas
- *	
+ *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2, or (at your option)
  *  any later version.
- *   
+ *
  *  This Program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *  GNU General Public License for more details.
- *   
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with GNU Make; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  *  http://www.gnu.org/copyleft/gpl.html
  *
  */
@@ -30,6 +30,9 @@
 
 #include "ParamVector.h"
 #include "CEDP.h"
+#include <algorithm>
+#include <ranges>
+#include <span>
 
 class CReflCalc {
 private:
@@ -46,14 +49,14 @@ private:
 
 
 	//Functions
-	void impnorm(double* refl, int datapoints, bool isimprefl);
-	void MyTransparentRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
-	void QsmearRf(double* qspreadreflpt, double* reflpt, int datapoints);
-	void MyRF(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl, CEDP* EDP);
-	bool CheckDensity(CEDP* EDP);
-	void GetOffSets(int& HighOffset, int& LowOffset, std::complex<double>* EDP, int EDPoints);
+	void impnorm(std::span<double> refl, bool isimprefl);
+	void MyTransparentRF(std::span<const double> sintheta, std::span<const double> sinsquaredtheta, std::span<double> refl, CEDP& EDP);
+	void QsmearRf(std::span<const double> qspreadreflpt, std::span<double> reflpt);
+	void MyRF(std::span<const double> sintheta, std::span<const double> sinsquaredtheta, std::span<double> refl, CEDP& EDP);
+	bool CheckDensity(CEDP& EDP);
+	void GetOffSets(int& HighOffset, int& LowOffset, std::span<const std::complex<double>> EDP);
 	void InitializeScratchArrays(int EDPoints);
- 
+
 
 	bool m_bXRonly;
 	bool m_bReflInitialized;
@@ -70,17 +73,17 @@ public:
 	vector<double> dataout, tsinthetai, qarray;
 	vector<double> sinsquaredthetai, qspreadsinsquaredthetai, qspreadsinthetai;
 	std::optional<vector<double>> exi;  // nullopt = no Q errors
-    int m_idatapoints, tarraysize;
+    int m_idatapoints;
 
 	CReflCalc();
 	int GetDataCount();
 
-	
-    tl::expected<void, std::string> Init(ReflSettings* InitStruct);
-	tl::expected<void, std::string> SetupRef(ReflSettings* InitStruct);
-	double Objective(CEDP* EDP);
-    void ComputeRF(CEDP* EDP);
-	void CalculateReflectivity(CEDP* EDP);
+
+    tl::expected<void, std::string> Init(const ReflSettings& InitStruct);
+	tl::expected<void, std::string> SetupRef(const ReflSettings& InitStruct);
+	double Objective(CEDP& EDP);
+    void ComputeRF(CEDP& EDP);
+	void CalculateReflectivity(CEDP& EDP);
 
 	int objectivefunction;
 };

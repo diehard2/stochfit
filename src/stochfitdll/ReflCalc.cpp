@@ -19,7 +19,6 @@
  */
 
 #include "ReflCalc.h"
-#include "ParamVector.h"
 #include "platform.h"
 #include "QSmear.h"
 
@@ -28,18 +27,18 @@
 // The calculation scheme used can be found in
 // L. G. Parratt, Phys. Rev. 95(2), 359(1954)
 
-CReflCalc::CReflCalc() : m_bReflInitialized(false), m_idatapoints(0), tarraysize(0) {}
+CReflCalc::CReflCalc() : m_bReflInitialized(false), m_idatapoints(0) {}
 
-tl::expected<void, std::string> CReflCalc::Init(ReflSettings *InitStruct) {
-  lambda = InitStruct->Wavelength;
+tl::expected<void, std::string> CReflCalc::Init(const ReflSettings& InitStruct) {
+  lambda = InitStruct.Wavelength;
   k0 = 2.0 * std::numbers::pi / lambda;
 
-  objectivefunction = InitStruct->Objectivefunction;
-  m_bforcenorm = InitStruct->Forcenorm;
+  objectivefunction = InitStruct.Objectivefunction;
+  m_bforcenorm = InitStruct.Forcenorm;
   m_dnormfactor = 1.0;
-  m_dQSpread = InitStruct->QErr / 100;
-  m_bXRonly = InitStruct->XRonly;
-  m_bImpNorm = InitStruct->Impnorm;
+  m_dQSpread = InitStruct.QErr / 100;
+  m_bXRonly = InitStruct.XRonly;
+  m_bImpNorm = InitStruct.Impnorm;
 
   // Setup OpenMP - currently a maximum of 8 processors is allowed. After a
   // certain number of data points, there will not be much of a benefit to
@@ -52,68 +51,66 @@ tl::expected<void, std::string> CReflCalc::Init(ReflSettings *InitStruct) {
     m_iuseableprocessors = MAX_OMP_THREADS;
 
   // For Debugging Purposes
-#ifdef SINGLEPROCDEBUG
-  m_iuseableprocessors = 1;
-#endif
+  if constexpr (kSingleProcDebug) {
+      m_iuseableprocessors = 1;
+  }
 
   omp_set_num_threads(m_iuseableprocessors);
   return SetupRef(InitStruct);
 }
 
-tl::expected<void, std::string> CReflCalc::SetupRef(ReflSettings *InitStruct) {
-  if (InitStruct->Refl == nullptr)
-    return tl::unexpected(
-        std::string("Refl data pointer is null — check data file format"));
-  if (InitStruct->ReflError == nullptr)
-    return tl::unexpected(
-        std::string("ReflError data pointer is null — check data file format"));
-
+tl::expected<void, std::string> CReflCalc::SetupRef(const ReflSettings& InitStruct) {
   // Now create our xi,yi,dyi, and thetai
-  m_idatapoints = InitStruct->QPoints - InitStruct->HighQOffset -
-                  InitStruct->CritEdgeOffset;
+  m_idatapoints = static_cast<int>(InitStruct.Q.size()) - InitStruct.HighQOffset -
+                  InitStruct.CritEdgeOffset;
   xi.resize(m_idatapoints);
-  yi.resize(m_idatapoints);
-
-  if (InitStruct->QError != NULL)
-    exi = vector<double>(m_idatapoints);
-
-  eyi.resize(m_idatapoints);
   sinthetai.resize(m_idatapoints);
   sinsquaredthetai.resize(m_idatapoints);
-  qspreadsinthetai.resize(m_idatapoints * 13);
-  qspreadsinsquaredthetai.resize(m_idatapoints * 13);
+  qspreadsinthetai.resize(m_idatapoints * QSmear::Points);
+  qspreadsinsquaredthetai.resize(m_idatapoints * QSmear::Points);
   reflpt.resize(m_idatapoints);
-  qspreadreflpt.resize(m_idatapoints * 13);
+  qspreadreflpt.resize(m_idatapoints * QSmear::Points);
+
+  // Only fill measured data arrays when reflectivity data is provided
+  if (!InitStruct.Refl.empty() && !InitStruct.ReflError.empty()) {
+    yi.resize(m_idatapoints);
+    eyi.resize(m_idatapoints);
+  }
+
+  if (!InitStruct.QError.empty())
+    exi = vector<double>(m_idatapoints);
 
   // and fill them up
   for (int i = 0; i < m_idatapoints; i++) {
-    xi[i] = InitStruct->Q[i + InitStruct->CritEdgeOffset];
-    yi[i] = InitStruct->Refl[i + InitStruct->CritEdgeOffset];
-    eyi[i] = InitStruct->ReflError[i + InitStruct->CritEdgeOffset];
-
+    xi[i] = InitStruct.Q[i + InitStruct.CritEdgeOffset];
+    if (!yi.empty()) {
+      yi[i] = InitStruct.Refl[i + InitStruct.CritEdgeOffset];
+      eyi[i] = InitStruct.ReflError[i + InitStruct.CritEdgeOffset];
+    }
     if (exi.has_value())
-      (*exi)[i] = InitStruct->QError[i + InitStruct->CritEdgeOffset];
+      (*exi)[i] = InitStruct.QError[i + InitStruct.CritEdgeOffset];
 
-    sinthetai[i] = InitStruct->Q[i + InitStruct->CritEdgeOffset] * lambda /
+    sinthetai[i] = InitStruct.Q[i + InitStruct.CritEdgeOffset] * lambda /
                    (4 * std::numbers::pi);
   }
 
   // Calculate the qspread sinthetai's for resolution smearing
-  QSmear::BuildArrays(m_idatapoints, lambda, m_dQSpread,
-                      sinthetai.data(),
-                      exi.has_value() ? exi->data() : nullptr,
-                      qspreadsinthetai.data(), qspreadsinsquaredthetai.data());
+  QSmear::BuildArrays(lambda, m_dQSpread,
+                      sinthetai,
+                      exi.has_value() ? std::span<const double>(*exi) : std::span<const double>{},
+                      qspreadsinthetai,
+                      qspreadsinsquaredthetai);
 
   // Now, create our q's for plotting, but mix-in the actual data points
-  double x0 = InitStruct->Q[0];
-  double x1 = InitStruct->Q[InitStruct->QPoints - 1];
+  double x0 = InitStruct.Q[0];
+  double x1 = InitStruct.Q.back();
   double dx = (x1 - x0) / 150.0;
   x1 = 1.1 * x1 - 0.1 * x0;
 
   tsinthetai.resize(3000);
   dataout.resize(3000);
   qarray.resize(3000);
-  tarraysize = 0;
+  int tarraysize = 0;
 
   int j = 0;
   int inc = 0;
@@ -142,6 +139,10 @@ tl::expected<void, std::string> CReflCalc::SetupRef(ReflSettings *InitStruct) {
     j++;
   }
 
+  tsinthetai.resize(tarraysize);
+  dataout.resize(tarraysize);
+  qarray.resize(tarraysize);
+
   // Calculate the theta's we'll use to make our reflectivities
   for (int l = 0; l < m_idatapoints; l++) {
     sinsquaredthetai[l] = sinthetai[l] * sinthetai[l];
@@ -158,83 +159,56 @@ tl::expected<void, std::string> CReflCalc::SetupRef(ReflSettings *InitStruct) {
 }
 
 // Compute the fitted reflectivity on the dense Q grid (no file output).
-void CReflCalc::ComputeRF(CEDP *EDP) {
+void CReflCalc::ComputeRF(CEDP& EDP) {
+  auto calcRF = [&](std::span<const double> sintheta, std::span<const double> sinsquared, std::span<double> out) {
+    if (!EDP.Get_UseABS())
+      MyTransparentRF(sintheta, sinsquared, out, EDP);
+    else
+      MyRF(sintheta, sinsquared, out, EDP);
+  };
+
+  std::span<double> normTarget;
+
   if (m_dQSpread == 0.0 || !exi.has_value()) {
-    if (EDP->Get_UseABS() == false)
-      MyTransparentRF(tsinthetai.data(), tsinsquaredthetai.data(), tarraysize,
-                      dataout.data(), EDP);
-    else
-      MyRF(tsinthetai.data(), tsinsquaredthetai.data(), tarraysize,
-           dataout.data(), EDP);
+    calcRF(tsinthetai, tsinsquaredthetai, dataout);
+    normTarget = dataout;
   } else {
-    if (EDP->Get_UseABS())
-      MyTransparentRF(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(),
-                      13 * m_idatapoints, qspreadreflpt.data(), EDP);
-    else
-      MyRF(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(),
-           13 * m_idatapoints, qspreadreflpt.data(), EDP);
-
-    QsmearRf(qspreadreflpt.data(), reflpt.data(), m_idatapoints);
+    calcRF(qspreadsinthetai, qspreadsinsquaredthetai, qspreadreflpt);
+    QsmearRf(qspreadreflpt, reflpt);
+    normTarget = reflpt;
   }
 
-  if (m_bforcenorm) {
-    impnorm(dataout.data(), tarraysize, false);
-  }
-
-  if (m_bImpNorm) {
-    impnorm(dataout.data(), tarraysize, true);
-  }
+  if (m_bforcenorm || m_bImpNorm) impnorm(normTarget, m_bImpNorm);
 }
 
-// Check to see if there is any negative electron density for the XR case, false
-// if there is neg ED
-bool CReflCalc::CheckDensity(CEDP *EDP) {
-  int EDPoints = EDP->Get_EDPPointCount();
-  std::complex<double> *tEDP = EDP->m_EDP.data();
-
-  for (int i = 0; i < EDPoints; i++) {
-    if (tEDP[i].real() < 0)
-      return false;
-  }
-
-  return true;
+bool CReflCalc::CheckDensity(CEDP& EDP) {
+  return std::ranges::none_of(EDP.m_EDP | std::views::take(EDP.Get_EDPPointCount()),
+                              [](const auto& v) { return v.real() < 0; });
 }
 
-double CReflCalc::Objective(CEDP *EDP) {
-  int counter = m_idatapoints;
+double CReflCalc::Objective(CEDP& EDP) {
+  int counter = m_idatapoints; 
 
-  if (m_bXRonly == true) {
-    if (CheckDensity(EDP) == false)
+  if (m_bXRonly) {
+    if (!CheckDensity(EDP))
       return -1;
   }
 
+  auto calcRF = [&](std::span<const double> sintheta, std::span<const double> sinsquared, std::span<double> out) {
+    if (!EDP.Get_UseABS())
+      MyTransparentRF(sintheta, sinsquared, out, EDP);
+    else
+      MyRF(sintheta, sinsquared, out, EDP);
+  };
+
   if (m_dQSpread == 0.0 || !exi.has_value()) {
-    if (!EDP->Get_UseABS())
-        MyTransparentRF(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints,
-                        reflpt.data(), EDP);
-    else
-      MyRF(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints,
-           reflpt.data(), EDP);
+    calcRF(sinthetai, sinsquaredthetai, reflpt);
   } else {
-    if (EDP->Get_UseABS())
-      MyTransparentRF(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(),
-                      13 * m_idatapoints, qspreadreflpt.data(), EDP);
-    else
-      MyRF(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(),
-           13 * m_idatapoints, qspreadreflpt.data(), EDP);
-
-    QsmearRf(qspreadreflpt.data(), reflpt.data(), m_idatapoints);
+    calcRF(qspreadsinthetai, qspreadsinsquaredthetai, qspreadreflpt);
+    QsmearRf(qspreadreflpt, reflpt);
   }
 
-  // Normalize if we let the absorption vary
-  if (m_bforcenorm) {
-    impnorm(reflpt.data(), m_idatapoints, false);
-  }
-
-  // Fix imperfect normalization
-  if (m_bImpNorm) {
-    impnorm(reflpt.data(), m_idatapoints, true);
-  }
+  if (m_bforcenorm || m_bImpNorm) impnorm(reflpt, m_bImpNorm);
 
   // Calculate the fitness score
   double calcholder1 = 0;
@@ -298,23 +272,25 @@ double CReflCalc::Objective(CEDP *EDP) {
 // Perform a rudimentary normalization on the modeled reflectivity (for
 // absorbing films) This is for the output reflectivity. If the normalization is
 // imperfect for neutrons, this should use isimprefl = true
-void CReflCalc::impnorm(double *refl, int datapoints, bool isimprefl) {
+void CReflCalc::impnorm(std::span<double> refl, bool isimprefl) {
   double normfactor;
 
-  if (isimprefl == true)
+  if (isimprefl)
     normfactor = m_dnormfactor;
   else
     normfactor = 1.0 / refl[0];
 
-  for (int i = 0; i < datapoints; i++) {
-    refl[i] *= normfactor;
+  for (double& v : refl) {
+    v *= normfactor;
   }
 }
 
-void CReflCalc::MyRF(double *sintheta, double *sinsquaredtheta, int datapoints,
-                     double *refl, CEDP *EDP) {
-  std::complex<double> *DEDP = EDP->m_DEDP.data();
-  int EDPoints = EDP->Get_EDPPointCount();
+void CReflCalc::MyRF(std::span<const double> sintheta,
+                     std::span<const double> sinsquaredtheta,
+                     std::span<double> refl, CEDP& EDP) {
+  std::complex<double> *DEDP = EDP.m_DEDP.data();
+  int EDPoints = EDP.Get_EDPPointCount();
+  int datapoints = static_cast<int>(refl.size());
 
   // Re-apply thread limit on the calling thread — omp_set_num_threads() in Init()
   // runs on the Electron main thread, but Processing() runs on a std::thread whose
@@ -324,12 +300,12 @@ void CReflCalc::MyRF(double *sintheta, double *sinsquaredtheta, int datapoints,
   omp_set_num_threads(m_iuseableprocessors);
 
   if (!m_bReflInitialized) {
-    InitializeScratchArrays(EDP->Get_EDPPointCount());
+    InitializeScratchArrays(EDP.Get_EDPPointCount());
   }
 
   // Calculate some complex constants to keep them out of the loop
   std::complex<double> lengthmultiplier =
-      -2.0 * std::complex<double>(0.0, 1.0) * EDP->Get_Dz();
+      -2.0 * std::complex<double>(0.0, 1.0) * EDP.Get_Dz();
   std::complex<double> indexsup = 1.0 - DEDP[0] / 2.0;
   std::complex<double> indexsupsquared = indexsup * indexsup;
   std::complex<double> zero;
@@ -337,7 +313,7 @@ void CReflCalc::MyRF(double *sintheta, double *sinsquaredtheta, int datapoints,
   int HighOffSet = 0;
   int LowOffset = 0;
 
-  GetOffSets(HighOffSet, LowOffset, DEDP, EDPoints);
+  GetOffSets(HighOffSet, LowOffset, EDP.m_DEDP);
 
 #pragma omp parallel
   {
@@ -352,7 +328,6 @@ void CReflCalc::MyRF(double *sintheta, double *sinsquaredtheta, int datapoints,
     std::complex<double> *rj = m_crj.data() + arrayoffset;
     std::complex<double> *Rj = m_cRj.data() + arrayoffset;
     std::complex<double> cholder, tempk1, tempk2;
-    double holder;
 
     /********Boundary conditions********/
     // No reflection in the last layer
@@ -432,34 +407,35 @@ void CReflCalc::MyRF(double *sintheta, double *sinsquaredtheta, int datapoints,
 
       // The magnitude of the reflection at layer 0 is the measured reflectivity
       // of the film
-      holder = std::abs(Rj[0]);
-      refl[l] = holder * holder;
+      refl[l] = std::norm(Rj[0]);
     }
   }
 }
 
-void CReflCalc::MyTransparentRF(double *sintheta, double *sinsquaredtheta,
-                                int datapoints, double *refl, CEDP *EDP) {
-  std::complex<double> *DEDP = EDP->m_DEDP.data();
-  int EDPoints = EDP->Get_EDPPointCount();
+void CReflCalc::MyTransparentRF(std::span<const double> sintheta,
+                                std::span<const double> sinsquaredtheta,
+                                std::span<double> refl, CEDP& EDP) {
+  std::complex<double> *DEDP = EDP.m_DEDP.data();
+  int EDPoints = EDP.Get_EDPPointCount();
+  int datapoints = static_cast<int>(refl.size());
 
   // Re-apply thread limit on the calling (worker) thread — see MyRF for rationale.
   omp_set_num_threads(m_iuseableprocessors);
 
   if (!m_bReflInitialized) {
-    InitializeScratchArrays(EDP->Get_EDPPointCount());
+    InitializeScratchArrays(EDP.Get_EDPPointCount());
   }
 
   ////Calculate some complex constants to keep them out of the loop
   std::complex<double> lengthmultiplier =
-      -2.0 * std::complex<double>(0.0, 1.0) * EDP->Get_Dz();
+      -2.0 * std::complex<double>(0.0, 1.0) * EDP.Get_Dz();
   std::complex<double> indexsup = 1.0 - DEDP[0] / 2.0;
   std::complex<double> indexsupsquared = indexsup * indexsup;
   int HighOffSet = EDPoints;
   int LowOffset = 0;
   int offset = datapoints;
 
-  GetOffSets(HighOffSet, LowOffset, DEDP, EDPoints);
+  GetOffSets(HighOffSet, LowOffset, EDP.m_DEDP);
 
   // Find the point at which we no longer need to use complex numbers
   // exclusively
@@ -571,8 +547,7 @@ void CReflCalc::MyTransparentRF(double *sintheta, double *sinsquaredtheta,
 
       // The magnitude of the reflection at layer 0 is the measured reflectivity
       // of the film
-      holder = std::abs(Rj[0]);
-      refl[l] = holder * holder;
+      refl[l] = std::norm(Rj[0]);
     }
 
 // Now calculate the rest using doubles
@@ -642,8 +617,7 @@ void CReflCalc::MyTransparentRF(double *sintheta, double *sinsquaredtheta,
 
       // The magnitude of the reflection at layer 0 is the measured reflectivity
       // of the film
-      holder = std::abs(Rj[0]);
-      refl[l] = holder * holder;
+      refl[l] = std::norm(Rj[0]);
     }
   }
 }
@@ -660,14 +634,14 @@ void CReflCalc::InitializeScratchArrays(int EDPoints) {
   m_bReflInitialized = true;
 }
 
-void CReflCalc::QsmearRf(double *qspreadreflpt, double *refl, int datapoints) {
-  QSmear::Apply(qspreadreflpt, refl, datapoints);
+void CReflCalc::QsmearRf(std::span<const double> qsr, std::span<double> reflpt) {
+  QSmear::Apply(qsr, reflpt);
 }
 
 int CReflCalc::GetDataCount() {
 #ifndef CHECKREFLCALC
   if (m_dQSpread == 0.0 || !exi.has_value())
-    return tarraysize;
+    return static_cast<int>(tsinthetai.size());
   else
     return m_idatapoints;
 #else
@@ -676,7 +650,8 @@ int CReflCalc::GetDataCount() {
 }
 
 void CReflCalc::GetOffSets(int &HighOffset, int &LowOffset,
-                           std::complex<double> *EDP, int EDPoints) {
+                           std::span<const std::complex<double>> EDP) {
+  int EDPoints = static_cast<int>(EDP.size());
   // Find duplicate pts so we don't do the same calculation over and over again
   for (int i = 0; i < EDPoints; i++) {
     if (EDP[i].real() == EDP[0].real())
@@ -700,33 +675,25 @@ void CReflCalc::GetOffSets(int &HighOffset, int &LowOffset,
 
 // Forward calculation without fitting data (used by mirefl and similar tools).
 // Results are stored in reflpt[].
-void CReflCalc::CalculateReflectivity(CEDP *EDP) {
-  if (m_bXRonly == true) {
-    if (CheckDensity(EDP) == false)
+void CReflCalc::CalculateReflectivity(CEDP& EDP) {
+  if (m_bXRonly) {
+    if (!CheckDensity(EDP))
       return;
   }
 
-  if (m_dQSpread < 0.005 || !exi.has_value()) {
-    if (EDP->Get_UseABS() == false)
-      MyTransparentRF(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints,
-                      reflpt.data(), EDP);
+  auto calcRF = [&](std::span<const double> sintheta, std::span<const double> sinsquared, std::span<double> out) {
+    if (!EDP.Get_UseABS())
+      MyTransparentRF(sintheta, sinsquared, out, EDP);
     else
-      MyRF(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints,
-           reflpt.data(), EDP);
-  } else {
-    if (EDP->Get_UseABS())
-      MyTransparentRF(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(),
-                      13 * m_idatapoints, qspreadreflpt.data(), EDP);
-    else
-      MyRF(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(),
-           13 * m_idatapoints, qspreadreflpt.data(), EDP);
+      MyRF(sintheta, sinsquared, out, EDP);
+  };
 
-    QsmearRf(qspreadreflpt.data(), reflpt.data(), m_idatapoints);
+  if (m_dQSpread < 0.005 || !exi.has_value()) {
+    calcRF(sinthetai, sinsquaredthetai, reflpt);
+  } else {
+    calcRF(qspreadsinthetai, qspreadsinsquaredthetai, qspreadreflpt);
+    QsmearRf(qspreadreflpt, reflpt);
   }
 
-  if (m_bforcenorm)
-    impnorm(reflpt.data(), m_idatapoints, false);
-
-  if (m_bImpNorm)
-    impnorm(reflpt.data(), m_idatapoints, true);
+  if (m_bforcenorm || m_bImpNorm) impnorm(reflpt, m_bImpNorm);
 }

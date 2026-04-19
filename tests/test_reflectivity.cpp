@@ -5,7 +5,7 @@
 // EDP generation will cause a failure here.
 
 #include <gtest/gtest.h>
-#include <stochfit/ReflCalc.h> 
+#include <stochfit/ReflCalc.h>
 #include <cmath>
 
 // Identical to the qrange in src/mirefl/MIRefl.cpp
@@ -22,32 +22,29 @@ static const double qrange[] = {
     0.560, 0.566, 0.572, 0.578, 0.584, 0.590, 0.594, 0.596, 0.598, 0.600
 };
 
-static void FillInitStruct(ReflSettings* s)
+static void FillInitStruct(ReflSettings& s)
 {
-    s->Wavelength       = 1.24;
-    s->Forcenorm        = false;
-    s->QErr             = 0;
-    s->XRonly           = false;
-    s->Impnorm          = false;
-    s->Q                = const_cast<double*>(qrange);
-    s->CritEdgeOffset   = 0;
-    s->HighQOffset      = 0;
-    s->UseSurfAbs       = false;
-    s->SupAbs           = 0;
-    s->SubAbs           = 0;
-    s->FilmAbs          = 0;
-    s->Boxes            = 2;
-    s->FilmLength       = 26;
-    s->Resolution       = 10;
-    s->FilmSLD          = 9.38;
-    s->SupSLD           = 0.0;
-    s->SubSLD           = 9.38;
-    s->QPoints          = static_cast<int>(sizeof qrange / sizeof qrange[0]);
-    s->Forcesig         = 0;
-    s->Objectivefunction = 0;
-    s->QError           = nullptr;
-    s->Refl             = nullptr;
-    s->ReflError        = nullptr;
+    s.Wavelength       = 1.24;
+    s.Forcenorm        = false;
+    s.QErr             = 0;
+    s.XRonly           = false;
+    s.Impnorm          = false;
+    s.Q                = std::span(qrange);
+    s.CritEdgeOffset   = 0;
+    s.HighQOffset      = 0;
+    s.UseSurfAbs       = false;
+    s.SupAbs           = 0;
+    s.SubAbs           = 0;
+    s.FilmAbs          = 0;
+    s.Boxes            = 2;
+    s.FilmLength       = 26;
+    s.Resolution       = 10;
+    s.FilmSLD          = 9.38;
+    s.SupSLD           = 0.0;
+    s.SubSLD           = 9.38;
+    s.Forcesig         = 0;
+    s.Objectivefunction = 0;
+    // Refl, ReflError, QError left as empty spans — only CalculateReflectivity is called
 }
 
 // Relative-tolerance check. At a thin-film interference minimum R can be
@@ -76,17 +73,17 @@ TEST(Reflectivity, TwoBoxLipidFilmParratt)
     const double FilmSLD  = 9.38;
     const double SLD[]    = {0.0, 8.911, 13.5072, 9.38};  // sup, box1, box2, sub
 
-    FillInitStruct(&init);
+    FillInitStruct(init);
 
-    ParamVector params(&init);
+    ParamVector params(init);
     for (int i = 0; i < init.Boxes; i++)
         params.SetMutatableParameter(i, SLD[i + 1] / FilmSLD);
     params.setroughness(3.15);
 
-    refl.Init(&init);
-    edp.Init(&init);
-    edp.GenerateEDP(&params);
-    refl.CalculateReflectivity(&edp);
+    refl.Init(init);
+    edp.Init(init);
+    edp.GenerateEDP(params);
+    refl.CalculateReflectivity(edp);
 
     ASSERT_EQ(refl.m_idatapoints, 100);
 

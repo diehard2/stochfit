@@ -102,7 +102,7 @@ void MetalSARunner::initialize(
     m_num_layers = edp_config.num_layers;
     m_num_datapoints = measurement.num_datapoints;
     m_use_qspread = measurement.use_qspread != 0;
-    m_num_q_per_call = m_use_qspread ? m_num_datapoints * 13 : m_num_datapoints;
+    m_num_q_per_call = m_use_qspread ? m_num_datapoints * GPU_QSPREAD_POINTS : m_num_datapoints;
     m_cancelled = false;
     m_finished = false;
 
@@ -182,9 +182,9 @@ void MetalSARunner::initialize(
 
     if (m_use_qspread) {
         m_qspread_sin = [m_device newBufferWithBytes:measurement.qspread_sintheta
-            length:nd * 13 * sizeof(float) options:MTLResourceStorageModeShared];
+            length:nd * GPU_QSPREAD_POINTS * sizeof(float) options:MTLResourceStorageModeShared];
         m_qspread_sin2 = [m_device newBufferWithBytes:measurement.qspread_sin2theta
-            length:nd * 13 * sizeof(float) options:MTLResourceStorageModeShared];
+            length:nd * GPU_QSPREAD_POINTS * sizeof(float) options:MTLResourceStorageModeShared];
     }
 
     // EDP config

@@ -19,14 +19,20 @@
 
 // Q-spread weights as device constant (GPU_QSPREAD_WEIGHTS in gpu_types.h is
 // constexpr host-only; CUDA device code needs __constant__ for array access)
-__constant__ float kQSpreadWeights[13] = {
-    1.000f,
-    0.056f, 0.056f,
-    0.135f, 0.135f,
-    0.278f, 0.278f,
-    0.487f, 0.487f,
-    0.726f, 0.726f,
-    0.923f, 0.923f,
+__constant__ float kQSpreadWeights[GPU_QSPREAD_POINTS] = {
+    0.056f,  // -1.2 sigma
+    0.135f,  // -1.0 sigma
+    0.278f,  // -0.8 sigma
+    0.487f,  // -0.6 sigma
+    0.726f,  // -0.4 sigma
+    0.923f,  // -0.2 sigma
+    1.000f,  // center
+    0.923f,  // +0.2 sigma
+    0.726f,  // +0.4 sigma
+    0.487f,  // +0.6 sigma
+    0.278f,  // +0.8 sigma
+    0.135f,  // +1.0 sigma
+    0.056f,  // +1.2 sigma
 };
 
 // ── Complex float type ─────────────────────────────────────────────────────
@@ -413,22 +419,12 @@ __global__ void kernel_qsmear(
     int q_idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (chain_id >= num_chains || q_idx >= num_datapoints) return;
 
-    const float* src = qspread_refl + chain_id * 13 * num_datapoints;
-    int base = 13 * q_idx;
+    const float* src = qspread_refl + chain_id * GPU_QSPREAD_POINTS * num_datapoints;
+    int base = GPU_QSPREAD_POINTS * q_idx;
 
-    float val = src[base];
-    val += 0.056f * src[base + 1];
-    val += 0.056f * src[base + 2];
-    val += 0.135f * src[base + 3];
-    val += 0.135f * src[base + 4];
-    val += 0.278f * src[base + 5];
-    val += 0.278f * src[base + 6];
-    val += 0.487f * src[base + 7];
-    val += 0.487f * src[base + 8];
-    val += 0.726f * src[base + 9];
-    val += 0.726f * src[base + 10];
-    val += 0.923f * src[base + 11];
-    val += 0.923f * src[base + 12];
+    float val = 0.0f;
+    for (int j = 0; j < GPU_QSPREAD_POINTS; j++)
+        val += kQSpreadWeights[j] * src[base + j];
 
     chain_refl[chain_id * num_datapoints + q_idx] = val / GPU_QSPREAD_NORM;
 }
@@ -758,8 +754,8 @@ __global__ void kernel_sa_persistent(
             float ri;
             if (meas.use_qspread) {
                 ri = 0.0f;
-                for (int j = 0; j < 13; j++) {
-                    int qidx = qi * 13 + j;
+                for (int j = 0; j < GPU_QSPREAD_POINTS; j++) {
+                    int qidx = qi * GPU_QSPREAD_POINTS + j;
                     ri += kQSpreadWeights[j] *
                           device_parratt_single(s_dedp, nl,
                               sin_arr[qidx], sinsq_arr[qidx], k0, dz);
@@ -955,7 +951,7 @@ void CudaSARunner::initialize(
     m_num_layers = edp_config.num_layers;
     m_num_datapoints = measurement.num_datapoints;
     m_use_qspread = measurement.use_qspread != 0;
-    m_num_q_per_call = m_use_qspread ? m_num_datapoints * 13 : m_num_datapoints;
+    m_num_q_per_call = m_use_qspread ? m_num_datapoints * GPU_QSPREAD_POINTS : m_num_datapoints;
     m_finished = false;
 
     // Managed-memory cancel flag (visible to both host and device)
@@ -1000,10 +996,10 @@ void CudaSARunner::initialize(
     CUDA_CHECK(cudaMemcpy(d_meas_sinsq, measurement.sinsquaredtheta, n * sizeof(float), cudaMemcpyHostToDevice));
 
     if (m_use_qspread) {
-        CUDA_CHECK(cudaMalloc(&d_meas_qspread_sin, n * 13 * sizeof(float)));
-        CUDA_CHECK(cudaMalloc(&d_meas_qspread_sin2, n * 13 * sizeof(float)));
-        CUDA_CHECK(cudaMemcpy(d_meas_qspread_sin, measurement.qspread_sintheta, n * 13 * sizeof(float), cudaMemcpyHostToDevice));
-        CUDA_CHECK(cudaMemcpy(d_meas_qspread_sin2, measurement.qspread_sin2theta, n * 13 * sizeof(float), cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMalloc(&d_meas_qspread_sin, n * GPU_QSPREAD_POINTS * sizeof(float)));
+        CUDA_CHECK(cudaMalloc(&d_meas_qspread_sin2, n * GPU_QSPREAD_POINTS * sizeof(float)));
+        CUDA_CHECK(cudaMemcpy(d_meas_qspread_sin, measurement.qspread_sintheta, n * GPU_QSPREAD_POINTS * sizeof(float), cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMemcpy(d_meas_qspread_sin2, measurement.qspread_sin2theta, n * GPU_QSPREAD_POINTS * sizeof(float), cudaMemcpyHostToDevice));
     }
 
     // Setup device measurement struct

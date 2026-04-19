@@ -22,18 +22,24 @@
 // Maximum number of SLD boxes supported on GPU
 constexpr int GPU_MAX_BOXES = 64;
 
-// Q-smearing uses 13 points per Q-value
+// Q-smearing uses 13 points per Q-value (center at index 6)
 constexpr int GPU_QSPREAD_POINTS = 13;
 
-// Q-smearing weights (Gaussian quadrature)
+// Q-smearing weights (Gaussian quadrature, symmetric around center at index 6)
 constexpr float GPU_QSPREAD_WEIGHTS[GPU_QSPREAD_POINTS] = {
+    0.056f,  // -1.2 sigma
+    0.135f,  // -1.0 sigma
+    0.278f,  // -0.8 sigma
+    0.487f,  // -0.6 sigma
+    0.726f,  // -0.4 sigma
+    0.923f,  // -0.2 sigma
     1.000f,  // center
-    0.056f, 0.056f,  // +/- 1.2 sigma
-    0.135f, 0.135f,  // +/- 1.0 sigma
-    0.278f, 0.278f,  // +/- 0.8 sigma
-    0.487f, 0.487f,  // +/- 0.6 sigma
-    0.726f, 0.726f,  // +/- 0.4 sigma
-    0.923f, 0.923f,  // +/- 0.2 sigma
+    0.923f,  // +0.2 sigma
+    0.726f,  // +0.4 sigma
+    0.487f,  // +0.6 sigma
+    0.278f,  // +0.8 sigma
+    0.135f,  // +1.0 sigma
+    0.056f,  // +1.2 sigma
 };
 constexpr float GPU_QSPREAD_NORM = 6.211f;
 

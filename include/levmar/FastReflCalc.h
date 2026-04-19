@@ -20,57 +20,55 @@
 
 #pragma once
 #include "Settings.h"
+#include <span>
 class FastReflcalc
 {
 private:
 
    vector<double> sinthetai, sinsquaredthetai, qspreadsinthetai, qspreadsinsquaredthetai, qspreadreflpt;
    int m_icritqoffset, m_ihighqoffset;
-   void ImpNorm(double* refl, int datapoints);
-   void MakeTheta(BoxReflSettings* InitStruct);
+   void ImpNorm(std::span<double> refl);
+   void MakeTheta(const BoxReflSettings& InitStruct);
    bool m_bImpNorm;
-   double* Realreflerrors; 
+   vector<double> Realreflerrors;
    int realrefllength;
    double m_dQSpread;
 
 protected:
-	 virtual void CalcRefl(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl);
+	 virtual void CalcRefl(std::span<const double> sintheta, std::span<const double> sinsquaredtheta, std::span<double> refl);
      double m_dnormfactor;
 public:
-	
+
 	//Variables
 
-	double* Realrefl;
+	vector<double> Realrefl;
 	int boxnumber, SubSLD;
 
 	double m_dsupsld;
 
     vector<double> reflpt;
     int m_idatapoints;
- 
+
 	double totalsize;
 
     double lambda;
 	double m_dcritedgeoff;
-	
+
 	//Member functions
-	
+
 	~FastReflcalc();
-	void QsmearRf(double* qspreadrefl, double* refl, int datapoints);
-    void init(BoxReflSettings* InitStruct);
+	void QsmearRf(std::span<const double> qspreadrefl, std::span<double> refl);
+    void init(const BoxReflSettings& InitStruct);
 	void SetOffsets(int LowQOffset, int HighQOffset);
 
-	double* originalparams;
 	//Density calcs
 	int CalculateZLength();
 	void MakeZ();
 
-	virtual void mkdensityonesigma(double* p, int plength);
-    virtual void mkdensity(double* p, int plength);
+	virtual void mkdensityonesigma(std::span<const double> p);
+    virtual void mkdensity(std::span<const double> p);
 	void myrfdispatch();
-	
-	double CalcQc(double dSLD);
-	double CalcFresnelPoint(double Q, double Qc);
+
 	bool onesigma;
 	double subphaseSLD;
 
@@ -79,8 +77,5 @@ public:
 	vector<double> SigmaArray;
 	vector<double> ImagArray;
 
-	virtual void Rhocalculate(double Zoffset,double* ZIncrement, double* LengthArray, double* RhoArray, double* SigmaArray, double* nk, double* nkb, int counter);
-
-	
 	static void objective(double *p, double *x, int m, int n, void *data);
 };

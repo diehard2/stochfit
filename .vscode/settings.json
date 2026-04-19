@@ -1,9 +1,14 @@
 {
+  "[cpp]": {
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+    "editor.formatOnSave": true
+  },
   "clangd.arguments": [
     "--compile-commands-dir=${workspaceFolder}/build",
     "--header-insertion=never",
     "--clang-tidy"
   ],
+  "clangd.onSave": true,
   "C_Cpp.intelliSenseEngine": "disabled",
   "cmake.useCMakePresets": "never",
   "cmake.generator": "Ninja",

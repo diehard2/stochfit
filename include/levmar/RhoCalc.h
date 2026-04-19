@@ -21,6 +21,7 @@
 #pragma once
 
 #include "Settings.h"
+#include <span>
 
 class RhoCalc
 {
@@ -28,10 +29,8 @@ private:
 	vector<double> distarray;
 	vector<double> rhoarray;
 	vector<double> rougharray;
-	double* MIRho;
-	double* param;
-
-	double* ZIncrement;
+	vector<double> MIRho;
+	vector<double> ZIncrement;
 
 	vector<double> m_LengthArray;
 	vector<double> m_RhoArray;
@@ -51,9 +50,9 @@ private:
 public:	
 	//Member functions
 	~RhoCalc();
-    void init(BoxReflSettings* InitStruct);
-	void mkdensityboxmodel(double* p, int plenght);
-    void mkdensity(double* p, int plength);	
+    void init(const BoxReflSettings& InitStruct);
+	void mkdensityboxmodel(std::span<const double> p);
+    void mkdensity(std::span<const double> p);
     static void objective(double *p, double *x, int m, int n, void *data);
 
 	vector<double> nk;

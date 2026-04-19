@@ -1,0 +1,6 @@
+---
+Checks: '-*,readability-*,performance-*,bugprone-*,modernize-*'
+HeaderFilterRegex: 'include/(stochfit|levmar)/.*\.h'
+WarningsAsErrors: ''
+FormatStyle: file
+---

@@ -262,6 +262,13 @@ kernel void kernel_parratt(
 
 // ── Q-smearing kernel ──────────────────────────────────────────────────────
 
+constant constexpr int   kQSpreadPoints = 13;
+constant constexpr float kQSpreadWeights[kQSpreadPoints] = {
+    0.056f, 0.135f, 0.278f, 0.487f, 0.726f, 0.923f, 1.000f,
+    0.923f, 0.726f, 0.487f, 0.278f, 0.135f, 0.056f,
+};
+constant constexpr float kQSpreadNorm = 6.211f;
+
 kernel void kernel_qsmear(
     device float* qspread_refl [[buffer(0)]],
     device float* chain_refl [[buffer(1)]],
@@ -273,18 +280,14 @@ kernel void kernel_qsmear(
     int q_idx = gid.x;
     if (chain_id >= num_chains || q_idx >= num_datapoints) return;
 
-    device float* src = qspread_refl + chain_id * 13 * num_datapoints;
-    int base = 13 * q_idx;
+    device float* src = qspread_refl + chain_id * kQSpreadPoints * num_datapoints;
+    int base = kQSpreadPoints * q_idx;
 
-    float val = src[base];
-    val += 0.056f * src[base + 1];  val += 0.056f * src[base + 2];
-    val += 0.135f * src[base + 3];  val += 0.135f * src[base + 4];
-    val += 0.278f * src[base + 5];  val += 0.278f * src[base + 6];
-    val += 0.487f * src[base + 7];  val += 0.487f * src[base + 8];
-    val += 0.726f * src[base + 9];  val += 0.726f * src[base + 10];
-    val += 0.923f * src[base + 11]; val += 0.923f * src[base + 12];
+    float val = 0.0f;
+    for (int j = 0; j < kQSpreadPoints; j++)
+        val += kQSpreadWeights[j] * src[base + j];
 
-    chain_refl[chain_id * num_datapoints + q_idx] = val / 6.211f;
+    chain_refl[chain_id * num_datapoints + q_idx] = val / kQSpreadNorm;
 }
 
 // ── Objective function kernel ──────────────────────────────────────────────

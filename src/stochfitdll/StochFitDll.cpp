@@ -31,7 +31,7 @@
 
 // ── Global state ──────────────────────────────────────────────────────────────
 
-static StochFit* stochfit = nullptr;
+static std::unique_ptr<StochFit> stochfit;
 static std::string g_last_init_error;
 
 // Owned copies of the Q/Refl/ReflError/QError arrays. The FlatBuffer passed to
@@ -85,12 +85,11 @@ extern "C" EXPORT void Init(const uint8_t* buf, int len)
 
     // Populate the C++ internal struct (still used by StochFitHarness)
     ReflSettings rs{};
-    rs.Directory            = g_directory.c_str();
-    rs.Q                    = g_q.data();
-    rs.Refl                 = g_refl.data();
-    rs.ReflError            = g_refl_error.data();
-    rs.QError               = g_q_error.empty() ? nullptr : g_q_error.data();
-    rs.QPoints              = s->q_points();
+    rs.Directory            = g_directory;
+    rs.Q                    = g_q;
+    rs.Refl                 = g_refl;
+    rs.ReflError            = g_refl_error;
+    rs.QError               = g_q_error.empty() ? std::span<const double>{} : std::span<const double>(g_q_error);
     rs.SubSLD               = s->sub_sld();
     rs.FilmSLD              = s->film_sld();
     rs.SupSLD               = s->sup_sld();
@@ -130,7 +129,7 @@ extern "C" EXPORT void Init(const uint8_t* buf, int len)
     rs.ChiSquare            = s->chi_square();
     rs.UseGpu               = s->use_gpu();
     rs.GpuChains            = s->gpu_chains();
-    rs.Title                = g_title.c_str();
+    rs.Title                = g_title;
 
     StochRunState  state{};
     StochRunState* statePtr = nullptr;
@@ -148,19 +147,16 @@ extern "C" EXPORT void Init(const uint8_t* buf, int len)
         state.goodnessOfFit  = st->goodness_of_fit();
         state.iteration      = st->iteration();
         g_ed_values          = copy_fbs_vec(st->ed_values());
-        state.edValues       = g_ed_values.data();
-        state.edCount        = static_cast<int>(g_ed_values.size());
+        state.edValues       = g_ed_values;
         statePtr             = &state;
     }
 
-    delete stochfit;
-    stochfit = new StochFit(&rs, statePtr);
+    stochfit = std::make_unique<StochFit>(rs, statePtr);
 
     if (auto r = stochfit->GetInitError(); !r)
     {
         g_last_init_error = r.error();
-        delete stochfit;
-        stochfit = nullptr;
+        stochfit.reset();
     }
 }
 
@@ -181,8 +177,7 @@ extern "C" EXPORT void Stop()
 
 extern "C" EXPORT void Destroy()
 {
-    delete stochfit;
-    stochfit = nullptr;
+    stochfit.reset();
     g_q.clear(); g_refl.clear(); g_refl_error.clear(); g_q_error.clear();
     g_ed_values.clear(); g_directory.clear(); g_title.clear();
 }
@@ -192,8 +187,7 @@ extern "C" EXPORT void Cancel()
     if (stochfit)
     {
         stochfit->Stop();
-        delete stochfit;
-        stochfit = nullptr;
+        stochfit.reset();
     }
     g_q.clear(); g_refl.clear(); g_refl_error.clear(); g_q_error.clear();
     g_ed_values.clear(); g_directory.clear(); g_title.clear();
@@ -270,8 +264,8 @@ extern "C" EXPORT int SAParams(uint8_t* outBuf, int maxLen)
 
     double lowestEnergy = 0, temp = 0;
     int mode = 0;
-    temp          = stochfit->m_SA->Get_Temp();
-    lowestEnergy  = stochfit->m_SA->Get_LowestEnergy();
+    temp          = stochfit->GetTemperature();
+    lowestEnergy  = stochfit->GetLowestEnergy();
     mode          = (temp < 1e-20) ? -1 : 1;
 
     flatbuffers::FlatBufferBuilder fbb(64);

@@ -174,12 +174,14 @@ endif()
 # load cleanly on machines with no NVIDIA GPU driver.
 # The actual CUDA kernels live in stochfit_cuda_plugin.dll (see below).
 add_library(stochfit_core STATIC
+    src/stochfitdll/AnnealPolicies.cpp
     src/stochfitdll/CEDP.cpp
+    src/stochfitdll/ParameterStepper.cpp
     src/stochfitdll/ParamVector.cpp
     src/stochfitdll/ReflCalc.cpp
-    src/stochfitdll/SA_Dispatcher.cpp
-    src/stochfitdll/SimulatedAnnealing.cpp
+    src/stochfitdll/ReflectivityObjective.cpp
     src/stochfitdll/StochFitHarness.cpp
+    src/stochfitdll/UnifiedReflectivity.cpp
     src/stochfitdll/gpu/gpu_detect.cpp
     src/stochfitdll/gpu/gpu_sa_runner.cpp
 )

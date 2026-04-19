@@ -6,7 +6,7 @@
 #include "ReflCalc.h"
 #include "ParamVector.h"
 
-void FillInitStruct(ReflSettings* Initstruct);
+static void FillInitStruct(ReflSettings& Initstruct);
 
 // Test Q-range (Angstrom^-1), 100 points from 0.02 to 0.60
 static const double qrange[] = {
@@ -36,23 +36,23 @@ int main(int argc, char* argv[])
 	double SLD[] = {0.0, 8.911, 13.5072, 9.38};
 
 	//Setup Parameters
-	FillInitStruct(&InitStruct);
+	FillInitStruct(InitStruct);
 
 	// Build a ParamVector and populate it with normalized SLD values
-	ParamVector params(&InitStruct);
+	ParamVector params(InitStruct);
 	for(int i = 0; i < InitStruct.Boxes; i++)
 		params.SetMutatableParameter(i, SLD[i+1] / FilmSLD);
 	params.setroughness(3.15);
 
-	Refl.Init(&InitStruct);
-	EDPGen.Init(&InitStruct);
+	Refl.Init(InitStruct);
+	EDPGen.Init(InitStruct);
 
 	int t_on = clock();
 
 	for(int i = 0; i < calculations; i++)
 	{
-		EDPGen.GenerateEDP(&params);
-		Refl.CalculateReflectivity(&EDPGen);
+		EDPGen.GenerateEDP(params);
+		Refl.CalculateReflectivity(EDPGen);
 	}
 
 	int t_off = clock();
@@ -60,37 +60,34 @@ int main(int argc, char* argv[])
 	cout << calculations << " calculations in: " << (((static_cast<float>(t_off - t_on))/(CLOCKS_PER_SEC)))*(1000000) << " microseconds\n\n";
 	cout << calculations/(((static_cast<float>(t_off - t_on))/(CLOCKS_PER_SEC))) << " calcuations per second\n\n";
 	cout << "1 calculation in: " << (((static_cast<float>(t_off - t_on))/(CLOCKS_PER_SEC)))*(1E6)/calculations << " microseconds\n\n";
-	Refl.ComputeRF(&EDPGen);
+	Refl.ComputeRF(EDPGen);
 
 	return 0;
 }
 
-void FillInitStruct(ReflSettings* InitStruct)
+static void FillInitStruct(ReflSettings& InitStruct)
 {
-	InitStruct->Wavelength = 1.24;
-	InitStruct->Forcenorm = 0;
-	InitStruct->QErr = 0;
-	InitStruct->XRonly = 0;
-	InitStruct->Impnorm = 0;
-	InitStruct->Q = const_cast<double*>(qrange);
-	InitStruct->CritEdgeOffset = 0;
-	InitStruct->HighQOffset = 0;
+	InitStruct.Wavelength = 1.24;
+	InitStruct.Forcenorm = 0;
+	InitStruct.QErr = 0;
+	InitStruct.XRonly = 0;
+	InitStruct.Impnorm = 0;
+	InitStruct.Q = std::span(qrange);
+	InitStruct.CritEdgeOffset = 0;
+	InitStruct.HighQOffset = 0;
 
-	InitStruct->UseSurfAbs = 0;
-	InitStruct->SupAbs = 0;
-	InitStruct->SubAbs = 0;
-	InitStruct->FilmAbs = 0;
-	InitStruct->Boxes = 2;
-	InitStruct->FilmLength = 26;
-	InitStruct->Resolution = 10;
-	InitStruct->FilmSLD = 9.38;
-	InitStruct->SupSLD = 0.0;
-	InitStruct->SubSLD = 9.38;
-	InitStruct->QPoints = (sizeof qrange / sizeof qrange[0]);
-	InitStruct->Forcesig = 0;
-	InitStruct->Objectivefunction = 0;
+	InitStruct.UseSurfAbs = 0;
+	InitStruct.SupAbs = 0;
+	InitStruct.SubAbs = 0;
+	InitStruct.FilmAbs = 0;
+	InitStruct.Boxes = 2;
+	InitStruct.FilmLength = 26;
+	InitStruct.Resolution = 10;
+	InitStruct.FilmSLD = 9.38;
+	InitStruct.SupSLD = 0.0;
+	InitStruct.SubSLD = 9.38;
+	InitStruct.Forcesig = 0;
+	InitStruct.Objectivefunction = 0;
 
-	InitStruct->QError = NULL;
-	InitStruct->Refl = NULL;
-	InitStruct->ReflError = NULL;
+	// Refl, ReflError, QError left as empty spans — only CalculateReflectivity is called
 }

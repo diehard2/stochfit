@@ -1,19 +1,19 @@
-/* 
+/*
  *	Copyright (C) 2008 Stephen Danauskas
- *	
+ *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2, or (at your option)
  *  any later version.
- *   
+ *
  *  This Program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *  GNU General Public License for more details.
- *   
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with GNU Make; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  *  http://www.gnu.org/copyleft/gpl.html
  *
  */
@@ -29,7 +29,7 @@
 #include "platform.h"
 #include "SettingsStruct.h"
 
-class ParamVector 
+class ParamVector
 {
 	private:
 		vector <double> gnome;
@@ -46,12 +46,13 @@ class ParamVector
 		int m_isurfabs_index;
 		int m_iimpnorm_index;
 		double roughness;
+		double m_roughness_max;
 
 		void SetBounds(double lowrough, double highrough, double highimp, double highabs);
 
 	public:
-		ParamVector(ReflSettings* InitStruct);
-		ParamVector();
+		ParamVector(const ReflSettings& InitStruct);
+		//ParamVector();
 		int RealparamsSize();
 		int GetInitializationLength();
 		int ParamCount();
@@ -66,13 +67,10 @@ class ParamVector
 		int setSurfAbs(double norm);
 		void SetSubphase(double subval);
 		void SetSupphase(double supval);
-		// ******** MAYBEDEAD ******** CopyArraytoGene — no callers found outside this file
-		bool CopyArraytoGene(double* myarray);
-		void UpdateBoundaries(double* high, double* low);
+		void UpdateBoundaries();
 		bool Get_FixedRoughness(){ return m_bfixroughness;}
 		bool Get_FixImpNorm(){ return m_bfiximpnorm;}
 		bool Get_UseSurfAbs(){ return m_busesurfabs;}
-
 
 		double GetUpperBounds(int index);
 		double GetLowerBounds(int index);

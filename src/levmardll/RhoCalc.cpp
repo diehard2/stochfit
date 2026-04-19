@@ -22,15 +22,15 @@
 #include "RhoCalc.h"
 #include "Settings.h"
 
-void RhoCalc::init(BoxReflSettings* InitStruct)
+void RhoCalc::init(const BoxReflSettings& InitStruct)
 {
-   	onesigma = InitStruct->OneSigma;
-	boxnumber = InitStruct->Boxes;
-	ZIncrement = InitStruct->ZIncrement;
-	Zlength = InitStruct->ZLength;
-	MIRho = InitStruct->MIEDP;
-	SubSLD = InitStruct->SubSLD;
-	m_dSupSLD = InitStruct->SupSLD;
+	onesigma  = InitStruct.OneSigma;
+	boxnumber = InitStruct.Boxes;
+	ZIncrement= InitStruct.ZIncrement;
+	Zlength   = InitStruct.ZLength;
+	MIRho     = InitStruct.MIEDP;
+	SubSLD    = InitStruct.SubSLD;
+	m_dSupSLD = InitStruct.SupSLD;
 
 	nk.resize(Zlength);
 	nkb.resize(Zlength);
@@ -44,136 +44,113 @@ void RhoCalc::init(BoxReflSettings* InitStruct)
 	m_SigmaArray.resize(boxnumber);
 }
 
-RhoCalc::~RhoCalc()
-{
-}
+RhoCalc::~RhoCalc() = default;
 
- void RhoCalc::objective(double* par, double* x, int m, int n, void* data)
+void RhoCalc::objective(double* par, double* x, int m, int n, void* data)
 {
-  RhoCalc* rhoinst = (RhoCalc*)data;
-  rhoinst->mkdensity(par,m);
+    RhoCalc* rhoinst = (RhoCalc*)data;
+    rhoinst->mkdensity(std::span<const double>(par, m));
 
-  //This gets squared in the LM routines
-  for(int i=0; i<rhoinst->Zlength; ++i)
-  {
-		x[i] = rhoinst->MIRho[i]-rhoinst->nk[i];
-  }
+    for (int i = 0; i < rhoinst->Zlength; ++i)
+        x[i] = rhoinst->MIRho[i] - rhoinst->nk[i];
 }
 
 void RhoCalc::Rhocalculate(double SubRough, double Zoffset)
 {
-	double SuperphaseSLD = m_dSupSLD;
-	double deltarho = 0;
-	double thick = 0;
-	double roughness = 0;
+	const double SuperphaseSLD = m_dSupSLD;
+	const double sqrt2 = sqrt(2.0);
 	double dist = 0;
-	double sqrt2 = sqrt(2.0);
 
-	//Calculate the portions of the e-density equation that don't need to be repeated
 	for (int i = 0; i <= boxnumber; i++)
     {
+        double deltarho, thick, roughness;
         if (i == 0)
         {
-            deltarho = m_RhoArray[0] * SubSLD - SuperphaseSLD;
-            thick = 0;
+            deltarho  = m_RhoArray[0] * SubSLD - SuperphaseSLD;
+            thick     = 0;
             roughness = m_SigmaArray[0];
         }
         else if (i == boxnumber)
         {
-            deltarho = SubSLD - m_RhoArray[i - 1] * SubSLD;
+            deltarho  = SubSLD - m_RhoArray[i-1] * SubSLD;
             roughness = SubRough;
-            thick = m_LengthArray[i - 1];
+            thick     = m_LengthArray[i-1];
         }
         else
         {
-            deltarho = (m_RhoArray[i + 1 - 1] - m_RhoArray[i - 1]) * SubSLD;
-            thick = m_LengthArray[i - 1];
-            roughness = m_SigmaArray[i + 1 - 1];
+            deltarho  = (m_RhoArray[i] - m_RhoArray[i-1]) * SubSLD;
+            thick     = m_LengthArray[i-1];
+            roughness = m_SigmaArray[i];
         }
 
-		dist  += thick;
-
-		distarray[i] = dist;
-		rhoarray[i] = deltarho/2.0;
-		rougharray[i] = roughness*sqrt2;
+		dist += thick;
+		distarray[i]  = dist;
+		rhoarray[i]   = deltarho / 2.0;
+		rougharray[i] = roughness * sqrt2;
 	}
 
-	#pragma omp parallel for /*schedule(guided)*/
-	for(int j = 0; j < Zlength;j++)
+	#pragma omp parallel for
+	for (int j = 0; j < Zlength; j++)
 	{
 		double summ = SuperphaseSLD;
 		for (int i = 0; i <= boxnumber; i++)
-        {
-			summ += (rhoarray[i]) * (1.0 + erf((ZIncrement[j] - distarray[i]-Zoffset) / (rougharray[i])));
-		}
+			summ += rhoarray[i] * (1.0 + erf((ZIncrement[j] - distarray[i] - Zoffset) / rougharray[i]));
 
-		if(SubRough != 1e-16)
-		{
-			nk[j] = summ/SubSLD;
-		}
+		if (SubRough != 1e-16)
+			nk[j] = summ / SubSLD;
 		else
-		{
-			nkb[j] = summ/SubSLD;
-		}
+			nkb[j] = summ / SubSLD;
 	}
 }
 
-void RhoCalc::mkdensityboxmodel(double* p, int plength)
+void RhoCalc::mkdensityboxmodel(std::span<const double> p)
 {
-	double SubRough = 1e-16;
-	double ZOffset = p[1];
+	constexpr double SubRough = 1e-16;
+	const double ZOffset = p[1];
 
-	if(onesigma == true)
+	if (onesigma)
 	{
-		for(int i = 0; i< boxnumber;i++)
+		for (int i = 0; i < boxnumber; i++)
 		{
 			m_LengthArray[i] = p[2*i+2];
-			m_RhoArray[i] = p[2*i+3];
-			m_SigmaArray[i] = 1e-16;
-		}
-
-		Rhocalculate(SubRough, ZOffset);
-	}
-	else
-	{
-		for(int i = 0; i< boxnumber;i++)
-		{
-			m_LengthArray[i] = p[3*i+2];
-			m_RhoArray[i] = p[3*i+3];
-			m_SigmaArray[i] = 1e-16;
-		}
-
-		Rhocalculate(SubRough, ZOffset);
-	}
-}
-
-void RhoCalc::mkdensity(double* p, int plength)
-{
-	//Move our parameters into individual arrays so they're easier to deal with
-
-	double SubRough = p[0];
-	double ZOffset = p[1];
-
-	if(onesigma == true)
-	{
-		for(int i = 0; i< boxnumber;i++)
-		{
-			m_LengthArray[i] = p[2*i+2];
-			m_RhoArray[i] = p[2*i+3];
-			m_SigmaArray[i] = p[0];
+			m_RhoArray[i]    = p[2*i+3];
+			m_SigmaArray[i]  = 1e-16;
 		}
 	}
 	else
 	{
-		for(int i = 0; i< boxnumber;i++)
+		for (int i = 0; i < boxnumber; i++)
 		{
 			m_LengthArray[i] = p[3*i+2];
- 			m_RhoArray[i] = p[3*i+3];
-			m_SigmaArray[i] = p[3*i+4];
+			m_RhoArray[i]    = p[3*i+3];
+			m_SigmaArray[i]  = 1e-16;
 		}
-
 	}
-
 	Rhocalculate(SubRough, ZOffset);
 }
 
+void RhoCalc::mkdensity(std::span<const double> p)
+{
+	const double SubRough = p[0];
+	const double ZOffset  = p[1];
+
+	if (onesigma)
+	{
+		for (int i = 0; i < boxnumber; i++)
+		{
+			m_LengthArray[i] = p[2*i+2];
+			m_RhoArray[i]    = p[2*i+3];
+			m_SigmaArray[i]  = p[0];
+		}
+	}
+	else
+	{
+		for (int i = 0; i < boxnumber; i++)
+		{
+			m_LengthArray[i] = p[3*i+2];
+			m_RhoArray[i]    = p[3*i+3];
+			m_SigmaArray[i]  = p[3*i+4];
+		}
+	}
+	Rhocalculate(SubRough, ZOffset);
+}

@@ -1,35 +1,32 @@
 #pragma once
 #include "platform.h"
 
-#pragma pack(push, 8)
 struct BoxReflSettings
 {
-        const char* Directory;
-        double* Q;
-        double* Refl;
-        double* ReflError;
-        double* QError;
-        double* UL;
-        double* LL;
-        double* ParamPercs;
-        int QPoints;
-        int32_t OneSigma;
-        int32_t WriteFiles;
-        double SubSLD;
-        double SupSLD;
-        int Boxes;
-        double Wavelength;
-        double QSpread;
-        int32_t Forcenorm;
-        int32_t ImpNorm;
-        int FitFunc;
-        int LowQOffset;
-        int HighQOffset;
-		int Iterations;
-		//EDP Specific Settings
-		double* MIEDP;
-		double* ZIncrement;
-		int ZLength;
-
+    std::string    Directory;
+    vector<double> Q;
+    vector<double> Refl;
+    vector<double> ReflError;
+    vector<double> QError;
+    vector<double> UL;
+    vector<double> LL;
+    vector<double> ParamPercs;
+    int QPoints    = 0;
+    bool OneSigma  = false;
+    bool WriteFiles = false;
+    double SubSLD  = 0;
+    double SupSLD  = 0;
+    int Boxes      = 0;
+    double Wavelength = 0;
+    double QSpread = 0;
+    bool Forcenorm = false;
+    bool ImpNorm   = false;
+    int FitFunc    = 0;
+    int LowQOffset = 0;
+    int HighQOffset = 0;
+    int Iterations = 0;
+    // EDP Specific Settings
+    vector<double> MIEDP;
+    vector<double> ZIncrement;
+    int ZLength    = 0;
 };
-#pragma pack(pop)

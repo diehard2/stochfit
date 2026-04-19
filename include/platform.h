@@ -29,6 +29,10 @@
 #include <chrono>
 #include <random>
 #include <optional>
+#include <span>
+#include <ranges>
+#include <limits>
+#include <utility>
 #include <tl/expected.hpp>
 
 // std::jthread is NOT used — replaced with std::thread + std::atomic<bool>
@@ -41,6 +45,9 @@
 #ifndef MAX_OMP_THREADS
 #  define MAX_OMP_THREADS 8
 #endif
+
+// ── Debug flags ──────────────────────────────────────────────────────────────
+inline constexpr bool kSingleProcDebug = false;
 
 // ── Export macro ────────────────────────────────────────────────────────────
 #if defined(_MSC_VER)

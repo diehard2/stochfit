@@ -23,26 +23,24 @@
 #include "Settings.h"
 #include "stochfit/QSmear.h"
 
-FastReflcalc::~FastReflcalc()
-{
-}
+FastReflcalc::~FastReflcalc() = default;
 
-void FastReflcalc::init(BoxReflSettings* InitStruct)
+void FastReflcalc::init(const BoxReflSettings& InitStruct)
 {
-    lambda=InitStruct->Wavelength;
-	onesigma = InitStruct->OneSigma;
-	Realrefl = InitStruct->Refl;
-	Realreflerrors = InitStruct->ReflError;
-	realrefllength = InitStruct->QPoints;
-	subphaseSLD = InitStruct->SubSLD;
-	m_dsupsld = InitStruct->SupSLD;
-	boxnumber = InitStruct->Boxes;;
-	m_dQSpread = InitStruct->QSpread/100.0;
-	m_bImpNorm = InitStruct->ImpNorm;;
+    lambda        = InitStruct.Wavelength;
+	onesigma      = InitStruct.OneSigma;
+	Realrefl      = InitStruct.Refl;
+	Realreflerrors= InitStruct.ReflError;
+	realrefllength= InitStruct.QPoints;
+	subphaseSLD   = InitStruct.SubSLD;
+	m_dsupsld     = InitStruct.SupSLD;
+	boxnumber     = InitStruct.Boxes;
+	m_dQSpread    = InitStruct.QSpread / 100.0;
+	m_bImpNorm    = InitStruct.ImpNorm;
 	m_dnormfactor = 1.0;
-	m_icritqoffset = InitStruct->LowQOffset;
-	m_ihighqoffset = InitStruct->HighQOffset;
-	m_idatapoints = InitStruct->QPoints;
+	m_icritqoffset= InitStruct.LowQOffset;
+	m_ihighqoffset= InitStruct.HighQOffset;
+	m_idatapoints = InitStruct.QPoints;
 
 	RhoArray.resize(boxnumber+2);
 	SigmaArray.resize(boxnumber+2);
@@ -52,70 +50,60 @@ void FastReflcalc::init(BoxReflSettings* InitStruct)
 	MakeTheta(InitStruct);
 }
 
-void FastReflcalc::MakeTheta(BoxReflSettings* InitStruct)
+void FastReflcalc::MakeTheta(const BoxReflSettings& InitStruct)
 {
-
-	double* QRange = InitStruct->Q;
-	double* QError = InitStruct->QError;
-
 	sinthetai.resize(m_idatapoints);
 	sinsquaredthetai.resize(m_idatapoints);
-	qspreadsinthetai.resize(m_idatapoints*20);
-	qspreadsinsquaredthetai.resize(m_idatapoints*20);
-	qspreadreflpt.resize(m_idatapoints*20);
-
+	qspreadsinthetai.resize(m_idatapoints * QSmear::Points);
+	qspreadsinsquaredthetai.resize(m_idatapoints * QSmear::Points);
+	qspreadreflpt.resize(m_idatapoints * QSmear::Points);
 	reflpt.resize(m_idatapoints);
 
-	for(int i = 0; i< m_idatapoints; i++)
-	{
-		sinthetai[i] = QRange[i]*lambda/(4.0*std::numbers::pi);
-	}
-
+	for (int i = 0; i < m_idatapoints; i++)
+		sinthetai[i] = InitStruct.Q[i] * lambda / (4.0 * std::numbers::pi);
 
 	for (int l = 0; l < m_idatapoints; l++)
-		sinsquaredthetai[l] = sinthetai[l]*sinthetai[l];
+		sinsquaredthetai[l] = sinthetai[l] * sinthetai[l];
 
-	// Calculate the qspread sinthetai's for resolution smearing
-	QSmear::BuildArrays(m_idatapoints, lambda, m_dQSpread,
-	                    sinthetai.data(), QError,
-	                    qspreadsinthetai.data(), qspreadsinsquaredthetai.data());
+	QSmear::BuildArrays(lambda, m_dQSpread,
+	                    sinthetai,
+	                    InitStruct.QError,
+	                    qspreadsinthetai,
+	                    qspreadsinsquaredthetai);
 }
 
 
- void FastReflcalc::objective(double* par, double* x, int m, int n, void* data)
+void FastReflcalc::objective(double* par, double* x, int m, int n, void* data)
 {
-  FastReflcalc* reflinst = (FastReflcalc*)data;
+    FastReflcalc* reflinst = static_cast<FastReflcalc*>(data);
+    std::span<const double> params(par, m);
+    std::span<double> residuals(x, n);
 
+    if (reflinst->onesigma)
+        reflinst->mkdensityonesigma(params);
+    else
+        reflinst->mkdensity(params);
 
-  if(reflinst->onesigma)
-	  reflinst->mkdensityonesigma(par,m);
-  else
-	  reflinst->mkdensity(par,m);
+    reflinst->myrfdispatch();
 
-  reflinst->myrfdispatch();
+    std::fill(residuals.begin(), residuals.end(), 0.0);
+    for (int i = reflinst->m_icritqoffset; i < n - reflinst->m_ihighqoffset; i++)
+    {
+        residuals[i] = log(reflinst->reflpt[i]) - log(reflinst->Realrefl[i]);
 
-  memset(x, 0, n*sizeof(double));
-  for(int i = reflinst->m_icritqoffset; i < n - reflinst->m_ihighqoffset; i++)
-  {
-		x[i] = (log(reflinst->reflpt[i])-log(reflinst->Realrefl[i]));
-
-		//Sometimes we get NAN. We make that solution unpalatable until I can find a workaround
-		if(x[i] != x[i])
-		{
-			x[i] = 1e6;
-		}
-  }
+        //Sometimes we get NAN. We make that solution unpalatable until I can find a workaround
+        if (residuals[i] != residuals[i])
+            residuals[i] = 1e6;
+    }
 }
 
-void FastReflcalc::mkdensityonesigma(double* p, int plength)
+void FastReflcalc::mkdensityonesigma(std::span<const double> p)
 {
-	//Move our parameters into individual arrays so they're easier to deal with
 	double rhofactor = 1e-6*lambda*lambda/(2.0*std::numbers::pi);
-	double SubRough = p[0];
 
 	RhoArray[0] = m_dsupsld*rhofactor;
 	LengthArray[0] = 0.0;
-	for(int i = 1; i< boxnumber+1;i++)
+	for (int i = 1; i < boxnumber+1; i++)
 	{
 		LengthArray[i] = p[2*(i-1)+1];
 		RhoArray[i] = p[2*(i-1)+2]*subphaseSLD*rhofactor;
@@ -125,67 +113,55 @@ void FastReflcalc::mkdensityonesigma(double* p, int plength)
 	RhoArray[boxnumber+1] = subphaseSLD*rhofactor;
 	SigmaArray[boxnumber] = p[0];
 	LengthArray[boxnumber+1] = 0;
-	m_dnormfactor = p[plength-1];
+	m_dnormfactor = p[p.size()-1];
 }
 
-void FastReflcalc::mkdensity(double* p, int plength)
+void FastReflcalc::mkdensity(std::span<const double> p)
 {
-	//Move our parameters into individual arrays so they're easier to deal with
-    double rhofactor = 1e-6*lambda*lambda/(2.*std::numbers::pi);
+    double rhofactor = 1e-6*lambda*lambda/(2.0*std::numbers::pi);
 
 	RhoArray[0] = m_dsupsld*rhofactor;
 	LengthArray[0] = 0.0;
-	for(int i = 1; i< boxnumber+1;i++)
+	for (int i = 1; i < boxnumber+1; i++)
 	{
 		LengthArray[i] = p[3*(i-1)+1];
 		RhoArray[i] = p[3*(i-1)+2]*subphaseSLD*rhofactor;
-
-		if(fabs(p[3*(i-1)+3]) < 1e-8)
-			SigmaArray[i-1] = 1e-8;
-		else
-			SigmaArray[i-1] = p[3*(i-1)+3];
-
+		SigmaArray[i-1] = fabs(p[3*(i-1)+3]) < 1e-8 ? 1e-8 : p[3*(i-1)+3];
 	}
 
 	RhoArray[boxnumber+1] = subphaseSLD*rhofactor;
 	SigmaArray[boxnumber] = p[0];
 	LengthArray[boxnumber+1] = 0;
-
-	m_dnormfactor = p[plength-1];
+	m_dnormfactor = p[p.size()-1];
 }
 
-void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datapoints, double* refl)
+void FastReflcalc::CalcRefl(std::span<const double> sintheta, std::span<const double> sinsquaredtheta, std::span<double> refl)
 {
 	//Generate the Parratt reflectivity layers
 	int nl = boxnumber+2;
 	double k0 = 2.0*std::numbers::pi/lambda;
-	std::complex<double> imaginary(0.0,1.0);
 	int offset = 0;
 
 	double suprefindex = 1-RhoArray[0];
 	double suprefindexsquared = suprefindex*suprefindex;
     double sigmacalc[20];
 
-	int neg = 0;
-    for(int i =0; i<datapoints;i++)
+	bool offset_sentinel = false;
+    for(int i = 0; i < (int)refl.size(); i++)
 	{
-
 		for(int k = 1; k<nl;k++)
 		{
 			if((suprefindexsquared*sinsquaredtheta[i]-2.0*RhoArray[k]+2.0*RhoArray[0])<0)
 			{
-				neg -= 1;
+				offset_sentinel = true;
 				break;
 			}
 		}
-		if(neg ==0)
-		{
-			/*if(m_dQSpread < 0.005 && neg == -5)
-				break;*/
-		}
-		else
+
+		if(offset_sentinel)
 		{
 			offset = i;
+			break;
 		}
 	}
 
@@ -253,7 +229,8 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 		refl[l] = std::abs(Rj[0]);
 		refl[l] *= refl[l];
 	}
-	for(int l = offset+1; l< datapoints ;l++)
+
+	for(int l = offset+1; l < (int)refl.size(); l++)
 	{
 		//Leave for vectorization
 		int nlminone = nl-1;
@@ -298,128 +275,31 @@ void FastReflcalc::CalcRefl(double* sintheta, double* sinsquaredtheta, int datap
 	}
 }
 
-void FastReflcalc::Rhocalculate(double Zoffset,double* ZIncrement, double* LengthArray, double* RhoArray, double* SigmaArray, double* nk, double* nkb, int loopcounter)
+void FastReflcalc::QsmearRf(std::span<const double> qspreadrefl, std::span<double> refl)
 {
-	int refllayers = boxnumber;
-	double SuperphaseSLD = RhoArray[0];
-	double deltarho = 0;
-	double thick = 0;
-	double roughness = 0;
-	double dist = 0;
-	double SubSLD = RhoArray[boxnumber+1];
-
-	//Create arrays so we don't have to redo this calculation for every data point
-
-	vector<double> distarray(refllayers+1);
-	vector<double> rhoarray(refllayers+1);
-	vector<double> rougharray(refllayers+1);
-
-	//Calculate the portions of the e-density equation that don't need to be repeated
-
-	for (int i = 0; i <= boxnumber; i++)
-    {
-          if (i == 0)
-        {
-            deltarho = RhoArray[1] - SuperphaseSLD;
-            thick = 0;
-            roughness = SigmaArray[0];
-        }
-        else if (i == refllayers)
-        {
-            deltarho = SubSLD - RhoArray[i];
-			roughness = SigmaArray[i];
-            thick = LengthArray[i];
-        }
-        else
-        {
-            deltarho = (RhoArray[i + 1] - RhoArray[i]);
-            thick = LengthArray[i];
-            roughness = SigmaArray[i];
-        }
-
-		dist  += thick;
-
-		distarray[i] = dist;
-		rhoarray[i] = deltarho;
-		rougharray[i] = roughness;
-	}
-
-	double sqrt2 = sqrt(2.0);
-
-	// This allows OpenMP to choose the appropriate number of threads
-	// The algorithm should now scale with the number of processors in a system
-
-	omp_set_num_threads(omp_get_num_threads());
-
-	#pragma omp parallel for schedule(guided)
-	for(int j = 0; j < loopcounter;j++)
-	{
-		double summ = RhoArray[0];
-		double bsumm = RhoArray[0];
-
-		for (int i = 0; i <= boxnumber; i++)
-        {
-			summ += (rhoarray[i] / 2.0) * (1.0 + erf((ZIncrement[j] - distarray[i]-Zoffset) / (rougharray[i] * sqrt2)));
-		}
-
-		for (int i = 0; i <= boxnumber; i++)
-        {
-			bsumm += (rhoarray[i] / 2.0) * (1.0 + erf((ZIncrement[j] - distarray[i]-Zoffset) / (1e-22 * sqrt2)));
-		}
-
-		nk[j] = summ/SubSLD;
-
-		nkb[j] = bsumm/SubSLD;
-	}
-
-}
-
-double FastReflcalc::CalcQc(double dSLD)
-{
-    return 4 * sqrt(std::numbers::pi * (subphaseSLD - m_dsupsld) * 1e-6);
-}
-
-double FastReflcalc::CalcFresnelPoint(double Q, double Qc)
-{
-    if (Q <= Qc)
-        return 1;
-    else
-    {
-        double term1 = sqrt(1 - (Qc / Q)*(Qc/Q));
-        return ((1.0 - term1) / (1.0 + term1))*((1.0 - term1) / (1.0 + term1));
-    }
-}
-
-
-void FastReflcalc::QsmearRf(double* qspreadrefl, double* refl, int datapoints)
-{
-	QSmear::Apply(qspreadrefl, refl, datapoints);
+	QSmear::Apply(qspreadrefl, refl);
 }
 
 void FastReflcalc::myrfdispatch()
 {
-	if(m_dQSpread < 0.005)
+	if (m_dQSpread < 0.005)
 	{
-		CalcRefl(sinthetai.data(), sinsquaredthetai.data(), m_idatapoints, reflpt.data());
+		CalcRefl(sinthetai, sinsquaredthetai, reflpt);
 	}
 	else
 	{
-		CalcRefl(qspreadsinthetai.data(), qspreadsinsquaredthetai.data(), m_idatapoints*13, qspreadreflpt.data());
-		QsmearRf(qspreadreflpt.data(), reflpt.data(), m_idatapoints);
+		CalcRefl(qspreadsinthetai, qspreadsinsquaredthetai, qspreadreflpt);
+		QsmearRf(qspreadreflpt, reflpt);
 	}
 
-	if(m_bImpNorm)
-	{
-		ImpNorm(reflpt.data(), m_idatapoints);
-	}
+	if (m_bImpNorm)
+		ImpNorm(reflpt);
 }
 
-void FastReflcalc::ImpNorm(double* refl, int datapoints)
+void FastReflcalc::ImpNorm(std::span<double> refl)
 {
-		for(int i = 0; i < datapoints; i++)
-		{
-			refl[i] = refl[i] * m_dnormfactor;
-		}
+	for (auto& r : refl)
+		r *= m_dnormfactor;
 }
 
 void FastReflcalc::SetOffsets(int LowQOffset, int HighQOffset)

@@ -5,6 +5,7 @@ import { useSettingsStore } from '../../stores/settings-store';
 import { useUiStore } from '../../stores/ui-store';
 import { useMiEdpStore } from '../../stores/mi-edp-store';
 import type { ModelSettings } from '../../lib/types';
+import { applyForceNormalization } from '../../lib/forcenorm';
 import { POLLING_INTERVAL_MS } from '../../lib/constants';
 import { BoxParameterTable, type BoxRow } from '../shared/BoxParameterTable';
 import { Field } from '../shared/Field';
@@ -180,13 +181,14 @@ export function ModelIndependentPanel() {
   async function handleStart() {
     if (!data) return alert('Load a data file first.');
 
+    const normData = applyForceNormalization(data, settings.forcenorm);
     const input: ReflSettingsInput = {
       directory: data.filePath.replace(/[^/\\]+$/, ''),
-      q: data.q,
-      refl: data.refl,
-      reflError: data.reflError,
-      qError: data.qError,
-      qPoints: data.q.length,
+      q: normData.q,
+      refl: normData.refl,
+      reflError: normData.reflError,
+      qError: normData.qError,
+      qPoints: normData.q.length,
       debug: false,
       ...settings,
       normSearchPerc: settings.normSearchPerc,
@@ -304,16 +306,17 @@ export function ModelIndependentPanel() {
     const zLen = result!.zRange.length;
     const params = buildRhoParams(subRough, zOffset, boxRows, oneSigma);
     const { ul, ll, percs } = makeBounds(params);
+    const normData = applyForceNormalization(data!, settings.forcenorm);
     return {
       directory: data!.filePath.replace(/[^/\\]+$/, ''),
-      q: data!.q,
-      refl: data!.refl,
-      reflError: data!.reflError,
-      qError: data!.qError,
+      q: normData.q,
+      refl: normData.refl,
+      reflError: normData.reflError,
+      qError: normData.qError,
       ul,
       ll,
       paramPercs: percs,
-      qPoints: data!.q.length,
+      qPoints: normData.q.length,
       oneSigma,
       writeFiles: false,
       subSLD: settings.subSLD,
@@ -321,7 +324,6 @@ export function ModelIndependentPanel() {
       boxes,
       wavelength: settings.wavelength,
       qSpread: settings.qSpread,
-      forcenorm: settings.forcenorm,
       impNorm: settings.normSearchPerc > 0,
       fitFunc: 0,
       lowQOffset: 0,

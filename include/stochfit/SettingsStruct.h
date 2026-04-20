@@ -5,16 +5,19 @@
 // StochRunState: optional resume state passed to StochFit constructor (nullptr = fresh start).
 
 #include "platform.h"
-#include <span>
-#include <string_view>
+#include <string>
+#include <vector>
+
+// Forward declarations for FlatBuffer-based constructors (implemented in SettingsStruct.cpp).
+namespace StochFitProto { struct ReflSettings; struct StochRunState; }
 
 struct ReflSettings
 {
-	std::string_view Directory;
-	std::span<const double> Q;
-	std::span<const double> Refl;
-	std::span<const double> ReflError;
-	std::span<const double> QError;
+	std::string Directory;
+	std::vector<double> Q;
+	std::vector<double> Refl;
+	std::vector<double> ReflError;
+	std::vector<double> QError;
 	// Q.size() replaces the old QPoints field
 	double SubSLD;
 	double FilmSLD;
@@ -26,7 +29,6 @@ struct ReflSettings
 	double Wavelength;
 	bool UseSurfAbs;
 	double QErr;
-	bool Forcenorm;
 	double Forcesig;
 	double RoughnessMax = 8.0; // upper bound for roughness search; determines EDP padding (6× this value)
 	bool Debug;
@@ -62,7 +64,10 @@ struct ReflSettings
 	// GPU acceleration control
 	bool UseGpu;
 	int32_t GpuChains;
-	std::string_view Title;
+	std::string Title;
+
+	ReflSettings() = default;
+	explicit ReflSettings(const StochFitProto::ReflSettings*);
 };
 
 // Session state for resuming a previous SA run.
@@ -82,6 +87,8 @@ struct StochRunState {
 	double chiSquare;
 	double goodnessOfFit;
 	int    iteration;
-	std::span<const double> edValues;  // Boxes+2 doubles: [supphase, box1..boxN, subphase]
-	// edCount removed — use edValues.size()
+	std::vector<double> edValues;  // Boxes+2 doubles: [supphase, box1..boxN, subphase]
+
+	StochRunState() = default;
+	explicit StochRunState(const StochFitProto::StochRunState*);
 };

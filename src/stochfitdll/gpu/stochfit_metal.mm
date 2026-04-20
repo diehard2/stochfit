@@ -211,11 +211,11 @@ void MetalSARunner::initialize(
 
     struct MetalMeasConfig {
         int num_datapoints, objective_function, use_qspread;
-        int force_norm, imp_norm, xr_only;
+        int imp_norm, xr_only;
     };
     MetalMeasConfig mmeas = {
         measurement.num_datapoints, measurement.objective_function,
-        measurement.use_qspread, measurement.force_norm,
+        measurement.use_qspread,
         measurement.imp_norm, measurement.xr_only
     };
     m_meas_config_buf = [m_device newBufferWithBytes:&mmeas

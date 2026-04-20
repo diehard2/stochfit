@@ -38,8 +38,8 @@
 #include "Anneal.h"
 #include "AnnealPolicies.h"
 #include "CEDP.h"
-#include "ParameterStepper.h"
 #include "ParamVector.h"
+#include "ParameterStepper.h"
 #include "ReflCalc.h"
 #include "ReflectivityObjective.h"
 #include "UnifiedReflectivity.h"
@@ -52,90 +52,87 @@ struct GpuMeasurement;
 struct GpuEDPConfig;
 
 using AnnealVariant = std::variant<Anneal<GreedyPolicy>,
-                                   Anneal<SimulatedPolicy>,
-                                   Anneal<StunPolicy>>;
+                                   Anneal<SimulatedPolicy>, Anneal<StunPolicy>>;
 
-class StochFit
-{
+class StochFit {
 public:
-    StochFit(const ReflSettings& InitStruct, const StochRunState* state = nullptr);
-    ~StochFit();
-    int  Start(int iterations);
-    int  Cancel();
-    void Stop();
-    int  GetData(double* Z, double* RhoOut, double* Q, double* ReflOut,
-                 double* roughness, double* chisquare, double* goodnessoffit,
-                 int32_t* isfinished);
-    void GetRunState(double* saScalars, double* edValues, int* edCount);
-    void GetArraySizes(int* RhoSize, int* ReflSize);
-    bool GetWarmedUp();
-    tl::expected<void, std::string> GetInitError() const { return m_initError; }
+  StochFit(const ReflSettings &InitStruct,
+           const std::unique_ptr<StochRunState> &state = {});
+  ~StochFit();
+  int Start(int iterations);
+  int Cancel();
+  void Stop();
+  int GetData(double *Q, double *ReflOut,
+              double *roughness, double *chisquare, double *goodnessoffit,
+              int32_t *isfinished);
+  void GetRunState(double *saScalars, double *edValues, int *edCount);
+  tl::expected<void, std::string> GetInitError() const { return m_initError; }
 
-    // Harness-level accessors for the annealer (used by GPU seam and FFI).
-    // GetTemperature()    = 1/β  (display value, same as old Get_Temp())
-    // GetRawTemperature() = β    (for session save, same as old Get_RawTemp())
-    // SetTemperature(β)   = set β directly (session restore)
-    double GetTemperature() const;
-    double GetRawTemperature() const;
-    void   SetTemperature(double t);
-    double GetLowestEnergy() const;
-    double GetAverageFSTUN() const;
-    void   SetAverageFSTUN(double f);
+  const ReflSettings& Settings()  const { return m_initStruct; }
+  const ParamVector&  GetParams() const { return params; }
+  int                 GetDataCount() const { return m_cRefl.GetDataCount(); }
 
-    bool m_bwarmedup;
+  // Harness-level accessors for the annealer (used by GPU seam and FFI).
+  // GetTemperature()    = 1/β  (display value, same as old Get_Temp())
+  // GetRawTemperature() = β    (for session save, same as old Get_RawTemp())
+  // SetTemperature(β)   = set β directly (session restore)
+  double GetTemperature() const;
+  double GetRawTemperature() const;
+  void SetTemperature(double t);
+  double GetLowestEnergy() const;
+  double GetAverageFSTUN() const;
+  void SetAverageFSTUN(double f);
 
 private:
-    int  Processing();
-    void UpdateFits(int currentiteration);
-    tl::expected<void, std::string> m_initError;
+  int Processing();
+  void UpdateFits(int currentiteration);
+  tl::expected<void, std::string> m_initError;
 
-    int  ProcessingGPU();
-    void InitGpuData(GpuSAState& sa_state, GpuParams& gpu_params,
-                     GpuMeasurement& meas, GpuEDPConfig& edp_config);
-    std::unique_ptr<GpuSARunner> m_gpuRunner;
-    GpuBackend m_gpuBackend = GpuBackend::None;
+  int ProcessingGPU();
+  void InitGpuData(GpuSAState &sa_state, GpuParams &gpu_params,
+                   GpuMeasurement &meas, GpuEDPConfig &edp_config);
+  std::unique_ptr<GpuSARunner> m_gpuRunner;
+  GpuBackend m_gpuBackend = GpuBackend::None;
 
-    // Float buffers for GPU data transfer
-    std::vector<float> m_fMeasSintheta;
-    std::vector<float> m_fMeasSinsq;
-    std::vector<float> m_fMeasQ;
-    std::vector<float> m_fMeasRefl;
-    std::vector<float> m_fMeasErr;
-    std::vector<float> m_fQspreadSin;
-    std::vector<float> m_fQspreadSin2;
-    std::vector<float> m_fEdSpacing;
-    std::vector<float> m_fDistArray;
+  // Float buffers for GPU data transfer
+  std::vector<float> m_fMeasSintheta;
+  std::vector<float> m_fMeasSinsq;
+  std::vector<float> m_fMeasQ;
+  std::vector<float> m_fMeasRefl;
+  std::vector<float> m_fMeasErr;
+  std::vector<float> m_fQspreadSin;
+  std::vector<float> m_fQspreadSin2;
+  std::vector<float> m_fEdSpacing;
+  std::vector<float> m_fDistArray;
 
-    std::vector<double> Zinc;
-    std::vector<double> Qinc;
-    std::vector<double> Rho;
-    std::vector<double> Refl;
+  std::vector<double> Qinc;
+  std::vector<double> Refl;
 
-    std::thread        m_thread;
-    std::atomic<bool>  m_bupdated;
-    std::atomic<bool>  m_stop_requested;
+  std::thread m_thread;
+  std::atomic<bool> m_bupdated;
+  std::atomic<bool> m_stop_requested;
 
-    string  m_Directory;
-    double  m_dRoughness    = 0.0;
-    double  m_dChiSquare    = 0.0;
-    double  m_dGoodnessOfFit = 0.0;
-    int     m_itotaliterations  = 0;
-    int     m_icurrentiteration = 0;
-    int     m_iparratlayers     = 0;
+  string m_Directory;
+  double m_dRoughness = 0.0;
+  double m_dChiSquare = 0.0;
+  double m_dGoodnessOfFit = 0.0;
+  int m_itotaliterations = 0;
+  int m_icurrentiteration = 0;
+  int m_iparratlayers = 0;
 
-    // m_initStruct MUST be declared before m_parratt (holds const ref to it).
-    ReflSettings m_initStruct;
+  // m_initStruct MUST be declared before m_parratt (holds const ref to it).
+  ReflSettings m_initStruct;
 
-    CReflCalc  m_cRefl;     // kept for display/LM path
-    CEDP       m_cEDP;
-    ParamVector params;
+  CReflCalc m_cRefl; // kept for display/LM path
+  CEDP m_cEDP;
+  ParamVector params;
 
-    ParrattReflectivity  m_parratt;
-    ReflectivityObjective m_objective;
-    ParameterStepper     m_stepper;
+  ParrattReflectivity m_parratt;
+  ReflectivityObjective m_objective;
+  ParameterStepper m_stepper;
 
-    std::optional<AnnealVariant> m_annealer;
+  std::optional<AnnealVariant> m_annealer;
 
-    // SA scratch buffer (sized by m_cRefl.m_idatapoints at init)
-    std::vector<double> m_saReflBuf;
+  // SA scratch buffer (sized by m_cRefl.m_idatapoints at init)
+  std::vector<double> m_saReflBuf;
 };

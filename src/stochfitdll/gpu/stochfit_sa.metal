@@ -110,7 +110,6 @@ struct GpuMeasConfigM {
     int num_datapoints;
     int objective_function;
     int use_qspread;
-    int force_norm;
     int imp_norm;
     int xr_only;
 };
@@ -314,10 +313,6 @@ kernel void kernel_objective(
 
     // Apply normalization (thread 0)
     if (tid == 0) {
-        if (meas_config.force_norm && refl[0] != 0.0f) {
-            float norm = 1.0f / refl[0];
-            for (int i = 0; i < n; i++) refl[i] *= norm;
-        }
         if (meas_config.imp_norm) {
             float norm = chain_params[chain_id].imp_norm;
             for (int i = 0; i < n; i++) refl[i] *= norm;

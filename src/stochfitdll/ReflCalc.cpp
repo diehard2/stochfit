@@ -34,7 +34,6 @@ tl::expected<void, std::string> CReflCalc::Init(const ReflSettings& InitStruct) 
   k0 = 2.0 * std::numbers::pi / lambda;
 
   objectivefunction = InitStruct.Objectivefunction;
-  m_bforcenorm = InitStruct.Forcenorm;
   m_dnormfactor = 1.0;
   m_dQSpread = InitStruct.QErr / 100;
   m_bXRonly = InitStruct.XRonly;
@@ -178,7 +177,7 @@ void CReflCalc::ComputeRF(CEDP& EDP) {
     normTarget = reflpt;
   }
 
-  if (m_bforcenorm || m_bImpNorm) impnorm(normTarget, m_bImpNorm);
+  if (m_bImpNorm) impnorm(normTarget, true);
 }
 
 bool CReflCalc::CheckDensity(CEDP& EDP) {
@@ -208,7 +207,7 @@ double CReflCalc::Objective(CEDP& EDP) {
     QsmearRf(qspreadreflpt, reflpt);
   }
 
-  if (m_bforcenorm || m_bImpNorm) impnorm(reflpt, m_bImpNorm);
+  if (m_bImpNorm) impnorm(reflpt, true);
 
   // Calculate the fitness score
   double calcholder1 = 0;
@@ -269,19 +268,9 @@ double CReflCalc::Objective(CEDP& EDP) {
   return (m_dgoodnessoffit);
 }
 
-// Perform a rudimentary normalization on the modeled reflectivity (for
-// absorbing films) This is for the output reflectivity. If the normalization is
-// imperfect for neutrons, this should use isimprefl = true
-void CReflCalc::impnorm(std::span<double> refl, bool isimprefl) {
-  double normfactor;
-
-  if (isimprefl)
-    normfactor = m_dnormfactor;
-  else
-    normfactor = 1.0 / refl[0];
-
+void CReflCalc::impnorm(std::span<double> refl, bool /*isimprefl*/) {
   for (double& v : refl) {
-    v *= normfactor;
+    v *= m_dnormfactor;
   }
 }
 
@@ -695,5 +684,5 @@ void CReflCalc::CalculateReflectivity(CEDP& EDP) {
     QsmearRf(qspreadreflpt, reflpt);
   }
 
-  if (m_bforcenorm || m_bImpNorm) impnorm(reflpt, m_bImpNorm);
+  if (m_bImpNorm) impnorm(reflpt, true);
 }

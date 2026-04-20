@@ -40,7 +40,6 @@ private:
 	//Variables
 	double totalsize;
     double lambda,k0;
-	bool m_bforcenorm;
 	bool m_bImpNorm;
 	int m_iuseableprocessors;
 	vector<std::complex<double>> m_ckk, m_cak, m_crj, m_cRj;

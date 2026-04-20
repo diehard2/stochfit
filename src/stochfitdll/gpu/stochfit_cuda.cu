@@ -465,10 +465,6 @@ __global__ void kernel_objective(
     __syncthreads();
 
     // Apply normalization
-    if (meas.force_norm && tid == 0) {
-        float norm = 1.0f / refl[0];
-        for (int i = 0; i < n; i++) refl[i] *= norm;
-    }
     if (meas.imp_norm && tid == 0) {
         float norm = p.imp_norm;
         for (int i = 0; i < n; i++) refl[i] *= norm;
@@ -652,7 +648,6 @@ __global__ void kernel_sa_persistent(
 
     __shared__ GpuParams  s_backup;
     __shared__ GpuSAState s_state;
-    __shared__ float  s_norm;
     __shared__ int    s_xr_fail;
     __shared__ int    s_cancel;
 
@@ -722,27 +717,7 @@ __global__ void kernel_sa_persistent(
             if (s_xr_fail) continue;
         }
 
-        // ── Phase 2: normalization factor (force_norm) ───────────────
-        if (meas.force_norm) {
-            if (tid == 0) {
-                float r0;
-                if (meas.use_qspread) {
-                    r0 = 0.0f;
-                    for (int j = 0; j < 13; j++)
-                        r0 += kQSpreadWeights[j] *
-                              device_parratt_single(s_dedp, nl,
-                                  sin_arr[j], sinsq_arr[j], k0, dz);
-                    r0 /= GPU_QSPREAD_NORM;
-                } else {
-                    r0 = device_parratt_single(
-                        s_dedp, nl, sin_arr[0], sinsq_arr[0], k0, dz);
-                }
-                s_norm = (r0 > 1e-30f) ? (1.0f / r0) : 1.0f;
-            }
-            __syncthreads();
-        }
-
-        float norm = meas.force_norm ? s_norm : 1.0f;
+        float norm = 1.0f;
         if (meas.imp_norm) norm *= params->imp_norm;
 
         // ── Phase 3: Parratt + objective (fused, parallel over Q) ────

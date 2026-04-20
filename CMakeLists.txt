@@ -276,6 +276,7 @@ endif()
 # ── stochfit_dll (shared lib — FFI exports only, loaded by Electron) ──────────
 add_library(stochfit_dll SHARED
     src/stochfitdll/StochFitDll.cpp
+    src/stochfitdll/SettingsStruct.cpp
 )
 add_dependencies(stochfit_dll flatbuffers_gen)
 target_include_directories(stochfit_dll

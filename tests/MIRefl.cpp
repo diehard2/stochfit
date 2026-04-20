@@ -68,11 +68,10 @@ int main(int argc, char* argv[])
 static void FillInitStruct(ReflSettings& InitStruct)
 {
 	InitStruct.Wavelength = 1.24;
-	InitStruct.Forcenorm = 0;
 	InitStruct.QErr = 0;
 	InitStruct.XRonly = 0;
 	InitStruct.Impnorm = 0;
-	InitStruct.Q = std::span(qrange);
+	InitStruct.Q = std::vector<double>(std::begin(qrange), std::end(qrange));
 	InitStruct.CritEdgeOffset = 0;
 	InitStruct.HighQOffset = 0;
 

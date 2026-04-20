@@ -25,11 +25,10 @@ static const double qrange[] = {
 static void FillInitStruct(ReflSettings& s)
 {
     s.Wavelength       = 1.24;
-    s.Forcenorm        = false;
     s.QErr             = 0;
     s.XRonly           = false;
     s.Impnorm          = false;
-    s.Q                = std::span(qrange);
+    s.Q                = std::vector<double>(std::begin(qrange), std::end(qrange));
     s.CritEdgeOffset   = 0;
     s.HighQOffset      = 0;
     s.UseSurfAbs       = false;

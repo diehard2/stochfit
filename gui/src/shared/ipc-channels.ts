@@ -5,7 +5,6 @@ export const IPC = {
   STOCH_CANCEL: 'stoch:cancel',
   STOCH_GET_DATA: 'stoch:getData',
   STOCH_ARRAY_SIZES: 'stoch:arraySizes',
-  STOCH_WARMED_UP: 'stoch:warmedUp',
   STOCH_SA_PARAMS: 'stoch:saParams',
   STOCH_GPU_AVAILABLE: 'stoch:gpuAvailable',
   STOCH_STOP: 'stoch:stop',

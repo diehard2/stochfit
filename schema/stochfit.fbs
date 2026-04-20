@@ -23,7 +23,7 @@ table ReflSettings {
   wavelength:                 double;
   use_surf_abs:               int32;
   q_err:                      double;
-  forcenorm:                  int32;
+  forcenorm:                  int32 (deprecated);
   forcesig:                   double;
   debug:                      int32;
   xr_only:                    int32;
@@ -94,7 +94,7 @@ table BoxReflSettings {
   boxes:          int32;
   wavelength:     double;
   q_spread:       double;
-  forcenorm:      int32;
+  forcenorm:      int32 (deprecated);
   imp_norm:       int32;
   fit_func:       int32;
   low_q_offset:   int32;

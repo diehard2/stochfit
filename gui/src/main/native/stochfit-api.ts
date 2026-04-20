@@ -30,7 +30,6 @@ export interface ReflSettingsInput {
   wavelength: number;
   useSurfAbs: boolean;
   qSpread: number;
-  forcenorm: boolean;
   forcesig: number;
   debug: boolean;
   neutron: boolean;
@@ -180,7 +179,6 @@ export function stochInit(settings: ReflSettingsInput, runState: StochRunStateOu
   FBReflSettings.addWavelength(builder, settings.wavelength);
   FBReflSettings.addUseSurfAbs(builder, settings.useSurfAbs ? 1 : 0);
   FBReflSettings.addQErr(builder, settings.qSpread);
-  FBReflSettings.addForcenorm(builder, settings.forcenorm ? 1 : 0);
   FBReflSettings.addForcesig(builder, settings.forcesig);
   FBReflSettings.addDebug(builder, settings.debug ? 1 : 0);
   FBReflSettings.addXrOnly(builder, settings.neutron ? 0 : 1);
@@ -307,10 +305,6 @@ export function stochGetRunState(boxes: number): StochRunStateOutput {
     edValues:       Array.from(edArr),
     edCount:        edArr.length,
   };
-}
-
-export function stochWarmedUp(): boolean {
-  return Boolean(getStochFns()['WarmedUp']());
 }
 
 export function stochSAParams(): SAParams {

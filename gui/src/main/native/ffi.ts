@@ -72,7 +72,6 @@ export function getStochFns() {
       GetRunState:  lib.func('int GetRunState(uint8_t *outBuf, int maxLen)'),
       ArraySizes:   lib.func('int ArraySizes(uint8_t *outBuf, int maxLen)'),
       SAParams:     lib.func('int SAParams(uint8_t *outBuf, int maxLen)'),
-      WarmedUp:     lib.func('bool WarmedUp()'),
       GpuAvailable: lib.func('bool GpuAvailable()'),
     };
   }

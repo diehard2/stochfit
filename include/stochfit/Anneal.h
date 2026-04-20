@@ -14,9 +14,8 @@
 struct AnnealDeps {
     std::span<const double> yi, eyi;
     std::span<double>       reflBuf;
-    bool xrOnly    = false;
-    bool forceNorm = false;
-    bool impNorm   = false;
+    bool xrOnly  = false;
+    bool impNorm = false;
 };
 
 inline bool HasNegativeDensity(const CEDP& edp) {
@@ -73,9 +72,6 @@ private:
         std::ranges::copy(result, m_deps.reflBuf.begin());
         if (m_deps.impNorm) {
             for (auto& v : m_deps.reflBuf) v *= p.getImpNorm();
-        } else if (m_deps.forceNorm) {
-            const double f = 1.0 / m_deps.reflBuf[0];
-            for (auto& v : m_deps.reflBuf) v *= f;
         }
     }
 };

@@ -62,7 +62,6 @@ static void fill_box_settings(const StochFitProto::BoxReflSettings* s, BoxReflSe
     rs.Boxes      = s->boxes();
     rs.Wavelength = s->wavelength();
     rs.QSpread    = s->q_spread();
-    rs.Forcenorm  = s->forcenorm();
     rs.ImpNorm    = s->imp_norm();
     rs.FitFunc    = s->fit_func();
     rs.LowQOffset = s->low_q_offset();

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDataStore } from '../../stores/data-store';
 import { useSettingsStore } from '../../stores/settings-store';
+import { applyForceNormalization } from '../../lib/forcenorm';
 import { useBoxModelStore } from '../../stores/box-model-store';
 import { BoxParameterTable, type BoxRow } from '../shared/BoxParameterTable';
 import type { BoxReflSettingsInput, LMFitResult, RhoEDPResult, StochFitResult } from '../../../main/native/levmar-api';
@@ -127,16 +128,17 @@ export function BoxModelPanel() {
       try {
         const reflParams = buildFastReflParams(subRough, boxRows, normFactor, oneSigma);
         const { ul, ll, percs } = makeBounds(reflParams);
+        const normData = applyForceNormalization(data, settings.forcenorm);
         const baseInput: BoxReflSettingsInput = {
           directory: data.filePath.replace(/[^/\\]+$/, ''),
-          q: data.q,
-          refl: data.refl,
-          reflError: data.reflError,
-          qError: data.qError,
+          q: normData.q,
+          refl: normData.refl,
+          reflError: normData.reflError,
+          qError: normData.qError,
           ul,
           ll,
           paramPercs: percs,
-          qPoints: data.q.length,
+          qPoints: normData.q.length,
           oneSigma,
           writeFiles: false,
           subSLD: settings.subSLD,
@@ -144,7 +146,6 @@ export function BoxModelPanel() {
           boxes,
           wavelength: settings.wavelength,
           qSpread: settings.qSpread,
-          forcenorm: settings.forcenorm,
           impNorm: impNorm,
           fitFunc: 0,
           lowQOffset: settings.critEdgeOffset,
@@ -182,16 +183,17 @@ export function BoxModelPanel() {
   function buildInput(): BoxReflSettingsInput {
     const params = buildFastReflParams(subRough, boxRows, normFactor, oneSigma);
     const { ul, ll, percs } = makeBounds(params);
+    const normData = applyForceNormalization(data!, settings.forcenorm);
     return {
       directory: data!.filePath.replace(/[^/\\]+$/, ''),
-      q: data!.q,
-      refl: data!.refl,
-      reflError: data!.reflError,
-      qError: data!.qError,
+      q: normData.q,
+      refl: normData.refl,
+      reflError: normData.reflError,
+      qError: normData.qError,
       ul,
       ll,
       paramPercs: percs,
-      qPoints: data!.q.length,
+      qPoints: normData.q.length,
       oneSigma,
       writeFiles: false,
       subSLD: settings.subSLD,
@@ -199,7 +201,6 @@ export function BoxModelPanel() {
       boxes,
       wavelength: settings.wavelength,
       qSpread: settings.qSpread,
-      forcenorm: settings.forcenorm,
       impNorm: impNorm,
       fitFunc: 0,
       lowQOffset: settings.critEdgeOffset,

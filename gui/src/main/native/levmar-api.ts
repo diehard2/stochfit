@@ -28,7 +28,6 @@ export interface BoxReflSettingsInput {
   boxes: number;
   wavelength: number;
   qSpread: number;
-  forcenorm: boolean;
   impNorm: boolean;
   fitFunc: number;
   lowQOffset: number;
@@ -104,7 +103,6 @@ function buildRequest(input: BoxReflSettingsInput, params: number[]): Uint8Array
   FBBoxReflSettings.addBoxes(builder, input.boxes);
   FBBoxReflSettings.addWavelength(builder, input.wavelength);
   FBBoxReflSettings.addQSpread(builder, input.qSpread);
-  FBBoxReflSettings.addForcenorm(builder, input.forcenorm ? 1 : 0);
   FBBoxReflSettings.addImpNorm(builder, input.impNorm ? 1 : 0);
   FBBoxReflSettings.addFitFunc(builder, input.fitFunc);
   FBBoxReflSettings.addLowQOffset(builder, input.lowQOffset);

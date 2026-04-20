@@ -1,19 +1,19 @@
 #include "UnifiedReflectivity.h"
-
 #include <cassert>
 
 namespace {
 void InitScratchArrays(WaveScratch<std::complex<double>> &complex_scratch,
-                       WaveScratch<double> &real_scratch,
-                       int num_threads, int edp_points) {
+                       WaveScratch<double> &real_scratch, int num_threads,
+                       int edp_points) {
   complex_scratch.resize(edp_points, num_threads);
   real_scratch.resize(edp_points, num_threads);
 }
 
 // Returns the first Q index where no EDP layer is evanescent. Exploits the fact
-// that sinsquaredthetai is monotone increasing (Q sorted ascending), so a single
-// max-density precompute + binary search replaces the original O(Q·EDP) scan.
-// Only valid for the measurement Q grid (monotone); never call for qspread arrays.
+// that sinsquaredthetai is monotone increasing (Q sorted ascending), so a
+// single max-density precompute + binary search replaces the original O(Q·EDP)
+// scan. Only valid for the measurement Q grid (monotone); never call for
+// qspread arrays.
 auto FindComplexToRealOffset(
     std::span<const double> sinsquaredthetai,
     std::span<const std::complex<double>> density_profile,
@@ -103,11 +103,8 @@ auto ParrattReflectivity::CalculateReflectivity(const CEDP &EDP)
 //  - Flat superstrate [0, sup_offset-2]: rj=0, ak=ak1 uniformly.
 //    Collapse to Rj[0] = ak1^(sup_offset-2) * Rj[sup_offset-1] via pow.
 void ParrattReflectivity::ReflectivityCalcCore(
-    const CEDP &EDP,
-    std::span<const double> sinthetai,
-    std::span<const double> sin2thetai,
-    std::span<double> out,
-    int q_end) {
+    const CEDP &EDP, std::span<const double> sinthetai,
+    std::span<const double> sin2thetai, std::span<double> out, int q_end) {
   const auto &density_profile = EDP.m_DEDP;
   const int edp_points = EDP.Get_EDPPointCount();
   const int n_q = std::min(q_end, static_cast<int>(sinthetai.size()));
@@ -135,9 +132,8 @@ void ParrattReflectivity::ReflectivityCalcCore(
 
       // Flat-front wavevector — density uniform at [1, sup_offset-1]
       const auto kk1 =
-          m_consts.k0 *
-          std::sqrt(m_consts.indexsupsquared * sin2thetai[l] -
-                    density_profile[1] + m_consts.sup_sld);
+          m_consts.k0 * std::sqrt(m_consts.indexsupsquared * sin2thetai[l] -
+                                  density_profile[1] + m_consts.sup_sld);
       const auto ak1 = std::exp(length_multiplier * kk1);
 
       // Flat-back wavevector
@@ -149,9 +145,8 @@ void ParrattReflectivity::ReflectivityCalcCore(
       // Varying region: kk and ak for [sup_offset, sub_offset]
       for (int i = sup_offset; i <= sub_offset; i++) {
         kk_slice[i] =
-            m_consts.k0 *
-            std::sqrt(m_consts.indexsupsquared * sin2thetai[l] -
-                      density_profile[i] + m_consts.sup_sld);
+            m_consts.k0 * std::sqrt(m_consts.indexsupsquared * sin2thetai[l] -
+                                    density_profile[i] + m_consts.sup_sld);
         ak_slice[i] = std::exp(length_multiplier * kk_slice[i]);
       }
 
@@ -173,10 +168,9 @@ void ParrattReflectivity::ReflectivityCalcCore(
         Rj_slice[i] = ak_slice[i] * (Rj_slice[i + 1] + rj_slice[i]) /
                       (Rj_slice[i + 1] * rj_slice[i] + 1.0);
 
-      out[l] = (sup_offset >= 2)
-                   ? std::norm(std::pow(ak1, sup_offset - 2) *
-                               Rj_slice[sup_offset - 1])
-                   : std::norm(Rj_slice[0]);
+      out[l] = (sup_offset >= 2) ? std::norm(std::pow(ak1, sup_offset - 2) *
+                                             Rj_slice[sup_offset - 1])
+                                 : std::norm(Rj_slice[0]);
     }
   }
 }
@@ -193,9 +187,9 @@ void ParrattReflectivity::TransparentReflectivityCalc(const CEDP &EDP) {
   const int edp_points = EDP.Get_EDPPointCount();
 
   const auto [sup_offset, sub_offset] = EDP.GetOffSets();
-  const int complex_to_real_offset = FindComplexToRealOffset(
-      m_consts.sinsquaredthetai, density_profile, m_consts.indexsupsquared,
-      m_consts.sup_sld);
+  const int complex_to_real_offset =
+      FindComplexToRealOffset(m_consts.sinsquaredthetai, density_profile,
+                              m_consts.indexsupsquared, m_consts.sup_sld);
 
   ReflectivityCalc(EDP, complex_to_real_offset);
 
@@ -263,7 +257,7 @@ void ParrattReflectivity::TransparentReflectivityCalc(const CEDP &EDP) {
       m_refl_out[l] =
           (sup_offset >= 2)
               ? std::norm(std::polar(1.0, static_cast<double>(sup_offset - 2) *
-                                             angle_mult * dkk1) *
+                                              angle_mult * dkk1) *
                           Rj_slice[sup_offset - 1])
               : std::norm(Rj_slice[0]);
     }

@@ -94,7 +94,6 @@ struct GpuMeasurement {
     int num_datapoints;
     int objective_function;    // 0-3
     int use_qspread;
-    int force_norm;
     int imp_norm;
     int xr_only;
 };

@@ -28,7 +28,6 @@ declare global {
       stochWriteOutput: (filePath: string, output: unknown) => Promise<void>;
       stochDeleteOutput: (filePath: string) => Promise<void>;
       stochArraySizes: () => Promise<{ rhoSize: number; reflSize: number }>;
-      stochWarmedUp: () => Promise<boolean>;
       stochSAParams: () => Promise<unknown>;
       lmFastReflFit: (i: unknown, p: number[]) => Promise<unknown>;
       lmFastReflGenerate: (i: unknown, p: number[]) => Promise<number[]>;

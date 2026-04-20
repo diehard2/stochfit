@@ -190,6 +190,10 @@ bool CEDP::Get_UseABS() const { return m_bUseSurfAbs; }
 
 double CEDP::Get_Dz() const { return m_dDz0; }
 
+double CEDP::Get_LeftOffset() const {
+  return m_fEDSpacingArray.empty() ? 0.0 : -m_fEDSpacingArray[0];
+}
+
 double CEDP::Get_FilmAbs() const { return m_dBeta; }
 
 double CEDP::Get_FilmAbsInput() const {

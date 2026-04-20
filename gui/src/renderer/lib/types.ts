@@ -164,7 +164,6 @@ export interface BoxLMSettings {
   boxes: number;
   wavelength: number;
   qSpread: number;
-  forcenorm: boolean;
   impNorm: boolean;
   fitFunc: number;
   lowQOffset: number;

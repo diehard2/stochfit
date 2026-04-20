@@ -4,6 +4,7 @@ import type { Data } from 'plotly.js';
 import { reflLayout, plotlyConfig } from './graph-config';
 import { COLORS, calcQc, calcFresnelPoint } from '../../lib/constants';
 import type { ReflData, FitResult } from '../../lib/types';
+import { applyForceNormalization } from '../../lib/forcenorm';
 import { useUiStore } from '../../stores/ui-store';
 import { useDataStore } from '../../stores/data-store';
 import { useSettingsStore } from '../../stores/settings-store';
@@ -74,11 +75,12 @@ export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
   };
 
   if (data) {
-    const normalized = applyTransform(data.q, data.refl, data.reflError);
+    const displayData = applyForceNormalization(data, settings?.forcenorm ?? false);
+    const normalized = applyTransform(displayData.q, displayData.refl, displayData.reflError);
     traces.push({
       x: normalized.q,
       y: normalized.refl,
-      error_y: data.reflError.some((e) => e > 0)
+      error_y: displayData.reflError.some((e) => e > 0)
         ? { type: 'data', array: normalized.errors ?? [], visible: true, color: COLORS.errorBar, thickness: 1, width: 3 }
         : undefined,
       mode: 'markers',

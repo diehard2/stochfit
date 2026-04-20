@@ -40,6 +40,7 @@ public:
   double Get_FilmAbsInput()
       const; // returns m_dBeta / m_dWaveConstant — inverse of Set_FilmAbs
   double Get_Dz() const;
+  double Get_LeftOffset() const; // superphase padding = 6 * RoughnessMax
   double Get_WaveConstant() const;
   void Set_FilmAbs(double absorption);
   std::pair<int, int> GetOffSets() const;

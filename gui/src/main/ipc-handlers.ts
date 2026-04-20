@@ -9,7 +9,6 @@ import {
   stochGetData,
   stochGetRunState,
   stochArraySizes,
-  stochWarmedUp,
   stochSAParams,
   stochGpuAvailable,
   readOutputFile,
@@ -86,10 +85,6 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.STOCH_ARRAY_SIZES, () => {
     return wrap('STOCH_ARRAY_SIZES', () => stochArraySizes());
-  });
-
-  ipcMain.handle(IPC.STOCH_WARMED_UP, () => {
-    return wrap('STOCH_WARMED_UP', () => stochWarmedUp());
   });
 
   ipcMain.handle(IPC.STOCH_SA_PARAMS, () => {

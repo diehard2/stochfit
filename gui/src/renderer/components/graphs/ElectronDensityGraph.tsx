@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Plot from './Plot';
 import type { Data } from 'plotly.js';
 import { edpLayout, plotlyConfig } from './graph-config';
@@ -12,6 +12,7 @@ interface Props {
   lmZRange?: number[];
   lmED?: number[];
   lmBoxED?: number[];
+  panelKey?: string;
 }
 
 type LockedRange = {
@@ -19,8 +20,12 @@ type LockedRange = {
   yaxis?: { range: [number, number]; autorange: false };
 } | null;
 
-export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED }: Props) {
+export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED, panelKey }: Props) {
   const [lockedRange, setLockedRange] = useState<LockedRange>(null);
+
+  useEffect(() => {
+    setLockedRange(null);
+  }, [panelKey]);
   const traces: Data[] = [];
 
   const handleRelayout = (e: Readonly<Plotly.PlotRelayoutEvent>) => {

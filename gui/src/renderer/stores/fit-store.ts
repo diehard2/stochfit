@@ -12,7 +12,7 @@ interface FitState {
   itPerSec: number;
 
   setStatus: (s: FitStatus) => void;
-  setResult: (r: FitResult) => void;
+  setResult: (r: FitResult | null) => void;
   setSAParams: (p: SAParams) => void;
   setPollTimer: (t: ReturnType<typeof setInterval> | null) => void;
   setMiBoxED: (ed: number[] | null) => void;

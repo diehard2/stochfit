@@ -26,6 +26,7 @@
 // absorption, and imperfect-normalization factor. Enforces clamped bounds
 // on all mutations. All public API uses double.
 
+#include <span>
 #include "platform.h"
 #include "SettingsStruct.h"
 
@@ -74,4 +75,9 @@ class ParamVector
 
 		double GetUpperBounds(int index);
 		double GetLowerBounds(int index);
+
+		std::span<const double> RealParams() const {
+			if (!m_binitialized) return {};
+			return { gnome.data(), static_cast<size_t>(length + 2) };
+		}
 };

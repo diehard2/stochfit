@@ -70,7 +70,6 @@ export function getStochFns() {
       Cancel:       lib.func('void Cancel()'),
       GetData:      lib.func('int GetData(uint8_t *outBuf, int maxLen)'),
       GetRunState:  lib.func('int GetRunState(uint8_t *outBuf, int maxLen)'),
-      ArraySizes:   lib.func('int ArraySizes(uint8_t *outBuf, int maxLen)'),
       SAParams:     lib.func('int SAParams(uint8_t *outBuf, int maxLen)'),
       GpuAvailable: lib.func('bool GpuAvailable()'),
     };

@@ -74,6 +74,7 @@ interface BoxModelState {
   setGenRefl: (r: number[] | null) => void;
   setGenEDP: (ed: number[] | null, boxED: number[] | null, zRange: number[] | null) => void;
   setLastFitReport: (report: FitReport | null) => void;
+  clearGenerated: () => void;
   reset: () => void;
 }
 
@@ -126,6 +127,7 @@ export const useBoxModelStore = create<BoxModelState>((set, get) => ({
   setGenRefl: (genRefl) => set({ genRefl }),
   setGenEDP: (genED, genBoxED, genZRange) => set({ genED, genBoxED, genZRange }),
   setLastFitReport: (lastFitReport) => set({ lastFitReport }),
+  clearGenerated: () => set({ genRefl: null, genED: null, genBoxED: null, genZRange: null, solutions: [], lastFitReport: null }),
   reset: () => {
     try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
     set({

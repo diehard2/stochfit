@@ -125,6 +125,7 @@ export function BoxModelPanel() {
     if (!data) return;
     if (autoGenTimer.current) clearTimeout(autoGenTimer.current);
     autoGenTimer.current = setTimeout(async () => {
+      setError(null);
       try {
         const reflParams = buildFastReflParams(subRough, boxRows, normFactor, oneSigma);
         const { ul, ll, percs } = makeBounds(reflParams);
@@ -155,6 +156,9 @@ export function BoxModelPanel() {
 
         // Generate reflectivity
         const refl = await window.api.lmFastReflGenerate(baseInput, reflParams) as number[];
+        console.log('[BoxModel] generate: qPoints=', baseInput.qPoints, 'q[0]=', baseInput.q[0], 'q[last]=', baseInput.q[baseInput.qPoints-1],
+                    'refl.length=', refl.length, 'refl[0]=', refl[0], 'refl last=', refl[refl.length - 1],
+                    'subSLD=', baseInput.subSLD, 'supSLD=', baseInput.supSLD, 'wavelength=', baseInput.wavelength);
         setGenRefl(refl);
 
         // Generate EDP: convert to RhoFit param layout and use a synthetic z-range
@@ -173,8 +177,9 @@ export function BoxModelPanel() {
         const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoEDPResult;
         const stepBoxED = computeBoxStepEDP(zRange, boxRows, 0, settings.supSLD, settings.subSLD);
         setGenEDP(edpRes.ed, stepBoxED, zRange);
-      } catch {
-        // silently ignore auto-gen errors
+      } catch (e) {
+        console.error('[BoxModel] auto-generate failed:', e);
+        setError(`Generate failed: ${(e as Error).message ?? e}`);
       }
     }, 500);
     return () => { if (autoGenTimer.current) clearTimeout(autoGenTimer.current); };

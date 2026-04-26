@@ -8,7 +8,6 @@ import { ReflSettings as FBReflSettings } from './generated/stoch-fit-proto/refl
 import { StochRunState as FBStochRunState } from './generated/stoch-fit-proto/stoch-run-state';
 import { GetDataResult } from './generated/stoch-fit-proto/get-data-result';
 import { GetRunStateResult } from './generated/stoch-fit-proto/get-run-state-result';
-import { ArraySizesResult } from './generated/stoch-fit-proto/array-sizes-result';
 import { SaParamsResult } from './generated/stoch-fit-proto/sa-params-result';
 
 // ── Public interfaces ─────────────────────────────────────────────────────────
@@ -133,7 +132,7 @@ export interface StochSessionFile {
 // Sized for up to ~8000 data points × 4 arrays × 8 bytes + overhead.
 const MAX_DATA_BUF  = 256 * 1024;  // 256 KB
 const MAX_STATE_BUF =   4 * 1024;  //   4 KB (scalars + edValues)
-const MAX_SMALL_BUF =   1 * 1024;  //   1 KB (ArraySizes, SAParams)
+const MAX_SMALL_BUF =   1 * 1024;  //   1 KB (SAParams)
 
 // ── FlatBuffers helpers ───────────────────────────────────────────────────────
 
@@ -258,14 +257,6 @@ export function stochCancel(): void {
 }
 
 // ── Polling ───────────────────────────────────────────────────────────────────
-
-export function stochArraySizes(): { rhoSize: number; reflSize: number } {
-  const fns = getStochFns();
-  const out = new Uint8Array(MAX_SMALL_BUF);
-  const written: number = fns['ArraySizes'](out, out.length);
-  const r = readResult(out, written, (bb) => ArraySizesResult.getRootAsArraySizesResult(bb));
-  return { rhoSize: r.rhoSize(), reflSize: r.reflSize() };
-}
 
 export function stochGetData(): FitData {
   const fns = getStochFns();

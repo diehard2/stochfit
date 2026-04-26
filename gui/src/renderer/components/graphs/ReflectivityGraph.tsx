@@ -14,6 +14,7 @@ interface Props {
   fitResult: FitResult | null;
   lmRefl?: number[];
   lmQ?: number[];
+  panelKey?: string;
 }
 
 type LockedRange = {
@@ -21,7 +22,7 @@ type LockedRange = {
   yaxis?: { range: [number, number]; autorange: false };
 } | null;
 
-export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
+export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ, panelKey }: Props) {
   const graphMode = useUiStore((s) => s.graphMode);
   const normalizeByFresnel = graphMode === 'fresnel';
   const rq4Mode = graphMode === 'rq4';
@@ -29,10 +30,10 @@ export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
   const [lockedRange, setLockedRange] = useState<LockedRange>(null);
   const traces: Data[] = [];
 
-  // Reset zoom when display mode changes (axes change scale/meaning)
+  // Reset zoom when display mode or panel changes (different data/axes)
   useEffect(() => {
     setLockedRange(null);
-  }, [graphMode]);
+  }, [graphMode, panelKey]);
 
   const handleRelayout = (e: Readonly<Plotly.PlotRelayoutEvent>) => {
     if (e['xaxis.autorange'] === true) {
@@ -76,6 +77,7 @@ export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
 
   if (data) {
     const displayData = applyForceNormalization(data, settings?.forcenorm ?? false);
+    console.log('[ReflGraph] measured data: q[0]=', displayData.q[0], 'q[last]=', displayData.q[displayData.q.length-1], 'R[0]=', displayData.refl[0], 'R[last]=', displayData.refl[displayData.q.length-1]);
     const normalized = applyTransform(displayData.q, displayData.refl, displayData.reflError);
     traces.push({
       x: normalized.q,
@@ -104,6 +106,9 @@ export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ }: Props) {
     });
   }
 
+  if (lmRefl !== undefined || lmQ !== undefined) {
+    console.log('[ReflGraph] box model: lmRefl.length=', lmRefl?.length, 'lmQ.length=', lmQ?.length, 'match=', lmRefl?.length === lmQ?.length);
+  }
   if (lmRefl && lmQ && lmQ.length > 0 && lmRefl.length === lmQ.length) {
     const normalized = applyTransform(lmQ, lmRefl);
     traces.push({

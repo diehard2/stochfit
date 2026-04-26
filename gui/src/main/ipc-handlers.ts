@@ -8,7 +8,6 @@ import {
   stochCancel,
   stochGetData,
   stochGetRunState,
-  stochArraySizes,
   stochSAParams,
   stochGpuAvailable,
   readOutputFile,
@@ -83,10 +82,6 @@ export function registerIpcHandlers(): void {
     return wrap('STOCH_GET_DATA', () => stochGetData());
   });
 
-  ipcMain.handle(IPC.STOCH_ARRAY_SIZES, () => {
-    return wrap('STOCH_ARRAY_SIZES', () => stochArraySizes());
-  });
-
   ipcMain.handle(IPC.STOCH_SA_PARAMS, () => {
     return wrap('STOCH_SA_PARAMS', () => stochSAParams());
   });
@@ -97,23 +92,23 @@ export function registerIpcHandlers(): void {
 
   // ── LevMar ──────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.LM_FAST_REFL_FIT, (_event, input: BoxReflSettingsInput, params: number[]) => {
-    return levmarFastReflFit(input, params);
+    return wrap('LM_FAST_REFL_FIT', () => levmarFastReflFit(input, params));
   });
 
   ipcMain.handle(IPC.LM_FAST_REFL_GENERATE, (_event, input: BoxReflSettingsInput, params: number[]) => {
-    return levmarFastReflGenerate(input, params);
+    return wrap('LM_FAST_REFL_GENERATE', () => levmarFastReflGenerate(input, params));
   });
 
   ipcMain.handle(IPC.LM_RHO_FIT, (_event, input: BoxReflSettingsInput, params: number[]) => {
-    return levmarRhoFit(input, params);
+    return wrap('LM_RHO_FIT', () => levmarRhoFit(input, params));
   });
 
   ipcMain.handle(IPC.LM_RHO_GENERATE, (_event, input: BoxReflSettingsInput, params: number[]) => {
-    return levmarRhoGenerate(input, params);
+    return wrap('LM_RHO_GENERATE', () => levmarRhoGenerate(input, params));
   });
 
   ipcMain.handle(IPC.LM_STOCH_FIT, (_event, input: BoxReflSettingsInput, params: number[]) => {
-    return levmarStochFit(input, params);
+    return wrap('LM_STOCH_FIT', () => levmarStochFit(input, params));
   });
 
   // ── File System ──────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ import { useSettingsStore } from '../../stores/settings-store';
 import { useFitStore } from '../../stores/fit-store';
 import { useMiEdpStore } from '../../stores/mi-edp-store';
 import { useUiStore } from '../../stores/ui-store';
+import { useBoxModelStore } from '../../stores/box-model-store';
 import type { ReflData, StochFitOutput, ModelSettings } from '../../lib/types';
 
 interface OpenDataResult {
@@ -27,7 +28,6 @@ declare global {
       stochLoadOutput: (filePath: string) => Promise<unknown>;
       stochWriteOutput: (filePath: string, output: unknown) => Promise<void>;
       stochDeleteOutput: (filePath: string) => Promise<void>;
-      stochArraySizes: () => Promise<{ rhoSize: number; reflSize: number }>;
       stochSAParams: () => Promise<unknown>;
       lmFastReflFit: (i: unknown, p: number[]) => Promise<unknown>;
       lmFastReflGenerate: (i: unknown, p: number[]) => Promise<number[]>;
@@ -46,15 +46,20 @@ declare global {
 export function DataPanel() {
   const { data, setData } = useDataStore();
   const { restore: restoreSettings } = useSettingsStore();
-  const { setResult } = useFitStore();
+  const { setResult, setMiBoxED } = useFitStore();
   const { setBoxes, setSubRough, setZOffset, setOneSigma, setBoxRows, setLmResult } = useMiEdpStore();
   const { showToast } = useUiStore();
+  const clearBoxModelGenerated = useBoxModelStore((s) => s.clearGenerated);
 
   async function handleOpen() {
     try {
       const result = await window.api.openDataFile();
       if (!result) return;
       setData(result.data);
+      // Clear stale results from any previous data file
+      setResult(null);
+      setMiBoxED(null);
+      clearBoxModelGenerated();
 
       if (result.savedOutput) {
         const out = result.savedOutput;

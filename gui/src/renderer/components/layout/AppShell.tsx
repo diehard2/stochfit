@@ -234,7 +234,7 @@ export function AppShell() {
         <div className="flex-1 flex flex-col overflow-hidden p-3 gap-3" onClick={closeMenu}>
           <div id="refl-graph" className="flex-1 rounded-card bg-surface border border-border overflow-hidden min-h-0"
             onContextMenu={(e) => onContextMenu(e, 'refl-graph', 'stochfit-reflectivity')}>
-            <ReflectivityGraph data={data} fitResult={graphFitResult} lmRefl={lmRefl} lmQ={lmQ} />
+            <ReflectivityGraph data={data} fitResult={graphFitResult} lmRefl={lmRefl} lmQ={lmQ} panelKey={activePanel} />
           </div>
           <div id="edp-graph" className="flex-1 rounded-card bg-surface border border-border overflow-hidden min-h-0"
             onContextMenu={(e) => onContextMenu(e, 'edp-graph', 'stochfit-edp')}>
@@ -244,6 +244,7 @@ export function AppShell() {
               lmZRange={isBoxModel ? (boxModelGenZRange ?? undefined) : undefined}
               lmED={isBoxModel ? (boxModelGenED ?? undefined) : undefined}
               lmBoxED={isBoxModel ? (boxModelGenBoxED ?? undefined) : undefined}
+              panelKey={activePanel}
             />
           </div>
         </div>

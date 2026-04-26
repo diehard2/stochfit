@@ -18,7 +18,6 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke(IPC.STOCH_WRITE_OUTPUT, filePath, output),
   stochDeleteOutput: (filePath: string) =>
     ipcRenderer.invoke(IPC.STOCH_DELETE_OUTPUT, filePath),
-  stochArraySizes: () => ipcRenderer.invoke(IPC.STOCH_ARRAY_SIZES),
   stochSAParams: () => ipcRenderer.invoke(IPC.STOCH_SA_PARAMS),
   stochGpuAvailable: () => ipcRenderer.invoke(IPC.STOCH_GPU_AVAILABLE),
 

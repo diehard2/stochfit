@@ -20,7 +20,11 @@ std::pair<int, int> CEDP::GetOffSets() const {
 }
 
 void CEDP::Init(const ReflSettings &InitStruct) {
-  int resolution = InitStruct.Resolution <= 0 ? 3 : InitStruct.Resolution;
+  // Nyquist: dz <= pi/Q_max; use 2x safety factor → resolution = ceil(2*Q_max/pi).
+  // Caller-supplied Resolution is used as a floor (override for special cases).
+  const int nyquist_res = InitStruct.Q.empty() ? 1
+      : std::max(1, static_cast<int>(std::ceil(InitStruct.Q.back() * 2.0 / std::numbers::pi)));
+  int resolution = std::max(nyquist_res, InitStruct.Resolution <= 0 ? 1 : InitStruct.Resolution);
   m_dDz0 = 1.0 / resolution;
   m_dLambda = InitStruct.Wavelength;
   m_bUseSurfAbs = InitStruct.UseSurfAbs;

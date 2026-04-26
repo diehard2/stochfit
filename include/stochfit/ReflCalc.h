@@ -75,7 +75,7 @@ public:
     int m_idatapoints;
 
 	CReflCalc();
-	int GetDataCount();
+	int GetDataCount() const;
 
 
     tl::expected<void, std::string> Init(const ReflSettings& InitStruct);

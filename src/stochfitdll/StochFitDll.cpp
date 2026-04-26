@@ -103,36 +103,18 @@ extern "C" EXPORT int GetData(uint8_t *outBuf, int maxLen) {
   if (!stochfit)
     return -1;
 
-  const int nd = stochfit->GetDataCount();
-  std::vector<double> qRange(nd), refl(nd);
-  double roughness = 0, chiSquare = 0, goodnessOfFit = 0;
-  int32_t isFinished = 0;
-
-  int iter = stochfit->GetData(qRange.data(), refl.data(),
-                               &roughness, &chiSquare, &goodnessOfFit, &isFinished);
-
-  // Generate display EDP at full resolution from current best genome
-  CEDP display_edp;
-  display_edp.Init(stochfit->Settings());
-  ParamVector genome = stochfit->GetParams();
-  display_edp.GenerateEDP(genome);
-
-  const int n = display_edp.Get_EDPPointCount();
-  std::vector<double> zRange(n), rho(n);
-  for (int i = 0; i < n; i++) {
-    zRange[i] = i * display_edp.Get_Dz() - display_edp.Get_LeftOffset();
-    rho[i]    = display_edp.m_EDP[i].real() / display_edp.m_EDP[n - 1].real();
-  }
+  const DataSnapshot snap = stochfit->GetData();
 
   flatbuffers::FlatBufferBuilder fbb(static_cast<size_t>(maxLen));
-  auto zVec   = fbb.CreateVector(zRange);
-  auto rhoVec = fbb.CreateVector(rho);
-  auto qVec   = fbb.CreateVector(qRange);
-  auto rfVec  = fbb.CreateVector(refl);
+  auto zVec   = fbb.CreateVector(snap.z);
+  auto rhoVec = fbb.CreateVector(snap.rho);
+  auto qVec   = fbb.CreateVector(snap.Q);
+  auto rfVec  = fbb.CreateVector(snap.refl);
 
   auto result = StochFitProto::CreateGetDataResult(
-      fbb, zVec, rhoVec, qVec, rfVec, roughness, chiSquare, goodnessOfFit,
-      isFinished != 0, iter);
+      fbb, zVec, rhoVec, qVec, rfVec,
+      snap.roughness, snap.chiSquare, snap.goodnessOfFit,
+      snap.isFinished, snap.iteration);
 
   return finish_into(fbb, result, outBuf, maxLen);
 }
@@ -141,18 +123,12 @@ extern "C" EXPORT int GetRunState(uint8_t *outBuf, int maxLen) {
   if (!stochfit)
     return -1;
 
-  double saScalars[9] = {};
-  // size the ed buffer generously; GetRunState fills edCount with actual count
-  std::vector<double> edValues(256, 0.0);
-  int edCount = 0;
-  stochfit->GetRunState(saScalars, edValues.data(), &edCount);
-  edValues.resize(static_cast<size_t>(edCount));
-
+  const StochRunState s = stochfit->GetRunState();
   flatbuffers::FlatBufferBuilder fbb(4096);
-  auto edVec = fbb.CreateVector(edValues);
+  auto edVec = fbb.CreateVector(s.edValues);
   auto result = StochFitProto::CreateGetRunStateResult(
-      fbb, saScalars[0], saScalars[1], saScalars[2], saScalars[3], saScalars[4],
-      saScalars[5], saScalars[6], saScalars[7], saScalars[8], edVec,
+      fbb, s.roughness, s.filmAbsInput, s.surfAbs, s.temperature, s.impNorm,
+      s.avgfSTUN, s.bestSolution, s.chiSquare, s.goodnessOfFit, edVec,
       0 /*iteration filled by caller*/);
 
   return finish_into(fbb, result, outBuf, maxLen);
@@ -162,10 +138,9 @@ extern "C" EXPORT int SAParams(uint8_t *outBuf, int maxLen) {
   if (!stochfit)
     return -1;
 
-  double lowestEnergy = 0, temp = 0;
   int mode = 0;
-  temp = stochfit->GetTemperature();
-  lowestEnergy = stochfit->GetLowestEnergy();
+  double temp = stochfit->GetTemperature();
+  double lowestEnergy = stochfit->GetLowestEnergy();
   mode = (temp < 1e-20) ? -1 : 1;
 
   flatbuffers::FlatBufferBuilder fbb(64);

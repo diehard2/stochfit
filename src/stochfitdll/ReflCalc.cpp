@@ -627,7 +627,7 @@ void CReflCalc::QsmearRf(std::span<const double> qsr, std::span<double> reflpt) 
   QSmear::Apply(qsr, reflpt);
 }
 
-int CReflCalc::GetDataCount() {
+int CReflCalc::GetDataCount() const {
 #ifndef CHECKREFLCALC
   if (m_dQSpread == 0.0 || !exi.has_value())
     return static_cast<int>(tsinthetai.size());

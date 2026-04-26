@@ -30,6 +30,7 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <thread>
 #include <variant>
@@ -54,6 +55,18 @@ struct GpuEDPConfig;
 using AnnealVariant = std::variant<Anneal<GreedyPolicy>,
                                    Anneal<SimulatedPolicy>, Anneal<StunPolicy>>;
 
+struct DataSnapshot {
+  std::vector<double> Q;
+  std::vector<double> refl;
+  std::vector<double> z;
+  std::vector<double> rho;
+  double roughness     = 0.0;
+  double chiSquare     = 0.0;
+  double goodnessOfFit = 0.0;
+  bool   isFinished    = false;
+  int    iteration     = 0;
+};
+
 class StochFit {
 public:
   StochFit(const ReflSettings &InitStruct,
@@ -62,15 +75,12 @@ public:
   int Start(int iterations);
   int Cancel();
   void Stop();
-  int GetData(double *Q, double *ReflOut,
-              double *roughness, double *chisquare, double *goodnessoffit,
-              int32_t *isfinished);
-  void GetRunState(double *saScalars, double *edValues, int *edCount);
+  DataSnapshot GetData();
+  StochRunState GetRunState();
   tl::expected<void, std::string> GetInitError() const { return m_initError; }
 
-  const ReflSettings& Settings()  const { return m_initStruct; }
-  const ParamVector&  GetParams() const { return params; }
-  int                 GetDataCount() const { return m_cRefl.GetDataCount(); }
+  const ReflSettings& Settings()      const { return m_initStruct; }
+  int                 GetDataCount()  const { return m_cRefl.GetDataCount(); }
 
   // Harness-level accessors for the annealer (used by GPU seam and FFI).
   // GetTemperature()    = 1/β  (display value, same as old Get_Temp())
@@ -84,13 +94,14 @@ public:
   void SetAverageFSTUN(double f);
 
 private:
+  DataSnapshot GetCurrentState();
   int Processing();
-  void UpdateFits(int currentiteration);
-  tl::expected<void, std::string> m_initError;
-
   int ProcessingGPU();
   void InitGpuData(GpuSAState &sa_state, GpuParams &gpu_params,
                    GpuMeasurement &meas, GpuEDPConfig &edp_config);
+
+  tl::expected<void, std::string> m_initError;
+
   std::unique_ptr<GpuSARunner> m_gpuRunner;
   GpuBackend m_gpuBackend = GpuBackend::None;
 
@@ -105,27 +116,33 @@ private:
   std::vector<float> m_fEdSpacing;
   std::vector<float> m_fDistArray;
 
-  std::vector<double> Qinc;
-  std::vector<double> Refl;
-
   std::thread m_thread;
-  std::atomic<bool> m_bupdated;
   std::atomic<bool> m_stop_requested;
+  std::atomic<int>  m_icurrentiteration{0};
 
   string m_Directory;
-  double m_dRoughness = 0.0;
-  double m_dChiSquare = 0.0;
-  double m_dGoodnessOfFit = 0.0;
   int m_itotaliterations = 0;
-  int m_icurrentiteration = 0;
-  int m_iparratlayers = 0;
+  int m_iparratlayers    = 0;
 
-  // m_initStruct MUST be declared before m_parratt (holds const ref to it).
+  // m_initStruct must be declared before m_parratt, which holds a const ref to it.
   ReflSettings m_initStruct;
 
-  CReflCalc m_cRefl; // kept for display/LM path
-  CEDP m_cEDP;
-  ParamVector params;
+  CReflCalc m_cRefl;      // display/LM path — main thread only
+  CEDP m_cEDP;            // SA scoring     — worker thread only (via annealer)
+  CEDP m_displayEDP;      // display EDP    — main thread only (GetCurrentState)
+  ParamVector params;     // SA state       — worker thread only
+
+  // Snapshot of the latest accepted solution, readable from the main thread.
+  // Guarded by m_displayMutex; copy only the minimum inside the lock.
+  struct DisplayState {
+    explicit DisplayState(const ReflSettings &s) : params(s) {}
+    ParamVector params;
+    std::vector<double> refl; // SA-computed reflectivity at accepted solution
+    double chiSquare = 0.0;
+    double goF       = 0.0;
+  };
+  mutable std::mutex m_displayMutex;
+  DisplayState m_displayState;
 
   ParrattReflectivity m_parratt;
   ReflectivityObjective m_objective;

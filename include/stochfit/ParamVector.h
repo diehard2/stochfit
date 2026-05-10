@@ -32,52 +32,58 @@
 
 class ParamVector
 {
-	private:
-		vector <double> gnome;
-		vector <double> data_params;
-		vector <double> data_params_high_val;
-		vector <double> data_params_low_val;
-		int length;
-		bool m_binitialized;
-		bool m_bfixroughness;
-		bool m_busesurfabs;
-		bool m_bfiximpnorm;
-		int m_dparameter_size;
-		int m_iroughness_index;
-		int m_isurfabs_index;
-		int m_iimpnorm_index;
-		double roughness;
-		double m_roughness_max;
+public:
+    explicit ParamVector(const ReflSettings&);
 
-		void SetBounds(double lowrough, double highrough, double highimp, double highabs);
+    // EDP grid (supphase, box1..boxN, subphase) — used by CEDP.
+    int                     RealParamsSize()    const { return m_boxes + 2; }
+    double                  GetRealParams(int i) const;
+    std::span<const double> RealParams()         const;
 
-	public:
-		ParamVector(const ReflSettings& InitStruct);
-		//ParamVector();
-		int RealparamsSize();
-		int GetInitializationLength();
-		int ParamCount();
-		double GetRealparams(int i);
-		double GetMutatableParameter(int i);
-		int SetMutatableParameter(int i, double x);
-		double getroughness();
-		int setroughness(double x);
-		double getImpNorm();
-		int setImpNorm(double rough);
-		double getSurfAbs();
-		int setSurfAbs(double norm);
-		void SetSubphase(double subval);
-		void SetSupphase(double supval);
-		void UpdateBoundaries();
-		bool Get_FixedRoughness(){ return m_bfixroughness;}
-		bool Get_FixImpNorm(){ return m_bfiximpnorm;}
-		bool Get_UseSurfAbs(){ return m_busesurfabs;}
+    // Mutable SA search space (per-box SLDs + optional roughness/surfabs/impnorm).
+    int    ParamCount()             const { return m_paramCount; }
+    int    BoxCount()               const { return m_boxes; }
+    double GetMutatableParameter(int i) const;
+    void   SetMutatableParameter(int i, double val);  // clamps to bounds
 
-		double GetUpperBounds(int index);
-		double GetLowerBounds(int index);
+    // Named parameter accessors.
+    double GetRoughness() const;
+    void   SetRoughness(double rough);     // no-op if roughness is fixed
+    double GetImpNorm()   const;
+    void   SetImpNorm(double norm);        // no-op if impnorm disabled
+    double GetSurfAbs()   const;
+    void   SetSurfAbs(double surfabs);     // no-op if surfabs disabled
 
-		std::span<const double> RealParams() const {
-			if (!m_binitialized) return {};
-			return { gnome.data(), static_cast<size_t>(length + 2) };
-		}
+    // Phase-endpoint values (not part of the SA mutable space).
+    void SetSubphase(double subval) { m_edpValues[m_boxes + 1] = subval; }
+    void SetSupphase(double supval) { m_edpValues[0]           = supval; }
+
+    // Bounds.
+    double GetUpperBounds(int index) const;
+    double GetLowerBounds(int index) const;
+    void   UpdateBoundaries();
+
+    // Feature flags.
+    bool IsRoughnessFixed() const { return m_fixRoughness; }
+    bool IsImpNormFixed()   const { return m_fixImpNorm; }
+    bool UsesSurfAbs()      const { return m_useSurfAbs; }
+
+private:
+    std::vector<double> m_edpValues;     // [supphase, box1..boxN, subphase]
+    std::vector<double> m_mutableParams;
+    std::vector<double> m_high;
+    std::vector<double> m_low;
+
+    int    m_boxes        = 0;
+    int    m_paramCount   = 0;
+    int    m_roughnessIdx = -1;
+    int    m_surfAbsIdx   = -1;
+    int    m_impNormIdx   = -1;
+    double m_roughness    = 0.0;   // fixed roughness value (when m_fixRoughness)
+    double m_roughnessMax = 8.0;
+    bool   m_fixRoughness = false;
+    bool   m_useSurfAbs   = false;
+    bool   m_fixImpNorm   = false;
+
+    void SetBounds(double lowrough, double highrough, double highimp, double highabs);
 };

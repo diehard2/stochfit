@@ -73,7 +73,7 @@ export interface ModelSettings {
 
   // GPU acceleration
   useGpu: boolean;
-  gpuChains: number;  // parallel SA chains; lower = easier to compare with CPU
+  gpuChains: number;
 }
 
 export const DEFAULT_SETTINGS: ModelSettings = {
@@ -90,7 +90,7 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   forcenorm: false,
   forcesig: 0.0,
   neutron: false,
-  resolution: 3,
+  resolution: 10,
   filmLength: 25.0,
   objectivefunction: 0, // Log(R) cost
   paramtemp: 0.03, // Parameter temperature
@@ -170,7 +170,6 @@ export interface BoxLMSettings {
   highQOffset: number;
   iterations: number;
   oneSigma: boolean;
-  writeFiles: boolean;
   parameters: number[];
   ul: number[];
   ll: number[];

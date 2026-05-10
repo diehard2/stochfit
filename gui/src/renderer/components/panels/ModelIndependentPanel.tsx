@@ -79,7 +79,7 @@ function makeBounds(params: number[]) {
 export function ModelIndependentPanel() {
   const { data } = useDataStore();
   const { settings, restore: restoreSettings } = useSettingsStore();
-  const { gpuAvailable, setSettingsOpen } = useUiStore();
+  const { setSettingsOpen } = useUiStore();
   const {
     status, result, saParams, pollTimer, itPerSec,
     setStatus, setResult, setSAParams, setPollTimer, setMiBoxED, setItPerSec, reset,
@@ -318,7 +318,6 @@ export function ModelIndependentPanel() {
       paramPercs: percs,
       qPoints: normData.q.length,
       oneSigma,
-      writeFiles: false,
       subSLD: settings.subSLD,
       supSLD: settings.supSLD,
       boxes,
@@ -451,25 +450,6 @@ export function ModelIndependentPanel() {
         <Field label="Roughness (σ) Search %" field="sigmasearch" step={1} disabled={isRunning} />
         {settings.algorithm === 2 && (
           <Field label="Adaptive Temperature" field="adaptive" type="checkbox" disabled={isRunning} tooltip="Auto-adjust temperature schedule based on acceptance rate." />
-        )}
-        <Field
-          label="Use GPU Acceleration"
-          field="useGpu"
-          type="checkbox"
-          disabled={!gpuAvailable || isRunning}
-          tooltip={gpuAvailable ? undefined : 'Requires NVIDIA RTX 20+ (compute 7.5+) or Apple Silicon Mac'}
-        />
-        {settings.useGpu && gpuAvailable && (
-          <Field
-            label="GPU Chains"
-            field="gpuChains"
-            type="number"
-            min={1}
-            max={512}
-            step={1}
-            disabled={isRunning}
-            tooltip="Parallel SA chains on GPU. 1 = single-chain (comparable to CPU speed). Higher = better parameter space exploration."
-          />
         )}
         <button
           onClick={() => setSettingsOpen(true)}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CEDP.h"
+#include "LayerStack.h"
 #include "QSmear.h"
 
 struct ReflConstants {
@@ -34,22 +35,25 @@ class ParrattReflectivity {
 public:
   explicit ParrattReflectivity(const ReflSettings &settings);
 
-  // Returns the measurement-grid reflectivity (size N).
-  // When qsmear is enabled (QErr >= 0.5% and QError non-empty, from ReflSettings),
-  // evaluates on the 13·N spread grid and applies weighted averaging internally.
+  // Primary entry point — takes any LayerStack (CEDP-sourced or box-model).
+  // When qsmear is enabled the 13·N spread grid is evaluated then averaged.
+  auto CalculateReflectivity(const LayerStack &ls) -> std::span<double>;
+
+  // Convenience overload: builds a LayerStack from EDP and delegates.
   auto CalculateReflectivity(const CEDP &EDP) -> std::span<double>;
 
 private:
-  void ReflectivityCalcCore(const CEDP &EDP,
-                            std::span<const double> sinthetai,
-                            std::span<const double> sin2thetai,
-                            std::span<double> out,
-                            int q_end = std::numeric_limits<int>::max());
-  void ReflectivityCalc(const CEDP &EDP,
-                        int q_end = std::numeric_limits<int>::max());
-  void TransparentReflectivityCalc(const CEDP &EDP);
+  template <bool HasRoughness>
+  void ReflectivityCalcCoreImpl(const LayerStack &ls,
+                                std::span<const double> sinthetai,
+                                std::span<const double> sin2thetai,
+                                std::span<double> out,
+                                int q_end = std::numeric_limits<int>::max());
 
-  const ReflSettings &m_settings;
+  void ReflectivityCalc(const LayerStack &ls,
+                        int q_end = std::numeric_limits<int>::max());
+  void TransparentReflectivityCalc(const LayerStack &ls);
+
   const ReflConstants m_consts;
   WaveScratch<std::complex<double>> m_complex;
   WaveScratch<double> m_real;

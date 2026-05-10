@@ -44,7 +44,9 @@ function parseFastReflParams(
 function makeBounds(params: number[]) {
   const ul = params.map((v) => (Math.abs(v) > 0 ? Math.abs(v) * 3 : 10));
   const ll = params.map((v) => (v >= 0 ? 0 : v * 3));
-  const percs = params.map(() => 10);
+  // StochFitBoxModel reads ParamPercs[0..6]: length-hi, length-lo, rho-hi, rho-lo,
+  // roughness-hi, roughness-lo, IsReasonable-cutoff. Must be at least 7 elements.
+  const percs = [2.0, 0.5, 2.0, 0.5, 2.0, 0.5, 10.0];
   return { ul, ll, percs };
 }
 
@@ -141,7 +143,6 @@ export function BoxModelPanel() {
           paramPercs: percs,
           qPoints: normData.q.length,
           oneSigma,
-          writeFiles: false,
           subSLD: settings.subSLD,
           supSLD: settings.supSLD,
           boxes,
@@ -156,9 +157,6 @@ export function BoxModelPanel() {
 
         // Generate reflectivity
         const refl = await window.api.lmFastReflGenerate(baseInput, reflParams) as number[];
-        console.log('[BoxModel] generate: qPoints=', baseInput.qPoints, 'q[0]=', baseInput.q[0], 'q[last]=', baseInput.q[baseInput.qPoints-1],
-                    'refl.length=', refl.length, 'refl[0]=', refl[0], 'refl last=', refl[refl.length - 1],
-                    'subSLD=', baseInput.subSLD, 'supSLD=', baseInput.supSLD, 'wavelength=', baseInput.wavelength);
         setGenRefl(refl);
 
         // Generate EDP: convert to RhoFit param layout and use a synthetic z-range
@@ -200,7 +198,6 @@ export function BoxModelPanel() {
       paramPercs: percs,
       qPoints: normData.q.length,
       oneSigma,
-      writeFiles: false,
       subSLD: settings.subSLD,
       supSLD: settings.supSLD,
       boxes,

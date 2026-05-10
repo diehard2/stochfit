@@ -6,7 +6,7 @@ ParameterStepper::ParameterStepper(Config cfg)
 void ParameterStepper::Step(ParamVector& params) {
     constexpr double kRoughMult = 5.0 / 3.0;
 
-    const int ii   = std::uniform_int_distribution<int>(0, params.GetInitializationLength() - 1)(m_rng);
+    const int ii   = std::uniform_int_distribution<int>(0, params.BoxCount() - 1)(m_rng);
     const int perc = std::uniform_int_distribution<int>(1, 100)(m_rng);
 
     const int sigmaTop = m_cfg.sigmaSearch;
@@ -19,19 +19,19 @@ void ParameterStepper::Step(ParamVector& params) {
                 params.GetMutatableParameter(ii) - m_cfg.stepSize,
                 params.GetMutatableParameter(ii) + m_cfg.stepSize)(m_rng));
     } else if (perc <= sigmaTop) {
-        params.setroughness(
+        params.SetRoughness(
             std::uniform_real_distribution<double>(
-                params.getroughness() * (1.0 - kRoughMult * m_cfg.stepSize),
-                params.getroughness() * (1.0 + kRoughMult * m_cfg.stepSize))(m_rng));
+                params.GetRoughness() * (1.0 - kRoughMult * m_cfg.stepSize),
+                params.GetRoughness() * (1.0 + kRoughMult * m_cfg.stepSize))(m_rng));
     } else if (perc <= absTop) {
-        params.setSurfAbs(
+        params.SetSurfAbs(
             std::uniform_real_distribution<double>(
-                params.getSurfAbs() * (1.0 - m_cfg.stepSize),
-                params.getSurfAbs() * (1.0 + m_cfg.stepSize))(m_rng));
+                params.GetSurfAbs() * (1.0 - m_cfg.stepSize),
+                params.GetSurfAbs() * (1.0 + m_cfg.stepSize))(m_rng));
     } else {
-        params.setImpNorm(
+        params.SetImpNorm(
             std::uniform_real_distribution<double>(
-                params.getImpNorm() * (1.0 - m_cfg.stepSize),
-                params.getImpNorm() * (1.0 + m_cfg.stepSize))(m_rng));
+                params.GetImpNorm() * (1.0 - m_cfg.stepSize),
+                params.GetImpNorm() * (1.0 + m_cfg.stepSize))(m_rng));
     }
 }

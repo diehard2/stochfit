@@ -178,7 +178,6 @@ add_library(stochfit_core STATIC
     src/stochfitdll/CEDP.cpp
     src/stochfitdll/ParameterStepper.cpp
     src/stochfitdll/ParamVector.cpp
-    src/stochfitdll/ReflCalc.cpp
     src/stochfitdll/ReflectivityObjective.cpp
     src/stochfitdll/StochFitHarness.cpp
     src/stochfitdll/UnifiedReflectivity.cpp
@@ -321,10 +320,10 @@ endif()
 
 # ── levmardll (shared lib) ────────────────────────────────────────────────────
 add_library(levmardll SHARED
-    src/levmardll/FastReflCalc.cpp
+    src/levmardll/BoxLayerBuild.cpp
     src/levmardll/LevMardll.cpp
-    src/levmardll/ReflCalc.cpp
     src/levmardll/RhoCalc.cpp
+    src/levmardll/SettingsBridge.cpp
 )
 add_dependencies(levmardll flatbuffers_gen)
 target_include_directories(levmardll
@@ -346,6 +345,12 @@ target_link_libraries(stochfit_tests PRIVATE stochfit_core GTest::gtest GTest::g
 target_compile_features(stochfit_tests PRIVATE cxx_std_20)
 add_test(NAME stochfit_tests COMMAND stochfit_tests)
 
+add_executable(stochfit_profile tests/stochfit_profile.cpp)
+target_include_directories(stochfit_profile PRIVATE include/stochfit src/stochfitdll)
+target_link_libraries(stochfit_profile PRIVATE stochfit_core)
+target_compile_definitions(stochfit_profile PRIVATE
+    RESOURCES_DIR="${CMAKE_SOURCE_DIR}/resources")
+
 # ── MSVC Release optimizations ────────────────────────────────────────────────
 # stochfit_core has no CUDA sources so target_compile_options is safe on it.
 # stochfit_cuda_plugin contains only the .cu file; /arch:AVX2 etc. must be
@@ -358,12 +363,17 @@ if(MSVC)
         $<$<CONFIG:Release>:/fp:fast>
         $<$<CONFIG:Release>:/GL>
         $<$<CONFIG:Release>:/arch:AVX2>
+        $<$<CONFIG:RelWithDebInfo>:/Oi>
+        $<$<CONFIG:RelWithDebInfo>:/fp:fast>
+        $<$<CONFIG:RelWithDebInfo>:/arch:AVX2>
+        $<$<CONFIG:RelWithDebInfo>:/Oy->
     )
-    target_compile_options(stochfit_core  PRIVATE ${_msvc_opts})
-    target_compile_options(stochfit_dll   PRIVATE ${_msvc_opts})
-    target_compile_options(levmardll      PRIVATE ${_msvc_opts})
-    target_compile_options(mirefl         PRIVATE ${_msvc_opts})
-    target_compile_options(stochfit_tests PRIVATE ${_msvc_opts})
+    target_compile_options(stochfit_core    PRIVATE ${_msvc_opts})
+    target_compile_options(stochfit_dll     PRIVATE ${_msvc_opts})
+    target_compile_options(levmardll        PRIVATE ${_msvc_opts})
+    target_compile_options(mirefl           PRIVATE ${_msvc_opts})
+    target_compile_options(stochfit_tests   PRIVATE ${_msvc_opts})
+    target_compile_options(stochfit_profile PRIVATE ${_msvc_opts})
     # stochfit_cuda_plugin (.cu only) intentionally omitted: nvcc has its own
     # Release optimizations and interprets MSVC-style /flags as input file paths.
 endif()

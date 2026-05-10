@@ -1,9 +1,8 @@
 // MIRefl.cpp : Defines the entry point for the console application.
-//
 
 #include "platform.h"
 #include "CEDP.h"
-#include "ReflCalc.h"
+#include "UnifiedReflectivity.h"
 #include "ParamVector.h"
 
 static void FillInitStruct(ReflSettings& Initstruct);
@@ -24,9 +23,7 @@ static const double qrange[] = {
 
 int main(int argc, char* argv[])
 {
-
 	CEDP EDPGen;
-	CReflCalc Refl;
 	ReflSettings InitStruct = {};
 	int calculations = 10;
 
@@ -35,17 +32,16 @@ int main(int argc, char* argv[])
 	double FilmSLD = 9.38;
 	double SLD[] = {0.0, 8.911, 13.5072, 9.38};
 
-	//Setup Parameters
 	FillInitStruct(InitStruct);
 
 	// Build a ParamVector and populate it with normalized SLD values
 	ParamVector params(InitStruct);
 	for(int i = 0; i < InitStruct.Boxes; i++)
 		params.SetMutatableParameter(i, SLD[i+1] / FilmSLD);
-	params.setroughness(3.15);
+	params.SetRoughness(3.15);
 
-	Refl.Init(InitStruct);
 	EDPGen.Init(InitStruct);
+	ParrattReflectivity Refl(InitStruct);
 
 	int t_on = clock();
 
@@ -60,7 +56,6 @@ int main(int argc, char* argv[])
 	cout << calculations << " calculations in: " << (((static_cast<float>(t_off - t_on))/(CLOCKS_PER_SEC)))*(1000000) << " microseconds\n\n";
 	cout << calculations/(((static_cast<float>(t_off - t_on))/(CLOCKS_PER_SEC))) << " calcuations per second\n\n";
 	cout << "1 calculation in: " << (((static_cast<float>(t_off - t_on))/(CLOCKS_PER_SEC)))*(1E6)/calculations << " microseconds\n\n";
-	Refl.ComputeRF(EDPGen);
 
 	return 0;
 }
@@ -88,5 +83,5 @@ static void FillInitStruct(ReflSettings& InitStruct)
 	InitStruct.Forcesig = 0;
 	InitStruct.Objectivefunction = 0;
 
-	// Refl, ReflError, QError left as empty spans — only CalculateReflectivity is called
+	// Refl, ReflError, QError left empty — only CalculateReflectivity is called
 }

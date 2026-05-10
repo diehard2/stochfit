@@ -22,7 +22,6 @@ export interface BoxReflSettingsInput {
   paramPercs: number[];
   qPoints: number;
   oneSigma: boolean;
-  writeFiles: boolean;
   subSLD: number;
   supSLD: number;
   boxes: number;
@@ -97,7 +96,6 @@ function buildRequest(input: BoxReflSettingsInput, params: number[]): Uint8Array
   FBBoxReflSettings.addParamPercs(builder, percOff);
   FBBoxReflSettings.addQPoints(builder, input.qPoints);
   FBBoxReflSettings.addOneSigma(builder, input.oneSigma ? 1 : 0);
-  FBBoxReflSettings.addWriteFiles(builder, input.writeFiles ? 1 : 0);
   FBBoxReflSettings.addSubSld(builder, input.subSLD);
   FBBoxReflSettings.addSupSld(builder, input.supSLD);
   FBBoxReflSettings.addBoxes(builder, input.boxes);

@@ -77,7 +77,6 @@ export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ, panelKey }: Pr
 
   if (data) {
     const displayData = applyForceNormalization(data, settings?.forcenorm ?? false);
-    console.log('[ReflGraph] measured data: q[0]=', displayData.q[0], 'q[last]=', displayData.q[displayData.q.length-1], 'R[0]=', displayData.refl[0], 'R[last]=', displayData.refl[displayData.q.length-1]);
     const normalized = applyTransform(displayData.q, displayData.refl, displayData.reflError);
     traces.push({
       x: normalized.q,
@@ -106,9 +105,6 @@ export function ReflectivityGraph({ data, fitResult, lmRefl, lmQ, panelKey }: Pr
     });
   }
 
-  if (lmRefl !== undefined || lmQ !== undefined) {
-    console.log('[ReflGraph] box model: lmRefl.length=', lmRefl?.length, 'lmQ.length=', lmQ?.length, 'match=', lmRefl?.length === lmQ?.length);
-  }
   if (lmRefl && lmQ && lmQ.length > 0 && lmRefl.length === lmQ.length) {
     const normalized = applyTransform(lmQ, lmRefl);
     traces.push({

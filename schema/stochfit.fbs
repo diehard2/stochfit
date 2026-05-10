@@ -88,7 +88,7 @@ table BoxReflSettings {
   param_percs:    [double];
   q_points:       int32;
   one_sigma:      int32;
-  write_files:    int32;
+  write_files:    int32 (deprecated);
   sub_sld:        double;
   sup_sld:        double;
   boxes:          int32;

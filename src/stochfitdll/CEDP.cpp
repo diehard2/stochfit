@@ -20,11 +20,7 @@ std::pair<int, int> CEDP::GetOffSets() const {
 }
 
 void CEDP::Init(const ReflSettings &InitStruct) {
-  // Nyquist: dz <= pi/Q_max; use 2x safety factor → resolution = ceil(2*Q_max/pi).
-  // Caller-supplied Resolution is used as a floor (override for special cases).
-  const int nyquist_res = InitStruct.Q.empty() ? 1
-      : std::max(1, static_cast<int>(std::ceil(InitStruct.Q.back() * 2.0 / std::numbers::pi)));
-  int resolution = std::max(nyquist_res, InitStruct.Resolution <= 0 ? 1 : InitStruct.Resolution);
+  int resolution = InitStruct.Resolution > 0 ? InitStruct.Resolution : 3;
   m_dDz0 = 1.0 / resolution;
   m_dLambda = InitStruct.Wavelength;
   m_bUseSurfAbs = InitStruct.UseSurfAbs;
@@ -50,16 +46,16 @@ void CEDP::Init(const ReflSettings &InitStruct) {
     m_dBeta = m_dBeta_Sub = m_dBeta_Sup = 0;
   }
 
-  // Arrays for the electron density profile and twice the electron density
-  // profile
   m_EDP.resize(m_iLayers);
   m_DEDP.resize(m_iLayers);
   m_fEDSpacingArray.resize(m_iLayers);
 
-  // Create scratch arrays for the electron density calculation
   m_fDistArray.resize(InitStruct.Boxes + 2);
   m_fRhoArray.resize(InitStruct.Boxes + 2);
   m_fImagRhoArray.resize(InitStruct.Boxes + 2);
+
+  // Precompute per-layer length multiplier for BuildLayerStack.
+  m_length_mult.assign(m_iLayers, std::complex<double>{0.0, -2.0 * m_dDz0});
 
   for (int i = 0; i < m_iLayers; i++) {
     m_fEDSpacingArray[i] = i * m_dDz0 - leftOffset;
@@ -68,124 +64,111 @@ void CEDP::Init(const ReflSettings &InitStruct) {
   for (int k = 0; k < InitStruct.Boxes + 2; k++) {
     m_fDistArray[k] =
         k * (InitStruct.FilmLength + (double)FilmSlack) / InitStruct.Boxes;
-    ;
   }
 }
 
 void CEDP::GenerateEDP(ParamVector &g) {
   if (!m_bUseSurfAbs)
-    MakeTranparentEDP(g);
+    BuildEDP<false>(g);
   else
-    MakeEDP(g);
+    BuildEDP<true>(g);
+
+  // Cache flat-region offsets for BuildLayerStack (O(n) here, O(1) in Build).
+  auto [sup, sub] = GetOffSets();
+  m_supOff = sup;
+  m_subOff = sub;
 }
 
 // The code for the ED calculation section is loosely based on the electron
 // density calculation in Motofit (www.sourceforge.net/motofit). It is a
 // standard method of calculating the electron density profile. We treat the
-// profile as having a user defined number of boxes The last 30% or so of the
+// profile as having a user defined number of boxes. The last 30% or so of the
 // curve will converge to have rho/rhoinf = 1.0. For lipid and lipid protein
-// films, the absorbance is negligible
+// films, the absorbance is negligible.
+template <bool Absorbing>
+void CEDP::BuildEDP(ParamVector &g) {
+  const int reflpoints = m_iLayers;
+  const int refllayers = g.RealParamsSize() - 1;
+  const double supersld = g.GetRealParams(0) * m_dRho;
 
-void CEDP::MakeTranparentEDP(ParamVector &g) {
-  double dist;
-  int reflpoints = m_iLayers;
-  int refllayers = g.RealparamsSize() - 1;
-  double roughness = g.getroughness();
-  double supersld = g.GetRealparams(0) * m_dRho;
+  double roughness = g.GetRoughness();
+  if (roughness < 1e-6) roughness = 1e-6;
+  roughness = 1.0 / (roughness * std::sqrt(2.0));
 
-  if (g.getroughness() < 1e-6)
-    roughness = 1e-6;
-
-  roughness = 1.0 / (roughness * sqrt(2.0));
-
-  // Don't delete this, otherwise the reflectivity calculation won't work
-  // sometimes
-  m_EDP[0].imag(0.0);
+  if constexpr (!Absorbing) {
+    // Don't delete this; otherwise the reflectivity calculation won't work
+    // sometimes.
+    m_EDP[0].imag(0.0);
+  }
 
   for (int k = 0; k < refllayers; k++) {
     m_fRhoArray[k] =
-        m_dRho * (g.GetRealparams(k + 1) - g.GetRealparams(k)) * 0.5;
-  }
+        m_dRho * (g.GetRealParams(k + 1) - g.GetRealParams(k)) * 0.5;
 
-#pragma omp parallel for private(dist)
-  for (int i = 0; i < reflpoints; i++) {
-    m_EDP[i].real(supersld);
-
-    for (int k = 0; k < refllayers; k++) {
-      dist = (m_fEDSpacingArray[i] - m_fDistArray[k]) * roughness;
-
-      if (dist > 6.0)
-        m_EDP[i] += (m_fRhoArray[k]) * (2.0);
-      else if (dist > -6.0)
-        m_EDP[i] += (m_fRhoArray[k]) * (1.0 + erf(dist));
-
-      // Make double array for the reflectivity calculation
-      m_DEDP[i] = 2.0 * m_EDP[i].real();
-    }
-  }
-}
-
-void CEDP::MakeEDP(ParamVector &g) {
-  double dist;
-  int reflpoints = m_iLayers;
-  int refllayers = g.RealparamsSize() - 1;
-  double roughness = g.getroughness();
-  double supersld = g.GetRealparams(0) * m_dRho;
-
-  if (g.getroughness() < 1e-6)
-    roughness = 1e-6;
-
-  roughness = 1.0 / (roughness * sqrt(2.0));
-
-#pragma omp parallel
-  {
-#pragma omp for
-    for (int k = 0; k < refllayers; k++) {
-      m_fRhoArray[k] =
-          m_dRho * (g.GetRealparams(k + 1) - g.GetRealparams(k)) / 2.0;
-
-      // Imag calculation
+    if constexpr (Absorbing) {
       if (k == 0) {
         m_fImagRhoArray[k] =
-            (m_dBeta * g.getSurfAbs() * g.GetRealparams(k + 1) /
-                 g.GetRealparams(refllayers) -
+            (m_dBeta * g.GetSurfAbs() * g.GetRealParams(k + 1) /
+                 g.GetRealParams(refllayers) -
              m_dBeta_Sup) /
             2.0;
       } else if (k == refllayers - 1) {
         m_fImagRhoArray[k] =
-            (m_dBeta_Sub - m_dBeta * g.getSurfAbs() * g.GetRealparams(k) /
-                               g.GetRealparams(refllayers)) /
+            (m_dBeta_Sub - m_dBeta * g.GetSurfAbs() * g.GetRealParams(k) /
+                               g.GetRealParams(refllayers)) /
             2.0;
       } else {
         m_fImagRhoArray[k] =
-            (m_dBeta * g.getSurfAbs() * g.GetRealparams(k + 1) /
-                 g.GetRealparams(refllayers) -
-             (m_dBeta * g.getSurfAbs() * g.GetRealparams(k) /
-              g.GetRealparams(refllayers)) /
+            (m_dBeta * g.GetSurfAbs() * g.GetRealParams(k + 1) /
+                 g.GetRealParams(refllayers) -
+             (m_dBeta * g.GetSurfAbs() * g.GetRealParams(k) /
+              g.GetRealParams(refllayers)) /
                  2.0);
       }
     }
-
-#pragma omp for private(dist)
-    for (int i = 0; i < reflpoints; i++) {
-      m_EDP[i] = std::complex<double>(supersld, m_dBeta);
-
-      for (int k = 0; k < refllayers; k++) {
-        dist = (m_fEDSpacingArray[i] - m_fDistArray[k]) * roughness;
-
-        if (dist > 6) {
-          m_EDP[i] += std::complex<double>((m_fRhoArray[k]) * (2.0),
-                                           (m_fImagRhoArray[k]) * (2.0));
-        } else if (dist > -6) {
-          m_EDP[i] +=
-              std::complex<double>((m_fRhoArray[k]) * (1.0 + erf(dist)),
-                                   (m_fImagRhoArray[k]) * (1.0 + erf(dist)));
-        }
-      }
-
-      m_DEDP[i] = 2.0 * m_EDP[i];
-    }
   }
+
+  double dist;
+#pragma omp parallel for private(dist)
+  for (int i = 0; i < reflpoints; i++) {
+    if constexpr (Absorbing)
+      m_EDP[i] = std::complex<double>(supersld, m_dBeta);
+    else
+      m_EDP[i].real(supersld);
+
+    for (int k = 0; k < refllayers; k++) {
+      dist = (m_fEDSpacingArray[i] - m_fDistArray[k]) * roughness;
+
+      if (dist > 6.0) {
+        if constexpr (Absorbing)
+          m_EDP[i] += std::complex<double>(m_fRhoArray[k] * 2.0,
+                                           m_fImagRhoArray[k] * 2.0);
+        else
+          m_EDP[i] += m_fRhoArray[k] * 2.0;
+      } else if (dist > -6.0) {
+        const double erf_val = 1.0 + std::erf(dist);
+        if constexpr (Absorbing)
+          m_EDP[i] += std::complex<double>(m_fRhoArray[k] * erf_val,
+                                           m_fImagRhoArray[k] * erf_val);
+        else
+          m_EDP[i] += m_fRhoArray[k] * erf_val;
+      }
+    }
+
+    m_DEDP[i] = 2.0 * m_EDP[i];
+  }
+}
+
+LayerStack CEDP::BuildLayerStack() const {
+  LayerStack ls;
+  ls.rho        = m_DEDP;
+  ls.length_mult = m_length_mult;
+  // sigma_sq is left defaulted (empty span) — no Nevot-Croce for EDP path.
+  ls.sup_offset   = m_supOff;
+  ls.sub_offset   = m_subOff;
+  ls.transparent  = !m_bUseSurfAbs;
+  ls.has_roughness = false;
+  return ls;
 }
 
 int CEDP::Get_EDPPointCount() const { return m_iLayers; }
@@ -202,8 +185,7 @@ double CEDP::Get_FilmAbs() const { return m_dBeta; }
 
 double CEDP::Get_FilmAbsInput() const {
   // Returns the value that, when passed to Set_FilmAbs(), reproduces m_dBeta.
-  // Set_FilmAbs(x) stores x * m_dWaveConstant, so x = m_dBeta /
-  // m_dWaveConstant.
+  // Set_FilmAbs(x) stores x * m_dWaveConstant, so x = m_dBeta / m_dWaveConstant.
   return (m_dWaveConstant > 0.0) ? m_dBeta / m_dWaveConstant : 0.0;
 }
 

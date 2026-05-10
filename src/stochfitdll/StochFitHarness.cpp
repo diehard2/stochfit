@@ -20,7 +20,6 @@
 
 #include "StochFitHarness.h"
 #include "ParamVector.h"
-#include "ReflCalc.h"
 #include "platform.h"
 
 #include "gpu/gpu_detect.h"
@@ -43,11 +42,23 @@ StochFit::StochFit(const ReflSettings &InitStruct,
 
   m_Directory = InitStruct.Directory;
 
-  // Initialize the display/LM reflectivity path (CReflCalc).
-  if (auto r = m_cRefl.Init(InitStruct); !r) {
-    m_initError = r;
+  // Slice measurement data by CritEdgeOffset / HighQOffset.
+  const int qsize  = static_cast<int>(InitStruct.Q.size());
+  m_datapoints = qsize - InitStruct.HighQOffset - InitStruct.CritEdgeOffset;
+  if (m_datapoints <= 0 ||
+      static_cast<int>(InitStruct.Refl.size()) < qsize ||
+      static_cast<int>(InitStruct.ReflError.size()) < qsize) {
+    m_initError = tl::unexpected(std::string("Invalid Q/Refl/ReflError sizes"));
     return;
   }
+  const int off = InitStruct.CritEdgeOffset;
+  m_xi.assign(InitStruct.Q.begin() + off,
+               InitStruct.Q.begin() + off + m_datapoints);
+  m_yi.assign(InitStruct.Refl.begin() + off,
+               InitStruct.Refl.begin() + off + m_datapoints);
+  m_eyi.assign(InitStruct.ReflError.begin() + off,
+                InitStruct.ReflError.begin() + off + m_datapoints);
+
   m_cEDP.Init(m_initStruct);
   m_displayEDP.Init(m_initStruct); // SLD profile display — no absorption needed
 
@@ -56,25 +67,25 @@ StochFit::StochFit(const ReflSettings &InitStruct,
   // temperature is raw m_dTemp (β) stored directly via SetTemperature.
   // surfAbs is saved independently so it is never baked into filmAbsInput.
   if (state &&
-      static_cast<int>(state->edValues.size()) == params.RealparamsSize()) {
-    params.setroughness(state->roughness);
+      static_cast<int>(state->edValues.size()) == params.RealParamsSize()) {
+    params.SetRoughness(state->roughness);
     params.SetSupphase(state->edValues[0]);
     for (int i = 1; i < static_cast<int>(state->edValues.size()) - 1; i++)
       params.SetMutatableParameter(i - 1, state->edValues[i]);
     params.SetSubphase(state->edValues[state->edValues.size() - 1]);
     m_cEDP.Set_FilmAbs(state->filmAbsInput);
-    params.setSurfAbs(state->surfAbs);
-    params.setImpNorm(state->impNorm);
+    params.SetSurfAbs(state->surfAbs);
+    params.SetImpNorm(state->impNorm);
   }
   params.UpdateBoundaries();
   m_displayState.params = params;
 
   // Build SA scratch buffer and deps.
-  const int nd = m_cRefl.m_idatapoints;
+  const int nd = m_datapoints;
   m_saReflBuf.resize(nd);
   AnnealDeps deps;
-  deps.yi = m_cRefl.yi;
-  deps.eyi = m_cRefl.eyi;
+  deps.yi = m_yi;
+  deps.eyi = m_eyi;
   deps.reflBuf = m_saReflBuf;
   deps.xrOnly = InitStruct.XRonly;
   deps.impNorm = InitStruct.Impnorm;
@@ -104,7 +115,7 @@ StochFit::StochFit(const ReflSettings &InitStruct,
 
   // Apply session temperature/avgfSTUN after the annealer is constructed.
   if (state != nullptr &&
-      static_cast<int>(state->edValues.size()) == params.RealparamsSize()) {
+      static_cast<int>(state->edValues.size()) == params.RealParamsSize()) {
     std::visit(
         [&](auto &a) {
           a.SetTemperature(state->temperature);
@@ -246,17 +257,17 @@ void StochFit::InitGpuData(GpuSAState &, GpuParams &,
   // sa_state.abssearch = m_initStruct.AbsorptionSearchPerc;
   //
   // memset(&gpu_params, 0, sizeof(gpu_params));
-  // int rps = params.RealparamsSize();
+  // int rps = params.RealParamsSize();
   // gpu_params.real_params_size = rps;
-  // gpu_params.num_boxes = params.GetInitializationLength();
+  // gpu_params.num_boxes = params.BoxCount();
   // for (int i = 0; i < rps; i++)
-  //   gpu_params.sld_values[i] = static_cast<float>(params.GetRealparams(i));
-  // gpu_params.roughness = static_cast<float>(params.getroughness());
-  // gpu_params.surf_abs = static_cast<float>(params.getSurfAbs());
-  // gpu_params.imp_norm = static_cast<float>(params.getImpNorm());
-  // gpu_params.fix_roughness = params.Get_FixedRoughness() ? 1 : 0;
-  // gpu_params.use_surf_abs = params.Get_UseSurfAbs() ? 1 : 0;
-  // gpu_params.fix_imp_norm = params.Get_FixImpNorm() ? 1 : 0;
+  //   gpu_params.sld_values[i] = static_cast<float>(params.GetRealParams(i));
+  // gpu_params.roughness = static_cast<float>(params.GetRoughness());
+  // gpu_params.surf_abs = static_cast<float>(params.GetSurfAbs());
+  // gpu_params.imp_norm = static_cast<float>(params.GetImpNorm());
+  // gpu_params.fix_roughness = params.IsRoughnessFixed() ? 1 : 0;
+  // gpu_params.use_surf_abs = params.UsesSurfAbs() ? 1 : 0;
+  // gpu_params.fix_imp_norm = params.IsImpNormFixed() ? 1 : 0;
   // gpu_params.roughness_low = 0.1f;
   // gpu_params.roughness_high = 8.0f;
   // gpu_params.surfabs_high = 10000.0f;
@@ -264,33 +275,21 @@ void StochFit::InitGpuData(GpuSAState &, GpuParams &,
   // gpu_params.param_low = -5.0f;
   // gpu_params.param_high = 5.0f;
   //
-  // const int nd = m_cRefl.m_idatapoints;
+  // const int nd = m_datapoints;
   // m_fMeasQ.resize(nd); m_fMeasRefl.resize(nd); m_fMeasErr.resize(nd);
   // m_fMeasSintheta.resize(nd); m_fMeasSinsq.resize(nd);
+  // const auto& consts = m_parratt.GetConsts();  // TODO: expose accessor
   // for (int i = 0; i < nd; i++) {
-  //   m_fMeasQ[i]       = static_cast<float>(m_cRefl.xi[i]);
-  //   m_fMeasRefl[i]    = static_cast<float>(m_cRefl.yi[i]);
-  //   m_fMeasErr[i]     = static_cast<float>(m_cRefl.eyi[i]);
-  //   m_fMeasSintheta[i]= static_cast<float>(m_cRefl.sinthetai[i]);
-  //   m_fMeasSinsq[i]   = static_cast<float>(m_cRefl.sinsquaredthetai[i]);
+  //   m_fMeasQ[i]       = static_cast<float>(m_xi[i]);
+  //   m_fMeasRefl[i]    = static_cast<float>(m_yi[i]);
+  //   m_fMeasErr[i]     = static_cast<float>(m_eyi[i]);
+  //   m_fMeasSintheta[i]= static_cast<float>(consts.sinthetai[i]);
+  //   m_fMeasSinsq[i]   = static_cast<float>(consts.sinsquaredthetai[i]);
   // }
-  // const bool use_qspread = (m_cRefl.m_dQSpread > 0.0f && m_cRefl.exi.has_value());
-  // if (use_qspread) {
-  //   m_fQspreadSin.resize(m_cRefl.qspreadsinthetai.size());
-  //   m_fQspreadSin2.resize(m_cRefl.qspreadsinthetai.size());
-  //   for (int i = 0; i < static_cast<int>(m_cRefl.qspreadsinthetai.size()); i++) {
-  //     m_fQspreadSin[i]  = static_cast<float>(m_cRefl.qspreadsinthetai[i]);
-  //     m_fQspreadSin2[i] = static_cast<float>(m_cRefl.qspreadsinsquaredthetai[i]);
-  //   }
-  // }
+  // const bool use_qspread = consts.qsmear_enabled;
+  // ...
   // memset(&meas, 0, sizeof(meas));
-  // meas.q_values = m_fMeasQ.data(); meas.refl_values = m_fMeasRefl.data();
-  // meas.refl_errors = m_fMeasErr.data(); meas.sintheta = m_fMeasSintheta.data();
-  // meas.sinsquaredtheta = m_fMeasSinsq.data();
-  // meas.qspread_sintheta  = use_qspread ? m_fQspreadSin.data()  : nullptr;
-  // meas.qspread_sin2theta = use_qspread ? m_fQspreadSin2.data() : nullptr;
-  // meas.num_datapoints = nd; meas.objective_function = m_cRefl.objectivefunction;
-  // meas.use_qspread = use_qspread ? 1 : 0;
+  // meas.num_datapoints = nd; meas.objective_function = m_initStruct.Objectivefunction;
   // meas.imp_norm = m_initStruct.Impnorm; meas.xr_only = m_initStruct.XRonly;
   //
   // const int nl = m_cEDP.Get_EDPPointCount();
@@ -366,14 +365,13 @@ DataSnapshot StochFit::GetCurrentState() {
   m_displayEDP.GenerateEDP(snap.params);
 
   DataSnapshot out;
-  out.roughness     = snap.params.getroughness();
+  out.roughness     = snap.params.GetRoughness();
   out.chiSquare     = snap.chiSquare;
   out.goodnessOfFit = snap.goF;
 
-  // snap.refl is the SA scoring buffer: one value per measured Q point (xi).
-  // Use xi as the Q axis so both arrays are always m_idatapoints sized.
-  const int nd = m_cRefl.m_idatapoints;
-  out.Q.assign(m_cRefl.xi.begin(), m_cRefl.xi.begin() + nd);
+  // snap.refl is the SA scoring buffer: one value per measured Q point.
+  const int nd = m_datapoints;
+  out.Q.assign(m_xi.begin(), m_xi.begin() + nd);
   out.refl = std::move(snap.refl);
   out.refl.resize(nd);
 
@@ -417,11 +415,11 @@ void StochFit::Stop() {
 StochRunState StochFit::GetRunState() {
   // Called after Stop() — thread is joined, no lock needed.
   StochRunState s;
-  s.roughness     = params.getroughness();
+  s.roughness     = params.GetRoughness();
   s.filmAbsInput  = m_cEDP.Get_FilmAbsInput();
-  s.surfAbs       = params.getSurfAbs();
+  s.surfAbs       = params.GetSurfAbs();
   s.temperature   = GetRawTemperature();
-  s.impNorm       = params.getImpNorm();
+  s.impNorm       = params.GetImpNorm();
   s.avgfSTUN      = GetAverageFSTUN();
   s.bestSolution  = GetLowestEnergy();
   s.chiSquare     = m_displayState.chiSquare;

@@ -71,7 +71,7 @@ private:
         auto result = m_parratt->CalculateReflectivity(*m_edp);
         std::ranges::copy(result, m_deps.reflBuf.begin());
         if (m_deps.impNorm) {
-            for (auto& v : m_deps.reflBuf) v *= p.getImpNorm();
+            for (auto& v : m_deps.reflBuf) v *= p.GetImpNorm();
         }
     }
 };

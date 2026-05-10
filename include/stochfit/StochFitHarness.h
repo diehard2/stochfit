@@ -41,7 +41,6 @@
 #include "CEDP.h"
 #include "ParamVector.h"
 #include "ParameterStepper.h"
-#include "ReflCalc.h"
 #include "ReflectivityObjective.h"
 #include "UnifiedReflectivity.h"
 #include <stochfit/SettingsStruct.h>
@@ -80,7 +79,7 @@ public:
   tl::expected<void, std::string> GetInitError() const { return m_initError; }
 
   const ReflSettings& Settings()      const { return m_initStruct; }
-  int                 GetDataCount()  const { return m_cRefl.GetDataCount(); }
+  int                 GetDataCount()  const { return m_datapoints; }
 
   // Harness-level accessors for the annealer (used by GPU seam and FFI).
   // GetTemperature()    = 1/β  (display value, same as old Get_Temp())
@@ -127,7 +126,12 @@ private:
   // m_initStruct must be declared before m_parratt, which holds a const ref to it.
   ReflSettings m_initStruct;
 
-  CReflCalc m_cRefl;      // display/LM path — main thread only
+  // Measured data sliced by CritEdgeOffset/HighQOffset, owned by StochFit.
+  int m_datapoints = 0;
+  std::vector<double> m_xi;   // Q values
+  std::vector<double> m_yi;   // reflectivity
+  std::vector<double> m_eyi;  // reflectivity errors
+
   CEDP m_cEDP;            // SA scoring     — worker thread only (via annealer)
   CEDP m_displayEDP;      // display EDP    — main thread only (GetCurrentState)
   ParamVector params;     // SA state       — worker thread only

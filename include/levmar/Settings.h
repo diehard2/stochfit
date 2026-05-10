@@ -13,7 +13,6 @@ struct BoxReflSettings
     vector<double> ParamPercs;
     int QPoints    = 0;
     bool OneSigma  = false;
-    bool WriteFiles = false;
     double SubSLD  = 0;
     double SupSLD  = 0;
     int Boxes      = 0;

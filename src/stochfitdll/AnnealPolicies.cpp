@@ -49,11 +49,8 @@ bool StunPolicy::Accept(double curE, double candE, double bestE, std::mt19937& r
 
         ++m_iter;
 
-        if (m_iter % m_tempIter == 0 && static_cast<int>(m_qWindow.size()) >= m_platIter) {
+        if (m_iter % m_tempIter == 0 && static_cast<int>(m_qWindow.size()) >= m_platIter)
             AdjustTemp(windowAvg);
-            if (m_iter % m_stunDecIter == 0)
-                m_averageFSTUN *= m_gammaDec;
-        }
     } else {
         ++m_iter;
         if (m_iter % m_platIter == 0)
@@ -73,12 +70,14 @@ double StunPolicy::fSTUN(double val, double bestE) const {
 }
 
 void StunPolicy::AdjustTemp(double averageSTUN) {
+    // Wenzel & Hamacher (PRL 82:3003, 1999): reduce β when avg fSTUN exceeds
+    // threshold (tunneling phase), increase β otherwise (local-search phase).
     if (averageSTUN > m_averageFSTUN) {
-        if (m_dTemp < 1e200)
-            m_dTemp *= 0.5 / m_slope;
-    } else {
         if (m_dTemp > 1e-200)
-            m_dTemp *= m_slope;
+            m_dTemp *= m_slope;      // β↓, T↑ — keep tunneling
+    } else {
+        if (m_dTemp < 1e200)
+            m_dTemp /= m_slope;      // β↑, T↓ — settle into basin
     }
 }
 

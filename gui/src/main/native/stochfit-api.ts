@@ -54,8 +54,6 @@ export interface ReflSettingsInput {
   highQOffset: number;
   iterations: number;
   title: string;
-  useGpu: boolean;
-  gpuChains: number;
 }
 
 export interface FitData {
@@ -204,8 +202,6 @@ export function stochInit(settings: ReflSettingsInput, runState: StochRunStateOu
   FBReflSettings.addIterations(builder, settings.iterations);
   FBReflSettings.addIterationsCompleted(builder, 0);
   FBReflSettings.addChiSquare(builder, 0.0);
-  FBReflSettings.addUseGpu(builder, settings.useGpu ? 1 : 0);
-  FBReflSettings.addGpuChains(builder, settings.gpuChains);
   FBReflSettings.addTitle(builder, titleOff);
   const settingsOff = FBReflSettings.endReflSettings(builder);
 
@@ -304,10 +300,6 @@ export function stochSAParams(): SAParams {
   const written: number = fns['SAParams'](out, out.length);
   const r = readResult(out, written, (bb) => SaParamsResult.getRootAsSaParamsResult(bb));
   return { lowestEnergy: r.lowestEnergy(), temp: r.temp(), mode: r.mode() };
-}
-
-export function stochGpuAvailable(): boolean {
-  return Boolean(getStochFns()['GpuAvailable']());
 }
 
 // ── Output file I/O ───────────────────────────────────────────────────────────

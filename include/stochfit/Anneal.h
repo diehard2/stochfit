@@ -14,15 +14,8 @@
 struct AnnealDeps {
     std::span<const double> yi, eyi;
     std::span<double>       reflBuf;
-    bool xrOnly  = false;
     bool impNorm = false;
 };
-
-inline bool HasNegativeDensity(const CEDP& edp) {
-    return std::ranges::any_of(
-        std::span{edp.m_EDP}.first(static_cast<size_t>(edp.Get_EDPPointCount())),
-        [](const auto& v) { return v.real() < 0.0; });
-}
 
 template <class Policy>
 class Anneal {
@@ -42,6 +35,15 @@ public:
 
     bool Iteration(ParamVector& params);
     void InitEnergy(ParamVector& params);
+
+    // Cooperative interface for persistent OMP parallel regions.
+    // All threads must call these in order per SA iteration.
+    // PrepareCandidate: mutates candidate (omp single) then builds EDP (omp for).
+    // ComputeSharedRefl: runs cooperative Parratt (omp for); result in parratt->GetLastResult().
+    // EvaluateAndAccept: pure serial — call from omp single only.
+    void PrepareCandidate(ParamVector& params);
+    void ComputeSharedRefl();
+    bool EvaluateAndAccept(ParamVector& params);
 
     double GetTemperature() const    { return m_policy.GetTemperature(); }
     void   SetTemperature(double t)  { m_policy.SetTemperature(t); }
@@ -85,6 +87,59 @@ void Anneal<Policy>::InitEnergy(ParamVector& params) {
     m_lastChiSquare = ComputeChiSquare(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
 }
 
+// ── Cooperative methods for persistent OMP parallel regions ──────────────────
+
+template <class Policy>
+void Anneal<Policy>::PrepareCandidate(ParamVector& params) {
+#pragma omp single
+    {
+        m_tempParams = params;
+        m_stepper->Step(m_tempParams);
+        m_edp->FillBoxArrays(m_tempParams);
+    }
+    // implicit barrier: all threads see m_tempParams and m_fRhoArray
+
+    m_edp->GenerateEDPCooperative(m_tempParams);
+    // implicit barrier: all threads see completed EDP
+}
+
+template <class Policy>
+void Anneal<Policy>::ComputeSharedRefl() {
+    auto result = m_parratt->CalculateReflectivityCooperative(*m_edp);
+#pragma omp single
+    {
+        std::ranges::copy(result, m_deps.reflBuf.begin());
+        if (m_deps.impNorm) {
+            for (auto& v : m_deps.reflBuf) v *= m_tempParams.GetImpNorm();
+        }
+    }
+}
+
+template <class Policy>
+bool Anneal<Policy>::EvaluateAndAccept(ParamVector& params) {
+    m_isIterMinimum = false;
+    const double candE = m_objective->Evaluate(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
+
+    if (candE < m_bestEnergy) {
+        m_bestEnergy = m_currentEnergy = candE;
+        params = m_tempParams;
+        m_isIterMinimum = true;
+        m_lastChiSquare = ComputeChiSquare(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
+        return true;
+    }
+
+    if (m_policy.Accept(m_currentEnergy, candE, m_bestEnergy, m_rng)) {
+        m_currentEnergy = candE;
+        params = m_tempParams;
+        m_lastChiSquare = ComputeChiSquare(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
+        return true;
+    }
+
+    return false;
+}
+
+// ── Original single-threaded Iteration (used by InitEnergy, tests) ────────────
+
 template <class Policy>
 bool Anneal<Policy>::Iteration(ParamVector& params) {
     m_isIterMinimum = false;
@@ -92,10 +147,6 @@ bool Anneal<Policy>::Iteration(ParamVector& params) {
     m_stepper->Step(m_tempParams);
 
     m_edp->GenerateEDP(m_tempParams);
-
-    if (m_deps.xrOnly && HasNegativeDensity(*m_edp))
-        return false;
-
     ComputeModel(m_tempParams);
 
     const double candE = m_objective->Evaluate(m_deps.reflBuf, m_deps.yi, m_deps.eyi);

@@ -18,29 +18,38 @@ struct ReflConstants {
 template <typename T> struct WaveScratch {
   std::vector<T> kk, ak, rj, Rj;
   int edp_points = 0;
+  int num_threads = 0;
 
-  void resize(int new_edp_points, int num_threads) {
-    if (new_edp_points == edp_points)
+  void resize(int new_edp_points, int new_num_threads) {
+    if (new_edp_points == edp_points && new_num_threads == num_threads)
       return;
-    const int n = new_edp_points * num_threads;
+    const int n = new_edp_points * new_num_threads;
     kk.resize(n);
     ak.resize(n);
     rj.resize(n);
     Rj.resize(n);
     edp_points = new_edp_points;
+    num_threads = new_num_threads;
   }
 };
 
 class ParrattReflectivity {
 public:
   explicit ParrattReflectivity(const ReflSettings &settings);
+  ParrattReflectivity(const ReflSettings &settings, int n_layers);
 
-  // Primary entry point — takes any LayerStack (CEDP-sourced or box-model).
-  // When qsmear is enabled the 13·N spread grid is evaluated then averaged.
+  // Standalone entry points — creates its own OMP parallel team.
+  // Safe to call from any context (no enclosing parallel required).
   auto CalculateReflectivity(const LayerStack &ls) -> std::span<double>;
-
-  // Convenience overload: builds a LayerStack from EDP and delegates.
   auto CalculateReflectivity(const CEDP &EDP) -> std::span<double>;
+
+  // Cooperative entry point — must be called by ALL threads of an enclosing
+  // OMP parallel region.  Shares the caller's thread team (no fork/join).
+  // BuildLayerStack runs in omp single internally.
+  auto CalculateReflectivityCooperative(const CEDP &EDP) -> std::span<double>;
+
+  // Returns the reflectivity output from the most recent calculation.
+  std::span<const double> GetLastResult() const { return m_refl_out; }
 
 private:
   template <bool HasRoughness>
@@ -62,5 +71,5 @@ private:
   std::vector<double> m_refl_out;      // Parratt output (sinthetai.size(): N or 13·N)
   std::vector<double> m_refl_smeared;  // Smeared result (N); only used when qsmear on
 
-  int m_num_threads = 1;
+  LayerStack m_cooperative_ls; // written by omp single in CalculateReflectivityCooperative
 };

@@ -9,7 +9,6 @@ import {
   stochGetData,
   stochGetRunState,
   stochSAParams,
-  stochGpuAvailable,
   readOutputFile,
   writeOutputFile,
   outputFilePath,
@@ -84,10 +83,6 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.STOCH_SA_PARAMS, () => {
     return wrap('STOCH_SA_PARAMS', () => stochSAParams());
-  });
-
-  ipcMain.handle(IPC.STOCH_GPU_AVAILABLE, () => {
-    return wrap('STOCH_GPU_AVAILABLE', () => stochGpuAvailable());
   });
 
   // ── LevMar ──────────────────────────────────────────────────────────────

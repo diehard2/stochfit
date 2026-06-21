@@ -21,18 +21,17 @@
 #include "StochFitHarness.h"
 #include "ParamVector.h"
 #include "platform.h"
-
-#include "gpu/gpu_detect.h"
-#include "gpu/gpu_sa_runner.h"
+#include <omp.h>
 
 // ── Constructor
 // ───────────────────────────────────────────────────────────────
 
 StochFit::StochFit(const ReflSettings &InitStruct,
                    const std::unique_ptr<StochRunState> &state)
-    // m_initStruct first: m_parratt holds a const ref to it.
+    // m_initStruct first; m_cEDP/m_displayEDP before m_parratt (declaration order).
     : m_initStruct(InitStruct), params(InitStruct), m_displayState(InitStruct),
-      m_parratt(m_initStruct),
+      m_cEDP(m_initStruct), m_displayEDP(m_initStruct),
+      m_parratt(m_initStruct, m_cEDP.GetLayerCount()),
       m_objective(ReflectivityObjective::Type{InitStruct.Objectivefunction}),
       m_stepper({.sigmaSearch = InitStruct.Sigmasearch,
                  .absSearch = InitStruct.AbsorptionSearchPerc,
@@ -59,8 +58,6 @@ StochFit::StochFit(const ReflSettings &InitStruct,
   m_eyi.assign(InitStruct.ReflError.begin() + off,
                 InitStruct.ReflError.begin() + off + m_datapoints);
 
-  m_cEDP.Init(m_initStruct);
-  m_displayEDP.Init(m_initStruct); // SLD profile display — no absorption needed
 
   // Apply run state if provided.
   // filmAbsInput is the pre-multiplication value: Set_FilmAbs(x) stores x*WC.
@@ -87,7 +84,6 @@ StochFit::StochFit(const ReflSettings &InitStruct,
   deps.yi = m_yi;
   deps.eyi = m_eyi;
   deps.reflBuf = m_saReflBuf;
-  deps.xrOnly = InitStruct.XRonly;
   deps.impNorm = InitStruct.Impnorm;
 
   // Construct the algorithm-specific annealer variant.
@@ -183,36 +179,49 @@ void StochFit::SetAverageFSTUN(double f) {
 
 int StochFit::Processing() {
   try {
-    // GPU path disabled pending rework — see ProcessingGPU() below.
-    // if (m_initStruct.UseGpu) {
-    //   auto gpu_info = detect_gpu();
-    //   if (gpu_info.backend != GpuBackend::None) {
-    //     m_gpuBackend = gpu_info.backend;
-    //     return ProcessingGPU();
-    //   }
-    // }
-
     if (!m_annealer)
       return -1;
 
-    for (int isteps = 0;
-         isteps < m_itotaliterations && !m_stop_requested.load(); ++isteps) {
+    const int nThreads = omp_get_max_threads();
 
-      const bool accepted =
-          std::visit([&](auto &a) { return a.Iteration(params); }, *m_annealer);
+#pragma omp parallel num_threads(nThreads)
+    {
+      for (int isteps = 0;
+           isteps < m_itotaliterations && !m_stop_requested.load(); ++isteps) {
 
-      if (accepted || isteps == 0) {
-        const double gof = std::visit(
-            [](const auto &a) { return a.GetCurrentEnergy(); }, *m_annealer);
-        const double chi = std::visit(
-            [](const auto &a) { return a.GetLastChiSquare(); }, *m_annealer);
-        std::lock_guard lock(m_displayMutex);
-        m_displayState.params   = params;
-        m_displayState.refl.assign(m_saReflBuf.begin(), m_saReflBuf.end());
-        m_displayState.chiSquare = chi;
-        m_displayState.goF       = gof;
+        // All threads: mutate candidate (omp single inside) + build EDP (omp for inside).
+        // PrepareCandidate retries internally until a valid EDP is produced.
+        std::visit([&](auto &a) { a.PrepareCandidate(params); }, *m_annealer);
+
+        // All threads: cooperative Parratt Q-point distribution (omp for inside).
+        std::visit([&](auto &a) { a.ComputeSharedRefl(); }, *m_annealer);
+
+        // Serial: accept/reject + display snapshot.
+#pragma omp single
+        {
+          bool accepted = false;
+          double gof = 0.0, chi = 0.0;
+
+          accepted = std::visit(
+              [&](auto &a) { return a.EvaluateAndAccept(params); }, *m_annealer);
+          if (accepted || isteps == 0) {
+            gof = std::visit([](const auto &a) { return a.GetCurrentEnergy(); },
+                             *m_annealer);
+            chi = std::visit([](const auto &a) { return a.GetLastChiSquare(); },
+                             *m_annealer);
+          }
+
+          if (accepted || isteps == 0) {
+            std::lock_guard lock(m_displayMutex);
+            m_displayState.params = params;
+            m_displayState.refl.assign(m_saReflBuf.begin(), m_saReflBuf.end());
+            m_displayState.chiSquare = chi;
+            m_displayState.goF       = gof;
+          }
+          m_icurrentiteration.store(isteps + 1, std::memory_order_relaxed);
+        }
+        // implicit barrier: all threads sync before the next iteration
       }
-      m_icurrentiteration.store(isteps + 1, std::memory_order_relaxed);
     }
 
     m_icurrentiteration.store(m_itotaliterations, std::memory_order_relaxed);
@@ -225,130 +234,6 @@ int StochFit::Processing() {
     std::cerr << "[StochFit] Processing() caught unknown exception" << std::endl;
     return -1;
   }
-}
-
-// ── GPU support (disabled pending rework)
-// ───────────────────────────────────────
-
-void StochFit::InitGpuData(GpuSAState &, GpuParams &,
-                           GpuMeasurement &, GpuEDPConfig &) {
-  // TODO: rewrite to use DisplayState snapshot model.
-  // Original implementation preserved below.
-  //
-  // memset(&sa_state, 0, sizeof(sa_state));
-  // sa_state.temperature = 1.0f / static_cast<float>(GetTemperature());
-  // sa_state.best_energy = static_cast<float>(GetLowestEnergy());
-  // sa_state.current_energy = sa_state.best_energy;
-  // sa_state.best_solution = sa_state.best_energy;
-  // sa_state.slope = static_cast<float>(m_initStruct.Slope);
-  // sa_state.gamma = static_cast<float>(m_initStruct.Gamma);
-  // sa_state.avg_fstun = static_cast<float>(m_initStruct.Inittemp);
-  // sa_state.gammadec = static_cast<float>(m_initStruct.Gammadec);
-  // sa_state.stepsize = static_cast<float>(m_initStruct.Paramtemp);
-  // sa_state.algorithm = m_initStruct.Algorithm;
-  // sa_state.iteration = 0;
-  // sa_state.plat_time = m_initStruct.Platiter;
-  // sa_state.temp_iter = m_initStruct.Tempiter;
-  // sa_state.stun_func = m_initStruct.STUNfunc;
-  // sa_state.stun_dec_iter = m_initStruct.STUNdeciter;
-  // sa_state.adaptive = m_initStruct.Adaptive;
-  // sa_state.sigmasearch = m_initStruct.Sigmasearch;
-  // sa_state.normsearch = m_initStruct.NormalizationSearchPerc;
-  // sa_state.abssearch = m_initStruct.AbsorptionSearchPerc;
-  //
-  // memset(&gpu_params, 0, sizeof(gpu_params));
-  // int rps = params.RealParamsSize();
-  // gpu_params.real_params_size = rps;
-  // gpu_params.num_boxes = params.BoxCount();
-  // for (int i = 0; i < rps; i++)
-  //   gpu_params.sld_values[i] = static_cast<float>(params.GetRealParams(i));
-  // gpu_params.roughness = static_cast<float>(params.GetRoughness());
-  // gpu_params.surf_abs = static_cast<float>(params.GetSurfAbs());
-  // gpu_params.imp_norm = static_cast<float>(params.GetImpNorm());
-  // gpu_params.fix_roughness = params.IsRoughnessFixed() ? 1 : 0;
-  // gpu_params.use_surf_abs = params.UsesSurfAbs() ? 1 : 0;
-  // gpu_params.fix_imp_norm = params.IsImpNormFixed() ? 1 : 0;
-  // gpu_params.roughness_low = 0.1f;
-  // gpu_params.roughness_high = 8.0f;
-  // gpu_params.surfabs_high = 10000.0f;
-  // gpu_params.impnorm_high = 10000.0f;
-  // gpu_params.param_low = -5.0f;
-  // gpu_params.param_high = 5.0f;
-  //
-  // const int nd = m_datapoints;
-  // m_fMeasQ.resize(nd); m_fMeasRefl.resize(nd); m_fMeasErr.resize(nd);
-  // m_fMeasSintheta.resize(nd); m_fMeasSinsq.resize(nd);
-  // const auto& consts = m_parratt.GetConsts();  // TODO: expose accessor
-  // for (int i = 0; i < nd; i++) {
-  //   m_fMeasQ[i]       = static_cast<float>(m_xi[i]);
-  //   m_fMeasRefl[i]    = static_cast<float>(m_yi[i]);
-  //   m_fMeasErr[i]     = static_cast<float>(m_eyi[i]);
-  //   m_fMeasSintheta[i]= static_cast<float>(consts.sinthetai[i]);
-  //   m_fMeasSinsq[i]   = static_cast<float>(consts.sinsquaredthetai[i]);
-  // }
-  // const bool use_qspread = consts.qsmear_enabled;
-  // ...
-  // memset(&meas, 0, sizeof(meas));
-  // meas.num_datapoints = nd; meas.objective_function = m_initStruct.Objectivefunction;
-  // meas.imp_norm = m_initStruct.Impnorm; meas.xr_only = m_initStruct.XRonly;
-  //
-  // const int nl = m_cEDP.Get_EDPPointCount();
-  // m_fEdSpacing.resize(nl); m_fDistArray.resize(gpu_params.num_boxes + 2);
-  // const float leftOffset = static_cast<float>(m_cEDP.Get_LeftOffset());
-  // for (int i = 0; i < nl; i++)
-  //   m_fEdSpacing[i] = i * static_cast<float>(m_cEDP.Get_Dz()) - leftOffset;
-  // constexpr int FilmSlack = 7;
-  // for (int k = 0; k < gpu_params.num_boxes + 2; k++)
-  //   m_fDistArray[k] = k * (static_cast<float>(m_initStruct.FilmLength) +
-  //                          FilmSlack) / static_cast<float>(m_initStruct.Boxes);
-  // const float waveConst = static_cast<float>(m_cEDP.Get_WaveConstant());
-  // const float lambda    = static_cast<float>(m_initStruct.Wavelength);
-  // memset(&edp_config, 0, sizeof(edp_config));
-  // edp_config.ed_spacing = m_fEdSpacing.data(); edp_config.dist_array = m_fDistArray.data();
-  // edp_config.rho = static_cast<float>(m_initStruct.FilmSLD * 1e-6) * waveConst;
-  // edp_config.dz = static_cast<float>(m_cEDP.Get_Dz());
-  // edp_config.k0 = 2.0f * std::numbers::pi_v<float> / lambda;
-  // edp_config.num_layers = nl; edp_config.use_abs = m_initStruct.UseSurfAbs;
-  // if (m_initStruct.UseSurfAbs) {
-  //   edp_config.beta     = static_cast<float>(m_initStruct.FilmAbs) * waveConst;
-  //   edp_config.beta_sub = static_cast<float>(m_initStruct.SubAbs) * waveConst;
-  //   edp_config.beta_sup = static_cast<float>(m_initStruct.SupAbs) * waveConst;
-  // }
-}
-
-int StochFit::ProcessingGPU() {
-  // TODO: rewrite GPU loop to use DisplayState snapshot model.
-  // Original implementation preserved below.
-  //
-  // GpuSAState sa_state; GpuParams gpu_params; GpuMeasurement meas; GpuEDPConfig edp_config;
-  // InitGpuData(sa_state, gpu_params, meas, edp_config);
-  // auto gpu_info = detect_gpu();
-  // const int num_chains = (m_initStruct.GpuChains > 0) ? m_initStruct.GpuChains
-  //                                                      : gpu_info.max_chains;
-  // m_gpuRunner = GpuSARunner::create(m_gpuBackend);
-  // if (!m_gpuRunner) return -1;
-  // m_gpuRunner->initialize(sa_state, gpu_params, meas, edp_config, num_chains);
-  // constexpr int batch_size = 5000;
-  // auto last_update = std::chrono::steady_clock::now();
-  // constexpr auto update_interval = std::chrono::seconds(2);
-  // const int outer_total = m_itotaliterations;
-  // m_itotaliterations = outer_total * num_chains;
-  // for (int done = 0; done < outer_total && !m_stop_requested.load(); done += batch_size) {
-  //   const int this_batch = std::min(batch_size, outer_total - done);
-  //   m_gpuRunner->run_batch(this_batch);
-  //   m_icurrentiteration.store((done + this_batch) * num_chains);
-  //   const auto now = std::chrono::steady_clock::now();
-  //   if ((now - last_update) >= update_interval) {
-  //     GpuResultSummary result = m_gpuRunner->get_result();
-  //     // TODO: update params + store into DisplayState under m_displayMutex
-  //     last_update = now;
-  //   }
-  // }
-  // GpuResultSummary result = m_gpuRunner->get_result();
-  // // TODO: final params update + DisplayState snapshot
-  // m_gpuRunner.reset();
-  // return 0;
-  return -1;
 }
 
 // ── Display snapshot (main thread only)

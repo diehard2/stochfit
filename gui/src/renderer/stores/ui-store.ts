@@ -11,7 +11,6 @@ interface UiState {
   publicationMode: boolean;
   graphMode: GraphMode;
   darkMode: boolean;
-  gpuAvailable: boolean;
   masterGraphOpen: boolean;
   toast: string | null;
 
@@ -22,7 +21,6 @@ interface UiState {
   setPublicationMode: (v: boolean) => void;
   setGraphMode: (m: GraphMode) => void;
   setDarkMode: (v: boolean) => void;
-  setGpuAvailable: (v: boolean) => void;
   setMasterGraphOpen: (v: boolean) => void;
   showToast: (message: string, durationMs?: number) => void;
 }
@@ -35,7 +33,6 @@ export const useUiStore = create<UiState>((set) => ({
   publicationMode: false,
   graphMode: 'standard',
   darkMode: true,
-  gpuAvailable: false,
   masterGraphOpen: false,
   toast: null,
 
@@ -46,7 +43,6 @@ export const useUiStore = create<UiState>((set) => ({
   setPublicationMode: (publicationMode) => set({ publicationMode }),
   setGraphMode: (graphMode) => set({ graphMode }),
   setDarkMode: (darkMode) => set({ darkMode }),
-  setGpuAvailable: (gpuAvailable) => set({ gpuAvailable }),
   setMasterGraphOpen: (masterGraphOpen) => set({ masterGraphOpen }),
   showToast: (message, durationMs = 3000) => {
     set({ toast: message });

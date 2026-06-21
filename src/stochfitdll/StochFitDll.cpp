@@ -22,7 +22,6 @@
 #include "SettingsStruct.h"
 #include "StochFitHarness.h"
 #include "generated/stochfit_generated.h"
-#include "gpu/gpu_detect.h"
 #include "platform.h"
 #include <flatbuffers/flatbuffers.h>
 
@@ -149,4 +148,3 @@ extern "C" EXPORT int SAParams(uint8_t *outBuf, int maxLen) {
   return finish_into(fbb, result, outBuf, maxLen);
 }
 
-extern "C" EXPORT bool GpuAvailable() { return is_gpu_available(); }

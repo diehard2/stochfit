@@ -71,7 +71,6 @@ export function getStochFns() {
       GetData:      lib.func('int GetData(uint8_t *outBuf, int maxLen)'),
       GetRunState:  lib.func('int GetRunState(uint8_t *outBuf, int maxLen)'),
       SAParams:     lib.func('int SAParams(uint8_t *outBuf, int maxLen)'),
-      GpuAvailable: lib.func('bool GpuAvailable()'),
     };
   }
   return _fnsStoch;

@@ -577,6 +577,20 @@ export function ModelIndependentPanel() {
                 <span className="text-secondary">Iterations</span>
                 <span className="font-mono text-primary">{lmResult.info[5]?.toFixed(0) ?? '—'}</span>
               </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-secondary">Stopped by</span>
+                <span className="font-mono text-primary">
+                  {(() => {
+                    const code = lmResult.info[6];
+                    const reasons: Record<number, string> = {
+                      1: 'small gradient', 2: 'small Δp', 3: 'max iterations',
+                      4: 'singular matrix', 5: 'no further reduction',
+                      6: 'small ‖e‖', 7: 'NaN/Inf in func',
+                    };
+                    return code != null ? (reasons[code] ?? `code ${code}`) : '—';
+                  })()}
+                </span>
+              </div>
             </div>
           )}
         </>

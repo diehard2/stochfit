@@ -68,15 +68,27 @@ void CEDP::Init(const ReflSettings &InitStruct) {
 }
 
 void CEDP::GenerateEDP(ParamVector &g) {
-  if (!m_bUseSurfAbs)
-    BuildEDP<false>(g);
-  else
-    BuildEDP<true>(g);
+  // Standalone path: wrap serial setup in its own single so standalone callers
+  // (display, InitEnergy, LevMar) work correctly outside a persistent OMP team.
+#pragma omp single
+  { FillBoxArrays(g); }
 
-  // Cache flat-region offsets for BuildLayerStack (O(n) here, O(1) in Build).
-  auto [sup, sub] = GetOffSets();
-  m_supOff = sup;
-  m_subOff = sub;
+  if (!m_bUseSurfAbs) BuildEDP<false>(g);
+  else BuildEDP<true>(g);
+
+#pragma omp single
+  {
+    auto [sup, sub] = GetOffSets();
+    m_supOff = sup;
+    m_subOff = sub;
+  }
+}
+
+// Cooperative path: FillBoxArrays was already called in the caller's omp single
+// (merged with Step). GetOffSets is called later in BuildLayerStackFull.
+void CEDP::GenerateEDPCooperative(ParamVector &g) {
+  if (!m_bUseSurfAbs) BuildEDP<false>(g);
+  else BuildEDP<true>(g);
 }
 
 // The code for the ED calculation section is loosely based on the electron
@@ -85,21 +97,19 @@ void CEDP::GenerateEDP(ParamVector &g) {
 // profile as having a user defined number of boxes. The last 30% or so of the
 // curve will converge to have rho/rhoinf = 1.0. For lipid and lipid protein
 // films, the absorbance is negligible.
+// Fills m_fRhoArray (and m_fImagRhoArray for absorbing films). No omp pragma —
+// designed to be called from within the caller's omp single block.
+void CEDP::FillBoxArrays(ParamVector &g) {
+  if (!m_bUseSurfAbs) FillBoxArraysImpl<false>(g);
+  else FillBoxArraysImpl<true>(g);
+}
+
 template <bool Absorbing>
-void CEDP::BuildEDP(ParamVector &g) {
-  const int reflpoints = m_iLayers;
+void CEDP::FillBoxArraysImpl(ParamVector &g) {
   const int refllayers = g.RealParamsSize() - 1;
-  const double supersld = g.GetRealParams(0) * m_dRho;
 
-  double roughness = g.GetRoughness();
-  if (roughness < 1e-6) roughness = 1e-6;
-  roughness = 1.0 / (roughness * std::sqrt(2.0));
-
-  if constexpr (!Absorbing) {
-    // Don't delete this; otherwise the reflectivity calculation won't work
-    // sometimes.
+  if constexpr (!Absorbing)
     m_EDP[0].imag(0.0);
-  }
 
   for (int k = 0; k < refllayers; k++) {
     m_fRhoArray[k] =
@@ -127,9 +137,23 @@ void CEDP::BuildEDP(ParamVector &g) {
       }
     }
   }
+}
+
+template <bool Absorbing>
+void CEDP::BuildEDP(ParamVector &g) {
+  const int reflpoints = m_iLayers;
+  const int refllayers = g.RealParamsSize() - 1;
+  const double supersld = g.GetRealParams(0) * m_dRho;
+
+  double roughness = g.GetRoughness();
+  if (roughness < 1e-6) roughness = 1e-6;
+  roughness = 1.0 / (roughness * std::sqrt(2.0));
+
+  // m_fRhoArray was filled by FillBoxArrays (in an omp single with implicit barrier)
+  // before this function is called. No serial setup here.
 
   double dist;
-#pragma omp parallel for private(dist)
+#pragma omp for private(dist)
   for (int i = 0; i < reflpoints; i++) {
     if constexpr (Absorbing)
       m_EDP[i] = std::complex<double>(supersld, m_dBeta);
@@ -163,9 +187,25 @@ LayerStack CEDP::BuildLayerStack() const {
   LayerStack ls;
   ls.rho        = m_DEDP;
   ls.length_mult = m_length_mult;
-  // sigma_sq is left defaulted (empty span) — no Nevot-Croce for EDP path.
   ls.sup_offset   = m_supOff;
   ls.sub_offset   = m_subOff;
+  ls.transparent  = !m_bUseSurfAbs;
+  ls.has_roughness = false;
+  return ls;
+}
+
+// Cooperative variant: computes sup/sub offsets fresh (skips the cached values
+// that GenerateEDPCooperative doesn't update). m_supOff/m_subOff are mutable so
+// this can be called on a const CEDP& and still keeps the cache in sync.
+LayerStack CEDP::BuildLayerStackFull() const {
+  auto [sup, sub] = GetOffSets();
+  m_supOff = sup;
+  m_subOff = sub;
+  LayerStack ls;
+  ls.rho        = m_DEDP;
+  ls.length_mult = m_length_mult;
+  ls.sup_offset   = sup;
+  ls.sub_offset   = sub;
   ls.transparent  = !m_bUseSurfAbs;
   ls.has_roughness = false;
   return ls;

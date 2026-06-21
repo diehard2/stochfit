@@ -28,6 +28,7 @@
 #include "stochfit/UnifiedReflectivity.h"
 #include <flatbuffers/flatbuffers.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <levmar/levmar.h>
@@ -278,10 +279,12 @@ static bool IsReasonable(const BoxSolution &sol, const BoxReflSettings &rs,
   BoxLayers layers;
   BuildBoxLayers(rs, sol.params, rs.OneSigma, layers);
   for (int i = 1; i <= rs.Boxes; ++i) {
-    if (layers.length_mult[i].imag() > 0.0)
+    if (layers.length_mult[i].imag() > 0.0) {
       return false;
-    if (layers.rho[i].real() < 0.0)
+    }
+    if (layers.rho[i].real() < 0.0) {
       return false;
+    }
   }
   if (rs.OneSigma && cutoff > 0.0) {
     for (int i = 0; i < (int)sol.params.size(); ++i) {
@@ -407,20 +410,22 @@ extern "C" EXPORT int StochFitBoxModel(const uint8_t *inBuf, int /*inLen*/,
       }
       locparameters[paramsize - 1] = params[paramsize - 1];
 
-      if (rs.UL.empty())
+      if (rs.UL.empty()) {
         dlevmar_dif(LevmarReflResidual, locparameters.data(), xvec.data(),
                     paramsize, QSize, 500, opts, locinfo.data(), work.data(),
                     covar.data(), (void *)(&task));
-      else
+      } else {
         dlevmar_bc_dif(LevmarReflResidual, locparameters.data(), xvec.data(),
                        paramsize, QSize, rs.LL.data(), rs.UL.data(), nullptr,
                        500, opts, locinfo.data(), work.data(), covar.data(),
                        (void *)(&task));
+      }
 
       localanswer.params = locparameters;
-      for (int j = 0; j < paramsize; ++j)
+      for (int j = 0; j < paramsize; ++j) {
         localanswer.covar[j] = std::sqrt(std::fabs(covar[j * (paramsize + 1)]));
-      std::copy(locinfo.begin(), locinfo.end(), localanswer.info.begin());
+      }
+      std::ranges::copy(locinfo, localanswer.info.begin());
       localanswer.score = locinfo[1];
 
       if (locinfo[1] < bestchisquare &&

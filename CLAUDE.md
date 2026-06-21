@@ -20,20 +20,20 @@ cmake --build --preset windows --target stochfit_shared
 cmake --build --preset default --target stochfit_shared
 
 # Build everything (C++ + LevMar + tests)
-cmake --build build --config Release --parallel
+cmake --build --preset windows --parallel
 
 # Build specific targets
-cmake --build build --target stochfit_dll
-cmake --build build --target levmardll
-cmake --build build --target stochfit_tests
-cmake --build build --target mirefl
+cmake --build --preset windows --target stochfit_dll
+cmake --build --preset windows --target levmardll
+cmake --build --preset windows --target stochfit_tests
+cmake --build --preset windows --target mirefl
 
 # Build and package the Electron GUI
-cmake --build build --target gui
+cmake --build --preset windows --target gui
 
 # Run tests
-ctest --test-dir build -C Release -V
-./build/bin/stochfit_tests.exe
+ctest --test-dir build/Release -V
+./build/Release/bin/stochfit_tests.exe
 ```
 
 The `gui/` directory has its own npm project; the CMake `gui` target handles `npm install` and Electron Forge packaging. For iterating on the frontend only, you can run `npm run start` inside `gui/`.

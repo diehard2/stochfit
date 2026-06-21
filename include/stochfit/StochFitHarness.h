@@ -21,8 +21,7 @@
 #pragma once
 
 // Top-level SA orchestrator.
-// Manages the worker thread, GPU dispatch (CUDA/Metal when UseGpu=true),
-// and data marshaling between C++ and the FFI layer.
+// Manages the worker thread and data marshaling between C++ and the FFI layer.
 // Session file I/O is handled by Electron: Init() accepts an optional
 // StochRunState* with pre-parsed state (null = fresh start).
 // On stop: call Stop() to block until worker exits, then GetRunState() to read
@@ -44,12 +43,6 @@
 #include "ReflectivityObjective.h"
 #include "UnifiedReflectivity.h"
 #include <stochfit/SettingsStruct.h>
-
-class GpuSARunner;
-struct GpuSAState;
-struct GpuParams;
-struct GpuMeasurement;
-struct GpuEDPConfig;
 
 using AnnealVariant = std::variant<Anneal<GreedyPolicy>,
                                    Anneal<SimulatedPolicy>, Anneal<StunPolicy>>;
@@ -81,7 +74,6 @@ public:
   const ReflSettings& Settings()      const { return m_initStruct; }
   int                 GetDataCount()  const { return m_datapoints; }
 
-  // Harness-level accessors for the annealer (used by GPU seam and FFI).
   // GetTemperature()    = 1/β  (display value, same as old Get_Temp())
   // GetRawTemperature() = β    (for session save, same as old Get_RawTemp())
   // SetTemperature(β)   = set β directly (session restore)
@@ -95,25 +87,8 @@ public:
 private:
   DataSnapshot GetCurrentState();
   int Processing();
-  int ProcessingGPU();
-  void InitGpuData(GpuSAState &sa_state, GpuParams &gpu_params,
-                   GpuMeasurement &meas, GpuEDPConfig &edp_config);
 
   tl::expected<void, std::string> m_initError;
-
-  std::unique_ptr<GpuSARunner> m_gpuRunner;
-  GpuBackend m_gpuBackend = GpuBackend::None;
-
-  // Float buffers for GPU data transfer
-  std::vector<float> m_fMeasSintheta;
-  std::vector<float> m_fMeasSinsq;
-  std::vector<float> m_fMeasQ;
-  std::vector<float> m_fMeasRefl;
-  std::vector<float> m_fMeasErr;
-  std::vector<float> m_fQspreadSin;
-  std::vector<float> m_fQspreadSin2;
-  std::vector<float> m_fEdSpacing;
-  std::vector<float> m_fDistArray;
 
   std::thread m_thread;
   std::atomic<bool> m_stop_requested;

@@ -26,7 +26,8 @@ ParamVector::ParamVector(const ReflSettings& s)
       m_paramCount(s.Boxes),
       m_roughnessMax(s.RoughnessMax),
       m_useSurfAbs(s.UseSurfAbs),
-      m_fixImpNorm(s.Impnorm)
+      m_fixImpNorm(s.Impnorm),
+      m_xrOnly(s.XRonly)
 {
     if (m_useSurfAbs) {
         m_surfAbsIdx = m_paramCount++;
@@ -60,7 +61,7 @@ ParamVector::ParamVector(const ReflSettings& s)
 void ParamVector::SetBounds(double lowrough, double highrough, double highimp, double highabs)
 {
     std::ranges::fill(m_high, 5.0);
-    std::ranges::fill(m_low, -5.0);
+    std::ranges::fill(m_low, m_xrOnly ? 0.0 : -5.0);
 
     if (!m_fixRoughness) {
         m_high[m_roughnessIdx] = highrough;

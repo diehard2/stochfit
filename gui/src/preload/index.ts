@@ -19,7 +19,6 @@ contextBridge.exposeInMainWorld('api', {
   stochDeleteOutput: (filePath: string) =>
     ipcRenderer.invoke(IPC.STOCH_DELETE_OUTPUT, filePath),
   stochSAParams: () => ipcRenderer.invoke(IPC.STOCH_SA_PARAMS),
-  stochGpuAvailable: () => ipcRenderer.invoke(IPC.STOCH_GPU_AVAILABLE),
 
   // LevMar
   lmFastReflFit: (input: BoxReflSettingsInput, params: number[]) =>

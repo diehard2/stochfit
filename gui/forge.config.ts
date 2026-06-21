@@ -8,7 +8,6 @@ const libExt    = process.platform === 'win32' ? '.dll' : process.platform === '
 const libPrefix = process.platform === 'win32' ? '' : 'lib';
 
 // Include a build artifact only when it actually exists.
-// This lets the config work whether or not optional features (CUDA) were compiled in.
 function opt(...paths: string[]): string[] {
   return paths.filter(p => existsSync(resolve(__dirname, p)));
 }
@@ -46,10 +45,6 @@ const config: ForgeConfig = {
       // On Linux: libgomp is a system package; not bundled.
       ...opt('../build/bin/libomp.dylib'),   // macOS
       ...opt('../build/bin/vcomp140.dll'),   // Windows
-
-      // CUDA plugin — only present when built with CUDA support.
-      // Loaded at runtime by gpu_sa_runner; omitted on GPU-less builds.
-      ...opt(`../build/bin/${libPrefix}stochfit_cuda_plugin${libExt}`),
 
       '../resources/test1refl.txt',
     ],

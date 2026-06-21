@@ -27,7 +27,6 @@
 //
 // Normal lifecycle:  Init() → Start() → [GetData() polling] → Stop() →
 // GetRunState() → Destroy() Cancel (no save):  Init() → Start() → Cancel()
-// GpuAvailable() is called at startup to determine if UseGpu can be enabled.
 
 #pragma once
 #include "platform.h"
@@ -49,5 +48,3 @@ extern "C" EXPORT int
 GetRunState(uint8_t *outBuf,
             int maxLen); // → GetRunStateResult (call after Stop())
 extern "C" EXPORT int SAParams(uint8_t *outBuf, int maxLen); // → SAParamsResult
-
-extern "C" EXPORT bool GpuAvailable();

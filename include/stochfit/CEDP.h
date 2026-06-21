@@ -37,10 +37,26 @@ private:
 
   template <bool Absorbing>
   void BuildEDP(ParamVector &g);
+  template <bool Absorbing>
+  void FillBoxArraysImpl(ParamVector &g);
 
 public:
+  CEDP() = default;
+  explicit CEDP(const ReflSettings &s) { Init(s); }
+
   void Init(const ReflSettings &InitStruct);
+  int GetLayerCount() const { return m_iLayers; }
+
+  // Standalone EDP build — includes serial setup, parallel EDP loop, and offset caching.
   void GenerateEDP(ParamVector &g);
+
+  // Cooperative path (SA persistent-team use):
+  //   1. Call FillBoxArrays(g) inside your omp single block before the parallel section.
+  //   2. Call GenerateEDPCooperative(g) — runs only the parallel omp for.
+  //   3. Call BuildLayerStackFull() inside the next omp single — computes offsets fresh.
+  void FillBoxArrays(ParamVector &g);         // serial setup only, no omp pragma
+  void GenerateEDPCooperative(ParamVector &g); // omp for only, no serial omp singles
+
   int Get_EDPPointCount() const;
   bool Get_UseABS() const;
   double Get_FilmAbs() const;
@@ -56,6 +72,11 @@ public:
   // Valid only after a GenerateEDP() call. No roughness (σ=0), sup/sub offsets
   // from the most recent GenerateEDP, transparent flag from m_bUseSurfAbs.
   LayerStack BuildLayerStack() const;
+
+  // Like BuildLayerStack but computes sup/sub offsets fresh from m_DEDP — use
+  // in the cooperative SA path where GenerateEDPCooperative skipped GetOffSets.
+  // Const (m_supOff/m_subOff are mutable); call from within an omp single.
+  LayerStack BuildLayerStackFull() const;
 
   vector<std::complex<double>> m_EDP;
   vector<std::complex<double>> m_DEDP;

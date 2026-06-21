@@ -100,7 +100,7 @@ export function AppShell() {
   const boxModelGenED = useBoxModelStore((s) => s.genED);
   const boxModelGenBoxED = useBoxModelStore((s) => s.genBoxED);
   const boxModelGenZRange = useBoxModelStore((s) => s.genZRange);
-  const { activePanel, setAboutOpen, graphMode, setGraphMode, darkMode, setDarkMode, setGpuAvailable, setMasterGraphOpen } = useUiStore();
+  const { activePanel, setAboutOpen, graphMode, setGraphMode, darkMode, setDarkMode, setMasterGraphOpen } = useUiStore();
   const normalizeByFresnel = graphMode === 'fresnel';
   const boxModelStore = useBoxModelStore();
   const settings = useSettingsStore((s) => s.settings);
@@ -137,15 +137,6 @@ export function AppShell() {
       setReportBusy(false);
     }
   }, [data, fitResult, settings, boxModelStore, miBoxED, graphMode]);
-
-  useEffect(() => {
-    window.api.stochGpuAvailable().then((available) => {
-      console.log('[GPU] GpuAvailable() =', available);
-      setGpuAvailable(available);
-    }).catch((err) => {
-      console.error('[GPU] stochGpuAvailable failed:', err);
-    });
-  }, [setGpuAvailable]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');

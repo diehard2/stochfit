@@ -37,7 +37,6 @@ declare global {
       onFitProgress: (cb: (d: unknown) => void) => () => void;
       onFitComplete: (cb: (d: unknown) => void) => () => void;
       onSettingsReset: (cb: () => void) => () => void;
-      stochGpuAvailable: () => Promise<boolean>;
       openPdf: (dir: string, baseName: string, data: Uint8Array) => Promise<string | null>;
     };
   }

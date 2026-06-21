@@ -51,9 +51,10 @@ int main(int argc, char* argv[])
     SetConsoleOutputCP(CP_UTF8);
 #endif
     std::string dataPath = RESOURCES_DIR "/test1refl.txt";
-    int iterations = 5'000'000;
-    int resolution = 3;
-    bool xrOnly    = true;
+    int    iterations = 5'000'000;
+    int    resolution = 3;
+    bool   xrOnly     = true;
+    double targetChi  = 0.0;   // 0 = disabled
 
     for (int i = 1; i < argc; ++i) {
         std::string_view arg = argv[i];
@@ -61,6 +62,8 @@ int main(int argc, char* argv[])
             resolution = std::stoi(std::string(arg.substr(13)));
         else if (arg.starts_with("--iterations="))
             iterations = std::stoi(std::string(arg.substr(13)));
+        else if (arg.starts_with("--target-chi="))
+            targetChi = std::stod(std::string(arg.substr(13)));
         else if (arg == "--opaque")
             xrOnly = false;
         else if (arg.starts_with("--"))
@@ -121,8 +124,6 @@ int main(int argc, char* argv[])
     settings.Impnorm                 = false;
     settings.XRonly                  = xrOnly;
     settings.Debug                   = false;
-    settings.UseGpu                  = false;
-    settings.GpuChains               = 1;
     settings.Iterations              = iterations;
 
     StochFit harness(settings);
@@ -148,6 +149,10 @@ int main(int argc, char* argv[])
                     snap.roughness, ips);
         std::fflush(stdout);
         if (snap.isFinished) break;
+        if (targetChi > 0.0 && snap.chiSquare > 0.0 && snap.chiSquare <= targetChi) {
+            std::printf("  --> χ² target %.6g reached\n", targetChi);
+            break;
+        }
     }
 
     harness.Stop();

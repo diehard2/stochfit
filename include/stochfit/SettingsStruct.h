@@ -61,9 +61,6 @@ struct ReflSettings
 	int IterationsCompleted;
 	double ChiSquare;
 
-	// GPU acceleration control
-	bool UseGpu;
-	int32_t GpuChains;
 	std::string Title;
 
 	ReflSettings() = default;

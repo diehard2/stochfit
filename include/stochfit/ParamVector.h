@@ -84,6 +84,7 @@ private:
     bool   m_fixRoughness = false;
     bool   m_useSurfAbs   = false;
     bool   m_fixImpNorm   = false;
+    bool   m_xrOnly       = false;
 
     void SetBounds(double lowrough, double highrough, double highimp, double highabs);
 };

@@ -50,8 +50,8 @@ table ReflSettings {
   iterations:                 int32;
   iterations_completed:       int32;
   chi_square:                 double;
-  use_gpu:                    int32;
-  gpu_chains:                 int32;
+  use_gpu:                    int32 (deprecated);
+  gpu_chains:                 int32 (deprecated);
   title:                      string;
 }
 

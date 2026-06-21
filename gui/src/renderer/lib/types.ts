@@ -70,10 +70,6 @@ export interface ModelSettings {
   highQOffset: number;
   iterations: number;
   title: string;
-
-  // GPU acceleration
-  useGpu: boolean;
-  gpuChains: number;
 }
 
 export const DEFAULT_SETTINGS: ModelSettings = {
@@ -111,8 +107,6 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   highQOffset: 0,
   iterations: 5000000,
   title: 'StochFit',
-  useGpu: false,
-  gpuChains: 1,
 };
 
 // Inlined from stochfit-api / levmar-api to avoid main-process import in renderer

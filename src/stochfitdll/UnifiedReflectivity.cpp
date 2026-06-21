@@ -66,33 +66,70 @@ ParrattReflectivity::ParrattReflectivity(const ReflSettings &settings)
   m_refl_out.resize(m_consts.sinthetai.size());
   if (m_qsmear_enabled)
     m_refl_smeared.resize(meas_n);
-
-  m_num_threads = 1;
 }
 
+ParrattReflectivity::ParrattReflectivity(const ReflSettings &settings,
+                                         int n_layers)
+    : ParrattReflectivity(settings) {
+  InitScratchArrays(m_complex, m_real, omp_get_max_threads(), n_layers);
+}
+
+// Standalone: creates its own OMP team. Safe for levmar/InitEnergy/any serial context.
 auto ParrattReflectivity::CalculateReflectivity(const LayerStack &ls)
     -> std::span<double> {
   const int n_layers = static_cast<int>(ls.rho.size());
-  InitScratchArrays(m_complex, m_real, m_num_threads, n_layers);
+  InitScratchArrays(m_complex, m_real, omp_get_max_threads(), n_layers);
+
+#pragma omp parallel
+  {
+    if (m_qsmear_enabled) {
+      if (ls.has_roughness)
+        ReflectivityCalcCoreImpl<true>(ls, m_consts.sinthetai,
+                                       m_consts.sinsquaredthetai, m_refl_out);
+      else
+        ReflectivityCalcCoreImpl<false>(ls, m_consts.sinthetai,
+                                        m_consts.sinsquaredthetai, m_refl_out);
+    } else if (ls.transparent && !ls.has_roughness) {
+      TransparentReflectivityCalc(ls);
+    } else {
+      ReflectivityCalc(ls);
+    }
+  }
 
   if (m_qsmear_enabled) {
-    if (ls.has_roughness)
-      ReflectivityCalcCoreImpl<true>(ls, m_consts.sinthetai,
-                                     m_consts.sinsquaredthetai, m_refl_out);
-    else
-      ReflectivityCalcCoreImpl<false>(ls, m_consts.sinthetai,
-                                      m_consts.sinsquaredthetai, m_refl_out);
     QSmear::Apply(m_refl_out, m_refl_smeared);
     return m_refl_smeared;
   }
+  return m_refl_out;
+}
 
-  // Transparent fast path uses real-kk arithmetic and skips Nevot-Croce.
-  // Only valid when there is no roughness (Nevot-Croce changes rj even on the
-  // real branch). Box-model with roughness uses the complex path instead.
-  if (ls.transparent && !ls.has_roughness)
-    TransparentReflectivityCalc(ls);
+// Cooperative: must be called by ALL threads of an enclosing OMP parallel region.
+// BuildLayerStack and scratch sizing happen in omp single; Q-point work is shared.
+auto ParrattReflectivity::CalculateReflectivityCooperative(const CEDP &EDP)
+    -> std::span<double> {
+#pragma omp single
+  {
+    // BuildLayerStackFull computes GetOffSets inline — merges 2 barriers into 1.
+    m_cooperative_ls = EDP.BuildLayerStackFull();
+  }
+  // implicit barrier: all threads see m_cooperative_ls
+
+  if (m_qsmear_enabled) {
+    if (m_cooperative_ls.has_roughness)
+      ReflectivityCalcCoreImpl<true>(m_cooperative_ls, m_consts.sinthetai,
+                                     m_consts.sinsquaredthetai, m_refl_out);
+    else
+      ReflectivityCalcCoreImpl<false>(m_cooperative_ls, m_consts.sinthetai,
+                                      m_consts.sinsquaredthetai, m_refl_out);
+#pragma omp single
+    { QSmear::Apply(m_refl_out, m_refl_smeared); }
+    return m_refl_smeared;
+  }
+
+  if (m_cooperative_ls.transparent && !m_cooperative_ls.has_roughness)
+    TransparentReflectivityCalc(m_cooperative_ls);
   else
-    ReflectivityCalc(ls);
+    ReflectivityCalc(m_cooperative_ls);
 
   return m_refl_out;
 }
@@ -124,24 +161,24 @@ void ParrattReflectivity::ReflectivityCalcCoreImpl(
   const int n_layers = static_cast<int>(density_profile.size());
   const int n_q = std::min(q_end, static_cast<int>(sinthetai.size()));
 
-  const auto [sup_offset, sub_offset] = std::pair{ls.sup_offset, ls.sub_offset};
+  const int sup_offset = ls.sup_offset;
+  const int sub_offset = ls.sub_offset;
 
-  omp_set_num_threads(m_num_threads);
-#pragma omp parallel
-  {
-    const int threadnum = omp_get_thread_num();
-    const int arrayoffset = threadnum * n_layers;
+  // Per-thread scratch setup — each thread in the enclosing parallel team computes
+  // its own slice. No inner omp parallel needed; caller provides the team.
+  const int threadnum = omp_get_thread_num();
+  const int arrayoffset = threadnum * n_layers;
 
-    auto *kk_slice = m_complex.kk.data() + arrayoffset;
-    auto *ak_slice = m_complex.ak.data() + arrayoffset;
-    auto *rj_slice = m_complex.rj.data() + arrayoffset;
-    auto *Rj_slice = m_complex.Rj.data() + arrayoffset;
+  auto *kk_slice = m_complex.kk.data() + arrayoffset;
+  auto *ak_slice = m_complex.ak.data() + arrayoffset;
+  auto *rj_slice = m_complex.rj.data() + arrayoffset;
+  auto *Rj_slice = m_complex.Rj.data() + arrayoffset;
 
-    ak_slice[0] = 1.0;
-    Rj_slice[sub_offset + 1] = 0.0;
+  ak_slice[0] = 1.0;
+  Rj_slice[sub_offset + 1] = 0.0;
 
 #pragma omp for schedule(runtime)
-    for (int l = 0; l < n_q; l++) {
+  for (int l = 0; l < n_q; l++) {
       kk_slice[0] = m_consts.k0 * m_consts.indexsup * sinthetai[l];
 
       // Flat-front wavevector — density uniform at [1, sup_offset-1]
@@ -183,10 +220,16 @@ void ParrattReflectivity::ReflectivityCalcCoreImpl(
         Rj_slice[i] = ak_slice[i] * (Rj_slice[i + 1] + rj_slice[i]) /
                       (Rj_slice[i + 1] * rj_slice[i] + 1.0);
 
-      out[l] = (sup_offset >= 2) ? std::norm(std::pow(ak1, sup_offset - 2) *
-                                             Rj_slice[sup_offset - 1])
-                                 : std::norm(Rj_slice[0]);
-    }
+      if (sup_offset >= 2) {
+        // Replace std::pow(ak1, n) with an explicit multiply loop — pow calls
+        // exp(n*log(z)) which is ~30x slower than n multiplications for small n.
+        // sup_offset is typically 1-3 so this loop runs 0-1 times in practice.
+        auto ak_pow = std::complex<double>{1.0, 0.0};
+        for (int p = 0; p < sup_offset - 2; ++p) ak_pow *= ak1;
+        out[l] = std::norm(ak_pow * Rj_slice[sup_offset - 1]);
+      } else {
+        out[l] = std::norm(Rj_slice[0]);
+      }
   }
 }
 
@@ -208,7 +251,8 @@ void ParrattReflectivity::TransparentReflectivityCalc(const LayerStack &ls) {
   const int n_layers = static_cast<int>(density_profile.size());
   const int n_q = static_cast<int>(m_refl_out.size());
 
-  const auto [sup_offset, sub_offset] = std::pair{ls.sup_offset, ls.sub_offset};
+  const int sup_offset = ls.sup_offset;
+  const int sub_offset = ls.sub_offset;
   const int rj_start = sup_offset >= 2 ? sup_offset - 1 : 0;
 
   const int complex_to_real_offset =
@@ -218,24 +262,21 @@ void ParrattReflectivity::TransparentReflectivityCalc(const LayerStack &ls) {
   // ls.length_mult[i].imag() = -2*length[i]; uniform for CEDP path.
   const double angle_mult_flat = ls.length_mult[1].imag();
 
-  // Both loops share a single parallel region so we pay only one fork+join
-  // per SA iteration instead of two. nowait on the complex loop lets threads
-  // proceed to the real loop without an extra barrier between them.
-  omp_set_num_threads(m_num_threads);
-#pragma omp parallel
-  {
-    const int threadnum = omp_get_thread_num();
-    const int arrayoffset = threadnum * n_layers;
+  // Both loops share the caller's parallel team so there is only one fork+join
+  // per SA run instead of two per SA iteration. nowait on the complex loop lets
+  // threads proceed to the real loop without an extra barrier between them.
+  const int threadnum = omp_get_thread_num();
+  const int arrayoffset = threadnum * n_layers;
 
-    auto *kk_slice  = m_complex.kk.data() + arrayoffset;
-    auto *ak_slice  = m_complex.ak.data() + arrayoffset;
-    auto *rj_slice  = m_complex.rj.data() + arrayoffset;
-    auto *Rj_slice  = m_complex.Rj.data() + arrayoffset;
-    auto *dkk_slice = m_real.kk.data() + arrayoffset;
-    auto *drj_slice = m_real.rj.data() + arrayoffset;
+  auto *kk_slice  = m_complex.kk.data() + arrayoffset;
+  auto *ak_slice  = m_complex.ak.data() + arrayoffset;
+  auto *rj_slice  = m_complex.rj.data() + arrayoffset;
+  auto *Rj_slice  = m_complex.Rj.data() + arrayoffset;
+  auto *dkk_slice = m_real.kk.data() + arrayoffset;
+  auto *drj_slice = m_real.rj.data() + arrayoffset;
 
-    ak_slice[0] = 1.0;
-    Rj_slice[sub_offset + 1] = 0.0;
+  ak_slice[0] = 1.0;
+  Rj_slice[sub_offset + 1] = 0.0;
 
     // Complex Q-points: evanescent layers present; use full complex arithmetic.
 #pragma omp for nowait schedule(runtime)
@@ -287,7 +328,8 @@ void ParrattReflectivity::TransparentReflectivityCalc(const LayerStack &ls) {
           m_consts.k0 *
           sqrt((m_consts.indexsupsquared * m_consts.sinsquaredthetai[l]) -
                density_profile[1].real() + m_consts.sup_sld);
-      const auto dak1 = std::polar(1.0, angle_mult_flat * dkk1);
+      const double angle0 = angle_mult_flat * dkk1;
+      const auto dak1 = std::complex<double>(std::cos(angle0), std::sin(angle0));
 
       const auto dkk_sub =
           m_consts.k0 *
@@ -299,7 +341,8 @@ void ParrattReflectivity::TransparentReflectivityCalc(const LayerStack &ls) {
             m_consts.k0 *
             sqrt((m_consts.indexsupsquared * m_consts.sinsquaredthetai[l]) -
                  density_profile[i].real() + m_consts.sup_sld);
-        ak_slice[i] = std::polar(1.0, ls.length_mult[i].imag() * dkk_slice[i]);
+        const double angle_i = ls.length_mult[i].imag() * dkk_slice[i];
+        ak_slice[i] = {std::cos(angle_i), std::sin(angle_i)};
       }
 
       if (sup_offset >= 2) {
@@ -320,6 +363,5 @@ void ParrattReflectivity::TransparentReflectivityCalc(const LayerStack &ls) {
       // out of the norm.
       m_refl_out[l] = (sup_offset >= 2) ? std::norm(Rj_slice[sup_offset - 1])
                                         : std::norm(Rj_slice[0]);
-    }
   }
 }

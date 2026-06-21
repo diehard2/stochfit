@@ -51,8 +51,6 @@ ReflSettings::ReflSettings(const StochFitProto::ReflSettings* s)
     Iterations           = s->iterations();
     IterationsCompleted  = s->iterations_completed();
     ChiSquare            = s->chi_square();
-    UseGpu               = s->use_gpu();
-    GpuChains            = s->gpu_chains();
     Title                = s->title() ? s->title()->str() : "";
 }
 

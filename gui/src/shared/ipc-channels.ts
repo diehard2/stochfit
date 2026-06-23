@@ -25,15 +25,8 @@ export const IPC = {
   FS_SAVE_FILE: 'fs:saveFile',
   FS_OPEN_PDF: 'fs:openPdf',
 
-  // Progress events (main → renderer)
-  FIT_PROGRESS: 'fit:progress',
-  FIT_COMPLETE: 'fit:complete',
-
   // Shell
   SHELL_OPEN_EXTERNAL: 'shell:openExternal',
-
-  // Settings events (main → renderer)
-  SETTINGS_RESET: 'settings:reset',
 } as const;
 
 export type IpcChannel = typeof IPC[keyof typeof IPC];

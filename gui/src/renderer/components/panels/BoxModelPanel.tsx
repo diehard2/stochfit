@@ -4,7 +4,9 @@ import { useSettingsStore } from '../../stores/settings-store';
 import { applyForceNormalization } from '../../lib/forcenorm';
 import { useBoxModelStore } from '../../stores/box-model-store';
 import { BoxParameterTable, type BoxRow } from '../shared/BoxParameterTable';
-import type { BoxReflSettingsInput, LMFitResult, RhoEDPResult, StochFitResult } from '../../../main/native/levmar-api';
+import type { BoxReflSettingsInput } from '../../../main/native/levmar-api';
+import type { LMResult as LMFitResult, RhoEDPResult, StochFitResult } from '../../lib/types';
+import { computeBoxStepEDP } from '../../lib/edp-utils';
 
 // ── Param helpers ────────────────────────────────────────────────────────────
 
@@ -48,30 +50,6 @@ function makeBounds(params: number[]) {
   // roughness-hi, roughness-lo, IsReasonable-cutoff. Must be at least 7 elements.
   const percs = [2.0, 0.5, 2.0, 0.5, 2.0, 0.5, 10.0];
   return { ul, ll, percs };
-}
-
-// Compute a pure step-function box EDP in the frontend.
-// Avoids the erf midpoint artifact (erf(0)=0 → 0.5) that appears when z falls
-// exactly on an interface in the C++ RhoGenerate calculation.
-function computeBoxStepEDP(
-  zRange: number[],
-  rows: BoxRow[],
-  zOffset: number,
-  supSLD: number,
-  subSLD: number,
-): number[] {
-  const boundaries: number[] = [zOffset];
-  for (const row of rows) {
-    boundaries.push(boundaries[boundaries.length - 1] + row.length);
-  }
-  const supNorm = subSLD !== 0 ? supSLD / subSLD : 0;
-  return zRange.map(z => {
-    if (z < boundaries[0]) return supNorm;
-    for (let i = 0; i < rows.length; i++) {
-      if (z < boundaries[i + 1]) return rows[i].rho;
-    }
-    return 1.0; // subphase
-  });
 }
 
 // Convert FastReflFit params to RhoFit layout for EDP generation:

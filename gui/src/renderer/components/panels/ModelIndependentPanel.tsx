@@ -12,33 +12,9 @@ import { Field } from '../shared/Field';
 import type { FitResult, SAParams } from '../../lib/types';
 import type { ReflSettingsInput, StochRunStateOutput, StochFitOutput } from '../../../main/native/stochfit-api';
 import type { BoxReflSettingsInput, LMFitResult } from '../../../main/native/levmar-api';
+import { computeBoxStepEDP } from '../../lib/edp-utils';
 
 // ── Param helpers ────────────────────────────────────────────────────────────
-
-// Compute a pure step-function box EDP in the frontend.
-// Avoids the erf midpoint artifact (erf(0)=0 → 0.5) that appears when z falls
-// exactly on an interface in the C++ RhoGenerate calculation.
-function computeBoxStepEDP(
-  zRange: number[],
-  rows: BoxRow[],
-  zOffset: number,
-  supSLD: number,
-  subSLD: number,
-): number[] {
-  const boundaries: number[] = [zOffset];
-  for (const row of rows) {
-    boundaries.push(boundaries[boundaries.length - 1] + row.length);
-  }
-  const supNorm = subSLD !== 0 ? supSLD / subSLD : 0;
-  return zRange.map(z => {
-    if (z < boundaries[0]) return supNorm;
-    for (let i = 0; i < rows.length; i++) {
-      if (z < boundaries[i + 1]) return rows[i].rho;
-    }
-    return 1.0; // subphase
-  });
-}
-
 
 function buildRhoParams(subRough: number, zOffset: number, rows: BoxRow[], oneSigma: boolean): number[] {
   const result = [subRough, zOffset];
@@ -79,7 +55,7 @@ function makeBounds(params: number[]) {
 export function ModelIndependentPanel() {
   const { data } = useDataStore();
   const { settings, restore: restoreSettings } = useSettingsStore();
-  const { setSettingsOpen } = useUiStore();
+  const { setSettingsOpen, showToast } = useUiStore();
   const {
     status, result, saParams, pollTimer, itPerSec,
     setStatus, setResult, setSAParams, setPollTimer, setMiBoxED, setItPerSec, reset,
@@ -118,7 +94,7 @@ export function ModelIndependentPanel() {
   }, [boxes]);
 
   // Start polling for fit updates. Extracted so doStart and the remount effect can share it.
-  const startPolling = useCallback((_runDirectory: string, runDataFile: string) => {
+  const startPolling = useCallback((runDataFile: string) => {
     const timer = setInterval(async () => {
       let fitData: FitResult;
       let saData: SAParams;
@@ -158,10 +134,7 @@ export function ModelIndependentPanel() {
   useEffect(() => {
     if (status === 'running' && !pollTimer && data) {
       prevTimeRef.current = Date.now();
-      startPolling(
-        data.filePath.replace(/[^/\\]+$/, ''),
-        data.filePath,
-      );
+      startPolling(data.filePath);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -179,7 +152,7 @@ export function ModelIndependentPanel() {
   // ── SA Fitting ─────────────────────────────────────────────────────────────
 
   async function handleStart() {
-    if (!data) return alert('Load a data file first.');
+    if (!data) { showToast('Load a data file first.'); return; }
 
     const normData = applyForceNormalization(data, settings.forcenorm);
     const input: ReflSettingsInput = {
@@ -191,7 +164,6 @@ export function ModelIndependentPanel() {
       qPoints: normData.q.length,
       debug: false,
       ...settings,
-      normSearchPerc: settings.normSearchPerc,
       absSearchPerc: settings.useSurfAbs ? settings.absSearchPerc : 0,
       impnorm: settings.normSearchPerc > 0,
     };
@@ -213,15 +185,13 @@ export function ModelIndependentPanel() {
     prevIterRef.current = 0;
     prevTimeRef.current = Date.now();
 
-    // Capture directory for session file path (stable over the run lifetime)
-    const runDirectory = input.directory;
     const runDataFile = data!.filePath;
 
     try {
       await window.api.stochInit(input, runState);
     } catch (e) {
       setStatus('idle');
-      alert(String(e));
+      showToast(String(e));
       return;
     }
 
@@ -229,11 +199,11 @@ export function ModelIndependentPanel() {
       await window.api.stochStart(settings.iterations);
     } catch (e) {
       setStatus('idle');
-      alert(String(e));
+      showToast(String(e));
       return;
     }
 
-    startPolling(runDirectory, runDataFile);
+    startPolling(runDataFile);
   }
 
   async function saveOutput(dataFile: string, iteration: number) {

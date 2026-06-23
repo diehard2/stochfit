@@ -40,22 +40,6 @@ contextBridge.exposeInMainWorld('api', {
   openPdf: (dir: string, baseName: string, data: Uint8Array) =>
     ipcRenderer.invoke(IPC.FS_OPEN_PDF, dir, baseName, data),
 
-  // Progress events (main → renderer)
-  onFitProgress: (callback: (data: unknown) => void) => {
-    ipcRenderer.on(IPC.FIT_PROGRESS, (_event, data) => callback(data));
-    return () => ipcRenderer.removeAllListeners(IPC.FIT_PROGRESS);
-  },
-  onFitComplete: (callback: (data: unknown) => void) => {
-    ipcRenderer.on(IPC.FIT_COMPLETE, (_event, data) => callback(data));
-    return () => ipcRenderer.removeAllListeners(IPC.FIT_COMPLETE);
-  },
-
   // Shell
   openExternal: (url: string) => ipcRenderer.invoke(IPC.SHELL_OPEN_EXTERNAL, url),
-
-  // Settings events (main → renderer)
-  onSettingsReset: (callback: () => void) => {
-    ipcRenderer.on(IPC.SETTINGS_RESET, () => callback());
-    return () => ipcRenderer.removeAllListeners(IPC.SETTINGS_RESET);
-  },
 });

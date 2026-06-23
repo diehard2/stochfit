@@ -152,6 +152,17 @@ export interface StochFitOutput {
   };
 }
 
+export interface RhoEDPResult {
+  ed: number[];
+  boxED: number[];
+}
+
+export interface StochFitResult extends LMResult {
+  paramArray: number[];
+  chiSquareArray: number[];
+  paramArraySize: number;
+}
+
 export interface BoxLMSettings {
   subSLD: number;
   supSLD: number;

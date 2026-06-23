@@ -8,7 +8,6 @@ interface UiState {
   settingsOpen: boolean;
   aboutOpen: boolean;
   sldCalcOpen: boolean;
-  publicationMode: boolean;
   graphMode: GraphMode;
   darkMode: boolean;
   masterGraphOpen: boolean;
@@ -18,7 +17,6 @@ interface UiState {
   setSettingsOpen: (v: boolean) => void;
   setAboutOpen: (v: boolean) => void;
   setSldCalcOpen: (v: boolean) => void;
-  setPublicationMode: (v: boolean) => void;
   setGraphMode: (m: GraphMode) => void;
   setDarkMode: (v: boolean) => void;
   setMasterGraphOpen: (v: boolean) => void;
@@ -30,7 +28,6 @@ export const useUiStore = create<UiState>((set) => ({
   settingsOpen: false,
   aboutOpen: false,
   sldCalcOpen: false,
-  publicationMode: false,
   graphMode: 'standard',
   darkMode: true,
   masterGraphOpen: false,
@@ -40,7 +37,6 @@ export const useUiStore = create<UiState>((set) => ({
   setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
   setAboutOpen: (aboutOpen) => set({ aboutOpen }),
   setSldCalcOpen: (sldCalcOpen) => set({ sldCalcOpen }),
-  setPublicationMode: (publicationMode) => set({ publicationMode }),
   setGraphMode: (graphMode) => set({ graphMode }),
   setDarkMode: (darkMode) => set({ darkMode }),
   setMasterGraphOpen: (masterGraphOpen) => set({ masterGraphOpen }),

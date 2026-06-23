@@ -115,15 +115,6 @@ export interface StochFitOutput {
   };
 }
 
-/** @deprecated Use StochFitOutput (version 2). Kept for backward-compat read. */
-export interface StochSessionFile {
-  version: 1;
-  savedAt: string;
-  dataFile: string;
-  settings: Record<string, unknown>;
-  saState: StochRunStateOutput;
-}
-
 // ── Buffer sizing ─────────────────────────────────────────────────────────────
 
 // Conservative upper bound for GetData output (Rho + Refl arrays + FlatBuffer overhead).

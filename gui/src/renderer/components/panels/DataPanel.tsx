@@ -5,42 +5,8 @@ import { useFitStore } from '../../stores/fit-store';
 import { useMiEdpStore } from '../../stores/mi-edp-store';
 import { useUiStore } from '../../stores/ui-store';
 import { useBoxModelStore } from '../../stores/box-model-store';
-import type { ReflData, StochFitOutput, ModelSettings } from '../../lib/types';
+import type { ModelSettings } from '../../lib/types';
 
-interface OpenDataResult {
-  data: ReflData;
-  savedOutput?: StochFitOutput;
-}
-
-declare global {
-  interface Window {
-    api: {
-      openDataFile: () => Promise<OpenDataResult | null>;
-      openFile: (filters?: Electron.FileFilter[]) => Promise<{ filePath: string; content: string } | null>;
-      saveFile: (defaultPath: string, content: string) => Promise<boolean>;
-      stochInit: (s: unknown, runState: unknown) => Promise<void>;
-      stochStart: (n: number) => Promise<void>;
-      stochStop: () => Promise<void>;
-      stochDestroy: () => Promise<void>;
-      stochCancel: () => Promise<void>;
-      stochGetData: () => Promise<unknown>;
-      stochGetRunState: (boxes: number) => Promise<unknown>;
-      stochLoadOutput: (filePath: string) => Promise<unknown>;
-      stochWriteOutput: (filePath: string, output: unknown) => Promise<void>;
-      stochDeleteOutput: (filePath: string) => Promise<void>;
-      stochSAParams: () => Promise<unknown>;
-      lmFastReflFit: (i: unknown, p: number[]) => Promise<unknown>;
-      lmFastReflGenerate: (i: unknown, p: number[]) => Promise<number[]>;
-      lmRhoFit: (i: unknown, p: number[]) => Promise<unknown>;
-      lmRhoGenerate: (i: unknown, p: number[]) => Promise<unknown>;
-      lmStochFit: (i: unknown, p: number[]) => Promise<unknown>;
-      onFitProgress: (cb: (d: unknown) => void) => () => void;
-      onFitComplete: (cb: (d: unknown) => void) => () => void;
-      onSettingsReset: (cb: () => void) => () => void;
-      openPdf: (dir: string, baseName: string, data: Uint8Array) => Promise<string | null>;
-    };
-  }
-}
 
 export function DataPanel() {
   const { data, setData } = useDataStore();
@@ -80,7 +46,7 @@ export function DataPanel() {
         showToast('Loaded previous fit results');
       }
     } catch (e) {
-      alert(`Failed to load file: ${(e as Error).message}`);
+      showToast(`Failed to load file: ${(e as Error).message}`);
     }
   }
 

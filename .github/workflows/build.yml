@@ -122,10 +122,10 @@ jobs:
       - name: Fix libomp rpath (macOS)
         if: runner.os == 'macOS'
         run: |
-          LIBOMP=$(otool -L build/bin/libstochfit.dylib | awk '/libomp/{print $1}')
+          LIBOMP=$(otool -L build/Release/bin/libstochfit.dylib | awk '/libomp/{print $1}')
           if [ -n "$LIBOMP" ]; then
             echo "Rewriting libomp reference: $LIBOMP -> @loader_path/libomp.dylib"
-            install_name_tool -change "$LIBOMP" "@loader_path/libomp.dylib" build/bin/libstochfit.dylib
+            install_name_tool -change "$LIBOMP" "@loader_path/libomp.dylib" build/Release/bin/libstochfit.dylib
           fi
         shell: bash
 
@@ -133,7 +133,7 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           TEST_RC=0
-          build/bin/mirefl 2>&1 | tee /tmp/test_out.txt || TEST_RC=$?
+          build/Release/bin/mirefl 2>&1 | tee /tmp/test_out.txt || TEST_RC=$?
           if [ "${TEST_RC}" != "0" ]; then
             echo "## Smoke Test Failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
@@ -154,7 +154,7 @@ jobs:
       - name: Test (mirefl smoke test — Windows)
         if: runner.os == 'Windows'
         run: |
-          build/bin/mirefl.exe > /tmp/test_out.txt 2>&1
+          build/Release/bin/mirefl.exe > /tmp/test_out.txt 2>&1
           TEST_RC=$?
           if [ "${TEST_RC}" != "0" ]; then
             echo "## Smoke Test Failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"

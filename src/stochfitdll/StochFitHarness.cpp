@@ -23,6 +23,50 @@
 #include "platform.h"
 #include <omp.h>
 
+#ifdef _WIN32
+#  define NOMINMAX
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#  include <vector>
+#  include <mutex>
+
+static DWORD_PTR GetPCoreMask() {
+    DWORD bufLen = 0;
+    GetLogicalProcessorInformationEx(RelationProcessorCore, nullptr, &bufLen);
+    std::vector<uint8_t> buf(bufLen);
+    auto* info = reinterpret_cast<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*>(buf.data());
+    if (!GetLogicalProcessorInformationEx(RelationProcessorCore, info, &bufLen))
+        return ~(DWORD_PTR)0;
+
+    uint8_t maxClass = 0;
+    for (auto* p = info; reinterpret_cast<uint8_t*>(p) < buf.data() + bufLen;
+         p = reinterpret_cast<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*>(
+             reinterpret_cast<uint8_t*>(p) + p->Size))
+        maxClass = std::max(maxClass, p->Processor.EfficiencyClass);
+
+    DWORD_PTR mask = 0;
+    bool hybrid = false;
+    for (auto* p = info; reinterpret_cast<uint8_t*>(p) < buf.data() + bufLen;
+         p = reinterpret_cast<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*>(
+             reinterpret_cast<uint8_t*>(p) + p->Size)) {
+        if (p->Processor.EfficiencyClass < maxClass) hybrid = true;
+        else mask |= p->Processor.GroupMask[0].Mask;
+    }
+    return hybrid ? mask : ~(DWORD_PTR)0;
+}
+
+static void PinOMPThreadsToPCores() {
+    static std::once_flag pinned;
+    std::call_once(pinned, [] {
+        const DWORD_PTR mask = GetPCoreMask();
+        const int pCoreCount = static_cast<int>(__popcnt64(mask));
+        #pragma omp parallel
+        { SetThreadAffinityMask(GetCurrentThread(), mask); }
+        omp_set_num_threads(pCoreCount);
+    });
+}
+#endif
+
 // ── Constructor
 // ───────────────────────────────────────────────────────────────
 
@@ -182,6 +226,10 @@ int StochFit::Processing() {
     if (!m_annealer)
       return -1;
 
+#ifdef _WIN32
+    PinOMPThreadsToPCores();
+#endif
+
     const int nThreads = omp_get_max_threads();
 
 #pragma omp parallel num_threads(nThreads)
@@ -308,7 +356,7 @@ StochRunState StochFit::GetRunState() {
   s.avgfSTUN      = GetAverageFSTUN();
   s.bestSolution  = GetLowestEnergy();
   s.chiSquare     = m_displayState.chiSquare;
-  s.goodnessOfFit = GetLowestEnergy();
+  s.goodnessOfFit = m_displayState.goF;
   auto span = params.RealParams();
   s.edValues.assign(span.begin(), span.end());
   return s;

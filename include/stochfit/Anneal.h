@@ -33,13 +33,12 @@ public:
           m_policy(std::forward<PolicyArgs>(policyArgs)...),
           m_rng(std::random_device{}()) {}
 
-    bool Iteration(ParamVector& params);
     void InitEnergy(ParamVector& params);
 
     // Cooperative interface for persistent OMP parallel regions.
     // All threads must call these in order per SA iteration.
     // PrepareCandidate: mutates candidate (omp single) then builds EDP (omp for).
-    // ComputeSharedRefl: runs cooperative Parratt (omp for); result in parratt->GetLastResult().
+    // ComputeSharedRefl: runs cooperative Parratt (omp for); result in m_deps.reflBuf.
     // EvaluateAndAccept: pure serial — call from omp single only.
     void PrepareCandidate(ParamVector& params);
     void ComputeSharedRefl();
@@ -53,7 +52,6 @@ public:
     double GetLowestEnergy() const   { return m_bestEnergy; }
     double GetCurrentEnergy() const  { return m_currentEnergy; }
     double GetLastChiSquare() const  { return m_lastChiSquare; }
-    bool   IsIterMinimum() const     { return m_isIterMinimum; }
 
 private:
     CEDP*                        m_edp;
@@ -66,7 +64,6 @@ private:
     double m_bestEnergy    = std::numeric_limits<double>::max();
     double m_currentEnergy = std::numeric_limits<double>::max();
     double m_lastChiSquare = 0.0;
-    bool   m_isIterMinimum = false;
     [[no_unique_address]] Policy m_policy;
 
     void ComputeModel(ParamVector& p) {
@@ -117,13 +114,11 @@ void Anneal<Policy>::ComputeSharedRefl() {
 
 template <class Policy>
 bool Anneal<Policy>::EvaluateAndAccept(ParamVector& params) {
-    m_isIterMinimum = false;
     const double candE = m_objective->Evaluate(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
 
     if (candE < m_bestEnergy) {
         m_bestEnergy = m_currentEnergy = candE;
         params = m_tempParams;
-        m_isIterMinimum = true;
         m_lastChiSquare = ComputeChiSquare(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
         return true;
     }
@@ -138,34 +133,3 @@ bool Anneal<Policy>::EvaluateAndAccept(ParamVector& params) {
     return false;
 }
 
-// ── Original single-threaded Iteration (used by InitEnergy, tests) ────────────
-
-template <class Policy>
-bool Anneal<Policy>::Iteration(ParamVector& params) {
-    m_isIterMinimum = false;
-    m_tempParams = params;
-    m_stepper->Step(m_tempParams);
-
-    m_edp->GenerateEDP(m_tempParams);
-    ComputeModel(m_tempParams);
-
-    const double candE = m_objective->Evaluate(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
-
-    // Fast path: unconditionally accept a new global best.
-    if (candE < m_bestEnergy) {
-        m_bestEnergy = m_currentEnergy = candE;
-        params = m_tempParams;
-        m_isIterMinimum = true;
-        m_lastChiSquare = ComputeChiSquare(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
-        return true;
-    }
-
-    if (m_policy.Accept(m_currentEnergy, candE, m_bestEnergy, m_rng)) {
-        m_currentEnergy = candE;
-        params = m_tempParams;
-        m_lastChiSquare = ComputeChiSquare(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
-        return true;
-    }
-
-    return false;
-}

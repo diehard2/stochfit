@@ -83,7 +83,6 @@ int main(int argc, char* argv[])
     settings.Refl      = refl;
     settings.ReflError = reflErr;
     settings.Directory = ".";
-    settings.Title     = "profile";
 
     // SLD parameters (silicon substrate, X-ray at 1.24 Å)
     settings.SubSLD     = 9.38;
@@ -123,7 +122,6 @@ int main(int argc, char* argv[])
     settings.AbsorptionSearchPerc    = 0;
     settings.Impnorm                 = false;
     settings.XRonly                  = xrOnly;
-    settings.Debug                   = false;
     settings.Iterations              = iterations;
 
     StochFit harness(settings);

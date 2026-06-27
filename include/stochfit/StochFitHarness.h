@@ -96,7 +96,6 @@ private:
 
   string m_Directory;
   int m_itotaliterations = 0;
-  int m_iparratlayers    = 0;
 
   // m_initStruct must be declared before m_parratt, which holds a const ref to it.
   ReflSettings m_initStruct;
@@ -129,6 +128,6 @@ private:
 
   std::optional<AnnealVariant> m_annealer;
 
-  // SA scratch buffer (sized by m_cRefl.m_idatapoints at init)
+  // SA scratch buffer (one entry per measured Q point)
   std::vector<double> m_saReflBuf;
 };

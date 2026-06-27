@@ -48,17 +48,15 @@ Electron GUI (React/TypeScript)
 Koffi FFI (Node.js ↔ stochfit.dll)
         ↕  C-style exports
 stochfit_core (static, C++20)
-        ↕  optional lazy-load
-stochfit_cuda_plugin.dll (CUDA kernels)
 ```
 
 ### C++ Backend
 
 All physics lives in `stochfit_core` (static lib), exposed via a thin C-style FFI layer in `stochfitdll`:
 
-- **`StochFitHarness`** (`include/stochfit/StochFitHarness.h`) — Top-level orchestrator. Constructed from a `ReflSettings` FlatBuffer; manages the worker thread, selects CPU vs GPU path, and owns all algorithm state.
+- **`StochFitHarness`** (`include/stochfit/StochFitHarness.h`) — Top-level orchestrator. Constructed from a `ReflSettings` FlatBuffer; manages the worker thread and owns all algorithm state.
 - **`Anneal<Policy>`** (`include/stochfit/Anneal.h`) — Template-based simulated annealing. Three policies: `Greedy`, `SimulatedAnnealing`, `STUN`.
-- **`ParrattReflectivity`** (`include/stochfit/ReflCalc.h`) — Parratt recursive reflectivity calculation; OpenMP-parallel with optional Q-smearing (13-point Gaussian quadrature).
+- **`ParrattReflectivity`** (`include/stochfit/UnifiedReflectivity.h`) — Parratt recursive reflectivity calculation; OpenMP-parallel with optional Q-smearing (13-point Gaussian quadrature).
 - **`CEDP`** (`include/stochfit/CEDP.h`) — Electron density profile generator; box-model layers with Gaussian interface broadening.
 - **`ParamVector`** (`include/stochfit/ParamVector.h`) — Parameter bounds, mutation, and clamping.
 - **`ParameterStepper`** — Adaptive mutation step sizing.
@@ -66,17 +64,12 @@ All physics lives in `stochfit_core` (static lib), exposed via a thin C-style FF
 
 The FFI exports (`src/stochfitdll/StochFitDll.cpp`) are: `Init`, `Start`, `Stop`, `GetData`, `GetRunState`, `Cancel`, `Destroy`. All inputs/outputs are FlatBuffer byte buffers.
 
-**GPU acceleration** is entirely opt-in and zero-hard-dependency:
-- `gpu_detect()` probes at runtime for CUDA ≥ compute 7.5 or Apple Metal.
-- If a suitable GPU is found, `GpuSARunner` lazy-loads `stochfit_cuda_plugin.dll/.so/.dylib` on the first `ProcessingGPU()` call.
-- If the plugin is absent or the GPU is insufficient, the CPU path is used silently.
-
 `levmardll` is a separate shared library for Levenberg-Marquardt post-refinement. It exposes `levmarFastReflFit` and `levmarRhoFit` FFI functions and links against vcpkg's `levmar` and LAPACK/OpenBLAS.
 
 ### FlatBuffers Protocol
 
 Schema is in `schema/stochfit.fbs`. Key tables:
-- `ReflSettings` — All input parameters (Q data, SLD layer stack, algorithm choice, GPU flag, box model params).
+- `ReflSettings` — All input parameters (Q data, SLD layer stack, algorithm choice, box model params).
 - `GetDataResult` — Polling response: reflectivity curve, SLD profile, chi-square, goodness-of-fit.
 - `StochRunState` — Full serialized state for session resume (SA temperature, parameter values, EDP).
 - `LevMarRequest` / `ReflFitResult` — LevMar request/response.

@@ -26,7 +26,6 @@ ReflSettings::ReflSettings(const StochFitProto::ReflSettings* s)
     UseSurfAbs           = s->use_surf_abs();
     QErr                 = s->q_err();
     Forcesig             = s->forcesig();
-    Debug                = s->debug();
     XRonly               = s->xr_only();
     Resolution           = s->resolution();
     FilmLength           = s->film_length();
@@ -49,9 +48,6 @@ ReflSettings::ReflSettings(const StochFitProto::ReflSettings* s)
     CritEdgeOffset       = s->crit_edge_offset();
     HighQOffset          = s->high_q_offset();
     Iterations           = s->iterations();
-    IterationsCompleted  = s->iterations_completed();
-    ChiSquare            = s->chi_square();
-    Title                = s->title() ? s->title()->str() : "";
 }
 
 StochRunState::StochRunState(const StochFitProto::StochRunState* st)

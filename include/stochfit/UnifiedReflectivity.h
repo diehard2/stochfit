@@ -48,9 +48,6 @@ public:
   // BuildLayerStack runs in omp single internally.
   auto CalculateReflectivityCooperative(const CEDP &EDP) -> std::span<double>;
 
-  // Returns the reflectivity output from the most recent calculation.
-  std::span<const double> GetLastResult() const { return m_refl_out; }
-
 private:
   template <bool HasRoughness>
   void ReflectivityCalcCoreImpl(const LayerStack &ls,

@@ -31,7 +31,6 @@ struct ReflSettings
 	double QErr;
 	double Forcesig;
 	double RoughnessMax = 8.0; // upper bound for roughness search; determines EDP padding (6× this value)
-	bool Debug;
 	bool XRonly;
 	int Resolution;
 	double FilmLength;
@@ -56,12 +55,7 @@ struct ReflSettings
 
 	int CritEdgeOffset;
 	int HighQOffset;
-	//Not used
-	int Iterations;
-	int IterationsCompleted;
-	double ChiSquare;
-
-	std::string Title;
+	int Iterations; // SA iteration count; also used by LevMar
 
 	ReflSettings() = default;
 	explicit ReflSettings(const StochFitProto::ReflSettings*);

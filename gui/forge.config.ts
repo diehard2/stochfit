@@ -36,15 +36,15 @@ const config: ForgeConfig = {
     executableName: 'stochfit',
     extraResource: [
       // Core native libraries
-      `../build/bin/${libPrefix}stochfit${libExt}`,
-      `../build/bin/${libPrefix}levmardll${libExt}`,
+      `../build/Release/bin/${libPrefix}stochfit${libExt}`,
+      `../build/Release/bin/${libPrefix}levmardll${libExt}`,
 
       // OpenMP runtime — not present on stock macOS or Windows.
       // On macOS: libomp.dylib (copied from Homebrew by CMake).
       // On Windows: vcomp140.dll (Visual C++ OpenMP runtime, copied from VS Redist by CMake).
       // On Linux: libgomp is a system package; not bundled.
-      ...opt('../build/bin/libomp.dylib'),   // macOS
-      ...opt('../build/bin/vcomp140.dll'),   // Windows
+      ...opt('../build/Release/bin/libomp.dylib'),   // macOS
+      ...opt('../build/Release/bin/vcomp140.dll'),   // Windows
 
       '../resources/test1refl.txt',
     ],

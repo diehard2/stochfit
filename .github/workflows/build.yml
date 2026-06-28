@@ -28,11 +28,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build gfortran liblapack-dev dotnet-sdk-8.0
+          sudo apt-get install -y ninja-build gfortran liblapack-dev mono-complete
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install ninja libomp
+        run: brew install ninja libomp mono
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v4

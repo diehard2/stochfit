@@ -2,7 +2,7 @@
 
 // Cross-platform portability layer for StochFit.
 // Provides: MAX_OMP_THREADS limit, EXPORT visibility macro (dllexport / visibility("default")),
-// platform_error() stderr sink, and GpuBackend enum.
+// and platform_error() stderr sink.
 // Use std::numbers::pi for π and std::complex<double> directly in all code.
 // All standard headers needed by the codebase are included here.
 
@@ -29,6 +29,10 @@
 #include <chrono>
 #include <random>
 #include <optional>
+#include <span>
+#include <ranges>
+#include <limits>
+#include <utility>
 #include <tl/expected.hpp>
 
 // std::jthread is NOT used — replaced with std::thread + std::atomic<bool>
@@ -41,6 +45,9 @@
 #ifndef MAX_OMP_THREADS
 #  define MAX_OMP_THREADS 8
 #endif
+
+// ── Debug flags ──────────────────────────────────────────────────────────────
+inline constexpr bool kSingleProcDebug = false;
 
 // ── Export macro ────────────────────────────────────────────────────────────
 #if defined(_MSC_VER)
@@ -55,8 +62,3 @@ inline void platform_error(const char* msg) { std::cerr << msg << std::endl; }
 // ── Convenience namespaces (matching existing codebase convention) ──────────
 using namespace std;
 
-// ── GPU backend tag ──────────────────────────────────────────────────────────
-// GpuBackend::None means no GPU was detected at runtime.
-// CUDA is probed via dynamic loading (nvcuda.dll / libcuda.so) so that
-// stochfit.dll loads on GPU-less machines without crashing.
-enum class GpuBackend : int { None, CUDA, Metal };

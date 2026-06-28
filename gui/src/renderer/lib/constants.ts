@@ -10,13 +10,6 @@ export const COLORS = {
   axisMuted: '#888893',
 } as const;
 
-// Publication mode colors (B&W)
-export const PUB_COLORS = {
-  data: '#000000',
-  fit: '#333333',
-  fitAlt: '#666666',
-} as const;
-
 // Font stacks
 export const FONTS = {
   ui: 'Inter, system-ui, sans-serif',

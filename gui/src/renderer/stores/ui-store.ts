@@ -1,35 +1,47 @@
 import { create } from 'zustand';
 
 export type ActivePanel = 'data' | 'parameters' | 'mi' | 'boxmodel';
+export type GraphMode = 'standard' | 'fresnel' | 'rq4';
 
 interface UiState {
   activePanel: ActivePanel;
   settingsOpen: boolean;
   aboutOpen: boolean;
-  publicationMode: boolean;
-  normalizeByFresnel: boolean;
-  gpuAvailable: boolean;
+  sldCalcOpen: boolean;
+  graphMode: GraphMode;
+  darkMode: boolean;
+  masterGraphOpen: boolean;
+  toast: string | null;
 
   setActivePanel: (p: ActivePanel) => void;
   setSettingsOpen: (v: boolean) => void;
   setAboutOpen: (v: boolean) => void;
-  setPublicationMode: (v: boolean) => void;
-  setNormalizeByFresnel: (v: boolean) => void;
-  setGpuAvailable: (v: boolean) => void;
+  setSldCalcOpen: (v: boolean) => void;
+  setGraphMode: (m: GraphMode) => void;
+  setDarkMode: (v: boolean) => void;
+  setMasterGraphOpen: (v: boolean) => void;
+  showToast: (message: string, durationMs?: number) => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
   activePanel: 'data',
   settingsOpen: false,
   aboutOpen: false,
-  publicationMode: false,
-  normalizeByFresnel: false,
-  gpuAvailable: false,
+  sldCalcOpen: false,
+  graphMode: 'standard',
+  darkMode: true,
+  masterGraphOpen: false,
+  toast: null,
 
   setActivePanel: (activePanel) => set({ activePanel }),
   setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
   setAboutOpen: (aboutOpen) => set({ aboutOpen }),
-  setPublicationMode: (publicationMode) => set({ publicationMode }),
-  setNormalizeByFresnel: (normalizeByFresnel) => set({ normalizeByFresnel }),
-  setGpuAvailable: (gpuAvailable) => set({ gpuAvailable }),
+  setSldCalcOpen: (sldCalcOpen) => set({ sldCalcOpen }),
+  setGraphMode: (graphMode) => set({ graphMode }),
+  setDarkMode: (darkMode) => set({ darkMode }),
+  setMasterGraphOpen: (masterGraphOpen) => set({ masterGraphOpen }),
+  showToast: (message, durationMs = 3000) => {
+    set({ toast: message });
+    setTimeout(() => set({ toast: null }), durationMs);
+  },
 }));

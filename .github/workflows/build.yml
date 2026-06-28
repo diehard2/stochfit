@@ -15,206 +15,176 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     permissions:
-      packages: write        # allows vcpkg to push built packages to GitHub Packages
-      pull-requests: write   # allows posting build failure diagnostics as PR comments
+      packages: write        # vcpkg NuGet binary cache on GitHub Packages
+      pull-requests: write   # failure comment on PR
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build gfortran liblapack-dev dotnet-sdk-8.0
+          sudo apt-get install -y ninja-build gfortran liblapack-dev mono-complete
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install ninja libomp
-
-      - name: Setup dotnet (enables vcpkg NuGet binary cache on all platforms)
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0'
+        run: brew install ninja libomp mono
 
       - name: Install Ninja (Windows)
         if: runner.os == 'Windows'
-        uses: seanmiddleditch/gha-setup-ninja@v5
+        uses: seanmiddleditch/gha-setup-ninja@v6
 
       - name: Setup MSVC (Windows)
         if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
-
-      # Cache the vcpkg clone + bootstrap binary.  The stamp file lives inside
-      # build/vcpkg so a cache hit also restores it, skipping re-bootstrap.
-      - name: Cache vcpkg bootstrap
-        uses: actions/cache@v4
+        uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
-          path: build/vcpkg
-          key: vcpkg-bootstrap-${{ runner.os }}-${{ hashFiles('env/vcpkg-version.txt') }}
+          arch: x64
 
-      - name: Install CUDA
-        if: runner.os != 'macOS'
-        uses: Jimver/cuda-toolkit@v0.2.30
+      - name: Cache vcpkg
+        uses: actions/cache@v5
         with:
-          cuda: '13.1.0'
+          path: |
+            build/vcpkg
+            build/vcpkg/downloads
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('env/vcpkg-version.txt', 'vcpkg.json', 'env/ports/**') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+            vcpkg-bootstrap-${{ runner.os }}-
 
-      - name: Cache vcpkg installed packages
-        uses: actions/cache@v4
-        with:
-          path: build/vcpkg_installed
-          key: vcpkg-installed-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'env/vcpkg-version.txt', 'env/ports/**') }}
+      - name: Bootstrap vcpkg
+        shell: bash
+        run: |
+          VERSION="$(tr -d '[:space:]' < env/vcpkg-version.txt)"
+          STAMP="build/vcpkg/.bootstrap-stamp"
+          CACHED=""; [ -f "$STAMP" ] && CACHED="$(tr -d '[:space:]' < "$STAMP")"
+          if [ "$CACHED" != "$VERSION" ]; then
+            if [ -d "build/vcpkg/.git" ]; then
+              git -C build/vcpkg fetch --tags
+            else
+              git clone --filter=blob:none --no-checkout https://github.com/microsoft/vcpkg.git build/vcpkg
+            fi
+            git -C build/vcpkg checkout "$VERSION"
+            if [ "$RUNNER_OS" = "Windows" ]; then
+              build/vcpkg/bootstrap-vcpkg.bat -disableMetrics
+            else
+              bash build/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+            fi
+            echo "$VERSION" > "$STAMP"
+          fi
+
+      - name: Register vcpkg NuGet binary cache (GitHub Packages)
+        shell: bash
+        run: |
+          FEED="https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            VCPKG_BIN="build/vcpkg/vcpkg.exe"
+          else
+            VCPKG_BIN="build/vcpkg/vcpkg"
+          fi
+          NUGET_EXE="$($VCPKG_BIN fetch nuget 2>/dev/null | tail -1)"
+          if [ -z "$NUGET_EXE" ]; then
+            echo "vcpkg fetch nuget failed, skipping NuGet registration"
+            exit 0
+          fi
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            NUGET="mono $NUGET_EXE"
+          else
+            NUGET="$NUGET_EXE"
+          fi
+          $NUGET sources add \
+            -name "vcpkg-cache" \
+            -source "$FEED" \
+            -username "${{ github.repository_owner }}" \
+            -password "${{ secrets.GITHUB_TOKEN }}" \
+            -StorePasswordInClearText || true
+          $NUGET setapikey "${{ secrets.GITHUB_TOKEN }}" -source "$FEED" || true
 
       - name: Configure
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MACOSX_DEPLOYMENT_TARGET: "14.0"
-        run: |
-          CFG_RC=0
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            cmake --preset windows 2>&1 | tee /tmp/cfg_out.txt || CFG_RC=$?
-          else
-            cmake --preset default 2>&1 | tee /tmp/cfg_out.txt || CFG_RC=$?
-          fi
-          if [ "${CFG_RC}" != "0" ]; then
-            echo "## Configure Failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            tail -100 /tmp/cfg_out.txt >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            if [ "${{ github.event_name }}" == "pull_request" ]; then
-              BODY=$(printf '**Configure failure on %s**\n```\n%s\n```' "${{ runner.os }}" "$(tail -80 /tmp/cfg_out.txt)")
-              gh pr comment "${{ github.event.pull_request.number }}" \
-                --repo "${{ github.repository }}" \
-                --body "${BODY}" || true
-            fi
-            exit "${CFG_RC}"
-          fi
+          VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json,readwrite"
         shell: bash
+        run: |
+          set -o pipefail
+          PRESET=${{ runner.os == 'Windows' && 'windows' || 'default' }}
+          cmake --preset "$PRESET" 2>&1 | tee /tmp/step_out.txt || {
+            { echo "## Configure failure on ${{ runner.os }}"; echo '```'; tail -100 /tmp/step_out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
 
       - name: Build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          BUILD_RC=0
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            cmake --build --preset windows --parallel 2>&1 | tee /tmp/build_out.txt || BUILD_RC=$?
-          else
-            cmake --build --preset default --parallel 2>&1 | tee /tmp/build_out.txt || BUILD_RC=$?
-          fi
-          if [ "${BUILD_RC}" != "0" ]; then
-            echo "## Build Failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            tail -100 /tmp/build_out.txt >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            if [ "${{ github.event_name }}" == "pull_request" ]; then
-              BODY=$(printf '**Build failure on %s**\n```\n%s\n```' "${{ runner.os }}" "$(tail -80 /tmp/build_out.txt)")
-              gh pr comment "${{ github.event.pull_request.number }}" \
-                --repo "${{ github.repository }}" \
-                --body "${BODY}" || true
-            fi
-            exit "${BUILD_RC}"
-          fi
+          VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json,readwrite"
         shell: bash
+        run: |
+          set -o pipefail
+          PRESET=${{ runner.os == 'Windows' && 'windows' || 'default' }}
+          cmake --build --preset "$PRESET" --parallel 2>&1 | tee /tmp/step_out.txt || {
+            { echo "## Build failure on ${{ runner.os }}"; echo '```'; tail -100 /tmp/step_out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
+
+      - name: Fix libomp rpath (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          LIBOMP=$(otool -L build/Release/bin/libstochfit.dylib | awk '/libomp/{print $1}')
+          if [ -n "$LIBOMP" ]; then
+            echo "Rewriting libomp reference: $LIBOMP -> @loader_path/libomp.dylib"
+            install_name_tool -change "$LIBOMP" "@loader_path/libomp.dylib" build/Release/bin/libstochfit.dylib
+          fi
 
       - name: Test (mirefl smoke test)
-        if: runner.os != 'Windows'
-        run: |
-          TEST_RC=0
-          build/bin/mirefl 2>&1 | tee /tmp/test_out.txt || TEST_RC=$?
-          if [ "${TEST_RC}" != "0" ]; then
-            echo "## Smoke Test Failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            cat /tmp/test_out.txt >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            if [ "${{ github.event_name }}" == "pull_request" ]; then
-              BODY=$(printf '**Smoke test failure on %s**\n```\n%s\n```' "${{ runner.os }}" "$(cat /tmp/test_out.txt)")
-              gh pr comment "${{ github.event.pull_request.number }}" \
-                --repo "${{ github.repository }}" \
-                --body "${BODY}" || true
-            fi
-            exit "${TEST_RC}"
-          fi
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Test (mirefl smoke test — Windows)
-        if: runner.os == 'Windows'
         run: |
-          build/bin/mirefl.exe > /tmp/test_out.txt 2>&1
-          TEST_RC=$?
-          if [ "${TEST_RC}" != "0" ]; then
-            echo "## Smoke Test Failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            cat /tmp/test_out.txt >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            if [ "${{ github.event_name }}" == "pull_request" ]; then
-              BODY=$(printf '**Smoke test failure on %s**\n```\n%s\n```' "${{ runner.os }}" "$(cat /tmp/test_out.txt)")
-              gh pr comment "${{ github.event.pull_request.number }}" \
-                --repo "${{ github.repository }}" \
-                --body "${BODY}" || true
-            fi
-            exit "${TEST_RC}"
-          fi
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          set -o pipefail
+          EXT=${{ runner.os == 'Windows' && '.exe' || '' }}
+          build/Release/bin/mirefl${EXT} 2>&1 | tee /tmp/step_out.txt || {
+            { echo "## Smoke test failure on ${{ runner.os }}"; echo '```'; cat /tmp/step_out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install GUI dependencies
         working-directory: gui
         run: npm ci
 
-      - name: Package GUI (no installer)
-        if: "!startsWith(github.ref, 'refs/tags/') && github.event_name != 'workflow_dispatch'"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Stamp version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
         working-directory: gui
-        run: |
-          PKG_RC=0
-          npm run package 2>&1 | tee /tmp/pkg_out.txt || PKG_RC=$?
-          if [ "${PKG_RC}" != "0" ]; then
-            echo "## Package GUI failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            tail -100 /tmp/pkg_out.txt >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            if [ "${{ github.event_name }}" == "pull_request" ]; then
-              BODY=$(printf '**Package GUI failure on %s**\n```\n%s\n```' "${{ runner.os }}" "$(tail -60 /tmp/pkg_out.txt)")
-              gh pr comment "${{ github.event.pull_request.number }}" \
-                --repo "${{ github.repository }}" \
-                --body "${BODY}" || true
-            fi
-            exit "${PKG_RC}"
-          fi
         shell: bash
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          npm version "$TAG" --no-git-tag-version
 
-      - name: Make installers (release)
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+      - name: Make installers
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         working-directory: gui
-        run: |
-          PKG_RC=0
-          npm run make 2>&1 | tee /tmp/pkg_out.txt || PKG_RC=$?
-          if [ "${PKG_RC}" != "0" ]; then
-            echo "## Make installers failure on ${{ runner.os }}" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            tail -100 /tmp/pkg_out.txt >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            exit "${PKG_RC}"
-          fi
         shell: bash
+        run: |
+          set -o pipefail
+          npm run make 2>&1 | tee /tmp/step_out.txt || {
+            { echo "## Make installers failure on ${{ runner.os }}"; echo '```'; tail -100 /tmp/step_out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
 
       - name: Upload Windows installer
         if: runner.os == 'Windows' && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: installer-windows
           path: build/electron/make/**/*.exe
@@ -222,7 +192,7 @@ jobs:
 
       - name: Upload macOS installer
         if: runner.os == 'macOS' && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: installer-macos
           path: build/electron/make/**/*.dmg
@@ -230,10 +200,20 @@ jobs:
 
       - name: Upload Linux installers
         if: runner.os == 'Linux' && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: installer-linux
           path: build/electron/make/zip/linux/**/*.zip
+
+      - name: Comment on PR failure
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --body "**${{ matrix.os }} build failed** — [view logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" || true
 
   release:
     name: Create GitHub Release
@@ -244,7 +224,7 @@ jobs:
       contents: write
     steps:
       - name: Download all installers
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: artifacts
 

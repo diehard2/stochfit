@@ -11,7 +11,7 @@ export default defineConfig({
     outDir: path.join(__dirname, '.vite/build/main'),
     emptyOutDir: true,
     rollupOptions: {
-      external: ['electron', 'koffi', 'path', 'fs'],
+      external: ['electron', 'koffi', 'path', 'fs', 'h5wasm'],
     },
   },
 });

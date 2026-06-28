@@ -15,323 +15,480 @@
  *  along with GNU Make; see the file COPYING.  If not, write to
  *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  *  http://www.gnu.org/copyleft/gpl.html
- *
  */
 
-//
-// LevMardll.cpp : Defines the entry point for the DLL application.
-//
-
-#include "platform.h"
 #include "LevMardll.h"
-#include "FastReflCalc.h"
+#include "BoxLayerBuild.h"
 #include "RhoCalc.h"
-#include "ParameterContainer.h"
-#include <random>
 #include "Settings.h"
+#include "SettingsBridge.h"
+#include "generated/stochfit_generated.h"
+#include "platform.h"
+#include "stochfit/ReflectivityObjective.h"
+#include "stochfit/UnifiedReflectivity.h"
+#include <flatbuffers/flatbuffers.h>
+
+#include <algorithm>
+#include <cmath>
+#include <cstring>
 #include <levmar/levmar.h>
+#include <random>
+#include <span>
+#include <vector>
 
-extern "C" EXPORT void Rhofit(BoxReflSettings* InitStruct, double parameters[], double covariance[], int parametersize, double info[])
-{
-	double opts[LM_OPTS_SZ];
-	double* xvec = new double[InitStruct->ZLength] ;
-	double *work, *covar;
+// ── Helpers
+// ───────────────────────────────────────────────────────────────────
 
-	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20;
-	opts[4]=-LM_DIFF_DELTA; // relevant only if the finite difference jacobian version is used
-
-	RhoCalc Rho;
-	Rho.init(InitStruct);
-
-	//Allocate a dummy array - Our real calculation is done in Refl.objective
-	memset(xvec, 0, InitStruct->ZLength*sizeof(double));
-
-	//Allocate workspace and our covariance matrix
-	work=new double[((LM_DIF_WORKSZ(parametersize, InitStruct->ZLength)+parametersize*InitStruct->ZLength))];
-	covar=work+LM_DIF_WORKSZ(parametersize, InitStruct->ZLength);
-
-	if(InitStruct->UL == NULL)
-		dlevmar_dif(Rho.objective, parameters, xvec, parametersize, InitStruct->ZLength, 1000, opts, info, work, covar, (void*)(&Rho));
-	else
-		dlevmar_bc_dif(Rho.objective, parameters, xvec, parametersize, InitStruct->ZLength, InitStruct->LL, InitStruct->UL, nullptr, 1000, opts, info, work, covar, (void*)(&Rho));
-
-
-	//Calculate the standard deviations in the parameters
-	for(int i = 0; i< parametersize;i++)
-	{
-		covariance[i] = sqrt(covar[i*(parametersize+1)]);
-	}
-
-	delete[] xvec;
-	delete[] work;
+static std::vector<double> copy_fbs_vec(const flatbuffers::Vector<double> *v) {
+  if (!v || v->size() == 0)
+    return {};
+  return std::vector<double>(v->data(), v->data() + v->size());
 }
 
-extern "C" EXPORT void RhoGenerate(BoxReflSettings* InitStruct, double parameters[], int paramsize, double ED[], double BoxED[])
-{
-	RhoCalc Rho;
-	Rho.init(InitStruct);
-	Rho.mkdensity(parameters,paramsize);
-	Rho.mkdensityboxmodel(parameters,paramsize);
-
-	for(int i = 0; i< InitStruct->ZLength; i++)
-	{
-		ED[i] = Rho.nk[i];
-		BoxED[i] = Rho.nkb[i];
-	}
+static void fill_box_settings(const StochFitProto::BoxReflSettings *s,
+                              BoxReflSettings &rs) {
+  rs.Directory = s->directory() ? s->directory()->str() : "";
+  rs.Q = copy_fbs_vec(s->q());
+  rs.Refl = copy_fbs_vec(s->refl());
+  rs.ReflError = copy_fbs_vec(s->refl_error());
+  rs.QError = copy_fbs_vec(s->q_error());
+  rs.UL = copy_fbs_vec(s->ul());
+  rs.LL = copy_fbs_vec(s->ll());
+  rs.ParamPercs = copy_fbs_vec(s->param_percs());
+  rs.MIEDP = copy_fbs_vec(s->miedp());
+  rs.ZIncrement = copy_fbs_vec(s->z_increment());
+  rs.QPoints = s->q_points();
+  rs.OneSigma = s->one_sigma();
+  rs.SubSLD = s->sub_sld();
+  rs.SupSLD = s->sup_sld();
+  rs.Boxes = s->boxes();
+  rs.Wavelength = s->wavelength();
+  rs.QSpread = s->q_spread();
+  rs.ImpNorm = s->imp_norm();
+  rs.FitFunc = s->fit_func();
+  rs.LowQOffset = s->low_q_offset();
+  rs.HighQOffset = s->high_q_offset();
+  rs.Iterations = s->iterations();
+  rs.ZLength = s->z_length();
 }
 
-
-extern "C" EXPORT void FastReflfit(BoxReflSettings* InitStruct, double params[], double covariance[], int paramsize, double info[])
-{
-	//Variables
-	double *work, *covar;
-
-	FastReflcalc Refl;
-	Refl.init(InitStruct);
-
-	//Setup the fit
-	//opts[4] is relevant only if the finite difference jacobian version is used
-	double opts[LM_OPTS_SZ];
-	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20; opts[4]=-LM_DIFF_DELTA;
-
-	//Allocate a dummy array - Our real calculation is done in Refl.objective
-	double* xvec = new double[InitStruct->QPoints] ;
-	memset(xvec, 0, InitStruct->QPoints*sizeof(double));
-
-	//Allocate workspace and our covariance matrix
-
-	work=new double[((LM_DIF_WORKSZ(paramsize, InitStruct->QPoints)+paramsize*InitStruct->QPoints))];
-	covar=work+LM_DIF_WORKSZ(paramsize, InitStruct->QPoints);
-
-	if(InitStruct->UL == NULL)
-		dlevmar_dif(Refl.objective,params, xvec, paramsize,InitStruct->QPoints, 1000, opts, info, work, covar,(void*)(&Refl));
-	else
-		dlevmar_bc_dif(Refl.objective, params, xvec,  paramsize,InitStruct->QPoints, InitStruct->LL,InitStruct->UL, nullptr, 1000, opts, info, work, covar,(void*)(&Refl));
-
-	for(int i = 0; i< paramsize;i++)
-	{
-		covariance[i] = sqrt(covar[i*(paramsize+1)]);
-	}
-
-	delete[] xvec;
-	delete[] work;
+template <typename T>
+static int finish_into(flatbuffers::FlatBufferBuilder &fbb,
+                       flatbuffers::Offset<T> root, uint8_t *outBuf,
+                       int maxLen) {
+  fbb.Finish(root);
+  int written = static_cast<int>(fbb.GetSize());
+  if (written > maxLen)
+    return -1;
+  std::memcpy(outBuf, fbb.GetBufferPointer(), written);
+  return written;
 }
 
+// ── LevmarReflTask
+// ──────────────────────────────────────────────────────────── All state needed
+// by the levmar residual callback. Stack-allocated per FFI call.
 
-extern "C" EXPORT void StochFit(BoxReflSettings* InitStruct, double parameters[], double covararray[], int paramsize,
-			double info[], double ParamArray[], double chisquarearray[], int* paramarraysize)
-{
-	FastReflcalc Refl;
-	Refl.init(InitStruct);
-	double* Reflectivity = InitStruct->Refl;
-	int QSize = InitStruct->QPoints;
-	double* parampercs = InitStruct->ParamPercs;
+struct LevmarReflTask {
+  ParrattReflectivity parratt;
+  ReflectivityObjective objective;
+  BoxLayers layers;
+  std::span<const double> Realrefl;
+  std::span<const double> Realreflerrors;
+  const BoxReflSettings *rs = nullptr;
+};
 
-	//Setup the fit
-	double opts[LM_OPTS_SZ];
-	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20;
-	opts[4]=-LM_DIFF_DELTA; // relevant only if the finite difference jacobian version is used
-
-	//Allocate a dummy array - Our real calculation is done in Refl.objective
-	double* xvec = new double[InitStruct->QPoints] ;
-	for(int i = 0; i < InitStruct->QPoints; i++)
-	{
-		xvec[i] = 0;
-	}
-
-	//Copy starting solution
-	double* origguess = new double[paramsize];
-	memcpy(origguess, parameters, sizeof(double)*paramsize);
-
-	if(InitStruct->OneSigma != 0)
-		Refl.mkdensityonesigma(parameters, paramsize);
-	else
-		Refl.mkdensity(parameters, paramsize);
-
-	Refl.myrfdispatch();
-
-	double bestchisquare = 0;
-	for(int i = 0; i < InitStruct->QPoints; i++)
-	{
-		bestchisquare += (log(Refl.reflpt[i])-log(Reflectivity[i]))*(log(Refl.reflpt[i])-log(Reflectivity[i]));
-	}
-
-	double tempinfoarray[LM_INFO_SZ];
-	tempinfoarray[1] = bestchisquare;
-	double* tempcovararray = new double[paramsize*paramsize];
-	memset(tempcovararray, 0, sizeof(double)*paramsize*paramsize);
-	ParameterContainer original(parameters, tempcovararray, paramsize,InitStruct->OneSigma,
-		tempinfoarray, parampercs[6]);
-	delete[] tempcovararray;
-
-	vector<ParameterContainer> temp;
-	temp.reserve(6000);
-
-	omp_set_num_threads(omp_get_num_procs());
-
-	#pragma omp parallel
-	{
-		FastReflcalc locRefl;
-		locRefl.init(InitStruct);
-
-		//Initialize random number generator
-		std::mt19937 randgen(std::random_device{}() + omp_get_thread_num());
-		// IRandom(max, min) mirrors the old CRandomMersenne::IRandom(double max, double min) signature
-		auto IRandom = [&](double max, double min) {
-			return std::uniform_real_distribution<double>(min, max)(randgen);
-		};
-
-		ParameterContainer localanswer;
-		double locparameters[20];
-		double locbestchisquare = bestchisquare;
-		int vecsize = 1000;
-		int veccount = 0;
-		ParameterContainer* vec = (ParameterContainer*)malloc(vecsize*sizeof(ParameterContainer));
-
-		double locinfo[LM_INFO_SZ];
-
-		//Allocate workspace - these will be private to each thread
-
-		double* work, *covar;
-		work=(double*)malloc((LM_DIF_WORKSZ(paramsize, QSize)+paramsize*QSize)*sizeof(double));
-		covar=work+LM_DIF_WORKSZ(paramsize, QSize);
-
-
-		#pragma omp for schedule(runtime)
-		for(int i = 0; i < InitStruct->Iterations;i++)
-		{
-			locparameters[0] = IRandom(origguess[0]*parampercs[4], origguess[0]*parampercs[5]);
-			for(int k = 0; k< InitStruct->Boxes; k++)
-			{
-				if(InitStruct->OneSigma != 0)
-				{
-					locparameters[2*k+1] = IRandom(origguess[2*k+1]*parampercs[0], origguess[2*k+1]*parampercs[1]);
-					locparameters[2*k+2] = IRandom(origguess[2*k+2]*parampercs[2], origguess[2*k+2]*parampercs[3]);
-				}
-				else
-				{
-					locparameters[3*k+1] = IRandom(origguess[3*k+1]*parampercs[0], origguess[3*k+1]*parampercs[1]);
-					locparameters[3*k+2] = IRandom(origguess[3*k+2]*parampercs[2], origguess[3*k+2]*parampercs[3]);
-					locparameters[3*k+3] = IRandom(origguess[3*k+3]*parampercs[4], origguess[3*k+3]*parampercs[5]);
-				}
-			}
-
-			locparameters[paramsize-1] = origguess[paramsize-1];
-
-
-			if(InitStruct->UL == NULL)
-				dlevmar_dif(locRefl.objective, locparameters, xvec,  paramsize, InitStruct->QPoints, 500, opts, locinfo, work,covar,(void*)(&locRefl));
-			else
-				dlevmar_bc_dif(locRefl.objective, locparameters, xvec, paramsize, InitStruct->QPoints, InitStruct->LL, InitStruct->UL, nullptr,
-					500, opts, locinfo, work,covar,(void*)(&locRefl));
-
-			localanswer.SetContainer(locparameters,covar,paramsize,InitStruct->OneSigma,locinfo, parampercs[6]);
-
-			if(locinfo[1] < bestchisquare && localanswer.IsReasonable() == true)
-			{
-				//Resize the private arrays if we need the space
-				if(veccount+2 == vecsize)
-				{
-							vecsize += 1000;
-							vec = (ParameterContainer*)realloc(vec,vecsize*sizeof(ParameterContainer));
-				}
-
-				bool unique = true;
-				int arraysize = veccount;
-
-				//Check if the answer already exists
-				for(int i = 0; i < arraysize; i++)
-				{
-					if(localanswer == vec[i])
-					{
-						unique = false;
-						i = arraysize;
-					}
-				}
-				//If the answer is unique add it to our set of answers
-				if(unique == true)
-				{
-					vec[veccount] = localanswer;
-					veccount++;
-				}
-			}
-		}
-		#pragma omp critical (AddVecs)
-		{
-			for(int i = 0; i < veccount; i++)
-			{
-				temp.push_back(vec[i]);
-			}
-		}
-		free(vec);
-		free(work);
-	}
-	//
-	delete[] xvec;
-	delete[] origguess;
-
-	//Sort the answers
-	//Get the total number of answers
-	temp.push_back(original);
-
-	vector<ParameterContainer> allsolutions;
-	allsolutions.reserve(6000);
-
-	int tempsize = static_cast<int>(temp.size());
-	allsolutions.push_back(temp[0]);
-
-	for(int i = 1; i < tempsize; i++)
-	{
-		int allsolutionssize = static_cast<int>(allsolutions.size());
-		for(int j = 0; j < allsolutionssize;j++)
-			{
-				if(temp[i] == allsolutions[j])
-				{
-					break;
-				}
-				if(j == allsolutionssize-1)
-				{
-					allsolutions.push_back(temp[i]);
-				}
-			}
-	}
-
-	if(allsolutions.size() > 0)
-	{
-		sort(allsolutions.begin(), allsolutions.end());
-	}
-
-	for(int i = 0; i < (int)allsolutions.size() && i < 1000 && allsolutions.size() > 0; i++)
-	{
-		for(int j = 0; j < paramsize; j++)
-		{
-			ParamArray[(i)*paramsize+j] = (allsolutions.at(i).GetParamArray())[j];
-			covararray[(i)*paramsize+j] = (allsolutions.at(i).GetCovarArray())[j];
-		}
-
-		memcpy(info, allsolutions.at(i).GetInfoArray(), LM_INFO_SZ * sizeof(double));
-		info += LM_INFO_SZ;
-
-		chisquarearray[i] = (allsolutions.at(i).GetScore());
-	}
-	*paramarraysize = min((int)allsolutions.size(),999);
+// Static C-style callback required by levmar's void* interface.
+static void LevmarReflResidual(double *p, double *x, int m, int n, void *data) {
+  auto *self = static_cast<LevmarReflTask *>(data);
+  BuildBoxLayers(*self->rs, std::span<const double>(p, m), self->rs->OneSigma,
+                 self->layers);
+  auto refl =
+      self->parratt.CalculateReflectivity(self->layers.View(self->rs->Boxes));
+  if (self->rs->ImpNorm) {
+    const double nf = self->layers.normfactor;
+    for (auto &r : refl)
+      r *= nf;
+  }
+  self->objective.FillResiduals(refl, self->Realrefl, self->Realreflerrors,
+                                std::span<double>(x, n), self->rs->LowQOffset,
+                                self->rs->HighQOffset);
 }
 
-extern "C" EXPORT void FastReflGenerate(BoxReflSettings* InitStruct, double parameters[], int parametersize, double Reflectivity[])
-{
-	FastReflcalc FastRefl;
-	FastRefl.init(InitStruct);
+// ── FastReflfit
+// ───────────────────────────────────────────────────────────────
 
-	if(InitStruct->OneSigma)
-		FastRefl.mkdensityonesigma(parameters, parametersize);
-	else
-		FastRefl.mkdensity(parameters,parametersize);
+extern "C" EXPORT int FastReflfit(const uint8_t *inBuf, int /*inLen*/,
+                                  uint8_t *outBuf, int maxLen) {
+  auto *req = flatbuffers::GetRoot<StochFitProto::LevMarRequest>(inBuf);
 
-	FastRefl.SetOffsets(0,0);
-	FastRefl.myrfdispatch();
+  BoxReflSettings rs{};
+  fill_box_settings(req->settings(), rs);
 
-	for(int i = 0; i< InitStruct->QPoints; i++)
-	{
-		Reflectivity[i] = FastRefl.reflpt[i];
-	}
+  std::vector<double> params = copy_fbs_vec(req->parameters());
+  int paramsize = static_cast<int>(params.size());
+
+  double opts[LM_OPTS_SZ] = {LM_INIT_MU, 1e-15, 1e-15, 1e-20, -LM_DIFF_DELTA};
+
+  LevmarReflTask task{
+      ParrattReflectivity(ToReflSettings(rs)),
+      ReflectivityObjective(ReflectivityObjective::Type{rs.FitFunc}),
+      {},
+      rs.Refl,
+      rs.ReflError,
+      &rs};
+
+  std::vector<double> xvec(rs.QPoints, 0.0);
+  std::vector<double> work(LM_DIF_WORKSZ(paramsize, rs.QPoints) +
+                           paramsize * rs.QPoints);
+  auto covar = std::span(work).subspan(LM_DIF_WORKSZ(paramsize, rs.QPoints));
+  std::vector<double> info(LM_INFO_SZ, 0.0);
+
+  if (rs.UL.empty())
+    dlevmar_dif(LevmarReflResidual, params.data(), xvec.data(), paramsize,
+                rs.QPoints, 1000, opts, info.data(), work.data(), covar.data(),
+                (void *)(&task));
+  else
+    dlevmar_bc_dif(LevmarReflResidual, params.data(), xvec.data(), paramsize,
+                   rs.QPoints, rs.LL.data(), rs.UL.data(), nullptr, 1000, opts,
+                   info.data(), work.data(), covar.data(), (void *)(&task));
+
+  std::vector<double> covarOut(paramsize);
+  for (int i = 0; i < paramsize; i++)
+    covarOut[i] = std::sqrt(covar[i * (paramsize + 1)]);
+
+  flatbuffers::FlatBufferBuilder fbb(4096);
+  auto result = StochFitProto::CreateReflFitResult(
+      fbb, fbb.CreateVector(params), fbb.CreateVector(covarOut),
+      fbb.CreateVector(info));
+  return finish_into(fbb, result, outBuf, maxLen);
+}
+
+// ── FastReflGenerate
+// ──────────────────────────────────────────────────────────
+
+extern "C" EXPORT int FastReflGenerate(const uint8_t *inBuf, int /*inLen*/,
+                                       uint8_t *outBuf, int maxLen) {
+  auto *req = flatbuffers::GetRoot<StochFitProto::LevMarRequest>(inBuf);
+
+  BoxReflSettings rs{};
+  fill_box_settings(req->settings(), rs);
+
+  std::vector<double> params = copy_fbs_vec(req->parameters());
+
+  ParrattReflectivity parratt(ToReflSettings(rs));
+  BoxLayers layers;
+  BuildBoxLayers(rs, params, rs.OneSigma, layers);
+  auto refl = parratt.CalculateReflectivity(layers.View(rs.Boxes));
+  if (rs.ImpNorm) {
+    const double nf = layers.normfactor;
+    for (auto &r : refl)
+      r *= nf;
+  }
+
+  std::vector<double> reflOut(refl.begin(), refl.begin() + rs.QPoints);
+
+  flatbuffers::FlatBufferBuilder fbb(4096);
+  auto result =
+      StochFitProto::CreateReflGenerateResult(fbb, fbb.CreateVector(reflOut));
+  return finish_into(fbb, result, outBuf, maxLen);
+}
+
+// ── Rhofit ───────────────────────────────────────────────────────────────────
+
+extern "C" EXPORT int Rhofit(const uint8_t *inBuf, int /*inLen*/,
+                             uint8_t *outBuf, int maxLen) {
+  auto *req = flatbuffers::GetRoot<StochFitProto::LevMarRequest>(inBuf);
+
+  BoxReflSettings rs{};
+  fill_box_settings(req->settings(), rs);
+
+  std::vector<double> params = copy_fbs_vec(req->parameters());
+  int paramsize = static_cast<int>(params.size());
+
+  double opts[LM_OPTS_SZ] = {LM_INIT_MU, 1e-15, 1e-15, 1e-20, -LM_DIFF_DELTA};
+
+  RhoCalc Rho;
+  Rho.init(rs);
+
+  std::vector<double> xvec(rs.ZLength, 0.0);
+  std::vector<double> work(LM_DIF_WORKSZ(paramsize, rs.ZLength) +
+                           paramsize * rs.ZLength);
+  auto covar = std::span(work).subspan(LM_DIF_WORKSZ(paramsize, rs.ZLength));
+  std::vector<double> info(LM_INFO_SZ, 0.0);
+
+  if (rs.UL.empty())
+    dlevmar_dif(RhoCalc::objective, params.data(), xvec.data(), paramsize,
+                rs.ZLength, 1000, opts, info.data(), work.data(), covar.data(),
+                (void *)(&Rho));
+  else
+    dlevmar_bc_dif(RhoCalc::objective, params.data(), xvec.data(), paramsize,
+                   rs.ZLength, rs.LL.data(), rs.UL.data(), nullptr, 1000, opts,
+                   info.data(), work.data(), covar.data(), (void *)(&Rho));
+
+  std::vector<double> covarOut(paramsize);
+  for (int i = 0; i < paramsize; i++)
+    covarOut[i] = std::sqrt(covar[i * (paramsize + 1)]);
+
+  flatbuffers::FlatBufferBuilder fbb(4096);
+  auto result = StochFitProto::CreateRhoFitResult(fbb, fbb.CreateVector(params),
+                                                  fbb.CreateVector(covarOut),
+                                                  fbb.CreateVector(info));
+  return finish_into(fbb, result, outBuf, maxLen);
+}
+
+// ── RhoGenerate
+// ───────────────────────────────────────────────────────────────
+
+extern "C" EXPORT int RhoGenerate(const uint8_t *inBuf, int /*inLen*/,
+                                  uint8_t *outBuf, int maxLen) {
+  auto *req = flatbuffers::GetRoot<StochFitProto::LevMarRequest>(inBuf);
+
+  BoxReflSettings rs{};
+  fill_box_settings(req->settings(), rs);
+
+  std::vector<double> params = copy_fbs_vec(req->parameters());
+
+  RhoCalc Rho;
+  Rho.init(rs);
+  Rho.mkdensity(params);
+  Rho.mkdensityboxmodel(params);
+
+  std::vector<double> ed(Rho.nk.begin(), Rho.nk.begin() + rs.ZLength);
+  std::vector<double> boxED(Rho.nkb.begin(), Rho.nkb.begin() + rs.ZLength);
+
+  flatbuffers::FlatBufferBuilder fbb(8192);
+  auto result = StochFitProto::CreateRhoGenerateResult(
+      fbb, fbb.CreateVector(ed), fbb.CreateVector(boxED));
+  return finish_into(fbb, result, outBuf, maxLen);
+}
+
+// ── StochFitBoxModel helpers
+// ──────────────────────────────────────────────────
+
+struct BoxSolution {
+  std::vector<double> params;
+  std::vector<double> covar; // per-parameter sigma: sqrt(|diag(covariance)|)
+  std::array<double, LM_INFO_SZ> info{};
+  double score = 1e300;
+
+  bool operator<(const BoxSolution &o) const { return score < o.score; }
+};
+
+static bool IsReasonable(const BoxSolution &sol, const BoxReflSettings &rs,
+                         double cutoff) {
+  BoxLayers layers;
+  BuildBoxLayers(rs, sol.params, rs.OneSigma, layers);
+  for (int i = 1; i <= rs.Boxes; ++i) {
+    if (layers.length_mult[i].imag() > 0.0) {
+      return false;
+    }
+    if (layers.rho[i].real() < 0.0) {
+      return false;
+    }
+  }
+  if (rs.OneSigma && cutoff > 0.0) {
+    for (int i = 0; i < (int)sol.params.size(); ++i) {
+      if (sol.covar[i] > cutoff * std::fabs(sol.params[i]))
+        return false;
+    }
+  }
+  return true;
+}
+
+static bool ApproxEqual(const BoxSolution &a, const BoxSolution &b,
+                        double tol = 0.005) {
+  if (std::fabs(a.score / b.score - 1.0) > tol)
+    return false;
+  for (size_t i = 0; i < a.params.size(); ++i) {
+    if (b.params[i] != 0.0 && std::fabs(a.params[i] / b.params[i] - 1.0) > tol)
+      return false;
+  }
+  return true;
+}
+
+// ── StochFitBoxModel
+// ──────────────────────────────────────────────────────────
+
+extern "C" EXPORT int StochFitBoxModel(const uint8_t *inBuf, int /*inLen*/,
+                                       uint8_t *outBuf, int maxLen) {
+  auto *req = flatbuffers::GetRoot<StochFitProto::LevMarRequest>(inBuf);
+
+  BoxReflSettings rs{};
+  fill_box_settings(req->settings(), rs);
+
+  std::vector<double> params = copy_fbs_vec(req->parameters());
+  int paramsize = static_cast<int>(params.size());
+  int QSize = rs.QPoints;
+
+  double opts[LM_OPTS_SZ] = {LM_INIT_MU, 1e-15, 1e-15, 1e-20, -LM_DIFF_DELTA};
+
+  // Compute initial chi-square using the selected FitFunc (same metric as the
+  // fits).
+  double bestchisquare = 0;
+  {
+    LevmarReflTask tmp{.parratt = ParrattReflectivity(ToReflSettings(rs)),
+                       .objective = ReflectivityObjective(
+                           ReflectivityObjective::Type{rs.FitFunc}),
+                       .layers = {},
+                       .Realrefl = rs.Refl,
+                       .Realreflerrors = rs.ReflError,
+                       .rs = &rs};
+    BuildBoxLayers(rs, params, rs.OneSigma, tmp.layers);
+    auto r = tmp.parratt.CalculateReflectivity(tmp.layers.View(rs.Boxes));
+    if (rs.ImpNorm)
+      for (auto &rv : r)
+        rv *= tmp.layers.normfactor;
+    std::vector<double> residuals(QSize, 0.0);
+    tmp.objective.FillResiduals(r, rs.Refl, rs.ReflError, residuals,
+                                rs.LowQOffset, rs.HighQOffset);
+    for (double res : residuals)
+      bestchisquare += res * res;
+  }
+
+  BoxSolution original;
+  original.params = params;
+  original.covar.assign(paramsize, 0.0);
+  original.info[1] = bestchisquare;
+  original.score = bestchisquare;
+
+  std::vector<BoxSolution> temp;
+  temp.reserve(6000);
+
+  omp_set_num_threads(omp_get_num_procs());
+
+#pragma omp parallel
+  {
+    LevmarReflTask task{.parratt = ParrattReflectivity(ToReflSettings(rs)),
+                        .objective = ReflectivityObjective(
+                            ReflectivityObjective::Type{rs.FitFunc}),
+                        .layers = {},
+                        .Realrefl = rs.Refl,
+                        .Realreflerrors = rs.ReflError,
+                        .rs = &rs};
+
+    std::mt19937 randgen(std::random_device{}() + omp_get_thread_num());
+    auto IRandom = [&](double max, double min) {
+      return std::uniform_real_distribution<double>(min, max)(randgen);
+    };
+
+    BoxSolution localanswer;
+    localanswer.params.resize(paramsize);
+    localanswer.covar.resize(paramsize);
+    std::vector<double> locparameters(paramsize);
+    std::vector<BoxSolution> localvec;
+    localvec.reserve(1000);
+
+    std::vector<double> locinfo(LM_INFO_SZ);
+    std::vector<double> work(LM_DIF_WORKSZ(paramsize, QSize) +
+                             paramsize * QSize);
+    auto covar = std::span(work).subspan(LM_DIF_WORKSZ(paramsize, QSize));
+    std::vector<double> xvec(QSize, 0.0);
+
+#pragma omp for schedule(runtime)
+    for (int i = 0; i < rs.Iterations; i++) {
+      locparameters[0] =
+          IRandom(params[0] * rs.ParamPercs[4], params[0] * rs.ParamPercs[5]);
+      for (int k = 0; k < rs.Boxes; k++) {
+        if (rs.OneSigma) {
+          locparameters[2 * k + 1] =
+              IRandom(params[2 * k + 1] * rs.ParamPercs[0],
+                      params[2 * k + 1] * rs.ParamPercs[1]);
+          locparameters[2 * k + 2] =
+              IRandom(params[2 * k + 2] * rs.ParamPercs[2],
+                      params[2 * k + 2] * rs.ParamPercs[3]);
+        } else {
+          locparameters[3 * k + 1] =
+              IRandom(params[3 * k + 1] * rs.ParamPercs[0],
+                      params[3 * k + 1] * rs.ParamPercs[1]);
+          locparameters[3 * k + 2] =
+              IRandom(params[3 * k + 2] * rs.ParamPercs[2],
+                      params[3 * k + 2] * rs.ParamPercs[3]);
+          locparameters[3 * k + 3] =
+              IRandom(params[3 * k + 3] * rs.ParamPercs[4],
+                      params[3 * k + 3] * rs.ParamPercs[5]);
+        }
+      }
+      locparameters[paramsize - 1] = params[paramsize - 1];
+
+      if (rs.UL.empty()) {
+        dlevmar_dif(LevmarReflResidual, locparameters.data(), xvec.data(),
+                    paramsize, QSize, 500, opts, locinfo.data(), work.data(),
+                    covar.data(), (void *)(&task));
+      } else {
+        dlevmar_bc_dif(LevmarReflResidual, locparameters.data(), xvec.data(),
+                       paramsize, QSize, rs.LL.data(), rs.UL.data(), nullptr,
+                       500, opts, locinfo.data(), work.data(), covar.data(),
+                       (void *)(&task));
+      }
+
+      localanswer.params = locparameters;
+      for (int j = 0; j < paramsize; ++j) {
+        localanswer.covar[j] = std::sqrt(std::fabs(covar[j * (paramsize + 1)]));
+      }
+      std::ranges::copy(locinfo, localanswer.info.begin());
+      localanswer.score = locinfo[1];
+
+      if (locinfo[1] < bestchisquare &&
+          IsReasonable(localanswer, rs, rs.ParamPercs[6])) {
+        bool unique = true;
+        for (const auto &v : localvec) {
+          if (ApproxEqual(localanswer, v)) {
+            unique = false;
+            break;
+          }
+        }
+        if (unique)
+          localvec.push_back(localanswer);
+      }
+    }
+
+#pragma omp critical(AddVecs)
+    {
+      for (const auto &v : localvec)
+        temp.push_back(v);
+    }
+  }
+
+  temp.push_back(original);
+
+  std::vector<BoxSolution> allsolutions;
+  allsolutions.reserve(6000);
+  int tempsize = static_cast<int>(temp.size());
+  allsolutions.push_back(temp[0]);
+  for (int i = 1; i < tempsize; i++) {
+    int sz = static_cast<int>(allsolutions.size());
+    for (int j = 0; j < sz; j++) {
+      if (ApproxEqual(temp[i], allsolutions[j]))
+        break;
+      if (j == sz - 1)
+        allsolutions.push_back(temp[i]);
+    }
+  }
+
+  if (!allsolutions.empty())
+    std::sort(allsolutions.begin(), allsolutions.end());
+
+  int n = static_cast<int>(std::min<size_t>(allsolutions.size(), 999));
+  std::vector<double> outParams(params);
+  std::vector<double> covarArray(static_cast<size_t>(n * paramsize));
+  std::vector<double> infoOut(static_cast<size_t>(n * LM_INFO_SZ));
+  std::vector<double> paramArray(static_cast<size_t>(n * paramsize));
+  std::vector<double> chiSquareArray(n);
+
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < paramsize; j++) {
+      paramArray[i * paramsize + j] = allsolutions[i].params[j];
+      covarArray[i * paramsize + j] = allsolutions[i].covar[j];
+    }
+    std::copy(allsolutions[i].info.begin(), allsolutions[i].info.end(),
+              infoOut.begin() + i * LM_INFO_SZ);
+    chiSquareArray[i] = allsolutions[i].score;
+  }
+
+  flatbuffers::FlatBufferBuilder fbb(static_cast<size_t>(maxLen));
+  auto result = StochFitProto::CreateBoxStochFitResult(
+      fbb, fbb.CreateVector(outParams), fbb.CreateVector(covarArray),
+      fbb.CreateVector(infoOut), fbb.CreateVector(paramArray),
+      fbb.CreateVector(chiSquareArray), n);
+  return finish_into(fbb, result, outBuf, maxLen);
 }

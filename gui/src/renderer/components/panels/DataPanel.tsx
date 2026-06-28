@@ -1,52 +1,52 @@
 import React from 'react';
 import { useDataStore } from '../../stores/data-store';
-import { parseReflData } from '../../lib/data-parser';
+import { useSettingsStore } from '../../stores/settings-store';
+import { useFitStore } from '../../stores/fit-store';
+import { useMiEdpStore } from '../../stores/mi-edp-store';
+import { useUiStore } from '../../stores/ui-store';
+import { useBoxModelStore } from '../../stores/box-model-store';
+import type { ModelSettings } from '../../lib/types';
 
-declare global {
-  interface Window {
-    api: {
-      openFile: (filters?: Electron.FileFilter[]) => Promise<{ filePath: string; content: string } | null>;
-      saveFile: (defaultPath: string, content: string) => Promise<boolean>;
-      stochInit: (s: unknown, runState: unknown) => Promise<void>;
-      stochStart: (n: number) => Promise<void>;
-      stochStop: () => Promise<void>;
-      stochDestroy: () => Promise<void>;
-      stochCancel: () => Promise<void>;
-      stochGetData: () => Promise<unknown>;
-      stochGetRunState: (boxes: number) => Promise<unknown>;
-      stochLoadSession: (filePath: string) => Promise<unknown>;
-      stochWriteSession: (filePath: string, session: unknown) => Promise<void>;
-      stochDeleteSession: (filePath: string) => Promise<void>;
-      stochArraySizes: () => Promise<{ rhoSize: number; reflSize: number }>;
-      stochWarmedUp: () => Promise<boolean>;
-      stochSAParams: () => Promise<unknown>;
-      lmFastReflFit: (i: unknown, p: number[]) => Promise<unknown>;
-      lmFastReflGenerate: (i: unknown, p: number[]) => Promise<number[]>;
-      lmRhoFit: (i: unknown, p: number[]) => Promise<unknown>;
-      lmRhoGenerate: (i: unknown, p: number[]) => Promise<unknown>;
-      lmStochFit: (i: unknown, p: number[]) => Promise<unknown>;
-      onFitProgress: (cb: (d: unknown) => void) => () => void;
-      onFitComplete: (cb: (d: unknown) => void) => () => void;
-      onSettingsReset: (cb: () => void) => () => void;
-      stochGpuAvailable: () => Promise<boolean>;
-    };
-  }
-}
 
 export function DataPanel() {
   const { data, setData } = useDataStore();
+  const { restore: restoreSettings } = useSettingsStore();
+  const { setResult, setMiBoxED } = useFitStore();
+  const { setBoxes, setSubRough, setZOffset, setOneSigma, setBoxRows, setLmResult } = useMiEdpStore();
+  const { showToast } = useUiStore();
+  const clearBoxModelGenerated = useBoxModelStore((s) => s.clearGenerated);
 
   async function handleOpen() {
-    const result = await window.api.openFile([
-      { name: 'Data files', extensions: ['txt', 'dat', 'csv'] },
-      { name: 'All files', extensions: ['*'] },
-    ]);
-    if (!result) return;
     try {
-      const parsed = parseReflData(result.content, result.filePath);
-      setData(parsed);
+      const result = await window.api.openDataFile();
+      if (!result) return;
+      setData(result.data);
+      // Clear stale results from any previous data file
+      setResult(null);
+      setMiBoxED(null);
+      clearBoxModelGenerated();
+
+      if (result.savedOutput) {
+        const out = result.savedOutput;
+        // Restore settings
+        restoreSettings(out.settings as unknown as Partial<ModelSettings>);
+        // Restore fit result for chart display
+        setResult({ ...out.fitResult, isFinished: true });
+        // Restore box model
+        if (out.boxModel) {
+          setBoxes(out.boxModel.boxes);
+          setSubRough(out.boxModel.subRough);
+          setZOffset(out.boxModel.zOffset);
+          setOneSigma(out.boxModel.oneSigma);
+          setBoxRows(out.boxModel.boxRows);
+          if (out.boxModel.lmResult) {
+            setLmResult(out.boxModel.lmResult);
+          }
+        }
+        showToast('Loaded previous fit results');
+      }
     } catch (e) {
-      alert(`Failed to parse file: ${(e as Error).message}`);
+      showToast(`Failed to load file: ${(e as Error).message}`);
     }
   }
 
@@ -67,38 +67,51 @@ export function DataPanel() {
           <div className="text-xs text-secondary font-mono truncate" title={data.filePath}>
             {data.fileName}
           </div>
-          <div className="text-xs text-secondary">
-            {data.q.length} points &middot; Q: [{data.q[0].toExponential(3)} &hellip; {data.q[data.q.length - 1].toExponential(3)}] Å⁻¹
-          </div>
+          <div className="text-xs text-secondary">{data.q.length} points</div>
 
-          {/* Mini data table — first 8 rows */}
-          <div className="mt-2 rounded-card bg-elevated border border-border overflow-hidden">
-            <table className="w-full text-xs font-mono">
-              <thead>
-                <tr className="border-b border-border text-secondary">
-                  <th className="px-2 py-1 text-left">Q</th>
-                  <th className="px-2 py-1 text-left">R</th>
-                  <th className="px-2 py-1 text-left">σR</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.q.slice(0, 8).map((q, i) => (
-                  <tr key={i} className="border-b border-border/50 hover:bg-surface/50">
-                    <td className="px-2 py-0.5">{q.toExponential(3)}</td>
-                    <td className="px-2 py-0.5">{data.refl[i].toExponential(3)}</td>
-                    <td className="px-2 py-0.5">{data.reflError[i].toExponential(3)}</td>
-                  </tr>
-                ))}
-                {data.q.length > 8 && (
-                  <tr>
-                    <td colSpan={3} className="px-2 py-1 text-secondary text-center">
-                      + {data.q.length - 8} more rows
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          {/* File metadata (ORSO / NeXus headers) */}
+          {data.metadata && data.metadata.length > 0 && (
+            <div className="rounded-card bg-elevated border border-border p-2 flex flex-col gap-0.5">
+              {data.metadata.map(({ label, value }) => (
+                <div key={label} className="flex gap-2 text-xs leading-relaxed">
+                  <span className="text-secondary shrink-0 w-20">{label}</span>
+                  <span className="text-primary font-mono truncate" title={value}>{value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Scrollable data table — all rows */}
+          {(() => {
+            const hasQErr = data.qError.some(v => v !== 0);
+            const fmt = (v: number) => v.toExponential(hasQErr ? 2 : 3);
+            return (
+              <div className="mt-1 rounded-card bg-elevated border border-border overflow-hidden">
+                <div className="overflow-y-auto max-h-52">
+                  <table className="w-full text-xs font-mono">
+                    <thead className="sticky top-0 bg-elevated z-10">
+                      <tr className="border-b border-border text-secondary">
+                        <th className="px-2 py-1 text-left">Q</th>
+                        <th className="px-2 py-1 text-left">R</th>
+                        <th className="px-2 py-1 text-left">σR</th>
+                        {hasQErr && <th className="px-2 py-1 text-left">δQ</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.q.map((q, i) => (
+                        <tr key={i} className="border-b border-border/50 hover:bg-surface/50">
+                          <td className="px-2 py-0.5">{fmt(q)}</td>
+                          <td className="px-2 py-0.5">{fmt(data.refl[i])}</td>
+                          <td className="px-2 py-0.5">{fmt(data.reflError[i])}</td>
+                          {hasQErr && <td className="px-2 py-0.5">{fmt(data.qError[i])}</td>}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       ) : (
         <div

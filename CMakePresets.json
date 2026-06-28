@@ -4,7 +4,6 @@
     {
       "name": "base",
       "hidden": true,
-      "binaryDir": "${sourceDir}/build",
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
@@ -13,12 +12,14 @@
     {
       "name": "default",
       "displayName": "Default Release (Linux/Mac)",
-      "inherits": "base"
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/Release"
     },
     {
       "name": "debug",
       "displayName": "Debug (Linux/Mac)",
-      "inherits": "default",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/Debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
@@ -27,6 +28,7 @@
       "name": "windows",
       "displayName": "Windows Release",
       "inherits": "base",
+      "binaryDir": "${sourceDir}/build/Release",
       "cacheVariables": {
         "CMAKE_MAKE_PROGRAM": "${sourceDir}/env/tools/ninja.exe",
         "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/env/cmake/MsvcEnvironment.cmake",
@@ -38,8 +40,18 @@
       "name": "windows-debug",
       "displayName": "Windows Debug",
       "inherits": "windows",
+      "binaryDir": "${sourceDir}/build/Debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-profile",
+      "displayName": "Windows Profile (RelWithDebInfo + frame pointers for VTune)",
+      "inherits": "windows",
+      "binaryDir": "${sourceDir}/build/RelWithDebInfo",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     }
   ],
@@ -59,6 +71,10 @@
     {
       "name": "windows-debug",
       "configurePreset": "windows-debug"
+    },
+    {
+      "name": "windows-profile",
+      "configurePreset": "windows-profile"
     }
   ]
 }

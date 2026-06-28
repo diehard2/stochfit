@@ -1,5 +1,6 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
+import { MakerZIP } from '@electron-forge/maker-zip';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
@@ -8,7 +9,6 @@ const libExt    = process.platform === 'win32' ? '.dll' : process.platform === '
 const libPrefix = process.platform === 'win32' ? '' : 'lib';
 
 // Include a build artifact only when it actually exists.
-// This lets the config work whether or not optional features (CUDA) were compiled in.
 function opt(...paths: string[]): string[] {
   return paths.filter(p => existsSync(resolve(__dirname, p)));
 }
@@ -17,6 +17,7 @@ function opt(...paths: string[]): string[] {
 // macOS so that `npm install` succeeds on Windows/Linux (optionalDependency).
 const makers: ForgeConfig['makers'] = [
   new MakerSquirrel({ authors: 'StochFit Contributors' }),
+  new MakerZIP({}, ['linux']),
 ];
 
 if (process.platform === 'darwin') {
@@ -35,24 +36,17 @@ const config: ForgeConfig = {
     asar: false,
     name: 'StochFit',
     executableName: 'stochfit',
-    osxSign: false,
-    osxNotarize: false,
-    ignore: [],
     extraResource: [
       // Core native libraries
-      `../build/bin/${libPrefix}stochfit${libExt}`,
-      `../build/bin/${libPrefix}levmardll${libExt}`,
+      `../build/Release/bin/${libPrefix}stochfit${libExt}`,
+      `../build/Release/bin/${libPrefix}levmardll${libExt}`,
 
       // OpenMP runtime — not present on stock macOS or Windows.
       // On macOS: libomp.dylib (copied from Homebrew by CMake).
       // On Windows: vcomp140.dll (Visual C++ OpenMP runtime, copied from VS Redist by CMake).
       // On Linux: libgomp is a system package; not bundled.
-      ...opt('../build/bin/libomp.dylib'),   // macOS
-      ...opt('../build/bin/vcomp140.dll'),   // Windows
-
-      // CUDA plugin — only present when built with CUDA support.
-      // Loaded at runtime by gpu_sa_runner; omitted on GPU-less builds.
-      ...opt(`../build/bin/${libPrefix}stochfit_cuda_plugin${libExt}`),
+      ...opt('../build/Release/bin/libomp.dylib'),   // macOS
+      ...opt('../build/Release/bin/vcomp140.dll'),   // Windows
 
       '../resources/test1refl.txt',
     ],

@@ -1,9 +1,12 @@
 import React, { useEffect } from 'react';
 import { useDataStore } from '../../stores/data-store';
 import { useSettingsStore } from '../../stores/settings-store';
+import { applyForceNormalization } from '../../lib/forcenorm';
 import { useBoxModelStore } from '../../stores/box-model-store';
 import { BoxParameterTable, type BoxRow } from '../shared/BoxParameterTable';
-import type { BoxReflSettingsInput, LMFitResult, RhoGenerateResult, StochFitResult } from '../../../main/native/levmar-api';
+import type { BoxReflSettingsInput } from '../../../main/native/levmar-api';
+import type { LMResult as LMFitResult, RhoEDPResult, StochFitResult } from '../../lib/types';
+import { computeBoxStepEDP } from '../../lib/edp-utils';
 
 // ── Param helpers ────────────────────────────────────────────────────────────
 
@@ -43,32 +46,10 @@ function parseFastReflParams(
 function makeBounds(params: number[]) {
   const ul = params.map((v) => (Math.abs(v) > 0 ? Math.abs(v) * 3 : 10));
   const ll = params.map((v) => (v >= 0 ? 0 : v * 3));
-  const percs = params.map(() => 10);
+  // StochFitBoxModel reads ParamPercs[0..6]: length-hi, length-lo, rho-hi, rho-lo,
+  // roughness-hi, roughness-lo, IsReasonable-cutoff. Must be at least 7 elements.
+  const percs = [2.0, 0.5, 2.0, 0.5, 2.0, 0.5, 10.0];
   return { ul, ll, percs };
-}
-
-// Compute a pure step-function box EDP in the frontend.
-// Avoids the erf midpoint artifact (erf(0)=0 → 0.5) that appears when z falls
-// exactly on an interface in the C++ RhoGenerate calculation.
-function computeBoxStepEDP(
-  zRange: number[],
-  rows: BoxRow[],
-  zOffset: number,
-  supSLD: number,
-  subSLD: number,
-): number[] {
-  const boundaries: number[] = [zOffset];
-  for (const row of rows) {
-    boundaries.push(boundaries[boundaries.length - 1] + row.length);
-  }
-  const supNorm = subSLD !== 0 ? supSLD / subSLD : 0;
-  return zRange.map(z => {
-    if (z < boundaries[0]) return supNorm;
-    for (let i = 0; i < rows.length; i++) {
-      if (z < boundaries[i + 1]) return rows[i].rho;
-    }
-    return 1.0; // subphase
-  });
 }
 
 // Convert FastReflFit params to RhoFit layout for EDP generation:
@@ -98,8 +79,8 @@ export function BoxModelPanel() {
   const { data } = useDataStore();
   const { settings } = useSettingsStore();
   const {
-    boxes, subRough, normFactor, oneSigma, boxRows,
-    setBoxes, setSubRough, setNormFactor, setOneSigma, setBoxRows,
+    boxes, subRough, normFactor, oneSigma, impNorm, boxRows,
+    setBoxes, setSubRough, setNormFactor, setOneSigma, setImpNorm, setBoxRows,
     solutions, activeIndex, setSolutions, setActiveIndex, setGenRefl, setGenEDP,
     lastFitReport, setLastFitReport,
   } = useBoxModelStore();
@@ -124,28 +105,28 @@ export function BoxModelPanel() {
     if (!data) return;
     if (autoGenTimer.current) clearTimeout(autoGenTimer.current);
     autoGenTimer.current = setTimeout(async () => {
+      setError(null);
       try {
         const reflParams = buildFastReflParams(subRough, boxRows, normFactor, oneSigma);
         const { ul, ll, percs } = makeBounds(reflParams);
+        const normData = applyForceNormalization(data, settings.forcenorm);
         const baseInput: BoxReflSettingsInput = {
           directory: data.filePath.replace(/[^/\\]+$/, ''),
-          q: data.q,
-          refl: data.refl,
-          reflError: data.reflError,
-          qError: data.qError,
+          q: normData.q,
+          refl: normData.refl,
+          reflError: normData.reflError,
+          qError: normData.qError,
           ul,
           ll,
           paramPercs: percs,
-          qPoints: data.q.length,
+          qPoints: normData.q.length,
           oneSigma,
-          writeFiles: false,
           subSLD: settings.subSLD,
           supSLD: settings.supSLD,
           boxes,
           wavelength: settings.wavelength,
-          qSpread: settings.qErr,
-          forcenorm: settings.forcenorm,
-          impNorm: settings.impnorm,
+          qSpread: settings.qSpread,
+          impNorm: impNorm,
           fitFunc: 0,
           lowQOffset: settings.critEdgeOffset,
           highQOffset: settings.highQOffset,
@@ -169,11 +150,12 @@ export function BoxModelPanel() {
         rhoInput.ul = ru;
         rhoInput.ll = rl;
         rhoInput.paramPercs = rp;
-        const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoGenerateResult;
+        const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoEDPResult;
         const stepBoxED = computeBoxStepEDP(zRange, boxRows, 0, settings.supSLD, settings.subSLD);
         setGenEDP(edpRes.ed, stepBoxED, zRange);
-      } catch {
-        // silently ignore auto-gen errors
+      } catch (e) {
+        console.error('[BoxModel] auto-generate failed:', e);
+        setError(`Generate failed: ${(e as Error).message ?? e}`);
       }
     }, 500);
     return () => { if (autoGenTimer.current) clearTimeout(autoGenTimer.current); };
@@ -182,25 +164,24 @@ export function BoxModelPanel() {
   function buildInput(): BoxReflSettingsInput {
     const params = buildFastReflParams(subRough, boxRows, normFactor, oneSigma);
     const { ul, ll, percs } = makeBounds(params);
+    const normData = applyForceNormalization(data!, settings.forcenorm);
     return {
       directory: data!.filePath.replace(/[^/\\]+$/, ''),
-      q: data!.q,
-      refl: data!.refl,
-      reflError: data!.reflError,
-      qError: data!.qError,
+      q: normData.q,
+      refl: normData.refl,
+      reflError: normData.reflError,
+      qError: normData.qError,
       ul,
       ll,
       paramPercs: percs,
-      qPoints: data!.q.length,
+      qPoints: normData.q.length,
       oneSigma,
-      writeFiles: false,
       subSLD: settings.subSLD,
       supSLD: settings.supSLD,
       boxes,
       wavelength: settings.wavelength,
-      qSpread: settings.qErr,
-      forcenorm: settings.forcenorm,
-      impNorm: settings.impnorm,
+      qSpread: settings.qSpread,
+      impNorm: impNorm,
       fitFunc: 0,
       lowQOffset: settings.critEdgeOffset,
       highQOffset: settings.highQOffset,
@@ -224,7 +205,7 @@ export function BoxModelPanel() {
       zIncrement: zRange,
       zLength: zRange.length,
     };
-    const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoGenerateResult;
+    const edpRes = await window.api.lmRhoGenerate(rhoInput, rhoParams) as RhoEDPResult;
     const stepBoxED = computeBoxStepEDP(zRange, parsedRows.rows, 0, settings.supSLD, settings.subSLD);
     setGenEDP(edpRes.ed, stepBoxED, zRange);
   }
@@ -249,8 +230,8 @@ export function BoxModelPanel() {
         paramNames.push(`Box ${i + 1} len`, `Box ${i + 1} ρ`);
         if (!oneSigma) paramNames.push(`Box ${i + 1} σ`);
       }
-      paramNames.push('Norm');
-      setLastFitReport({ info: res.info, covariance: res.covariance, paramCount: params.length, paramNames });
+      if (impNorm) paramNames.push('Norm');
+      setLastFitReport({ info: res.info, covariance: res.covariance, paramCount: paramNames.length, paramNames });
 
       await applyParamsAndGenerate(res.parameters, parsed);
     } catch (e) {
@@ -306,34 +287,35 @@ export function BoxModelPanel() {
     <div className="flex flex-col gap-4 p-4">
       <h2 className="text-sm font-semibold text-primary uppercase tracking-wider">Box Model</h2>
 
-      {/* Global params */}
-      <div className={`grid gap-2 ${settings.impnorm ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        <LabeledInput label="Sub Rough (Å)" value={subRough} onChange={setSubRough} />
-        {settings.impnorm && <LabeledInput label="Norm Factor" value={normFactor} onChange={setNormFactor} />}
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-secondary">Boxes</label>
-          <input
-            type="number"
-            value={boxes}
-            min={1}
-            max={20}
-            step={1}
-            onChange={(e) => setBoxes(parseInt(e.target.value) || 1)}
-            className="h-7 px-2 text-xs bg-elevated border border-border rounded-input text-primary focus:outline-none focus:border-accent/50"
-          />
+      <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-secondary">Boxes</label>
+            <input
+              type="number"
+              value={boxes}
+              min={1}
+              max={20}
+              step={1}
+              onChange={(e) => setBoxes(parseInt(e.target.value) || 1)}
+              className="h-7 px-2 text-xs bg-elevated border border-border rounded-input text-primary focus:outline-none focus:border-accent/50"
+            />
+          </div>
+          <LabeledInput label="Substrate σ (Å)" value={subRough} onChange={setSubRough} />
         </div>
-        <label className="flex items-center gap-1.5 mt-4 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={oneSigma}
-            onChange={(e) => setOneSigma(e.target.checked)}
-            className="rounded"
-          />
-          <span className="text-xs text-secondary">Lock Roughness</span>
-        </label>
+        {impNorm && (
+          <LabeledInput label="Norm Factor" value={normFactor} onChange={setNormFactor} />
+        )}
+        <div className="flex gap-4">
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked={oneSigma} onChange={(e) => setOneSigma(e.target.checked)} className="rounded" />
+            <span className="text-xs text-secondary">Lock Roughness (σ)</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked={impNorm} onChange={(e) => setImpNorm(e.target.checked)} className="rounded" />
+            <span className="text-xs text-secondary">Norm. Search</span>
+          </label>
+        </div>
       </div>
 
       {/* Box table */}

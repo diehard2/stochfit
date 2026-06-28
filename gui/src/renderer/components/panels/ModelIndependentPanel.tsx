@@ -5,39 +5,16 @@ import { useSettingsStore } from '../../stores/settings-store';
 import { useUiStore } from '../../stores/ui-store';
 import { useMiEdpStore } from '../../stores/mi-edp-store';
 import type { ModelSettings } from '../../lib/types';
+import { applyForceNormalization } from '../../lib/forcenorm';
 import { POLLING_INTERVAL_MS } from '../../lib/constants';
 import { BoxParameterTable, type BoxRow } from '../shared/BoxParameterTable';
 import { Field } from '../shared/Field';
 import type { FitResult, SAParams } from '../../lib/types';
-import type { ReflSettingsInput, StochRunStateOutput, StochSessionFile } from '../../../main/native/stochfit-api';
+import type { ReflSettingsInput, StochRunStateOutput, StochFitOutput } from '../../../main/native/stochfit-api';
 import type { BoxReflSettingsInput, LMFitResult } from '../../../main/native/levmar-api';
+import { computeBoxStepEDP } from '../../lib/edp-utils';
 
 // ── Param helpers ────────────────────────────────────────────────────────────
-
-// Compute a pure step-function box EDP in the frontend.
-// Avoids the erf midpoint artifact (erf(0)=0 → 0.5) that appears when z falls
-// exactly on an interface in the C++ RhoGenerate calculation.
-function computeBoxStepEDP(
-  zRange: number[],
-  rows: BoxRow[],
-  zOffset: number,
-  supSLD: number,
-  subSLD: number,
-): number[] {
-  const boundaries: number[] = [zOffset];
-  for (const row of rows) {
-    boundaries.push(boundaries[boundaries.length - 1] + row.length);
-  }
-  const supNorm = subSLD !== 0 ? supSLD / subSLD : 0;
-  return zRange.map(z => {
-    if (z < boundaries[0]) return supNorm;
-    for (let i = 0; i < rows.length; i++) {
-      if (z < boundaries[i + 1]) return rows[i].rho;
-    }
-    return 1.0; // subphase
-  });
-}
-
 
 function buildRhoParams(subRough: number, zOffset: number, rows: BoxRow[], oneSigma: boolean): number[] {
   const result = [subRough, zOffset];
@@ -78,7 +55,7 @@ function makeBounds(params: number[]) {
 export function ModelIndependentPanel() {
   const { data } = useDataStore();
   const { settings, restore: restoreSettings } = useSettingsStore();
-  const { gpuAvailable, setSettingsOpen } = useUiStore();
+  const { setSettingsOpen, showToast } = useUiStore();
   const {
     status, result, saParams, pollTimer, itPerSec,
     setStatus, setResult, setSAParams, setPollTimer, setMiBoxED, setItPerSec, reset,
@@ -94,7 +71,7 @@ export function ModelIndependentPanel() {
   // Resume dialog
   const [resumePending, setResumePending] = useState<{
     input: ReflSettingsInput;
-    session: StochSessionFile;
+    savedOutput: StochFitOutput;
   } | null>(null);
 
   // EDP box fitting state (persisted in store)
@@ -117,7 +94,7 @@ export function ModelIndependentPanel() {
   }, [boxes]);
 
   // Start polling for fit updates. Extracted so doStart and the remount effect can share it.
-  const startPolling = useCallback((runDirectory: string, runDataFile: string) => {
+  const startPolling = useCallback((runDataFile: string) => {
     const timer = setInterval(async () => {
       let fitData: FitResult;
       let saData: SAParams;
@@ -144,7 +121,7 @@ export function ModelIndependentPanel() {
       if (fitData.isFinished) {
         clearInterval(timer);
         setPollTimer(null);
-        await saveSession(runDirectory, runDataFile, fitData.iterationsCompleted);
+        await saveOutput(runDataFile, fitData.iterationsCompleted);
         setStatus('completed');
       }
     }, POLLING_INTERVAL_MS);
@@ -157,10 +134,7 @@ export function ModelIndependentPanel() {
   useEffect(() => {
     if (status === 'running' && !pollTimer && data) {
       prevTimeRef.current = Date.now();
-      startPolling(
-        data.filePath.replace(/[^/\\]+$/, ''),
-        data.filePath,
-      );
+      startPolling(data.filePath);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -178,25 +152,26 @@ export function ModelIndependentPanel() {
   // ── SA Fitting ─────────────────────────────────────────────────────────────
 
   async function handleStart() {
-    if (!data) return alert('Load a data file first.');
+    if (!data) { showToast('Load a data file first.'); return; }
 
+    const normData = applyForceNormalization(data, settings.forcenorm);
     const input: ReflSettingsInput = {
       directory: data.filePath.replace(/[^/\\]+$/, ''),
-      q: data.q,
-      refl: data.refl,
-      reflError: data.reflError,
-      qError: data.qError,
-      qPoints: data.q.length,
+      q: normData.q,
+      refl: normData.refl,
+      reflError: normData.reflError,
+      qError: normData.qError,
+      qPoints: normData.q.length,
       debug: false,
       ...settings,
-      normSearchPerc: settings.impnorm ? settings.normSearchPerc : 0,
       absSearchPerc: settings.useSurfAbs ? settings.absSearchPerc : 0,
+      impnorm: settings.normSearchPerc > 0,
     };
 
-    const sessionPath = input.directory + 'stochfit-session.json';
-    const session = await window.api.stochLoadSession(sessionPath) as StochSessionFile | null;
-    if (session && session.saState.edCount === settings.boxes + 2) {
-      setResumePending({ input, session });
+    const outputPath = data!.filePath + '.stochfit.json';
+    const savedOutput = await window.api.stochLoadOutput(outputPath) as StochFitOutput | null;
+    if (savedOutput && savedOutput.saState.edCount === settings.boxes + 2) {
+      setResumePending({ input, savedOutput });
       return;
     }
 
@@ -210,15 +185,13 @@ export function ModelIndependentPanel() {
     prevIterRef.current = 0;
     prevTimeRef.current = Date.now();
 
-    // Capture directory for session file path (stable over the run lifetime)
-    const runDirectory = input.directory;
     const runDataFile = data!.filePath;
 
     try {
       await window.api.stochInit(input, runState);
     } catch (e) {
       setStatus('idle');
-      alert(String(e));
+      showToast(String(e));
       return;
     }
 
@@ -226,28 +199,59 @@ export function ModelIndependentPanel() {
       await window.api.stochStart(settings.iterations);
     } catch (e) {
       setStatus('idle');
-      alert(String(e));
+      showToast(String(e));
       return;
     }
 
-    startPolling(runDirectory, runDataFile);
+    startPolling(runDataFile);
   }
 
-  async function saveSession(directory: string, dataFile: string, iteration: number) {
+  async function saveOutput(dataFile: string, iteration: number) {
     try {
       await window.api.stochStop();
       const saState = await window.api.stochGetRunState(settings.boxes) as StochRunStateOutput;
       saState.iteration = iteration;
-      const session: StochSessionFile = {
-        version: 1,
+
+      // Capture current fit result (may be null if no data yet)
+      const currentResult = useFitStore.getState().result;
+      if (!currentResult) {
+        await window.api.stochDestroy();
+        return;
+      }
+
+      // Capture current box model state
+      const miEdp = useMiEdpStore.getState();
+
+      const output: StochFitOutput = {
+        version: 2,
         savedAt: new Date().toISOString(),
         dataFile,
         settings: { ...settings } as Record<string, unknown>,
         saState,
+        fitResult: {
+          zRange: currentResult.zRange,
+          rho: currentResult.rho,
+          qRange: currentResult.qRange,
+          refl: currentResult.refl,
+          roughness: currentResult.roughness,
+          chiSquare: currentResult.chiSquare,
+          goodnessOfFit: currentResult.goodnessOfFit,
+          iterationsCompleted: currentResult.iterationsCompleted,
+        },
+        ...(miEdp.boxRows.length > 0 && {
+          boxModel: {
+            boxes: miEdp.boxes,
+            subRough: miEdp.subRough,
+            zOffset: miEdp.zOffset,
+            oneSigma: miEdp.oneSigma,
+            boxRows: miEdp.boxRows,
+            ...(miEdp.lmResult && { lmResult: miEdp.lmResult }),
+          },
+        }),
       };
-      await window.api.stochWriteSession(directory + 'stochfit-session.json', session);
+      await window.api.stochWriteOutput(dataFile + '.stochfit.json', output);
     } catch (e) {
-      console.error('[MI] saveSession failed:', e);
+      console.error('[MI] saveOutput failed:', e);
     } finally {
       await window.api.stochDestroy();
     }
@@ -259,8 +263,7 @@ export function ModelIndependentPanel() {
       setPollTimer(null);
     }
     if (data) {
-      const directory = data.filePath.replace(/[^/\\]+$/, '');
-      await saveSession(directory, data.filePath, result?.iterationsCompleted ?? 0);
+      await saveOutput(data.filePath, result?.iterationsCompleted ?? 0);
     } else {
       await window.api.stochCancel();
     }
@@ -273,25 +276,24 @@ export function ModelIndependentPanel() {
     const zLen = result!.zRange.length;
     const params = buildRhoParams(subRough, zOffset, boxRows, oneSigma);
     const { ul, ll, percs } = makeBounds(params);
+    const normData = applyForceNormalization(data!, settings.forcenorm);
     return {
       directory: data!.filePath.replace(/[^/\\]+$/, ''),
-      q: data!.q,
-      refl: data!.refl,
-      reflError: data!.reflError,
-      qError: data!.qError,
+      q: normData.q,
+      refl: normData.refl,
+      reflError: normData.reflError,
+      qError: normData.qError,
       ul,
       ll,
       paramPercs: percs,
-      qPoints: data!.q.length,
+      qPoints: normData.q.length,
       oneSigma,
-      writeFiles: false,
       subSLD: settings.subSLD,
       supSLD: settings.supSLD,
       boxes,
       wavelength: settings.wavelength,
-      qSpread: settings.qErr,
-      forcenorm: settings.forcenorm,
-      impNorm: settings.impnorm,
+      qSpread: settings.qSpread,
+      impNorm: settings.normSearchPerc > 0,
       fitFunc: 0,
       lowQOffset: 0,
       highQOffset: settings.highQOffset,
@@ -366,8 +368,8 @@ export function ModelIndependentPanel() {
                 onClick={() => {
                   const p = resumePending;
                   setResumePending(null);
-                  restoreSettings(p.session.settings as unknown as Partial<ModelSettings>);
-                  doStart(p.input, p.session.saState);
+                  restoreSettings(p.savedOutput.settings as unknown as Partial<ModelSettings>);
+                  doStart(p.input, p.savedOutput.saState);
                 }}
                 className="flex-1 py-2 text-xs font-medium bg-accent/20 hover:bg-accent/30 text-accent rounded-input transition-colors"
               >
@@ -419,25 +421,6 @@ export function ModelIndependentPanel() {
         {settings.algorithm === 2 && (
           <Field label="Adaptive Temperature" field="adaptive" type="checkbox" disabled={isRunning} tooltip="Auto-adjust temperature schedule based on acceptance rate." />
         )}
-        <Field
-          label="Use GPU Acceleration"
-          field="useGpu"
-          type="checkbox"
-          disabled={!gpuAvailable || isRunning}
-          tooltip={gpuAvailable ? undefined : 'Requires NVIDIA RTX 20+ (compute 7.5+) or Apple Silicon Mac'}
-        />
-        {settings.useGpu && gpuAvailable && (
-          <Field
-            label="GPU Chains"
-            field="gpuChains"
-            type="number"
-            min={1}
-            max={512}
-            step={1}
-            disabled={isRunning}
-            tooltip="Parallel SA chains on GPU. 1 = single-chain (comparable to CPU speed). Higher = better parameter space exploration."
-          />
-        )}
         <button
           onClick={() => setSettingsOpen(true)}
           disabled={isRunning}
@@ -452,14 +435,14 @@ export function ModelIndependentPanel() {
         <button
           onClick={handleStart}
           disabled={isRunning || !data}
-          className="flex-1 py-2 text-xs font-medium bg-success/20 hover:bg-success/30 text-success rounded-input disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="flex-1 py-2 text-xs font-semibold bg-success hover:bg-success/85 text-white rounded-input disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           {isRunning ? 'Running…' : 'Start Fit'}
         </button>
         <button
           onClick={handleCancel}
           disabled={!isRunning}
-          className="flex-1 py-2 text-xs font-medium bg-destructive/20 hover:bg-destructive/30 text-destructive rounded-input disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="flex-1 py-2 text-xs font-semibold bg-destructive hover:bg-destructive/85 text-white rounded-input disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           Cancel
         </button>
@@ -504,7 +487,7 @@ export function ModelIndependentPanel() {
             <div className="flex flex-col gap-2">
               {/* Global params */}
               <div className="grid grid-cols-2 gap-2">
-                <LabeledInput label="Sub Rough (Å)" value={subRough} onChange={setSubRough} />
+                <LabeledInput label="Substrate σ (Å)" value={subRough} onChange={setSubRough} />
                 <LabeledInput label="Z Offset (Å)" value={zOffset} onChange={setZOffset} />
               </div>
 
@@ -563,6 +546,20 @@ export function ModelIndependentPanel() {
               <div className="flex justify-between text-xs">
                 <span className="text-secondary">Iterations</span>
                 <span className="font-mono text-primary">{lmResult.info[5]?.toFixed(0) ?? '—'}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-secondary">Stopped by</span>
+                <span className="font-mono text-primary">
+                  {(() => {
+                    const code = lmResult.info[6];
+                    const reasons: Record<number, string> = {
+                      1: 'small gradient', 2: 'small Δp', 3: 'max iterations',
+                      4: 'singular matrix', 5: 'no further reduction',
+                      6: 'small ‖e‖', 7: 'NaN/Inf in func',
+                    };
+                    return code != null ? (reasons[code] ?? `code ${code}`) : '—';
+                  })()}
+                </span>
               </div>
             </div>
           )}

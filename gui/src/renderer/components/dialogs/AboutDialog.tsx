@@ -15,6 +15,7 @@ export function AboutDialog() {
           <div className="text-4xl">🔬</div>
           <div>
             <h1 className="text-lg font-bold text-primary">StochFit</h1>
+            <p className="text-xs text-secondary mt-0.5">v{__APP_VERSION__}</p>
             <p className="text-xs text-secondary mt-1">X-Ray Reflectometry Fitting Software</p>
           </div>
           <div className="text-xs text-secondary leading-relaxed">

@@ -1,3 +1,8 @@
+export interface ReflDataMeta {
+  label: string;
+  value: string;
+}
+
 export interface ReflData {
   q: number[];
   refl: number[];
@@ -5,6 +10,8 @@ export interface ReflData {
   qError: number[];
   filePath: string;
   fileName: string;
+  /** Optional metadata extracted from the file header (ORSO YAML, NeXus attrs, etc.) */
+  metadata?: ReflDataMeta[];
 }
 
 export interface FitResult {
@@ -36,13 +43,12 @@ export interface ModelSettings {
   supAbs: number;
   wavelength: number;
   useSurfAbs: boolean;
-  qErr: number;
+  qSpread: number;
   forcenorm: boolean;
   forcesig: number;
-  xrOnly: boolean;
+  neutron: boolean;
   resolution: number;
   filmLength: number;
-  impnorm: boolean;
   objectivefunction: number;
 
   // SA algorithm
@@ -64,10 +70,6 @@ export interface ModelSettings {
   highQOffset: number;
   iterations: number;
   title: string;
-
-  // GPU acceleration
-  useGpu: boolean;
-  gpuChains: number;  // parallel SA chains; lower = easier to compare with CPU
 }
 
 export const DEFAULT_SETTINGS: ModelSettings = {
@@ -80,13 +82,12 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   supAbs: 0.0,
   wavelength: 1.24,
   useSurfAbs: false,
-  qErr: 0.0,
+  qSpread: 0.0,
   forcenorm: false,
   forcesig: 0.0,
-  xrOnly: true,
-  resolution: 3,
+  neutron: false,
+  resolution: 10,
   filmLength: 25.0,
-  impnorm: false,
   objectivefunction: 0, // Log(R) cost
   paramtemp: 0.03, // Parameter temperature
   sigmasearch: 10,
@@ -106,9 +107,61 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   highQOffset: 0,
   iterations: 5000000,
   title: 'StochFit',
-  useGpu: false,
-  gpuChains: 1,
 };
+
+// Inlined from stochfit-api / levmar-api to avoid main-process import in renderer
+export interface SARunState {
+  roughness: number;
+  filmAbsInput: number;
+  surfAbs: number;
+  temperature: number;
+  impNorm: number;
+  avgfSTUN: number;
+  bestSolution: number;
+  chiSquare: number;
+  goodnessOfFit: number;
+  iteration: number;
+  edValues: number[];
+  edCount: number;
+}
+
+// Re-exported from BoxParameterTable for use in StochFitOutput
+import type { BoxRow } from '../components/shared/BoxParameterTable';
+export type { BoxRow };
+
+export interface LMResult {
+  parameters: number[];
+  covariance: number[];
+  info: number[];
+}
+
+export interface StochFitOutput {
+  version: 2;
+  savedAt: string;
+  dataFile: string;
+  settings: ModelSettings;
+  saState: SARunState;
+  fitResult: Omit<FitResult, 'isFinished'>;
+  boxModel?: {
+    boxes: number;
+    subRough: number;
+    zOffset: number;
+    oneSigma: boolean;
+    boxRows: BoxRow[];
+    lmResult?: LMResult;
+  };
+}
+
+export interface RhoEDPResult {
+  ed: number[];
+  boxED: number[];
+}
+
+export interface StochFitResult extends LMResult {
+  paramArray: number[];
+  chiSquareArray: number[];
+  paramArraySize: number;
+}
 
 export interface BoxLMSettings {
   subSLD: number;
@@ -116,14 +169,12 @@ export interface BoxLMSettings {
   boxes: number;
   wavelength: number;
   qSpread: number;
-  forcenorm: boolean;
   impNorm: boolean;
   fitFunc: number;
   lowQOffset: number;
   highQOffset: number;
   iterations: number;
   oneSigma: boolean;
-  writeFiles: boolean;
   parameters: number[];
   ul: number[];
   ll: number[];

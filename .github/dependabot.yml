@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /gui
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      npm-all:
+        patterns:
+          - "*"

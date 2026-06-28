@@ -1,4 +1,4 @@
-import { ipcMain, dialog } from 'electron';
+import { ipcMain, dialog, shell } from 'electron';
 import { IPC } from '../shared/ipc-channels';
 import {
   stochInit,
@@ -8,15 +8,13 @@ import {
   stochCancel,
   stochGetData,
   stochGetRunState,
-  stochArraySizes,
-  stochWarmedUp,
   stochSAParams,
-  stochGpuAvailable,
-  readSessionFile,
-  writeSessionFile,
+  readOutputFile,
+  writeOutputFile,
+  outputFilePath,
   type ReflSettingsInput,
   type StochRunStateOutput,
-  type StochSessionFile,
+  type StochFitOutput,
 } from './native/stochfit-api';
 import {
   levmarFastReflFit,
@@ -27,6 +25,8 @@ import {
   type BoxReflSettingsInput,
 } from './native/levmar-api';
 import fs from 'fs';
+import path from 'path';
+import { parseDataFile } from './parsers';
 
 function wrap<T>(name: string, fn: () => T): T {
   try {
@@ -63,16 +63,16 @@ export function registerIpcHandlers(): void {
     return wrap('STOCH_GET_RUN_STATE', () => stochGetRunState(boxes));
   });
 
-  ipcMain.handle(IPC.STOCH_LOAD_SESSION, (_event, filePath: string) => {
-    return wrap('STOCH_LOAD_SESSION', () => readSessionFile(filePath));
+  ipcMain.handle(IPC.STOCH_LOAD_OUTPUT, (_event, filePath: string) => {
+    return wrap('STOCH_LOAD_OUTPUT', () => readOutputFile(filePath));
   });
 
-  ipcMain.handle(IPC.STOCH_WRITE_SESSION, (_event, filePath: string, session: StochSessionFile) => {
-    return wrap('STOCH_WRITE_SESSION', () => writeSessionFile(filePath, session));
+  ipcMain.handle(IPC.STOCH_WRITE_OUTPUT, (_event, filePath: string, output: StochFitOutput) => {
+    return wrap('STOCH_WRITE_OUTPUT', () => writeOutputFile(filePath, output));
   });
 
-  ipcMain.handle(IPC.STOCH_DELETE_SESSION, (_event, filePath: string) => {
-    return wrap('STOCH_DELETE_SESSION', () => {
+  ipcMain.handle(IPC.STOCH_DELETE_OUTPUT, (_event, filePath: string) => {
+    return wrap('STOCH_DELETE_OUTPUT', () => {
       try { fs.unlinkSync(filePath); } catch { /* already gone */ }
     });
   });
@@ -81,44 +81,47 @@ export function registerIpcHandlers(): void {
     return wrap('STOCH_GET_DATA', () => stochGetData());
   });
 
-  ipcMain.handle(IPC.STOCH_ARRAY_SIZES, () => {
-    return wrap('STOCH_ARRAY_SIZES', () => stochArraySizes());
-  });
-
-  ipcMain.handle(IPC.STOCH_WARMED_UP, () => {
-    return wrap('STOCH_WARMED_UP', () => stochWarmedUp());
-  });
-
   ipcMain.handle(IPC.STOCH_SA_PARAMS, () => {
     return wrap('STOCH_SA_PARAMS', () => stochSAParams());
   });
 
-  ipcMain.handle(IPC.STOCH_GPU_AVAILABLE, () => {
-    return wrap('STOCH_GPU_AVAILABLE', () => stochGpuAvailable());
-  });
-
   // ── LevMar ──────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.LM_FAST_REFL_FIT, (_event, input: BoxReflSettingsInput, params: number[]) => {
-    return levmarFastReflFit(input, params);
+    return wrap('LM_FAST_REFL_FIT', () => levmarFastReflFit(input, params));
   });
 
   ipcMain.handle(IPC.LM_FAST_REFL_GENERATE, (_event, input: BoxReflSettingsInput, params: number[]) => {
-    return levmarFastReflGenerate(input, params);
+    return wrap('LM_FAST_REFL_GENERATE', () => levmarFastReflGenerate(input, params));
   });
 
   ipcMain.handle(IPC.LM_RHO_FIT, (_event, input: BoxReflSettingsInput, params: number[]) => {
-    return levmarRhoFit(input, params);
+    return wrap('LM_RHO_FIT', () => levmarRhoFit(input, params));
   });
 
   ipcMain.handle(IPC.LM_RHO_GENERATE, (_event, input: BoxReflSettingsInput, params: number[]) => {
-    return levmarRhoGenerate(input, params);
+    return wrap('LM_RHO_GENERATE', () => levmarRhoGenerate(input, params));
   });
 
   ipcMain.handle(IPC.LM_STOCH_FIT, (_event, input: BoxReflSettingsInput, params: number[]) => {
-    return levmarStochFit(input, params);
+    return wrap('LM_STOCH_FIT', () => levmarStochFit(input, params));
   });
 
   // ── File System ──────────────────────────────────────────────────────────
+  ipcMain.handle(IPC.FS_OPEN_DATA_FILE, async (_event) => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: [
+        { name: 'All supported', extensions: ['txt', 'dat', 'csv', 'ort', 'nxs', 'h5', 'hdf5', 'hdf'] },
+        { name: 'Text data', extensions: ['txt', 'dat', 'csv'] },
+        { name: 'ORSO (.ort)', extensions: ['ort'] },
+        { name: 'NeXus / HDF5', extensions: ['nxs', 'h5', 'hdf5', 'hdf'] },
+        { name: 'All files', extensions: ['*'] },
+      ],
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    return parseDataFile(result.filePaths[0]);
+  });
+
   ipcMain.handle(IPC.FS_OPEN_FILE, async (_event, filters?: Electron.FileFilter[]) => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
@@ -135,5 +138,21 @@ export function registerIpcHandlers(): void {
     if (result.canceled || !result.filePath) return false;
     fs.writeFileSync(result.filePath, content, 'utf-8');
     return true;
+  });
+
+  ipcMain.handle(IPC.FS_OPEN_PDF, async (_event, dir: string, baseName: string, data: Uint8Array) => {
+    // Auto-increment filename so we never overwrite a previous report (mirrors C# behavior)
+    let filePath = path.join(dir, `${baseName}.pdf`);
+    let counter = 1;
+    while (fs.existsSync(filePath)) {
+      filePath = path.join(dir, `${baseName}${counter++}.pdf`);
+    }
+    fs.writeFileSync(filePath, Buffer.from(data));
+    await shell.openPath(filePath);
+    return filePath;
+  });
+
+  ipcMain.handle(IPC.SHELL_OPEN_EXTERNAL, (_event, url: string) => {
+    shell.openExternal(url);
   });
 }

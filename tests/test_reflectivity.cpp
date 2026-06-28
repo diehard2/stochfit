@@ -1,12 +1,17 @@
 // Physics regression test for the Parratt reflectivity calculation.
-// Verifies CReflCalc::CalculateReflectivity() against reference values
-// captured from the current build for the same 2-box lipid film setup
-// used by mirefl.  Any change that corrupts the Parratt recursion or the
-// EDP generation will cause a failure here.
+// Verifies ParrattReflectivity::CalculateReflectivity() against reference
+// values captured for a 2-box lipid film setup (same parameters as mirefl).
+// Any change that corrupts the Parratt recursion or EDP generation will fail.
 
 #include <gtest/gtest.h>
-#include <stochfit/ReflCalc.h> 
+#include <stochfit/UnifiedReflectivity.h>
+#include <stochfit/CEDP.h>
+#include <stochfit/LayerStack.h>
+#include <stochfit/ParamVector.h>
 #include <cmath>
+#include <numbers>
+#include <complex>
+#include <vector>
 
 // Identical to the qrange in src/mirefl/MIRefl.cpp
 static const double qrange[] = {
@@ -22,32 +27,28 @@ static const double qrange[] = {
     0.560, 0.566, 0.572, 0.578, 0.584, 0.590, 0.594, 0.596, 0.598, 0.600
 };
 
-static void FillInitStruct(ReflSettings* s)
+static void FillInitStruct(ReflSettings& s)
 {
-    s->Wavelength       = 1.24;
-    s->Forcenorm        = false;
-    s->QErr             = 0;
-    s->XRonly           = false;
-    s->Impnorm          = false;
-    s->Q                = const_cast<double*>(qrange);
-    s->CritEdgeOffset   = 0;
-    s->HighQOffset      = 0;
-    s->UseSurfAbs       = false;
-    s->SupAbs           = 0;
-    s->SubAbs           = 0;
-    s->FilmAbs          = 0;
-    s->Boxes            = 2;
-    s->FilmLength       = 26;
-    s->Resolution       = 10;
-    s->FilmSLD          = 9.38;
-    s->SupSLD           = 0.0;
-    s->SubSLD           = 9.38;
-    s->QPoints          = static_cast<int>(sizeof qrange / sizeof qrange[0]);
-    s->Forcesig         = 0;
-    s->Objectivefunction = 0;
-    s->QError           = nullptr;
-    s->Refl             = nullptr;
-    s->ReflError        = nullptr;
+    s.Wavelength       = 1.24;
+    s.QErr             = 0;
+    s.XRonly           = false;
+    s.Impnorm          = false;
+    s.Q                = std::vector<double>(std::begin(qrange), std::end(qrange));
+    s.CritEdgeOffset   = 0;
+    s.HighQOffset      = 0;
+    s.UseSurfAbs       = false;
+    s.SupAbs           = 0;
+    s.SubAbs           = 0;
+    s.FilmAbs          = 0;
+    s.Boxes            = 2;
+    s.FilmLength       = 26;
+    s.Resolution       = 10;
+    s.FilmSLD          = 9.38;
+    s.SupSLD           = 0.0;
+    s.SubSLD           = 9.38;
+    s.Forcesig         = 0;
+    s.Objectivefunction = 0;
+    // Refl, ReflError, QError left empty — only CalculateReflectivity is called
 }
 
 // Relative-tolerance check. At a thin-film interference minimum R can be
@@ -57,68 +58,190 @@ static void ExpectRelative(double actual, double expected,
                            double reltol = 1e-3,
                            const char* label = "")
 {
-    // absolute tolerance floor prevents division by zero for values near 0
     double tol = std::fabs(expected) * reltol + 1e-15;
     EXPECT_NEAR(actual, expected, tol) << label;
 }
 
-// Reference values captured from refl.txt (ParamsRF at the exact data
-// Q-points) from the build that passes the complex-arithmetic unit tests.
-// Both ParamsRF and CalculateReflectivity call MyTransparentRF with the
-// same EDP; at a shared Q-point the arithmetic path (complex / real) is
-// identical, so the values agree to floating-point precision.
+// Reference values captured from the Parratt recursion for this setup.
+// Q < Qc uses the complex path; Q > Qc uses the real-kk fast path.
 TEST(Reflectivity, TwoBoxLipidFilmParratt)
 {
-    CEDP        edp;
-    CReflCalc   refl;
-    ReflSettings init = {};
-
     const double FilmSLD  = 9.38;
     const double SLD[]    = {0.0, 8.911, 13.5072, 9.38};  // sup, box1, box2, sub
 
-    FillInitStruct(&init);
+    ReflSettings init = {};
+    FillInitStruct(init);
 
-    ParamVector params(&init);
+    CEDP edp;
+    edp.Init(init);
+
+    ParamVector params(init);
     for (int i = 0; i < init.Boxes; i++)
         params.SetMutatableParameter(i, SLD[i + 1] / FilmSLD);
-    params.setroughness(3.15);
+    params.SetRoughness(3.15);
 
-    refl.Init(&init);
-    edp.Init(&init);
-    edp.GenerateEDP(&params);
-    refl.CalculateReflectivity(&edp);
+    edp.GenerateEDP(params);
 
-    ASSERT_EQ(refl.m_idatapoints, 100);
+    ParrattReflectivity parratt(init);
+    auto reflOut = parratt.CalculateReflectivity(edp);
+
+    ASSERT_EQ(reflOut.size(), 100u);
 
     // ── Q < Qc region (complex Parratt path) ──────────────────────────────
     // Q=0.020  total external reflection (below critical edge)
-    ExpectRelative(refl.reflpt[0],  1.0,          1e-6, "Q=0.020");
+    ExpectRelative(reflOut[0],  1.0,          1e-6, "Q=0.020");
     // Q=0.026  just above critical Q, sharp drop
-    ExpectRelative(refl.reflpt[1],  9.57934e-02,  1e-3, "Q=0.026");
+    ExpectRelative(reflOut[1],  9.57934e-02,  1e-3, "Q=0.026");
 
     // ── Q > Qc region (real Parratt path) ─────────────────────────────────
     // Q=0.032  continuing fall
-    ExpectRelative(refl.reflpt[2],  2.96789e-02,  1e-3, "Q=0.032");
+    ExpectRelative(reflOut[2],  2.96789e-02,  1e-3, "Q=0.032");
     // Q=0.038
-    ExpectRelative(refl.reflpt[3],  1.36002e-02,  1e-3, "Q=0.038");
+    ExpectRelative(reflOut[3],  1.36002e-02,  1e-3, "Q=0.038");
     // Q=0.050  Kiessig fringe region
-    ExpectRelative(refl.reflpt[5],  4.56059e-03,  1e-3, "Q=0.050");
+    ExpectRelative(reflOut[5],  4.56059e-03,  1e-3, "Q=0.050");
     // Q=0.080
-    ExpectRelative(refl.reflpt[10], 7.70483e-04,  1e-3, "Q=0.080");
+    ExpectRelative(reflOut[10], 7.70483e-04,  1e-3, "Q=0.080");
     // Q=0.140  rapid fall-off
-    ExpectRelative(refl.reflpt[20], 3.53317e-05,  1e-3, "Q=0.140");
+    ExpectRelative(reflOut[20], 3.53317e-05,  1e-3, "Q=0.140");
     // Q=0.188  near thin-film interference minimum — use looser tolerance
-    ExpectRelative(refl.reflpt[28], 6.14088e-08,  2e-2, "Q=0.188");
+    ExpectRelative(reflOut[28], 6.14088e-08,  2e-2, "Q=0.188");
     // Q=0.200  recovering after minimum
-    ExpectRelative(refl.reflpt[30], 2.13742e-07,  1e-3, "Q=0.200");
+    ExpectRelative(reflOut[30], 2.13742e-07,  1e-3, "Q=0.200");
     // Q=0.260  second fringe maximum
-    ExpectRelative(refl.reflpt[40], 2.61797e-06,  1e-3, "Q=0.260");
+    ExpectRelative(reflOut[40], 2.61797e-06,  1e-3, "Q=0.260");
     // Q=0.320
-    ExpectRelative(refl.reflpt[50], 9.57848e-07,  1e-3, "Q=0.320");
+    ExpectRelative(reflOut[50], 9.57848e-07,  1e-3, "Q=0.320");
     // Q=0.440
-    ExpectRelative(refl.reflpt[70], 1.04542e-07,  1e-3, "Q=0.440");
+    ExpectRelative(reflOut[70], 1.04542e-07,  1e-3, "Q=0.440");
     // Q=0.560  high-Q tail
-    ExpectRelative(refl.reflpt[90], 4.49987e-10,  2e-2, "Q=0.560");
+    ExpectRelative(reflOut[90], 4.49987e-10,  2e-2, "Q=0.560");
     // Q=0.600
-    ExpectRelative(refl.reflpt[99], 1.19181e-09,  2e-2, "Q=0.600");
+    ExpectRelative(reflOut[99], 1.19181e-09,  2e-2, "Q=0.600");
+}
+
+// ── Box model Parratt tests ───────────────────────────────────────────────────
+//
+// These tests drive ParrattReflectivity through a manually constructed LayerStack
+// (the same path used by LevMar / BoxLayerBuild) and check known analytical values.
+//
+// Density convention: density[i] = SLD_i * 2 * rhofactor
+//   where rhofactor = 1e-6 * lambda^2 / (2*pi)
+// k_i = k0 * sqrt(sin^2(theta) - density[i] + sup_sld)
+// For air superstrate (SLD_sup=0): sup_sld=0, k_air = Q/2 (exact).
+//
+// Reference values are derived analytically from the Fresnel/Parratt formulae.
+
+static void MakeBoxReflSettings(ReflSettings &s, double wavelength,
+                                 const std::vector<double> &Q)
+{
+    s = {};
+    s.Wavelength = wavelength;
+    s.SupSLD     = 0.0;  // air (Parratt units: 2*raw*rhofactor = 0 for air)
+    s.Q          = Q;
+    s.QErr       = 0;
+}
+
+// Single-box film where SLD_film = SLD_sub (degenerate: film has same density as
+// substrate, so the only interface is air/substrate). Expected reflectivity equals
+// the bare Fresnel: R = ((k_air - k_sub)/(k_air + k_sub))^2.
+//
+// Analytical:  k_air = Q/2 = 0.07,  k_sub = sqrt((Q/2)^2 - 4*pi*SubSLD*1e-6)
+//              SubSLD = 9.38e-6, Q = 0.14 -> k_sub = 0.069153
+//              r = 0.000847/0.139153 = 6.087e-3  ->  R = 3.703e-5
+TEST(Reflectivity, BoxModelNoFilm)
+{
+    const double SubSLD    = 9.38;
+    const double lambda    = 1.24;
+    const double rhofactor = 1e-6 * lambda * lambda / (2.0 * std::numbers::pi);
+    const double rho2      = 2.0 * rhofactor;
+
+    ReflSettings s;
+    MakeBoxReflSettings(s, lambda, {0.14});
+
+    std::vector<std::complex<double>> rho = {
+        {0.0,             0.0},   // superstrate (air)
+        {SubSLD * rho2,   0.0},   // film = Si (no contrast → r12 = 0)
+        {SubSLD * rho2,   0.0},   // substrate (Si)
+    };
+    std::vector<std::complex<double>> lm = {
+        {0.0, 0.0},               // superstrate (zero length)
+        {0.0, -2.0 * 200.0},      // film 200 Å (irrelevant since r12=0)
+        {0.0, 0.0},               // substrate
+    };
+
+    LayerStack ls{};
+    ls.rho          = rho;
+    ls.length_mult  = lm;
+    ls.sup_offset   = 0;
+    ls.sub_offset   = 1;
+    ls.has_roughness = false;
+    ls.transparent  = true;
+
+    ParrattReflectivity parratt(s);
+    auto refl = parratt.CalculateReflectivity(ls);
+    ASSERT_EQ(refl.size(), 1u);
+    ExpectRelative(refl[0], 3.703e-5, 5e-3, "BoxModel-no-film Q=0.14");
+}
+
+// Single-box film with SLD_film = SubSLD/2 = 4.69, thickness 200 Å, no roughness.
+// At Q=0.14 the propagation phase is ≈ 27.83 rad (close to a reflectivity minimum):
+// r01 ≈ 0.003023, r12 ≈ 0.003063; the phase modulation gives R ≈ 1.77e-6.
+// Also checks Q=0.016 (below Qc_Si ≈ 0.0217) where R must be ≈ 1.
+TEST(Reflectivity, BoxModelSingleFilm)
+{
+    const double SubSLD  = 9.38;
+    const double filmSLD = SubSLD / 2.0;   // 4.69
+    const double d       = 200.0;
+    const double lambda  = 1.24;
+    const double rhofactor = 1e-6 * lambda * lambda / (2.0 * std::numbers::pi);
+    const double rho2    = 2.0 * rhofactor;
+
+    // -- Q = 0.016 (below Qc_Si ≈ 0.0217): total reflection ----------------------
+    {
+        ReflSettings s;
+        MakeBoxReflSettings(s, lambda, {0.016});
+
+        std::vector<std::complex<double>> rho = {
+            {0.0, 0.0}, {filmSLD*rho2, 0.0}, {SubSLD*rho2, 0.0}
+        };
+        std::vector<std::complex<double>> lm = {
+            {0.0, 0.0}, {0.0, -2.0*d}, {0.0, 0.0}
+        };
+        LayerStack ls{};
+        ls.rho = rho; ls.length_mult = lm;
+        ls.sup_offset = 0; ls.sub_offset = 1;
+        ls.has_roughness = false; ls.transparent = false;
+
+        ParrattReflectivity parratt(s);
+        auto refl = parratt.CalculateReflectivity(ls);
+        ASSERT_EQ(refl.size(), 1u);
+        // k_sub is imaginary (Q < Qc) → total reflection
+        EXPECT_NEAR(refl[0], 1.0, 1e-6) << "BoxModel-total-reflection Q=0.016";
+    }
+
+    // -- Q = 0.14 (above all critical edges): interference -----------------------
+    {
+        ReflSettings s;
+        MakeBoxReflSettings(s, lambda, {0.14});
+
+        std::vector<std::complex<double>> rho = {
+            {0.0, 0.0}, {filmSLD*rho2, 0.0}, {SubSLD*rho2, 0.0}
+        };
+        std::vector<std::complex<double>> lm = {
+            {0.0, 0.0}, {0.0, -2.0*d}, {0.0, 0.0}
+        };
+        LayerStack ls{};
+        ls.rho = rho; ls.length_mult = lm;
+        ls.sup_offset = 0; ls.sub_offset = 1;
+        ls.has_roughness = false; ls.transparent = true;
+
+        ParrattReflectivity parratt(s);
+        auto refl = parratt.CalculateReflectivity(ls);
+        ASSERT_EQ(refl.size(), 1u);
+        // Near a reflectivity minimum; analytical value ≈ 1.77e-6 (loose tol)
+        ExpectRelative(refl[0], 1.77e-6, 5e-2, "BoxModel-single-film Q=0.14");
+        // Must be well below bare-Fresnel (3.7e-5) due to destructive interference
+        EXPECT_LT(refl[0], 1e-5) << "BoxModel-single-film Q=0.14 should be below bare Fresnel";
+    }
 }

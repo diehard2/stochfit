@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import Plot from 'react-plotly.js';
+import React, { useEffect, useState } from 'react';
+import Plot from './Plot';
 import type { Data } from 'plotly.js';
 import { edpLayout, plotlyConfig } from './graph-config';
 import { COLORS } from '../../lib/constants';
@@ -12,6 +12,7 @@ interface Props {
   lmZRange?: number[];
   lmED?: number[];
   lmBoxED?: number[];
+  panelKey?: string;
 }
 
 type LockedRange = {
@@ -19,8 +20,12 @@ type LockedRange = {
   yaxis?: { range: [number, number]; autorange: false };
 } | null;
 
-export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED }: Props) {
+export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED, panelKey }: Props) {
   const [lockedRange, setLockedRange] = useState<LockedRange>(null);
+
+  useEffect(() => {
+    setLockedRange(null);
+  }, [panelKey]);
   const traces: Data[] = [];
 
   const handleRelayout = (e: Readonly<Plotly.PlotRelayoutEvent>) => {
@@ -51,6 +56,7 @@ export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED
       type: 'scatter',
       name: 'EDP',
       line: { color: COLORS.miFit, width: 2, shape: 'spline' },
+      hovertemplate: 'Z: %{x:.2f} Å<br>ρ: %{y:.4f}<extra></extra>',
     });
   }
 
@@ -63,6 +69,7 @@ export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED
       type: 'scatter',
       name: 'Box Model',
       line: { color: COLORS.boxFit, width: 1.5, shape: 'hv' },
+      hovertemplate: 'Z: %{x:.2f} Å<br>ρ: %{y:.4f}<extra></extra>',
     });
   }
 
@@ -75,6 +82,7 @@ export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED
       type: 'scatter',
       name: 'EDP',
       line: { color: COLORS.miFit, width: 2, shape: 'spline' },
+      hovertemplate: 'Z: %{x:.2f} Å<br>ρ: %{y:.4f}<extra></extra>',
     });
   }
 
@@ -87,6 +95,7 @@ export function ElectronDensityGraph({ fitResult, boxED, lmZRange, lmED, lmBoxED
       type: 'scatter',
       name: 'Boxes',
       line: { color: COLORS.boxFit, width: 1.5, shape: 'hv' },
+      hovertemplate: 'Z: %{x:.2f} Å<br>ρ: %{y:.4f}<extra></extra>',
     });
   }
 

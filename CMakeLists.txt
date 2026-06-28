@@ -42,9 +42,9 @@ else()
     add_compile_options(
         $<$<CONFIG:Release>:-O3>
         $<$<CONFIG:Release>:-ffast-math>
-        $<$<CONFIG:Release>:-flto>
+        $<$<CONFIG:Release>:-flto=auto>
     )
-    add_link_options($<$<CONFIG:Release>:-flto>)
+    add_link_options($<$<CONFIG:Release>:-flto=auto>)
     # Architecture tuning — x86-64-v3 = AVX2+FMA (Haswell/Zen2+, ~2019+)
     if(APPLE AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
         add_compile_options($<$<CONFIG:Release>:-mcpu=apple-m1>)

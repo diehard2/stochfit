@@ -1,0 +1,5 @@
+# Normalize line endings on commit; use platform-native on checkout
+* text=auto
+
+# Patch files must always be LF or git apply breaks on Windows
+*.patch text eol=lf

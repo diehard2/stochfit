@@ -73,8 +73,9 @@ static void PinOMPThreadsToPCores() {
 StochFit::StochFit(const ReflSettings &InitStruct,
                    const std::unique_ptr<StochRunState> &state)
     // m_initStruct first; m_cEDP/m_displayEDP before m_parratt (declaration order).
-    : m_initStruct(InitStruct), params(InitStruct), m_displayState(InitStruct),
+    : m_initStruct(InitStruct),
       m_cEDP(m_initStruct), m_displayEDP(m_initStruct),
+      params(InitStruct), m_displayState(InitStruct),
       m_parratt(m_initStruct, m_cEDP.GetLayerCount()),
       m_objective(ReflectivityObjective::Type{InitStruct.Objectivefunction}),
       m_stepper({.sigmaSearch = InitStruct.Sigmasearch,
@@ -147,9 +148,8 @@ StochFit::StochFit(const ReflSettings &InitStruct,
     m_annealer.emplace(
         std::in_place_type<Anneal<StunPolicy>>, m_cEDP, m_parratt, m_objective,
         m_stepper, params, deps, InitStruct.Inittemp, InitStruct.Slope,
-        InitStruct.Platiter, InitStruct.Gamma, InitStruct.Gammadec,
-        InitStruct.STUNfunc, InitStruct.STUNdeciter, InitStruct.Tempiter,
-        InitStruct.Adaptive);
+        InitStruct.Platiter, InitStruct.Gamma,
+        InitStruct.STUNfunc, InitStruct.Tempiter, InitStruct.Adaptive);
     break;
   }
 

@@ -47,8 +47,7 @@ private:
 // m_dTemp stores β = 1/T, same convention as SimulatedPolicy.
 struct StunPolicy {
     StunPolicy(double initTemp, double slope, int platIter,
-               double gamma, double gammaDec,
-               int stunFunc, int stunDecIter, int tempIter, bool adaptive);
+               double gamma, int stunFunc, int tempIter, bool adaptive);
 
     bool Accept(double curE, double candE, double bestE, std::mt19937& rng);
 
@@ -64,10 +63,8 @@ private:
     int    m_platIter;
     int    m_iter = 0;
     double m_gamma;
-    double m_gammaDec;
     double m_averageFSTUN;
     int    m_stunFunc;
-    int    m_stunDecIter;
     int    m_tempIter;
     bool   m_adaptive;
     std::deque<double> m_qWindow;

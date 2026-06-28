@@ -30,8 +30,8 @@ public:
            PolicyArgs&&... policyArgs)
         : m_edp(&edp), m_parratt(&parratt), m_objective(&objective),
           m_stepper(&stepper), m_tempParams(initParams), m_deps(std::move(deps)),
-          m_policy(std::forward<PolicyArgs>(policyArgs)...),
-          m_rng(std::random_device{}()) {}
+          m_rng(std::random_device{}()),
+          m_policy(std::forward<PolicyArgs>(policyArgs)...) {}
 
     void InitEnergy(ParamVector& params);
 

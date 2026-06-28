@@ -36,12 +36,10 @@ private:
 	vector<double> m_RhoArray;
 	vector<double> m_SigmaArray;
 	
-	int pcount;
 	bool onesigma;
 	double SubSLD;
 	double m_dSupSLD;
 	int boxnumber;
-    double dz0;
 	int Zlength;
 
 

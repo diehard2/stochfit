@@ -22,14 +22,11 @@ void SimulatedPolicy::Schedule() {
 // ── StunPolicy ────────────────────────────────────────────────────────────────
 
 StunPolicy::StunPolicy(double initTemp, double slope, int platIter,
-                       double gamma, double gammaDec,
-                       int stunFunc, int stunDecIter, int tempIter, bool adaptive)
+                       double gamma, int stunFunc, int tempIter, bool adaptive)
     : m_dTemp(adaptive ? 10.0 : 1.0 / initTemp),
       m_slope(slope), m_platIter(platIter),
-      m_gamma(gamma), m_gammaDec(gammaDec),
-      m_averageFSTUN(initTemp),
-      m_stunFunc(stunFunc), m_stunDecIter(stunDecIter),
-      m_tempIter(tempIter), m_adaptive(adaptive) {}
+      m_gamma(gamma), m_averageFSTUN(initTemp),
+      m_stunFunc(stunFunc), m_tempIter(tempIter), m_adaptive(adaptive) {}
 
 bool StunPolicy::Accept(double curE, double candE, double bestE, std::mt19937& rng) {
     const double deltaE = fSTUN(candE, bestE) - fSTUN(curE, bestE);

@@ -1,6 +1,6 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
-import { MakerZip } from '@electron-forge/maker-zip';
+import { MakerZIP } from '@electron-forge/maker-zip';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
@@ -17,7 +17,7 @@ function opt(...paths: string[]): string[] {
 // macOS so that `npm install` succeeds on Windows/Linux (optionalDependency).
 const makers: ForgeConfig['makers'] = [
   new MakerSquirrel({ authors: 'StochFit Contributors' }),
-  new MakerZip({}, ['linux']),
+  new MakerZIP({}, ['linux']),
 ];
 
 if (process.platform === 'darwin') {

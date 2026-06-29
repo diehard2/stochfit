@@ -170,25 +170,39 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/v}"
           npm version "$TAG" --no-git-tag-version
 
-      - name: Make installers
+      - name: Package app
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBUG: 'electron-forge:*'
         working-directory: gui
         shell: bash
         run: |
           set -o pipefail
-          npm run make 2>&1 | tee /tmp/step_out.txt || {
-            { echo "## Make installers failure on ${{ runner.os }}"; echo '```'; tail -100 /tmp/step_out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          npm run package 2>&1 | tee /tmp/package_out.txt || {
+            { echo "## Package failure on ${{ runner.os }}"; echo '```'; tail -200 /tmp/package_out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
             exit 1
           }
 
-      - name: Debug build output
+      - name: Debug package output
         shell: bash
         run: |
           echo "=== build/electron tree ==="
-          find build/electron -type f 2>/dev/null || echo "(no build/electron directory)"
-          echo "=== forge make log tail ==="
-          tail -50 /tmp/step_out.txt || echo "(no make log)"
+          find build/electron -maxdepth 3 -type d 2>/dev/null || echo "(no build/electron directory)"
+          echo "=== package log (last 200 lines) ==="
+          tail -200 /tmp/package_out.txt || echo "(no package log)"
+
+      - name: Make installers
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBUG: 'electron-forge:*'
+        working-directory: gui
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run make -- --skip-package 2>&1 | tee /tmp/step_out.txt || {
+            { echo "## Make installers failure on ${{ runner.os }}"; echo '```'; tail -200 /tmp/step_out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
 
       - name: Upload Windows installer
         if: runner.os == 'Windows' && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch')
@@ -212,6 +226,7 @@ jobs:
         with:
           name: installer-linux
           path: build/electron/make/zip/linux/**/*.zip
+          if-no-files-found: error
 
       - name: Comment on PR failure
         if: failure() && github.event_name == 'pull_request'

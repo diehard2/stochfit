@@ -1,7 +1,0 @@
-FROM qwen3.6:35b-a3b 
-# This limits how much memory is used for 'thinking' and code context
-PARAMETER num_ctx 4096
-# This forces it to stay on the GPU
-PARAMETER num_gpu 99
-# Reduces the 'thinking' overhead
-PARAMETER temperature 0.6

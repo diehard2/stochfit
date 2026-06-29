@@ -30,7 +30,9 @@
     "vite": "^8.1.0"
   },
   "overrides": {
-    "@tootallnate/once": "^3.0.1"
+    "@tootallnate/once": "^3.0.1",
+    "tar": "^7.5.16",
+    "tmp": "^0.2.6"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.1",

@@ -70,10 +70,37 @@ static void PinOMPThreadsToPCores() {
 // ── Constructor
 // ───────────────────────────────────────────────────────────────
 
+// Trim the measurement arrays to the fit window [CritEdgeOffset, N-HighQOffset)
+// and zero the offsets. Everything downstream — including the Parratt Q grid
+// built by ReflConstants — must see the same window as the sliced data, or the
+// model buffer and reflBuf sizes disagree. Invalid inputs are returned
+// unchanged; the constructor body reports them via m_initError.
+static ReflSettings SliceToFitWindow(ReflSettings s) {
+  const int qsize = static_cast<int>(s.Q.size());
+  const int n = qsize - s.CritEdgeOffset - s.HighQOffset;
+  if (s.CritEdgeOffset < 0 || s.HighQOffset < 0 || n <= 0 ||
+      static_cast<int>(s.Refl.size()) < qsize ||
+      static_cast<int>(s.ReflError.size()) < qsize)
+    return s;
+
+  const int off = s.CritEdgeOffset;
+  auto slice = [&](std::vector<double> &v) {
+    if (static_cast<int>(v.size()) >= off + n)
+      v.assign(v.begin() + off, v.begin() + off + n);
+  };
+  slice(s.Q);
+  slice(s.Refl);
+  slice(s.ReflError);
+  slice(s.QError); // may be empty (no smearing); left alone in that case
+  s.CritEdgeOffset = 0;
+  s.HighQOffset = 0;
+  return s;
+}
+
 StochFit::StochFit(const ReflSettings &InitStruct,
                    const std::unique_ptr<StochRunState> &state)
     // m_initStruct first; m_cEDP/m_displayEDP before m_parratt (declaration order).
-    : m_initStruct(InitStruct),
+    : m_initStruct(SliceToFitWindow(InitStruct)),
       m_cEDP(m_initStruct), m_displayEDP(m_initStruct),
       params(InitStruct), m_displayState(InitStruct),
       m_parratt(m_initStruct, m_cEDP.GetLayerCount()),
@@ -86,22 +113,20 @@ StochFit::StochFit(const ReflSettings &InitStruct,
 
   m_Directory = InitStruct.Directory;
 
-  // Slice measurement data by CritEdgeOffset / HighQOffset.
+  // m_initStruct was sliced to the fit window by SliceToFitWindow; validate
+  // against the caller's original settings so invalid inputs are rejected.
   const int qsize  = static_cast<int>(InitStruct.Q.size());
   m_datapoints = qsize - InitStruct.HighQOffset - InitStruct.CritEdgeOffset;
-  if (m_datapoints <= 0 ||
+  if (InitStruct.CritEdgeOffset < 0 || InitStruct.HighQOffset < 0 ||
+      m_datapoints <= 0 ||
       static_cast<int>(InitStruct.Refl.size()) < qsize ||
       static_cast<int>(InitStruct.ReflError.size()) < qsize) {
     m_initError = tl::unexpected(std::string("Invalid Q/Refl/ReflError sizes"));
     return;
   }
-  const int off = InitStruct.CritEdgeOffset;
-  m_xi.assign(InitStruct.Q.begin() + off,
-               InitStruct.Q.begin() + off + m_datapoints);
-  m_yi.assign(InitStruct.Refl.begin() + off,
-               InitStruct.Refl.begin() + off + m_datapoints);
-  m_eyi.assign(InitStruct.ReflError.begin() + off,
-                InitStruct.ReflError.begin() + off + m_datapoints);
+  m_xi  = m_initStruct.Q;
+  m_yi  = m_initStruct.Refl;
+  m_eyi = m_initStruct.ReflError;
 
 
   // Apply run state if provided.
@@ -238,7 +263,6 @@ int StochFit::Processing() {
            isteps < m_itotaliterations && !m_stop_requested.load(); ++isteps) {
 
         // All threads: mutate candidate (omp single inside) + build EDP (omp for inside).
-        // PrepareCandidate retries internally until a valid EDP is produced.
         std::visit([&](auto &a) { a.PrepareCandidate(params); }, *m_annealer);
 
         // All threads: cooperative Parratt Q-point distribution (omp for inside).

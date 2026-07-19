@@ -8,6 +8,8 @@
 #include <stochfit/CEDP.h>
 #include <stochfit/LayerStack.h>
 #include <stochfit/ParamVector.h>
+#include <stochfit/StochFitHarness.h>
+#include <algorithm>
 #include <cmath>
 #include <numbers>
 #include <complex>
@@ -244,4 +246,59 @@ TEST(Reflectivity, BoxModelSingleFilm)
         // Must be well below bare-Fresnel (3.7e-5) due to destructive interference
         EXPECT_LT(refl[0], 1e-5) << "BoxModel-single-film Q=0.14 should be below bare Fresnel";
     }
+}
+
+// ── Harness fit-window test ───────────────────────────────────────────────────
+//
+// With nonzero CritEdgeOffset/HighQOffset the harness must compute the model on
+// the same sliced Q window as the measured data. Regression test for a bug where
+// the Parratt grid was built from the full Q array while the SA buffer was sized
+// to the window: the full-grid result overflowed the buffer and the model was
+// misaligned with the data by CritEdgeOffset points.
+TEST(Harness, QOffsetsSliceFitWindow)
+{
+    constexpr int kLowOff  = 5;
+    constexpr int kHighOff = 5;
+    constexpr int kFull    = 100;
+    constexpr int kWindow  = kFull - kLowOff - kHighOff;
+
+    ReflSettings init = {};
+    FillInitStruct(init);
+
+    // Reference model on the sliced Q grid at the harness's initial parameter
+    // values (ParamVector's constructor defaults: box SLDs = FilmSLD,
+    // roughness = 2.0). This mirrors what InitEnergy computes inside StochFit.
+    ReflSettings sliced = init;
+    sliced.Q.assign(init.Q.begin() + kLowOff, init.Q.end() - kHighOff);
+
+    CEDP edp;
+    edp.Init(sliced);
+    ParamVector params(sliced);
+    params.UpdateBoundaries();
+    edp.GenerateEDP(params);
+    ParrattReflectivity parratt(sliced, edp.GetLayerCount());
+    auto model = parratt.CalculateReflectivity(edp);
+    ASSERT_EQ(model.size(), static_cast<size_t>(kWindow));
+
+    // "Measured" data: the exact model inside the window, garbage outside it.
+    // If the harness reads any point outside the window, the energy is nonzero.
+    init.Refl.assign(kFull, 12345.0);
+    init.ReflError.assign(kFull, 1.0);
+    std::copy(model.begin(), model.end(), init.Refl.begin() + kLowOff);
+    init.CritEdgeOffset = kLowOff;
+    init.HighQOffset    = kHighOff;
+
+    StochFit fit(init);
+    ASSERT_TRUE(fit.GetInitError().has_value()) << fit.GetInitError().error();
+
+    // Model at initial params reproduces the measured window bit-for-bit, so
+    // the initial (lowest) energy must be exactly zero. A misaligned or
+    // full-grid model makes this far from zero.
+    EXPECT_NEAR(fit.GetLowestEnergy(), 0.0, 1e-12);
+
+    const DataSnapshot snap = fit.GetData();
+    ASSERT_EQ(snap.Q.size(), static_cast<size_t>(kWindow));
+    EXPECT_DOUBLE_EQ(snap.Q.front(), qrange[kLowOff]);
+    EXPECT_DOUBLE_EQ(snap.Q.back(),  qrange[kFull - kHighOff - 1]);
+    EXPECT_EQ(snap.refl.size(), static_cast<size_t>(kWindow));
 }

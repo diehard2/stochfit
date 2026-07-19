@@ -1,35 +1,21 @@
-# Sets up the MSVC environment by running vcvarsall.bat if not already active.
+# Ensures cl.exe/rc.exe/mt.exe are resolvable, running vcvarsall.bat if needed.
 # Use as VCPKG_CHAINLOAD_TOOLCHAIN_FILE on Windows.
+#
+# If a VS dev environment is already active (VS Code CMake Tools kit,
+# ilammy/msvc-dev-cmd in CI, a Developer Prompt, ...), cl.exe/rc.exe/mt.exe
+# are already correctly on PATH and CMake's own detection will find them —
+# we leave CMAKE_C_COMPILER/CMAKE_RC_COMPILER/CMAKE_MT untouched so we can't
+# override a correct auto-detected path with a wrong hand-built one. We only
+# step in and run vcvarsall.bat ourselves when nothing is active, which is
+# the case for a bare `cmake --preset windows` on a plain CI runner.
 
 if(NOT WIN32)
   return()
 endif()
 
-# If the MSVC environment is already initialized (e.g., by ilammy/msvc-dev-cmd in CI),
-# read compiler paths directly from the environment instead of re-running vcvarsall.bat.
-if(NOT "$ENV{VCToolsInstallDir}" STREQUAL "")
-  set(_vc_tools "$ENV{VCToolsInstallDir}")
-  string(REPLACE "\\" "/" _vc_tools "${_vc_tools}")
-  string(REGEX REPLACE "[/]+$" "" _vc_tools "${_vc_tools}")
-
-  # WindowsSdkVerBinPath includes the SDK version (e.g., .../bin/10.0.22621.0/)
-  # Fall back to WindowsSdkBinPath if the versioned one isn't set.
-  if(NOT "$ENV{WindowsSdkVerBinPath}" STREQUAL "")
-    set(_sdk_bin "$ENV{WindowsSdkVerBinPath}")
-  else()
-    set(_sdk_bin "$ENV{WindowsSdkBinPath}")
-  endif()
-  string(REPLACE "\\" "/" _sdk_bin "${_sdk_bin}")
-  string(REGEX REPLACE "[/]+$" "" _sdk_bin "${_sdk_bin}")
-
-  set(CMAKE_C_COMPILER   "${_vc_tools}/bin/HostX64/x64/cl.exe" CACHE FILEPATH "C compiler"   FORCE)
-  set(CMAKE_CXX_COMPILER "${_vc_tools}/bin/HostX64/x64/cl.exe" CACHE FILEPATH "C++ compiler" FORCE)
-  set(CMAKE_RC_COMPILER  "${_sdk_bin}/x64/rc.exe"              CACHE FILEPATH "RC compiler"  FORCE)
-  set(CMAKE_MT           "${_sdk_bin}/x64/mt.exe"              CACHE FILEPATH "Manifest tool" FORCE)
-
-  message(STATUS "MSVC environment ready (from existing environment)")
-  message(STATUS "  cl: ${_vc_tools}/bin/HostX64/x64/cl.exe")
-  message(STATUS "  rc: ${_sdk_bin}/x64/rc.exe")
+find_program(_cl_on_path cl.exe)
+if(_cl_on_path)
+  message(STATUS "MSVC environment already active (cl.exe found on PATH: ${_cl_on_path})")
   return()
 endif()
 
@@ -75,6 +61,7 @@ file(WRITE "${_vcvars_bat}"
   "call \"${VCVARSALL}\" x64 >nul 2>&1\r\n"
   "echo VCTOOLS=%VCToolsInstallDir%\r\n"
   "echo SDKBIN=%WindowsSdkBinPath%\r\n"
+  "echo SDKVERBIN=%WindowsSdkVerBinPath%\r\n"
   "echo VCLIB=%LIB%\r\n"
   "echo VCINCLUDE=%INCLUDE%\r\n"
   "echo VCPATH=%PATH%\r\n"
@@ -95,11 +82,35 @@ macro(extract_vcvar label outvar)
   string(REGEX REPLACE "[/]+$" "" ${outvar} "${${outvar}}")
 endmacro()
 
-extract_vcvar(VCTOOLS  _vc_tools)
-extract_vcvar(SDKBIN   _sdk_bin)
-extract_vcvar(VCLIB    _vc_lib)
+extract_vcvar(VCTOOLS   _vc_tools)
+extract_vcvar(SDKBIN    _sdk_bin)
+extract_vcvar(SDKVERBIN _sdk_verbin)
+extract_vcvar(VCLIB     _vc_lib)
 extract_vcvar(VCINCLUDE _vc_include)
-extract_vcvar(VCPATH   _vc_path)
+extract_vcvar(VCPATH    _vc_path)
+
+# WindowsSdkBinPath is often the unversioned "Windows Kits/10/bin/" directory,
+# which has no rc.exe/mt.exe directly under bin/x64 on many SDK installs — those
+# live under the versioned bin/<version>/x64 subfolder. Prefer that when set,
+# and verify the result actually contains rc.exe, falling back to a glob for
+# the newest installed SDK version if not (some vcvarsall variants don't
+# export WindowsSdkVerBinPath at all).
+if(_sdk_verbin)
+  set(_sdk_bin "${_sdk_verbin}")
+endif()
+if(NOT EXISTS "${_sdk_bin}/x64/rc.exe")
+  file(GLOB _sdk_versions LIST_DIRECTORIES true
+       "C:/Program Files (x86)/Windows Kits/10/bin/10.*")
+  set(_sdk_bin "")
+  foreach(_v ${_sdk_versions})
+    if(EXISTS "${_v}/x64/rc.exe" AND _v STRGREATER _sdk_bin)
+      set(_sdk_bin "${_v}")
+    endif()
+  endforeach()
+endif()
+if(NOT _sdk_bin)
+  message(FATAL_ERROR "Could not find a Windows SDK bin directory containing rc.exe/mt.exe.")
+endif()
 
 # Apply LIB, INCLUDE, and PATH to the CMake process environment
 set(ENV{LIB}     "${_vc_lib}")

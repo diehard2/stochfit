@@ -24,11 +24,12 @@
 // Output: result table — returns bytes written into outBuf.
 
 #pragma once
-#include "platform.h"
 #include <cstdint>
 
-extern "C" EXPORT int FastReflfit     (const uint8_t* inBuf, int inLen, uint8_t* outBuf, int maxLen);
+#include "platform.h"
+
+extern "C" EXPORT int FastReflfit(const uint8_t* inBuf, int inLen, uint8_t* outBuf, int maxLen);
 extern "C" EXPORT int FastReflGenerate(const uint8_t* inBuf, int inLen, uint8_t* outBuf, int maxLen);
-extern "C" EXPORT int Rhofit          (const uint8_t* inBuf, int inLen, uint8_t* outBuf, int maxLen);
-extern "C" EXPORT int RhoGenerate     (const uint8_t* inBuf, int inLen, uint8_t* outBuf, int maxLen);
+extern "C" EXPORT int Rhofit(const uint8_t* inBuf, int inLen, uint8_t* outBuf, int maxLen);
+extern "C" EXPORT int RhoGenerate(const uint8_t* inBuf, int inLen, uint8_t* outBuf, int maxLen);
 extern "C" EXPORT int StochFitBoxModel(const uint8_t* inBuf, int inLen, uint8_t* outBuf, int maxLen);

@@ -10,29 +10,30 @@
 // are either stubbed out or replaced with C++23 equivalents.
 
 // ── Standard C/C++ includes ────────────────────────────────────────────────
+#include <algorithm>
+#include <atomic>
+#include <chrono>
+#include <climits>
+#include <cmath>
+#include <complex>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <cmath>
 #include <ctime>
-#include <climits>
-#include <complex>
-#include <string>
-#include <vector>
 #include <deque>
-#include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <numbers>
-#include <thread>
-#include <atomic>
-#include <chrono>
-#include <random>
-#include <optional>
-#include <span>
-#include <ranges>
 #include <limits>
+#include <numbers>
+#include <optional>
+#include <random>
+#include <ranges>
+#include <span>
+#include <string>
+#include <thread>
 #include <utility>
+#include <vector>
+
 #include <tl/expected.hpp>
 
 // std::jthread is NOT used — replaced with std::thread + std::atomic<bool>
@@ -43,7 +44,7 @@
 
 // ── OMP thread limit ────────────────────────────────────────────────────────
 #ifndef MAX_OMP_THREADS
-#  define MAX_OMP_THREADS 8
+    #define MAX_OMP_THREADS 8
 #endif
 
 // ── Debug flags ──────────────────────────────────────────────────────────────
@@ -51,14 +52,16 @@ inline constexpr bool kSingleProcDebug = false;
 
 // ── Export macro ────────────────────────────────────────────────────────────
 #if defined(_MSC_VER)
-#  define EXPORT __declspec(dllexport)
+    #define EXPORT __declspec(dllexport)
 #else
-#  define EXPORT __attribute__((visibility("default")))
+    #define EXPORT __attribute__((visibility("default")))
 #endif
 
 // ── MessageBox replacement ──────────────────────────────────────────────────
-inline void platform_error(const char* msg) { std::cerr << msg << std::endl; }
+inline void platform_error(const char* msg)
+{
+    std::cerr << msg << std::endl;
+}
 
 // ── Convenience namespaces (matching existing codebase convention) ──────────
 using namespace std;
-

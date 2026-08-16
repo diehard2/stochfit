@@ -1,0 +1,10 @@
+<Configuration>
+  <!-- 1. Enable Networking explicitly -->
+  <Networking>Default</Networking>
+
+  <!-- 2. Flip the registry key quietly without forcing a live policy refresh -->
+   <LogonCommand>
+    <Command>reg add "HKLM\SYSTEM\CurrentControlSet\Control\CI\Policy" /v VerifiedAndReputablePolicyState /t REG_DWORD /d 0 /f</Command>
+    <Command>CiTool.exe -r</Command>
+  </LogonCommand>
+</Configuration>

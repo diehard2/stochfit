@@ -13,8 +13,22 @@ if(NOT WIN32)
   return()
 endif()
 
-find_program(_cl_on_path cl.exe)
-if(_cl_on_path)
+
+# NO_CACHE: this must re-check every configure. A cached result from an
+# earlier configure (e.g. one where vcvarsall.bat had already run in-process)
+# otherwise survives into a later, unrelated cmake.exe invocation — such as
+# the auto reconfigure ninja triggers when a CMakeLists.txt/toolchain file
+# changes — and wrongly short-circuits vcvarsall there too, even though that
+# fresh process never actually got INCLUDE/LIB/PATH set. That produces
+# "cannot open include file: <complex>/<span>/..." from a cl.exe that's
+# resolvable but has no STL search path.
+find_program(_cl_on_path cl.exe NO_CACHE)
+# cl.exe being resolvable is not sufficient proof a dev environment is active:
+# CMake/vcpkg's own toolchain probing can put the MSVC bin dir on PATH without
+# ever setting INCLUDE/LIB, which lets cl.exe itself be found but leaves it
+# unable to see the STL ("cannot open include file: <complex>/<span>/...").
+# Require INCLUDE too, since a real Developer Prompt / vcvarsall always sets it.
+if(_cl_on_path AND NOT "$ENV{INCLUDE}" STREQUAL "")
   message(STATUS "MSVC environment already active (cl.exe found on PATH: ${_cl_on_path})")
   return()
 endif()
@@ -127,6 +141,14 @@ set(CMAKE_C_COMPILER   "${_vc_tools}/bin/HostX64/x64/cl.exe" CACHE FILEPATH "C c
 set(CMAKE_CXX_COMPILER "${_vc_tools}/bin/HostX64/x64/cl.exe" CACHE FILEPATH "C++ compiler" FORCE)
 set(CMAKE_RC_COMPILER  "${_sdk_bin}/x64/rc.exe"              CACHE FILEPATH "RC compiler"  FORCE)
 set(CMAKE_MT           "${_sdk_bin}/x64/mt.exe"              CACHE FILEPATH "Manifest tool" FORCE)
+
+# Downstream CMakeLists.txt (vcomp140.dll redist detection) reads
+# VCToolsRedistDir/VCToolsInstallDir from the environment the way vcvarsall.bat
+# itself would set them. We ran vcvarsall.bat in a throwaway cmd subprocess
+# above, so those never reach our process env unless we set them here too.
+set(ENV{VCToolsInstallDir} "${_vc_tools}/")
+string(REPLACE "/Tools/MSVC/" "/Redist/MSVC/" _vc_redist "${_vc_tools}")
+set(ENV{VCToolsRedistDir} "${_vc_redist}/")
 
 message(STATUS "MSVC environment ready")
 message(STATUS "  cl: ${_vc_tools}/bin/HostX64/x64/cl.exe")

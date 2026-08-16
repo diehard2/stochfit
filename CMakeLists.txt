@@ -166,20 +166,43 @@ if(MSVC AND OpenMP_CXX_FOUND)
     endif()
     if(DEFINED _redist)
         file(TO_CMAKE_PATH "${_redist}" _redist)
-        find_file(VCOMP_DLL NAMES vcomp140.dll
-            PATHS
-                "${_redist}/x64/Microsoft.VC143.OPENMP"
-                "${_redist}/x64/Microsoft.VC142.OPENMP"
-            NO_DEFAULT_PATH)
+        # The OpenMP redist folder is versioned per MSVC toolset
+        # (Microsoft.VC142.OPENMP, VC143.OPENMP, VC145.OpenMP, ...) and the
+        # name isn't predictable across VS releases, so glob for it instead
+        # of hardcoding a fixed list that silently goes stale on VS upgrades.
+        file(GLOB _vcomp_glob_hits "${_redist}/x64/Microsoft.VC*.OpenMP/vcomp*.dll")
+        if(_vcomp_glob_hits)
+            list(GET _vcomp_glob_hits 0 VCOMP_DLL)
+        endif()
     endif()
     if(VCOMP_DLL)
         message(STATUS "Will copy OpenMP DLL: ${VCOMP_DLL}")
         add_custom_command(TARGET stochfit_core POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "${VCOMP_DLL}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
-            COMMENT "Copying OpenMP runtime DLL (vcomp140.dll)")
+            COMMENT "Copying OpenMP runtime DLL (vcomp*.dll)")
     else()
-        message(STATUS "OpenMP DLL not found in Redist — add VS Redist/x64/Microsoft.VC143.OPENMP to PATH if smoke test fails")
+        message(STATUS "OpenMP DLL not found in Redist (${_redist}) — add the VS Redist's x64/Microsoft.VC*.OpenMP dir to PATH if smoke test fails")
+    endif()
+
+    # The x64-windows-static-md triplet links the CRT dynamically (/MD), so
+    # stochfit.dll/levmardll.dll need the matching msvcp*.dll/vcruntime*.dll
+    # redistributables at runtime — a dev machine has these already (VS or a
+    # prior redist install put them in System32), but a clean machine (a
+    # fresh Windows Sandbox, a user's PC with no VS/redist installed) doesn't.
+    # Glob rather than name exact files (msvcp140.dll, vcruntime140_1.dll, ...)
+    # so this keeps working whichever MSVC version actually built the DLLs.
+    if(DEFINED _redist)
+        file(GLOB _crt_dlls "${_redist}/x64/Microsoft.VC*.CRT/msvcp*.dll" "${_redist}/x64/Microsoft.VC*.CRT/vcruntime*.dll")
+    endif()
+    if(_crt_dlls)
+        message(STATUS "Will copy CRT redist DLLs: ${_crt_dlls}")
+        add_custom_command(TARGET stochfit_core POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${_crt_dlls} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+            COMMENT "Copying MSVC CRT redist DLLs")
+    else()
+        message(STATUS "CRT redist DLLs not found in Redist (${_redist}) — packaged app will need the VC++ Redistributable preinstalled")
     endif()
 endif()
 

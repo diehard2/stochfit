@@ -1,7 +1,7 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { VitePlugin } from '@electron-forge/plugin-vite';
-import { existsSync } from 'fs';
+import { existsSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 
 const libExt    = process.platform === 'win32' ? '.dll' : process.platform === 'darwin' ? '.dylib' : '.so';
@@ -10,6 +10,18 @@ const libPrefix = process.platform === 'win32' ? '' : 'lib';
 // Include a build artifact only when it actually exists.
 function opt(...paths: string[]): string[] {
   return paths.filter(p => existsSync(resolve(__dirname, p)));
+}
+
+// Match build artifacts by name pattern rather than a hardcoded filename —
+// the MSVC redist DLLs we need (vcomp140.dll, msvcp140_1.dll, vcruntime140.dll,
+// ...) are suffixed with a toolset-specific version we don't want to bake in
+// here, so pick up whatever CMake actually copied into the build output.
+function optGlob(dir: string, pattern: RegExp): string[] {
+  const abs = resolve(__dirname, dir);
+  if (!existsSync(abs)) return [];
+  return readdirSync(abs)
+    .filter(f => pattern.test(f))
+    .map(f => `${dir}/${f}`);
 }
 
 // MakerDMG uses appdmg which has macOS-only native binaries — load it only on
@@ -79,10 +91,16 @@ const config: ForgeConfig = {
 
       // OpenMP runtime — not present on stock macOS or Windows.
       // On macOS: libomp.dylib (copied from Homebrew by CMake).
-      // On Windows: vcomp140.dll (Visual C++ OpenMP runtime, copied from VS Redist by CMake).
+      // On Windows: vcomp<ver>.dll (Visual C++ OpenMP runtime, copied from VS Redist by CMake).
       // On Linux: libgomp is a system package; not bundled.
-      ...opt('../build/Release/bin/libomp.dylib'),   // macOS
-      ...opt('../build/Release/bin/vcomp140.dll'),   // Windows
+      ...opt('../build/Release/bin/libomp.dylib'),                          // macOS
+      ...optGlob('../build/Release/bin', /^vcomp\d+\.dll$/),                // Windows
+
+      // MSVC CRT runtime (msvcp140.dll, vcruntime140.dll, vcruntime140_1.dll, ...) —
+      // the x64-windows-static-md triplet links the CRT dynamically, so a clean
+      // Windows machine without the VC++ Redistributable installed can't load
+      // stochfit.dll/levmardll.dll without these. Copied from VS Redist by CMake.
+      ...optGlob('../build/Release/bin', /^(msvcp|vcruntime)\d+(_\w+)?\.dll$/), // Windows
 
       '../resources/test1refl.txt',
     ],

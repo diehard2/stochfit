@@ -47,6 +47,32 @@
     #define MAX_OMP_THREADS 8
 #endif
 
+// ── OMP wait policy (non-Windows) ───────────────────────────────────────────
+// MSVC's vcomp runtime busy-spins at barriers by default. libgomp/libomp
+// default to a short spin followed by a futex sleep, and the wake latency for
+// that sleep is much higher inside a virtualized/WSL2 scheduler. The SA loop
+// in StochFitHarness::Processing() hits an omp barrier every iteration, so a
+// passive wait there serializes the whole run behind futex wakeups instead of
+// keeping cores busy — this showed up as ~22% CPU (vs. ~80% on Windows) and a
+// matching multi-x slowdown under WSL. Force an active (spin) wait so
+// non-Windows OpenMP runtimes match vcomp's behavior. Must be set before the
+// OpenMP runtime initializes on first use, so this runs as a load-time
+// constructor rather than in any function body.
+#if !defined(_WIN32)
+    #include <cstdlib>
+    namespace stochfit_detail {
+    inline void SetActiveOmpWaitPolicy()
+    {
+        setenv("OMP_WAIT_POLICY", "active", 0);
+        setenv("GOMP_SPINCOUNT", "30000000", 0);
+    }
+    struct OmpWaitPolicyInit {
+        OmpWaitPolicyInit() { SetActiveOmpWaitPolicy(); }
+    };
+    static OmpWaitPolicyInit g_ompWaitPolicyInit;
+    }  // namespace stochfit_detail
+#endif
+
 // ── Debug flags ──────────────────────────────────────────────────────────────
 inline constexpr bool kSingleProcDebug = false;
 

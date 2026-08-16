@@ -35,7 +35,17 @@ if (process.platform === 'linux') {
     // electron-installer-debian declares Depends: on libnss3/libnspr4/etc,
     // so apt resolves them instead of relying on the user already having
     // Chromium's runtime libs installed (see zip-based Linux packaging issue).
-    makers.push(new MakerDeb({}, ['linux']));
+    //
+    // bin/name/productName must match packagerConfig.executableName/name below —
+    // electron-installer-debian otherwise defaults `bin` to the gui/package.json
+    // "name" ("stochfit-gui"), which doesn't exist in the packaged app dir.
+    makers.push(new MakerDeb({
+      options: {
+        bin: 'stochfit',
+        name: 'stochfit',
+        productName: 'StochFit',
+      },
+    }, ['linux']));
   } catch {
     // maker-deb / electron-installer-debian not installed (non-Linux environment)
   }

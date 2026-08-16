@@ -28,7 +28,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build gfortran liblapack-dev mono-complete
+          sudo apt-get install -y ninja-build gfortran liblapack-dev mono-complete fakeroot dpkg
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
@@ -225,7 +225,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: installer-linux
-          path: build/electron/make/zip/linux/**/*.zip
+          path: build/electron/make/deb/x64/*.deb
           if-no-files-found: error
 
       - name: Comment on PR failure

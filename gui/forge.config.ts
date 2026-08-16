@@ -1,6 +1,5 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
-import { MakerZIP } from '@electron-forge/maker-zip';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
@@ -17,7 +16,6 @@ function opt(...paths: string[]): string[] {
 // macOS so that `npm install` succeeds on Windows/Linux (optionalDependency).
 const makers: ForgeConfig['makers'] = [
   new MakerSquirrel({ authors: 'StochFit Contributors' }),
-  new MakerZIP({}, ['linux']),
 ];
 
 if (process.platform === 'darwin') {
@@ -27,6 +25,19 @@ if (process.platform === 'darwin') {
     makers.push(new MakerDMG({}, ['darwin']));
   } catch {
     // maker-dmg not installed (non-macOS environment)
+  }
+}
+
+if (process.platform === 'linux') {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { MakerDeb } = require('@electron-forge/maker-deb');
+    // electron-installer-debian declares Depends: on libnss3/libnspr4/etc,
+    // so apt resolves them instead of relying on the user already having
+    // Chromium's runtime libs installed (see zip-based Linux packaging issue).
+    makers.push(new MakerDeb({}, ['linux']));
+  } catch {
+    // maker-deb / electron-installer-debian not installed (non-Linux environment)
   }
 }
 

@@ -65,6 +65,11 @@ const config: ForgeConfig = {
     // devDependencies from what gets copied.
     ignore: (file) => {
       if (!file) return false;
+      // node_modules/.bin holds symlinks to devDependency binaries (e.g. webpack);
+      // those packages get pruned as devDependencies but the .bin symlinks aren't
+      // module directories, so they survive and dangle — electron-installer-debian
+      // stat()s them and fails. Not needed at runtime, so drop the whole dir.
+      if (file.startsWith('/node_modules/.bin')) return true;
       return !(file.startsWith('/.vite') || file.startsWith('/node_modules') || file === '/package.json');
     },
     extraResource: [

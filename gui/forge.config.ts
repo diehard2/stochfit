@@ -57,6 +57,16 @@ const config: ForgeConfig = {
     asar: false,
     name: 'StochFit',
     executableName: 'stochfit',
+    // The Vite plugin's default ignore keeps only ".vite/**", which drops
+    // node_modules entirely. koffi and h5wasm are deliberately left external
+    // (see vite.*.config.ts rollupOptions.external) since they ship native/wasm
+    // binaries Rollup can't bundle, so node_modules + package.json must survive
+    // packaging too — electron-packager's default pruning still strips
+    // devDependencies from what gets copied.
+    ignore: (file) => {
+      if (!file) return false;
+      return !(file.startsWith('/.vite') || file.startsWith('/node_modules') || file === '/package.json');
+    },
     extraResource: [
       // Core native libraries
       `../build/Release/bin/${libPrefix}stochfit${libExt}`,

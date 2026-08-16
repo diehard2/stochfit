@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StochFit — Stochastic Reflectivity Fitting</title>
+<meta name="description" content="StochFit is a cross-platform application for fitting specular X-ray and neutron reflectivity data using stochastic methods." />
+<style>
+  :root {
+    --bg: #0b1220;
+    --bg-alt: #101a2c;
+    --panel: #141f36;
+    --panel-border: #223154;
+    --text: #e6ebf5;
+    --text-dim: #9db0cf;
+    --accent: #4f9dff;
+    --accent-2: #7cd9c8;
+    --accent-warm: #ffb15c;
+    --code-bg: #0a1526;
+    --radius: 10px;
+    --maxw: 980px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .wrap {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  header.hero {
+    background:
+      radial-gradient(1200px 400px at 20% -10%, rgba(79,157,255,0.25), transparent),
+      radial-gradient(900px 350px at 90% -20%, rgba(124,217,200,0.18), transparent),
+      var(--bg);
+    border-bottom: 1px solid var(--panel-border);
+    padding: 64px 0 48px;
+  }
+
+  .hero-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .badge {
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  h1.title {
+    font-size: 2.6rem;
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #ffffff, var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .tagline {
+    font-size: 1.15rem;
+    color: var(--text-dim);
+    max-width: 640px;
+    margin: 0;
+  }
+
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: 1px solid transparent;
+  }
+
+  .btn:hover { text-decoration: none; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #06101f;
+  }
+  .btn-primary:hover { background: #6fadff; }
+
+  .btn-secondary {
+    background: transparent;
+    border-color: var(--panel-border);
+    color: var(--text);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  main { padding: 48px 0 24px; }
+
+  section { margin-bottom: 56px; }
+
+  h2.section-title {
+    font-size: 1.5rem;
+    margin: 0 0 20px;
+    font-weight: 700;
+    color: var(--text);
+    border-left: 4px solid var(--accent);
+    padding-left: 12px;
+  }
+
+  p { color: var(--text-dim); }
+  p.lead { color: var(--text); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+
+  .card h3 {
+    margin: 0 0 8px;
+    font-size: 1.02rem;
+    color: var(--text);
+  }
+
+  .card p {
+    margin: 0;
+    font-size: 0.92rem;
+  }
+
+  .arch-diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    padding: 20px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.85rem;
+    color: var(--accent-2);
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.5;
+  }
+
+  ul.check-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px 24px;
+  }
+
+  ul.check-list li {
+    color: var(--text-dim);
+    font-size: 0.94rem;
+    padding-left: 1.5em;
+    position: relative;
+  }
+
+  ul.check-list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--accent-2);
+    font-weight: 700;
+  }
+
+  pre.codeblock {
+    background: var(--code-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.85rem;
+    color: #d3ddf0;
+  }
+
+  code.inline {
+    background: var(--code-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.88em;
+    color: var(--accent-2);
+  }
+
+  .citation {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-left: 3px solid var(--accent-warm);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    font-size: 0.92rem;
+    color: var(--text-dim);
+  }
+
+  .citation strong { color: var(--text); }
+
+  table.platform {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+
+  table.platform th, table.platform td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--panel-border);
+    color: var(--text-dim);
+  }
+
+  table.platform th {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  footer {
+    border-top: 1px solid var(--panel-border);
+    padding: 32px 0 48px;
+    color: var(--text-dim);
+    font-size: 0.88rem;
+  }
+
+  footer a { color: var(--text-dim); }
+  footer a:hover { color: var(--accent); }
+
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-bottom: 14px;
+  }
+
+  @media (max-width: 600px) {
+    h1.title { font-size: 2rem; }
+    header.hero { padding: 44px 0 36px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <div class="badge-row">
+      <span class="badge">C++20</span>
+      <span class="badge">Electron + React + TypeScript</span>
+      <span class="badge">CMake + vcpkg</span>
+      <span class="badge">Windows · macOS · Linux</span>
+    </div>
+    <h1 class="title">StochFit</h1>
+    <p class="tagline">Stochastic methods for fitting specular X-ray and neutron reflectivity data — now a modern, cross-platform, open-source rewrite.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/diehard2/stochfit">View on GitHub</a>
+      <a class="btn btn-secondary" href="https://github.com/diehard2/stochfit/releases">Download latest release</a>
+      <a class="btn btn-secondary" href="https://github.com/diehard2/stochfit/issues">Report a bug</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <h2 class="section-title">What is StochFit</h2>
+    <p class="lead">StochFit fits specular X-ray and neutron reflectivity curves using simulated-annealing-based stochastic optimization, with both model-independent (electron density profile) and model-dependent (box model) fitting. It provides an interactive GUI for building a layer model, running the fit live, and inspecting the resulting reflectivity and density profile.</p>
+  </section>
+
+  <section>
+    <h2 class="section-title">A ground-up modernization</h2>
+    <p>The original StochFit (2008–2013) was a Windows-only .NET application. The current codebase is a full rewrite: a native C++20 computation core, a cross-platform Electron/React GUI, and a reproducible CMake + vcpkg build — while preserving the same underlying stochastic fitting algorithms described in the original paper.</p>
+    <div class="grid" style="margin-top: 8px;">
+      <div class="card">
+        <h3>Rebuilt computation core</h3>
+        <p>Simulated annealing (Greedy / SA / STUN policies), unified Parratt recursion, and electron density profile generation reimplemented in modern, OpenMP-parallel C++20 with optional GPU acceleration hooks.</p>
+      </div>
+      <div class="card">
+        <h3>Cross-platform GUI</h3>
+        <p>Electron + React + TypeScript replaces the old WinForms UI, driven by a FlatBuffers-serialized FFI bridge into the native library — runs on Windows, macOS, and Linux.</p>
+      </div>
+      <div class="card">
+        <h3>Standardized build</h3>
+        <p>CMake 3.21+ with named presets and vcpkg-managed dependencies (LAPACK, levmar, FlatBuffers) replace hand-maintained Visual Studio project files and vendored DLLs.</p>
+      </div>
+      <div class="card">
+        <h3>Real test coverage</h3>
+        <p>GTest-based regression tests for the reflectivity math and fitting harness, plus a standalone console utility (<code class="inline">mirefl</code>) for manual spot-checks — the original shipped with none.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Notable fixes since the last public release</h2>
+    <ul class="check-list">
+      <li>Fixed a heap buffer overflow when Q critical-edge / high-Q offsets were nonzero during simulated annealing</li>
+      <li>Fixed reflectivity offset handling so the full data range is displayed and saved regardless of Q offsets</li>
+      <li>Fixed a null-pointer crash path when initialization failed early in the fitting harness</li>
+      <li>Worker thread exceptions are now caught and reported instead of silently crashing the process</li>
+      <li>Fixed session save/resume state (temperature, roughness, absorption) that had been miscomputed in the legacy port</li>
+      <li>Replaced blocking data polling with a bounded wait, eliminating a GUI freeze when the fitting thread stalled</li>
+      <li>Fixed a macOS arm64 crash in the LevMar covariance solver caused by an integer-width mismatch in the LAPACK bridge</li>
+      <li>General clang-tidy / clang-format cleanup and compiler-warning fixes across the C++ core</li>
+    </ul>
+    <p style="margin-top: 16px; font-size: 0.9rem;">Looking for the legacy .NET releases (1.6.5 / 1.7.0)? They're still archived on <a href="https://sourceforge.net/projects/stochfit/files/">SourceForge</a>, but are unmaintained — the current, actively developed releases are on <a href="https://github.com/diehard2/stochfit/releases">GitHub</a>.</p>
+  </section>
+
+  <section>
+    <h2 class="section-title">Architecture</h2>
+    <div class="arch-diagram">Electron GUI (React / TypeScript)
+        ↕  IPC (FlatBuffers)
+Koffi FFI  (Node.js ↔ stochfit.dll / .so / .dylib)
+        ↕  C-style exports
+stochfit_core  (static library, C++20)
+   ├─ StochFitHarness   — top-level orchestrator, worker thread
+   ├─ Anneal&lt;Policy&gt;    — Greedy / SimulatedAnnealing / STUN
+   ├─ ParrattReflectivity — recursive reflectivity, OpenMP + Q-smearing
+   ├─ CEDP              — electron density profile generation
+   └─ levmardll         — Levenberg-Marquardt post-refinement</div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Building from source</h2>
+    <p>Builds use CMake 3.21+ with named presets; dependencies are managed by vcpkg and bootstrapped automatically on first configure.</p>
+    <pre class="codeblock"># Windows
+cmake --preset windows
+cmake --build --preset windows --target stochfit_shared
+
+# macOS / Linux
+cmake --preset default
+cmake --build --preset default --target stochfit_shared
+
+# GUI (Electron)
+cd gui
+npm install
+npm start        # dev mode with hot reload
+npm run make      # package a distributable installer</pre>
+    <table class="platform" style="margin-top: 16px;">
+      <tr><th>Platform</th><th>Requirements</th></tr>
+      <tr><td>Windows</td><td>Visual Studio 2022 (C++ workload), CMake 3.21+, Node.js 24+</td></tr>
+      <tr><td>macOS</td><td>Xcode 16+ command-line tools, macOS 14+ (required for <code class="inline">std::jthread</code>)</td></tr>
+      <tr><td>Linux</td><td>CMake 3.21+, a C++20 toolchain, Node.js 24+</td></tr>
+    </table>
+    <p>Full build instructions, presets, and architecture notes are in the <a href="https://github.com/diehard2/stochfit/blob/master/README.md">README</a>.</p>
+  </section>
+
+  <section>
+    <h2 class="section-title">Citing StochFit</h2>
+    <div class="citation">
+      <strong>S. M. Danauskas, D. Li, M. Meron, B. Lin and K. Y. C. Lee</strong><br />
+      Stochastic fitting of specular X-ray reflectivity data using <em>StochFit</em>.<br />
+      <em>J. Appl. Cryst.</em> (2008). <strong>41</strong>, 1187–1193.
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Get involved</h2>
+    <p>Issues, feature requests, and pull requests are welcome on GitHub — that's now the home for all development, downloads, and bug tracking (this SourceForge page previously pointed to its own forums, which are retired).</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/diehard2/stochfit">github.com/diehard2/stochfit</a>
+      <a class="btn btn-secondary" href="https://github.com/diehard2/stochfit/issues">Issues &amp; bug reports</a>
+      <a class="btn btn-secondary" href="https://github.com/diehard2/stochfit/discussions">Discussions</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-links">
+      <a href="https://github.com/diehard2/stochfit">GitHub repository</a>
+      <a href="https://github.com/diehard2/stochfit/releases">Releases</a>
+      <a href="https://github.com/diehard2/stochfit/blob/master/README.md">Documentation</a>
+      <a href="https://github.com/diehard2/stochfit/issues">Issue tracker</a>
+    </div>
+    <div>StochFit — stochastic fitting of specular X-ray and neutron reflectivity data.</div>
+  </div>
+</footer>
+
+</body>
+</html>

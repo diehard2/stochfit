@@ -56,7 +56,16 @@ static DWORD_PTR GetPCoreMask()
         else
             mask |= p->Processor.GroupMask[0].Mask;
     }
-    return hybrid ? mask : ~(DWORD_PTR) 0;
+    // 0 means "not hybrid" (or the topology query failed) — the caller must
+    // leave thread count/affinity at their defaults in that case. Returning
+    // an all-ones sentinel here previously made popcount() read as 64 P-cores
+    // on any non-hybrid machine (i.e. any VM/most non-Intel-12th-gen+ CPUs),
+    // forcing omp_set_num_threads(64) regardless of real core count. The
+    // per-thread scratch buffers in UnifiedReflectivity are sized off
+    // omp_get_max_threads() *before* this runs (at Init(), not Start()), so
+    // the inflated thread count on Start() indexed past the end of those
+    // buffers — an out-of-bounds write, not merely oversubscription.
+    return hybrid ? mask : 0;
 }
 
 static void PinOMPThreadsToPCores()
@@ -64,6 +73,8 @@ static void PinOMPThreadsToPCores()
     static std::once_flag pinned;
     std::call_once(pinned, [] {
         const DWORD_PTR mask = GetPCoreMask();
+        if (mask == 0)
+            return;  // non-hybrid CPU (or query failed) — defaults are already correct
         const int pCoreCount = static_cast<int>(__popcnt64(mask));
     #pragma omp parallel
         {

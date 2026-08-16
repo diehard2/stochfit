@@ -39,8 +39,24 @@ function libPath(name: string): string {
   return devLibPath(path.join(__dirname, '../../../../'), fileName);
 }
 
+// libgomp reads OMP_WAIT_POLICY/GOMP_SPINCOUNT in its own loader constructor,
+// which — because libgomp.so is a NEEDED dependency of libstochfit.so — always
+// runs before any constructor defined inside libstochfit.so itself. That makes
+// the equivalent setenv() in platform.h a no-op: by the time it runs, libgomp
+// already cached the passive wait policy. Setting the vars here, before the
+// koffi.load() that dlopen()s libstochfit.so (and pulls in libgomp.so as a
+// dependency at that point), lands them before libgomp's constructor fires.
+function ensureOmpWaitPolicy(): void {
+  if (process.platform === 'win32') return;
+  if (!process.env.OMP_WAIT_POLICY) process.env.OMP_WAIT_POLICY = 'active';
+  if (!process.env.GOMP_SPINCOUNT) process.env.GOMP_SPINCOUNT = '30000000';
+}
+
 export function getStochLib() {
-  if (!_stochLib) _stochLib = koffi.load(libPath('stochfit'));
+  if (!_stochLib) {
+    ensureOmpWaitPolicy();
+    _stochLib = koffi.load(libPath('stochfit'));
+  }
   return _stochLib;
 }
 

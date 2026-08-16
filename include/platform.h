@@ -54,10 +54,20 @@
 // in StochFitHarness::Processing() hits an omp barrier every iteration, so a
 // passive wait there serializes the whole run behind futex wakeups instead of
 // keeping cores busy — this showed up as ~22% CPU (vs. ~80% on Windows) and a
-// matching multi-x slowdown under WSL. Force an active (spin) wait so
-// non-Windows OpenMP runtimes match vcomp's behavior. Must be set before the
-// OpenMP runtime initializes on first use, so this runs as a load-time
-// constructor rather than in any function body.
+// matching multi-x slowdown under WSL.
+//
+// NOTE: this setenv() is NOT sufficient on its own when libstochfit is loaded
+// as a shared library (the Electron/koffi path). libgomp reads these vars in
+// its own loader constructor, and because libgomp.so is a NEEDED dependency
+// of libstochfit.so, the ELF loader always runs libgomp's constructor first —
+// before this translation unit's static initializer ever gets to call
+// setenv(). By then libgomp has already cached the passive policy. The
+// authoritative fix for the GUI lives in gui/src/main/native/ffi.ts
+// (ensureOmpWaitPolicy), which sets the vars via Node's process.env *before*
+// koffi.load() triggers the dlopen() that pulls in libgomp.so. This copy is
+// kept as a best-effort default for statically-linked consumers (mirefl,
+// stochfit_tests) where ordering may differ, but is not guaranteed to win the
+// race against libgomp's constructor in the general case.
 #if !defined(_WIN32)
     #include <cstdlib>
     namespace stochfit_detail {

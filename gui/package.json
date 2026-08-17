@@ -21,7 +21,7 @@
     "@types/react-plotly.js": "^2.6.4",
     "@vitejs/plugin-react": "^6.0.5",
     "autoprefixer": "^10.5.4",
-    "electron": "^43.3.0",
+    "electron": "^43.4.0",
     "postcss": "^8.5.26",
     "tailwindcss": "^4.2.2",
     "typescript": "^7.0.2",
@@ -39,12 +39,12 @@
     "h5wasm": "^0.10.3",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
-    "koffi": "^3.1.4",
+    "koffi": "^3.1.5",
     "plotly.js": "^3.7.0",
     "plotly.js-dist-min": "^3.7.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-plotly.js": "^4.1.0",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.15"
   }
 }

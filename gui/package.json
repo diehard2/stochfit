@@ -19,13 +19,13 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@types/react-plotly.js": "^2.6.4",
-    "@vitejs/plugin-react": "^6.0.5",
+    "@vitejs/plugin-react": "^6.1.0",
     "autoprefixer": "^10.5.4",
-    "electron": "^43.4.0",
+    "electron": "^43.4.1",
     "postcss": "^8.5.26",
     "tailwindcss": "^4.2.2",
     "typescript": "^7.0.2",
-    "vite": "^8.2.1"
+    "vite": "^8.2.2"
   },
   "overrides": {
     "@tootallnate/once": "^3.0.1",
@@ -39,7 +39,7 @@
     "h5wasm": "^0.10.3",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
-    "koffi": "^3.1.5",
+    "koffi": "^3.1.6",
     "plotly.js": "^3.7.0",
     "plotly.js-dist-min": "^3.7.0",
     "react": "^19.2.8",

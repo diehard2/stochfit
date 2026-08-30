@@ -4,61 +4,65 @@
 // ReflSettings: passed by const reference into all C++ classes.
 // StochRunState: optional resume state passed to StochFit constructor (nullptr = fresh start).
 
-#include "platform.h"
 #include <string>
 #include <vector>
 
+#include "platform.h"
+
 // Forward declarations for FlatBuffer-based constructors (implemented in SettingsStruct.cpp).
-namespace StochFitProto { struct ReflSettings; struct StochRunState; }
+namespace StochFitProto {
+struct ReflSettings;
+struct StochRunState;
+}  // namespace StochFitProto
 
 struct ReflSettings
 {
-	std::string Directory;
-	std::vector<double> Q;
-	std::vector<double> Refl;
-	std::vector<double> ReflError;
-	std::vector<double> QError;
-	// Q.size() replaces the old QPoints field
-	double SubSLD;
-	double FilmSLD;
-	double SupSLD;
-	int Boxes;
-	double FilmAbs;
-	double SubAbs;
-	double SupAbs;
-	double Wavelength;
-	bool UseSurfAbs;
-	double QErr;
-	double Forcesig;
-	double RoughnessMax = 8.0; // upper bound for roughness search; determines EDP padding (6× this value)
-	bool XRonly;
-	int Resolution;
-	double FilmLength;
-	bool Impnorm;
-	int Objectivefunction;
-	double Paramtemp;
+    std::string Directory;
+    std::vector<double> Q;
+    std::vector<double> Refl;
+    std::vector<double> ReflError;
+    std::vector<double> QError;
+    // Q.size() replaces the old QPoints field
+    double SubSLD;
+    double FilmSLD;
+    double SupSLD;
+    int Boxes;
+    double FilmAbs;
+    double SubAbs;
+    double SupAbs;
+    double Wavelength;
+    bool UseSurfAbs;
+    double QErr;
+    double Forcesig;
+    double RoughnessMax = 8.0;  // upper bound for roughness search; determines EDP padding (6× this value)
+    bool XRonly;
+    int Resolution;
+    double FilmLength;
+    bool Impnorm;
+    int Objectivefunction;
+    double Paramtemp;
 
-	//Annealing parameters
-	int Sigmasearch;
-	int NormalizationSearchPerc;
-	int AbsorptionSearchPerc;
-	int Algorithm;
-	double Inittemp;
-	int Platiter;
-	double Slope;
-	double Gamma;
-	int STUNfunc;
-	bool Adaptive;
-	int Tempiter;
-	int STUNdeciter;
-	double Gammadec;
+    // Annealing parameters
+    int Sigmasearch;
+    int NormalizationSearchPerc;
+    int AbsorptionSearchPerc;
+    int Algorithm;
+    double Inittemp;
+    int Platiter;
+    double Slope;
+    double Gamma;
+    int STUNfunc;
+    bool Adaptive;
+    int Tempiter;
+    int STUNdeciter;
+    double Gammadec;
 
-	int CritEdgeOffset;
-	int HighQOffset;
-	int Iterations; // SA iteration count; also used by LevMar
+    int CritEdgeOffset;
+    int HighQOffset;
+    int Iterations;  // SA iteration count; also used by LevMar
 
-	ReflSettings() = default;
-	explicit ReflSettings(const StochFitProto::ReflSettings*);
+    ReflSettings() = default;
+    explicit ReflSettings(const StochFitProto::ReflSettings*);
 };
 
 // Session state for resuming a previous SA run.
@@ -67,19 +71,20 @@ struct ReflSettings
 // filmAbsInput = m_dBeta / m_dWaveConstant (inverse of Set_FilmAbs multiplication).
 // temperature  = raw m_dTemp (not 1/m_dTemp — passed directly to SetTemp()).
 // surfAbs saved independently so it is not baked into filmAbsInput across save/load cycles.
-struct StochRunState {
-	double roughness;
-	double filmAbsInput;  // pre-multiplication value: Set_FilmAbs(filmAbsInput) → m_dBeta = filmAbsInput * WC
-	double surfAbs;       // params->getSurfAbs() — saved independently
-	double temperature;   // raw m_dTemp (passed directly to SetTemp())
-	double impNorm;
-	double avgfSTUN;
-	double bestSolution;
-	double chiSquare;
-	double goodnessOfFit;
-	int    iteration;
-	std::vector<double> edValues;  // Boxes+2 doubles: [supphase, box1..boxN, subphase]
+struct StochRunState
+{
+    double roughness;
+    double filmAbsInput;  // pre-multiplication value: Set_FilmAbs(filmAbsInput) → m_dBeta = filmAbsInput * WC
+    double surfAbs;       // params->getSurfAbs() — saved independently
+    double temperature;   // raw m_dTemp (passed directly to SetTemp())
+    double impNorm;
+    double avgfSTUN;
+    double bestSolution;
+    double chiSquare;
+    double goodnessOfFit;
+    int iteration;
+    std::vector<double> edValues;  // Boxes+2 doubles: [supphase, box1..boxN, subphase]
 
-	StochRunState() = default;
-	explicit StochRunState(const StochFitProto::StochRunState*);
+    StochRunState() = default;
+    explicit StochRunState(const StochFitProto::StochRunState*);
 };

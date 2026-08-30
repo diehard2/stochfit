@@ -18,8 +18,9 @@
  *
  */
 
-#include "platform.h"
 #include "ParamVector.h"
+
+#include "platform.h"
 
 ParamVector::ParamVector(const ReflSettings& s)
     : m_boxes(s.Boxes),
@@ -37,7 +38,7 @@ ParamVector::ParamVector(const ReflSettings& s)
     }
     if (s.Forcesig > 0.0) {
         m_fixRoughness = true;
-        m_roughness    = s.Forcesig;
+        m_roughness = s.Forcesig;
     } else {
         m_roughnessIdx = m_paramCount++;
     }
@@ -65,15 +66,15 @@ void ParamVector::SetBounds(double lowrough, double highrough, double highimp, d
 
     if (!m_fixRoughness) {
         m_high[m_roughnessIdx] = highrough;
-        m_low[m_roughnessIdx]  = lowrough;
+        m_low[m_roughnessIdx] = lowrough;
     }
     if (m_fixImpNorm) {
         m_high[m_impNormIdx] = highimp;
-        m_low[m_impNormIdx]  = 0.0;
+        m_low[m_impNormIdx] = 0.0;
     }
     if (m_useSurfAbs) {
         m_high[m_surfAbsIdx] = highabs;
-        m_low[m_surfAbsIdx]  = 0.0;
+        m_low[m_surfAbsIdx] = 0.0;
     }
 }
 

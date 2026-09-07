@@ -54,7 +54,7 @@ static void FillInitStruct(ReflSettings& s)
 // absolute tolerance is unsuitable here.
 static void ExpectRelative(double actual, double expected, double reltol = 1e-3, const char* label = "")
 {
-    double tol = std::fabs(expected) * reltol + 1e-15;
+    double tol = (std::fabs(expected) * reltol) + 1e-15;
     EXPECT_NEAR(actual, expected, tol) << label;
 }
 
@@ -72,8 +72,9 @@ TEST(Reflectivity, TwoBoxLipidFilmParratt)
     edp.Init(init);
 
     ParamVector params(init);
-    for (int i = 0; i < init.Boxes; i++)
+    for (int i = 0; i < init.Boxes; i++) {
         params.SetMutatableParameter(i, SLD[i + 1] / FilmSLD);
+    }
     params.SetRoughness(3.15);
 
     edp.GenerateEDP(params);

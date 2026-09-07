@@ -1,16 +1,10 @@
-// plotly.js-dist-min ships no .d.ts — point it at the @types/plotly.js declarations.
-declare module 'plotly.js-dist-min' {
-  import * as PlotlyType from 'plotly.js';
-  export = PlotlyType;
-}
-
 import type { ReflData, StochFitOutput, FitResult, SAParams, SARunState, LMResult, RhoEDPResult, StochFitResult } from './renderer/lib/types';
 import type { ReflSettingsInput } from './main/native/stochfit-api';
 import type { BoxReflSettingsInput } from './main/native/levmar-api';
 
-declare const __APP_VERSION__: string;
-
 declare global {
+  const __APP_VERSION__: string;
+
   interface Window {
     api: {
       // Data file

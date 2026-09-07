@@ -31,8 +31,9 @@ int main(int argc, char* argv[])
 
     // Build a ParamVector and populate it with normalized SLD values
     ParamVector params(InitStruct);
-    for (int i = 0; i < InitStruct.Boxes; i++)
+    for (int i = 0; i < InitStruct.Boxes; i++) {
         params.SetMutatableParameter(i, SLD[i + 1] / FilmSLD);
+    }
     params.SetRoughness(3.15);
 
     EDPGen.Init(InitStruct);
@@ -47,10 +48,10 @@ int main(int argc, char* argv[])
 
     int t_off = clock();
 
-    cout << calculations << " calculations in: " << (((static_cast<float>(t_off - t_on)) / (CLOCKS_PER_SEC))) * (1000000)
+    cout << calculations << " calculations in: " << ((static_cast<float>(t_off - t_on)) / (CLOCKS_PER_SEC)) * 1000000
          << " microseconds\n\n";
-    cout << calculations / (((static_cast<float>(t_off - t_on)) / (CLOCKS_PER_SEC))) << " calcuations per second\n\n";
-    cout << "1 calculation in: " << (((static_cast<float>(t_off - t_on)) / (CLOCKS_PER_SEC))) * (1E6) / calculations << " microseconds\n\n";
+    cout << calculations / ((static_cast<float>(t_off - t_on)) / (CLOCKS_PER_SEC)) << " calcuations per second\n\n";
+    cout << "1 calculation in: " << ((static_cast<float>(t_off - t_on)) / (CLOCKS_PER_SEC)) * 1E6 / calculations << " microseconds\n\n";
 
     return 0;
 }

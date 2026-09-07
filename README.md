@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-- **Windows:** Visual Studio 2022 (with C++ workload) — detected automatically via `vswhere`
+- **Windows:** Visual Studio 2022 (with C++ workload **and** the "C++ Clang Compiler for Windows" component) — detected automatically via `vswhere`
 - **macOS:** Xcode 16+ command-line tools, macOS 14+
 - **All platforms:** CMake 3.21+, Git, Node.js 18+ (for the GUI)
 
@@ -51,6 +51,17 @@ cmake --build --preset default --target stochfit_shared
 ```
 
 **Debug builds:** use `windows-debug` / `debug` presets, or replace `-DCMAKE_BUILD_TYPE=Release` with `Debug`.
+
+---
+
+### Why clang-cl on Windows
+
+The `windows*` presets chain-load `env/cmake/ClangClEnvironment.cmake`, which builds with `clang-cl.exe` instead of `cl.exe` (still using the MSVC ABI, headers, and libs via `vcvarsall.bat`). Two reasons:
+
+- It dodges an MSVC 14.51 internal compiler error hit by an unrelated dependency probe.
+- It links LLVM's `libomp.dll` (real OpenMP 4.x, `OMP_PLACES`/`OMP_PROC_BIND`-capable) instead of MSVC's `vcomp`, matching the OpenMP runtime already used on Linux/macOS.
+
+VS Code's CMake Tools setup is unaffected — `.vscode/settings.json` still chain-loads `MsvcEnvironment.cmake` (plain `cl.exe`), since clangd's IntelliSense/tidy integration is driven from that build's `compile_commands.json`.
 
 ---
 

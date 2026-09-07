@@ -16,7 +16,8 @@ struct ReflConstants
     explicit ReflConstants(const ReflSettings& s);
 };
 
-template <typename T> struct WaveScratch
+template <typename T>
+struct WaveScratch
 {
     std::vector<T> kk, ak, rj, Rj;
     int edp_points = 0;
@@ -67,6 +68,4 @@ class ParrattReflectivity
     bool m_qsmear_enabled = false;
     std::vector<double> m_refl_out;      // Parratt output (sinthetai.size(): N or 13·N)
     std::vector<double> m_refl_smeared;  // Smeared result (N); only used when qsmear on
-
-    LayerStack m_cooperative_ls;  // written by omp single in CalculateReflectivityCooperative
 };

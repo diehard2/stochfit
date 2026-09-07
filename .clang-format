@@ -37,6 +37,7 @@ ReferenceAlignment: Pointer
 # Line breaks
 ReflowComments: true
 AlignTrailingComments: true
+BreakTemplateDeclarations: Yes
 
 # Include sorting
 IncludeBlocks: Regroup

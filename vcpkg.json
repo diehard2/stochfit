@@ -5,6 +5,6 @@
     "flatbuffers",
     "gtest",
     "levmar",
-"tl-expected"
+    "tl-expected"
   ]
 }

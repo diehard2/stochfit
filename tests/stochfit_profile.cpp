@@ -31,12 +31,14 @@ static bool LoadReflData(const std::string& path, std::vector<double>& q, std::v
     }
     std::string line;
     while (std::getline(f, line)) {
-        if (line.empty() || line[0] == '#')
+        if (line.empty() || line[0] == '#') {
             continue;
+        }
         std::istringstream ss(line);
         double qv, rv, ev;
-        if (!(ss >> qv >> rv >> ev))
+        if (!(ss >> qv >> rv >> ev)) {
             continue;
+        }
         q.push_back(qv);
         refl.push_back(rv);
         reflErr.push_back(ev);
@@ -57,25 +59,27 @@ int main(int argc, char* argv[])
 
     for (int i = 1; i < argc; ++i) {
         std::string_view arg = argv[i];
-        if (arg.starts_with("--resolution="))
+        if (arg.starts_with("--resolution=")) {
             resolution = std::stoi(std::string(arg.substr(13)));
-        else if (arg.starts_with("--iterations="))
+        } else if (arg.starts_with("--iterations=")) {
             iterations = std::stoi(std::string(arg.substr(13)));
-        else if (arg.starts_with("--target-chi="))
+        } else if (arg.starts_with("--target-chi=")) {
             targetChi = std::stod(std::string(arg.substr(13)));
-        else if (arg == "--opaque")
+        } else if (arg == "--opaque") {
             xrOnly = false;
-        else if (arg.starts_with("--"))
+        } else if (arg.starts_with("--")) {
             std::fprintf(stderr, "Unknown flag: %s\n", argv[i]);
-        else if (i == 1)
+        } else if (i == 1) {
             dataPath = argv[i];
-        else
+        } else {
             iterations = std::stoi(argv[i]);
+        }
     }
 
     std::vector<double> q, refl, reflErr;
-    if (!LoadReflData(dataPath, q, refl, reflErr))
+    if (!LoadReflData(dataPath, q, refl, reflErr)) {
         return 1;
+    }
     std::cout << "Loaded " << q.size() << " data points from " << dataPath << "\n";
 
     ReflSettings settings{};
@@ -144,8 +148,9 @@ int main(int argc, char* argv[])
         std::printf("[%5.1f%%] iter=%-9d  χ²=%.4e  GoF=%.4f  rough=%.3f  %.0f iter/s\n", pct, snap.iteration, snap.chiSquare,
                     snap.goodnessOfFit, snap.roughness, ips);
         std::fflush(stdout);
-        if (snap.isFinished)
+        if (snap.isFinished) {
             break;
+        }
         if (targetChi > 0.0 && snap.chiSquare > 0.0 && snap.chiSquare <= targetChi) {
             std::printf("  --> χ² target %.6g reached\n", targetChi);
             break;

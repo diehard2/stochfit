@@ -91,10 +91,13 @@ const config: ForgeConfig = {
 
       // OpenMP runtime — not present on stock macOS or Windows.
       // On macOS: libomp.dylib (copied from Homebrew by CMake).
-      // On Windows: vcomp<ver>.dll (Visual C++ OpenMP runtime, copied from VS Redist by CMake).
+      // On Windows: libomp.dll — LLVM's OpenMP runtime, copied from the VS-bundled
+      //   LLVM toolchain by CMake, since Windows builds with clang-cl. (The
+      //   vcomp<ver>.dll pattern is kept for anyone still building with MSVC.)
       // On Linux: libgomp is a system package; not bundled.
       ...opt('../build/Release/bin/libomp.dylib'),                          // macOS
-      ...optGlob('../build/Release/bin', /^vcomp\d+\.dll$/),                // Windows
+      ...opt('../build/Release/bin/libomp.dll'),                            // Windows (clang-cl)
+      ...optGlob('../build/Release/bin', /^vcomp\d+\.dll$/),                // Windows (MSVC fallback)
 
       // MSVC CRT runtime (msvcp140.dll, vcruntime140.dll, vcruntime140_1.dll, ...) —
       // the x64-windows-static-md triplet links the CRT dynamically, so a clean

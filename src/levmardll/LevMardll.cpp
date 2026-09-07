@@ -43,14 +43,15 @@
 
 static std::vector<double> copy_fbs_vec(const flatbuffers::Vector<double>* v)
 {
-    if (!v || v->size() == 0)
+    if (v == nullptr || v->empty()) {
         return {};
+    }
     return std::vector<double>(v->data(), v->data() + v->size());
 }
 
 static void fill_box_settings(const StochFitProto::BoxReflSettings* s, BoxReflSettings& rs)
 {
-    rs.Directory = s->directory() ? s->directory()->str() : "";
+    rs.Directory = (s->directory() != nullptr) ? s->directory()->str() : "";
     rs.Q = copy_fbs_vec(s->q());
     rs.Refl = copy_fbs_vec(s->refl());
     rs.ReflError = copy_fbs_vec(s->refl_error());
@@ -67,7 +68,7 @@ static void fill_box_settings(const StochFitProto::BoxReflSettings* s, BoxReflSe
     rs.Boxes = s->boxes();
     rs.Wavelength = s->wavelength();
     rs.QSpread = s->q_spread();
-    rs.ImpNorm = s->imp_norm();
+    rs.ImpNorm = (s->imp_norm() != 0);
     rs.FitFunc = s->fit_func();
     rs.LowQOffset = s->low_q_offset();
     rs.HighQOffset = s->high_q_offset();
@@ -75,12 +76,14 @@ static void fill_box_settings(const StochFitProto::BoxReflSettings* s, BoxReflSe
     rs.ZLength = s->z_length();
 }
 
-template <typename T> static int finish_into(flatbuffers::FlatBufferBuilder& fbb, flatbuffers::Offset<T> root, uint8_t* outBuf, int maxLen)
+template <typename T>
+static int finish_into(flatbuffers::FlatBufferBuilder& fbb, flatbuffers::Offset<T> root, uint8_t* outBuf, int maxLen)
 {
     fbb.Finish(root);
     int written = static_cast<int>(fbb.GetSize());
-    if (written > maxLen)
+    if (written > maxLen) {
         return -1;
+    }
     std::memcpy(outBuf, fbb.GetBufferPointer(), written);
     return written;
 }
@@ -107,8 +110,9 @@ static void LevmarReflResidual(double* p, double* x, int m, int n, void* data)
     auto refl = self->parratt.CalculateReflectivity(self->layers.View(self->rs->Boxes));
     if (self->rs->ImpNorm) {
         const double nf = self->layers.normfactor;
-        for (auto& r : refl)
+        for (auto& r : refl) {
             r *= nf;
+        }
     }
     self->objective.FillResiduals(refl, self->Realrefl, self->Realreflerrors, std::span<double>(x, n), self->rs->LowQOffset,
                                   self->rs->HighQOffset);
@@ -137,20 +141,22 @@ extern "C" EXPORT int FastReflfit(const uint8_t* inBuf, int /*inLen*/, uint8_t* 
                         &rs};
 
     std::vector<double> xvec(rs.QPoints, 0.0);
-    std::vector<double> work(LM_DIF_WORKSZ(paramsize, rs.QPoints) + paramsize * rs.QPoints);
+    std::vector<double> work(LM_DIF_WORKSZ(paramsize, rs.QPoints) + (paramsize * rs.QPoints));
     auto covar = std::span(work).subspan(LM_DIF_WORKSZ(paramsize, rs.QPoints));
     std::vector<double> info(LM_INFO_SZ, 0.0);
 
-    if (rs.UL.empty())
+    if (rs.UL.empty()) {
         dlevmar_dif(LevmarReflResidual, params.data(), xvec.data(), paramsize, rs.QPoints, 1000, opts, info.data(), work.data(),
                     covar.data(), (void*) (&task));
-    else
+    } else {
         dlevmar_bc_dif(LevmarReflResidual, params.data(), xvec.data(), paramsize, rs.QPoints, rs.LL.data(), rs.UL.data(), nullptr, 1000,
                        opts, info.data(), work.data(), covar.data(), (void*) (&task));
+    }
 
     std::vector<double> covarOut(paramsize);
-    for (int i = 0; i < paramsize; i++)
+    for (int i = 0; i < paramsize; i++) {
         covarOut[i] = std::sqrt(covar[i * (paramsize + 1)]);
+    }
 
     flatbuffers::FlatBufferBuilder fbb(4096);
     auto result = StochFitProto::CreateReflFitResult(fbb, fbb.CreateVector(params), fbb.CreateVector(covarOut), fbb.CreateVector(info));
@@ -175,8 +181,9 @@ extern "C" EXPORT int FastReflGenerate(const uint8_t* inBuf, int /*inLen*/, uint
     auto refl = parratt.CalculateReflectivity(layers.View(rs.Boxes));
     if (rs.ImpNorm) {
         const double nf = layers.normfactor;
-        for (auto& r : refl)
+        for (auto& r : refl) {
             r *= nf;
+        }
     }
 
     std::vector<double> reflOut(refl.begin(), refl.begin() + rs.QPoints);
@@ -204,20 +211,22 @@ extern "C" EXPORT int Rhofit(const uint8_t* inBuf, int /*inLen*/, uint8_t* outBu
     Rho.init(rs);
 
     std::vector<double> xvec(rs.ZLength, 0.0);
-    std::vector<double> work(LM_DIF_WORKSZ(paramsize, rs.ZLength) + paramsize * rs.ZLength);
+    std::vector<double> work(LM_DIF_WORKSZ(paramsize, rs.ZLength) + (paramsize * rs.ZLength));
     auto covar = std::span(work).subspan(LM_DIF_WORKSZ(paramsize, rs.ZLength));
     std::vector<double> info(LM_INFO_SZ, 0.0);
 
-    if (rs.UL.empty())
+    if (rs.UL.empty()) {
         dlevmar_dif(RhoCalc::objective, params.data(), xvec.data(), paramsize, rs.ZLength, 1000, opts, info.data(), work.data(),
                     covar.data(), (void*) (&Rho));
-    else
+    } else {
         dlevmar_bc_dif(RhoCalc::objective, params.data(), xvec.data(), paramsize, rs.ZLength, rs.LL.data(), rs.UL.data(), nullptr, 1000,
                        opts, info.data(), work.data(), covar.data(), (void*) (&Rho));
+    }
 
     std::vector<double> covarOut(paramsize);
-    for (int i = 0; i < paramsize; i++)
+    for (int i = 0; i < paramsize; i++) {
         covarOut[i] = std::sqrt(covar[i * (paramsize + 1)]);
+    }
 
     flatbuffers::FlatBufferBuilder fbb(4096);
     auto result = StochFitProto::CreateRhoFitResult(fbb, fbb.CreateVector(params), fbb.CreateVector(covarOut), fbb.CreateVector(info));
@@ -279,8 +288,9 @@ static bool IsReasonable(const BoxSolution& sol, const BoxReflSettings& rs, doub
     }
     if (rs.OneSigma && cutoff > 0.0) {
         for (int i = 0; i < (int) sol.params.size(); ++i) {
-            if (sol.covar[i] > cutoff * std::fabs(sol.params[i]))
+            if (sol.covar[i] > cutoff * std::fabs(sol.params[i])) {
                 return false;
+            }
         }
     }
     return true;
@@ -288,11 +298,13 @@ static bool IsReasonable(const BoxSolution& sol, const BoxReflSettings& rs, doub
 
 static bool ApproxEqual(const BoxSolution& a, const BoxSolution& b, double tol = 0.005)
 {
-    if (std::fabs(a.score / b.score - 1.0) > tol)
+    if (std::fabs((a.score / b.score) - 1.0) > tol) {
         return false;
+    }
     for (size_t i = 0; i < a.params.size(); ++i) {
-        if (b.params[i] != 0.0 && std::fabs(a.params[i] / b.params[i] - 1.0) > tol)
+        if (b.params[i] != 0.0 && std::fabs((a.params[i] / b.params[i]) - 1.0) > tol) {
             return false;
+        }
     }
     return true;
 }
@@ -325,13 +337,16 @@ extern "C" EXPORT int StochFitBoxModel(const uint8_t* inBuf, int /*inLen*/, uint
                            .rs = &rs};
         BuildBoxLayers(rs, params, rs.OneSigma, tmp.layers);
         auto r = tmp.parratt.CalculateReflectivity(tmp.layers.View(rs.Boxes));
-        if (rs.ImpNorm)
-            for (auto& rv : r)
+        if (rs.ImpNorm) {
+            for (auto& rv : r) {
                 rv *= tmp.layers.normfactor;
+            }
+        }
         std::vector<double> residuals(QSize, 0.0);
         tmp.objective.FillResiduals(r, rs.Refl, rs.ReflError, residuals, rs.LowQOffset, rs.HighQOffset);
-        for (double res : residuals)
+        for (double res : residuals) {
             bestchisquare += res * res;
+        }
     }
 
     BoxSolution original;
@@ -365,7 +380,7 @@ extern "C" EXPORT int StochFitBoxModel(const uint8_t* inBuf, int /*inLen*/, uint
         localvec.reserve(1000);
 
         std::vector<double> locinfo(LM_INFO_SZ);
-        std::vector<double> work(LM_DIF_WORKSZ(paramsize, QSize) + paramsize * QSize);
+        std::vector<double> work(LM_DIF_WORKSZ(paramsize, QSize) + (paramsize * QSize));
         auto covar = std::span(work).subspan(LM_DIF_WORKSZ(paramsize, QSize));
         std::vector<double> xvec(QSize, 0.0);
 
@@ -374,12 +389,12 @@ extern "C" EXPORT int StochFitBoxModel(const uint8_t* inBuf, int /*inLen*/, uint
             locparameters[0] = IRandom(params[0] * rs.ParamPercs[4], params[0] * rs.ParamPercs[5]);
             for (int k = 0; k < rs.Boxes; k++) {
                 if (rs.OneSigma) {
-                    locparameters[2 * k + 1] = IRandom(params[2 * k + 1] * rs.ParamPercs[0], params[2 * k + 1] * rs.ParamPercs[1]);
-                    locparameters[2 * k + 2] = IRandom(params[2 * k + 2] * rs.ParamPercs[2], params[2 * k + 2] * rs.ParamPercs[3]);
+                    locparameters[(2 * k) + 1] = IRandom(params[(2 * k) + 1] * rs.ParamPercs[0], params[(2 * k) + 1] * rs.ParamPercs[1]);
+                    locparameters[(2 * k) + 2] = IRandom(params[(2 * k) + 2] * rs.ParamPercs[2], params[(2 * k) + 2] * rs.ParamPercs[3]);
                 } else {
-                    locparameters[3 * k + 1] = IRandom(params[3 * k + 1] * rs.ParamPercs[0], params[3 * k + 1] * rs.ParamPercs[1]);
-                    locparameters[3 * k + 2] = IRandom(params[3 * k + 2] * rs.ParamPercs[2], params[3 * k + 2] * rs.ParamPercs[3]);
-                    locparameters[3 * k + 3] = IRandom(params[3 * k + 3] * rs.ParamPercs[4], params[3 * k + 3] * rs.ParamPercs[5]);
+                    locparameters[(3 * k) + 1] = IRandom(params[(3 * k) + 1] * rs.ParamPercs[0], params[(3 * k) + 1] * rs.ParamPercs[1]);
+                    locparameters[(3 * k) + 2] = IRandom(params[(3 * k) + 2] * rs.ParamPercs[2], params[(3 * k) + 2] * rs.ParamPercs[3]);
+                    locparameters[(3 * k) + 3] = IRandom(params[(3 * k) + 3] * rs.ParamPercs[4], params[(3 * k) + 3] * rs.ParamPercs[5]);
                 }
             }
             locparameters[paramsize - 1] = params[paramsize - 1];
@@ -407,15 +422,17 @@ extern "C" EXPORT int StochFitBoxModel(const uint8_t* inBuf, int /*inLen*/, uint
                         break;
                     }
                 }
-                if (unique)
+                if (unique) {
                     localvec.push_back(localanswer);
+                }
             }
         }
 
 #pragma omp critical(AddVecs)
         {
-            for (const auto& v : localvec)
+            for (const auto& v : localvec) {
                 temp.push_back(v);
+            }
         }
     }
 
@@ -428,15 +445,18 @@ extern "C" EXPORT int StochFitBoxModel(const uint8_t* inBuf, int /*inLen*/, uint
     for (int i = 1; i < tempsize; i++) {
         int sz = static_cast<int>(allsolutions.size());
         for (int j = 0; j < sz; j++) {
-            if (ApproxEqual(temp[i], allsolutions[j]))
+            if (ApproxEqual(temp[i], allsolutions[j])) {
                 break;
-            if (j == sz - 1)
+            }
+            if (j == sz - 1) {
                 allsolutions.push_back(temp[i]);
+            }
         }
     }
 
-    if (!allsolutions.empty())
+    if (!allsolutions.empty()) {
         std::sort(allsolutions.begin(), allsolutions.end());
+    }
 
     int n = static_cast<int>(std::min<size_t>(allsolutions.size(), 999));
     std::vector<double> outParams(params);
@@ -447,8 +467,8 @@ extern "C" EXPORT int StochFitBoxModel(const uint8_t* inBuf, int /*inLen*/, uint
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < paramsize; j++) {
-            paramArray[i * paramsize + j] = allsolutions[i].params[j];
-            covarArray[i * paramsize + j] = allsolutions[i].covar[j];
+            paramArray[(i * paramsize) + j] = allsolutions[i].params[j];
+            covarArray[(i * paramsize) + j] = allsolutions[i].covar[j];
         }
         std::copy(allsolutions[i].info.begin(), allsolutions[i].info.end(), infoOut.begin() + i * LM_INFO_SZ);
         chiSquareArray[i] = allsolutions[i].score;

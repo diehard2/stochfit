@@ -45,10 +45,23 @@ Continuing with trying to run arithchk anyway.")
   endif()
 endif()
 
+set(C_STANDARD_OPTIONS)
+if(VCPKG_TARGET_IS_LINUX)
+  # f2c-generated code (e.g. SRC/sgees.c) declares old-style unprototyped
+  # function-pointer typedefs and calls them with arguments — legal K&R/C17
+  # ("()" means "unspecified parameters"), but GCC 15 defaults to gnu23,
+  # where "()" means "takes no parameters," turning every such call into a
+  # hard error ("too many arguments to function 'select'"). Pin the C
+  # dialect back to gnu17 so this 20+ year old Fortran-to-C output still
+  # builds under new toolchains.
+  set(C_STANDARD_OPTIONS -DCMAKE_C_STANDARD=17 -DCMAKE_C_STANDARD_REQUIRED=ON -DCMAKE_C_EXTENSIONS=ON)
+endif()
+
 vcpkg_cmake_configure(
   SOURCE_PATH "${SOURCE_PATH}"
   OPTIONS
     ${ARITH_PATH}
+    ${C_STANDARD_OPTIONS}
 )
 
 vcpkg_cmake_install()

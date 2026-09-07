@@ -41,8 +41,9 @@ template <typename T> static int finish_into(flatbuffers::FlatBufferBuilder& fbb
 {
     fbb.Finish(root);
     int written = static_cast<int>(fbb.GetSize());
-    if (written > maxLen)
+    if (written > maxLen) {
         return -1;
+    }
     std::memcpy(outBuf, fbb.GetBufferPointer(), written);
     return written;
 }
@@ -108,8 +109,9 @@ extern "C" EXPORT void Cancel()
 
 extern "C" EXPORT int GetData(uint8_t* outBuf, int maxLen)
 {
-    if (!stochfit)
+    if (!stochfit) {
         return -1;
+    }
 
     const DataSnapshot snap = stochfit->GetData();
 
@@ -127,8 +129,9 @@ extern "C" EXPORT int GetData(uint8_t* outBuf, int maxLen)
 
 extern "C" EXPORT int GetRunState(uint8_t* outBuf, int maxLen)
 {
-    if (!stochfit)
+    if (!stochfit) {
         return -1;
+    }
 
     const StochRunState s = stochfit->GetRunState();
     flatbuffers::FlatBufferBuilder fbb(4096);
@@ -142,8 +145,9 @@ extern "C" EXPORT int GetRunState(uint8_t* outBuf, int maxLen)
 
 extern "C" EXPORT int SAParams(uint8_t* outBuf, int maxLen)
 {
-    if (!stochfit)
+    if (!stochfit) {
         return -1;
+    }
 
     int mode = 0;
     double temp = stochfit->GetTemperature();

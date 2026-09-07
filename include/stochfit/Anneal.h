@@ -2,14 +2,22 @@
 
 #include <limits>
 #include <random>
-#include <ranges>
 #include <span>
 
-#include "AnnealPolicies.h"
 #include "CEDP.h"
 #include "ParameterStepper.h"
 #include "ReflectivityObjective.h"
 #include "UnifiedReflectivity.h"
+
+// clang-cl targets the MSVC ABI, where plain [[no_unique_address]] has no
+// effect (and warns as an unknown attribute); clang instead spells it
+// [[msvc::no_unique_address]] there. MSVC itself only understands that
+// spelling too (added in 19.35 / VS 17.5).
+#if defined(_MSC_VER)
+    #define STOCHFIT_NO_UNIQUE_ADDRESS [[msvc::no_unique_address]]
+#else
+    #define STOCHFIT_NO_UNIQUE_ADDRESS [[no_unique_address]]
+#endif
 
 struct AnnealDeps
 {
@@ -18,18 +26,19 @@ struct AnnealDeps
     bool impNorm = false;
 };
 
-template <class Policy> class Anneal
+template <class Policy>
+class Anneal
 {
   public:
     template <class... PolicyArgs>
     Anneal(CEDP& edp, ParrattReflectivity& parratt, const ReflectivityObjective& objective, ParameterStepper& stepper,
-           const ParamVector& initParams, AnnealDeps deps, PolicyArgs&&... policyArgs)
+           ParamVector initParams, AnnealDeps deps, PolicyArgs&&... policyArgs)
         : m_edp(&edp),
           m_parratt(&parratt),
           m_objective(&objective),
           m_stepper(&stepper),
-          m_tempParams(initParams),
-          m_deps(std::move(deps)),
+          m_tempParams(std::move(initParams)),
+          m_deps(deps),
           m_rng(std::random_device{}()),
           m_policy(std::forward<PolicyArgs>(policyArgs)...)
     {
@@ -40,10 +49,17 @@ template <class Policy> class Anneal
     // Cooperative interface for persistent OMP parallel regions.
     // All threads must call these in order per SA iteration.
     // PrepareCandidate: mutates candidate (omp single) then builds EDP (omp for).
-    // ComputeSharedRefl: runs cooperative Parratt (omp for); result in m_deps.reflBuf.
-    // EvaluateAndAccept: pure serial — call from omp single only.
+    // ComputeSharedRefl: runs cooperative Parratt (omp for); no barrier — returns
+    //   a span into the Parratt object's own scratch buffer (stable until the next
+    //   ComputeSharedRefl call). Every thread gets the identical span back as an
+    //   ordinary return value (each in its own stack frame — no shared write, so
+    //   no data race), so the caller can hold onto it until the next single.
+    // PublishResult: serial only — call from the same omp single as EvaluateAndAccept,
+    //   passing the span ComputeSharedRefl returned. Copies/scales it into m_deps.reflBuf.
+    // EvaluateAndAccept: pure serial — call from omp single only, after PublishResult.
     void PrepareCandidate(ParamVector& params);
-    void ComputeSharedRefl();
+    std::span<double> ComputeSharedRefl();
+    void PublishResult(std::span<const double> result);
     bool EvaluateAndAccept(ParamVector& params);
 
     double GetTemperature() const
@@ -90,20 +106,22 @@ template <class Policy> class Anneal
     double m_bestEnergy = std::numeric_limits<double>::max();
     double m_currentEnergy = std::numeric_limits<double>::max();
     double m_lastChiSquare = 0.0;
-    [[no_unique_address]] Policy m_policy;
+    STOCHFIT_NO_UNIQUE_ADDRESS Policy m_policy;
 
     void ComputeModel(ParamVector& p)
     {
         auto result = m_parratt->CalculateReflectivity(*m_edp);
         std::ranges::copy(result, m_deps.reflBuf.begin());
         if (m_deps.impNorm) {
-            for (auto& v : m_deps.reflBuf)
+            for (auto& v : m_deps.reflBuf) {
                 v *= p.GetImpNorm();
+            }
         }
     }
 };
 
-template <class Policy> void Anneal<Policy>::InitEnergy(ParamVector& params)
+template <class Policy>
+void Anneal<Policy>::InitEnergy(ParamVector& params)
 {
     m_edp->GenerateEDP(params);
     ComputeModel(params);
@@ -113,7 +131,8 @@ template <class Policy> void Anneal<Policy>::InitEnergy(ParamVector& params)
 
 // ── Cooperative methods for persistent OMP parallel regions ──────────────────
 
-template <class Policy> void Anneal<Policy>::PrepareCandidate(ParamVector& params)
+template <class Policy>
+void Anneal<Policy>::PrepareCandidate(ParamVector& params)
 {
 #pragma omp single
     {
@@ -127,20 +146,28 @@ template <class Policy> void Anneal<Policy>::PrepareCandidate(ParamVector& param
     // implicit barrier: all threads see completed EDP
 }
 
-template <class Policy> void Anneal<Policy>::ComputeSharedRefl()
+template <class Policy>
+std::span<double> Anneal<Policy>::ComputeSharedRefl()
 {
-    auto result = m_parratt->CalculateReflectivityCooperative(*m_edp);
-#pragma omp single
-    {
-        std::ranges::copy(result, m_deps.reflBuf.begin());
-        if (m_deps.impNorm) {
-            for (auto& v : m_deps.reflBuf)
-                v *= m_tempParams.GetImpNorm();
+    // No single/barrier here: the result stays valid in the Parratt object's own
+    // scratch buffer until the next ComputeSharedRefl call, so publishing it can
+    // wait until the caller's existing serial section (see PublishResult).
+    return m_parratt->CalculateReflectivityCooperative(*m_edp);
+}
+
+template <class Policy>
+void Anneal<Policy>::PublishResult(std::span<const double> result)
+{
+    std::ranges::copy(result, m_deps.reflBuf.begin());
+    if (m_deps.impNorm) {
+        for (auto& v : m_deps.reflBuf) {
+            v *= m_tempParams.GetImpNorm();
         }
     }
 }
 
-template <class Policy> bool Anneal<Policy>::EvaluateAndAccept(ParamVector& params)
+template <class Policy>
+bool Anneal<Policy>::EvaluateAndAccept(ParamVector& params)
 {
     const double candE = m_objective->Evaluate(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
 

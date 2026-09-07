@@ -19,8 +19,9 @@ void ReflectivityObjective::FillResiduals(std::span<const double> model, std::sp
         case Type::InvRatio:
             for (int i = low_q_offset; i < hi; ++i) {
                 double r = yi[i] / model[i];
-                if (r < 1.0)
+                if (r < 1.0) {
                     r = 1.0 / r;
+                }
                 double res = 1.0 - r;
                 residuals[i] = std::isfinite(res) ? res : -1e6;
             }
@@ -35,8 +36,9 @@ void ReflectivityObjective::FillResiduals(std::span<const double> model, std::sp
         case Type::InvRatioErr:
             for (int i = low_q_offset; i < hi; ++i) {
                 double r = yi[i] / model[i];
-                if (r < 1.0)
+                if (r < 1.0) {
                     r = 1.0 / r;
+                }
                 double emap = yi[i] / eyi[i];
                 double res = (1.0 - r) * emap;
                 residuals[i] = std::isfinite(res) ? res : -1e6;
@@ -60,8 +62,9 @@ double ReflectivityObjective::Evaluate(std::span<const double> model, std::span<
         case Type::InvRatio:
             for (int i = 0; i < n; ++i) {
                 double r = yi[i] / model[i];
-                if (r < 1.0)
+                if (r < 1.0) {
                     r = 1.0 / r;
+                }
                 score += (1.0 - r) * (1.0 - r);
             }
             break;
@@ -74,8 +77,9 @@ double ReflectivityObjective::Evaluate(std::span<const double> model, std::span<
         case Type::InvRatioErr:
             for (int i = 0; i < n; ++i) {
                 double r = yi[i] / model[i];
-                if (r < 1.0)
+                if (r < 1.0) {
                     r = 1.0 / r;
+                }
                 double emap = (yi[i] / eyi[i]) * (yi[i] / eyi[i]);
                 score += (1.0 - r) * (1.0 - r) * emap;
             }

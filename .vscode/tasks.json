@@ -32,6 +32,24 @@
       "problemMatcher": [],
       "options": { "cwd": "${workspaceFolder}" },
       "group": "build"
+    },
+    {
+      "label": "Lint: clang-tidy (whole project)",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\Llvm\\x64\\bin\\run-clang-tidy",
+        "-p",
+        "build",
+        "-clang-tidy-binary",
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\Llvm\\x64\\bin\\clang-tidy.exe",
+        "-quiet",
+        "-j",
+        "0"
+      ],
+      "problemMatcher": ["$gcc"],
+      "options": { "cwd": "${workspaceFolder}", "env": { "PYTHONUTF8": "1" } },
+      "presentation": { "reveal": "always", "panel": "dedicated" }
     }
   ]
 }

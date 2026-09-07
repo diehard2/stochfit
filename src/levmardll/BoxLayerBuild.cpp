@@ -3,6 +3,7 @@
 #include <cmath>
 #include <numbers>
 
+
 LayerStack BoxLayers::View(int boxes) const noexcept
 {
     LayerStack ls;
@@ -37,15 +38,13 @@ void BuildBoxLayers(const BoxReflSettings& rs, std::span<const double> p, bool o
     for (int i = 1; i <= rs.Boxes; ++i) {
         double sigma;
         if (one_sigma) {
-            out.length_mult[i] = {0.0, -2.0 * p[2 * (i - 1) + 1]};
-            out.rho[i] = p[2 * (i - 1) + 2] * rs.SubSLD * rho2;
+            out.length_mult[i] = {0.0, -2.0 * p[(2 * (i - 1)) + 1]};
+            out.rho[i] = p[(2 * (i - 1)) + 2] * rs.SubSLD * rho2;
             sigma = p[0];
         } else {
-            out.length_mult[i] = {0.0, -2.0 * p[3 * (i - 1) + 1]};
-            out.rho[i] = p[3 * (i - 1) + 2] * rs.SubSLD * rho2;
-            sigma = std::fabs(p[3 * (i - 1) + 3]);
-            if (sigma < 1e-8)
-                sigma = 1e-8;
+            out.length_mult[i] = {0.0, -2.0 * p[(3 * (i - 1)) + 1]};
+            out.rho[i] = p[(3 * (i - 1)) + 2] * rs.SubSLD * rho2;
+            sigma = std::max(1e-8, std::fabs(p[(3 * (i - 1)) + 3]));
         }
         out.sigma_sq[i - 1] = -2.0 * sigma * sigma;
     }

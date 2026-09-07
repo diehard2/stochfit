@@ -36,8 +36,10 @@ class CEDP
     mutable int m_supOff = 0;
     mutable int m_subOff = 0;
 
-    template <bool Absorbing> void BuildEDP(ParamVector& g);
-    template <bool Absorbing> void FillBoxArraysImpl(ParamVector& g);
+    template <bool Absorbing>
+    void BuildEDP(ParamVector& g);
+    template <bool Absorbing>
+    void FillBoxArraysImpl(ParamVector& g);
 
   public:
     CEDP() = default;
@@ -58,7 +60,7 @@ class CEDP
     // Cooperative path (SA persistent-team use):
     //   1. Call FillBoxArrays(g) inside your omp single block before the parallel section.
     //   2. Call GenerateEDPCooperative(g) — runs only the parallel omp for.
-    //   3. Call BuildLayerStackFull() inside the next omp single — computes offsets fresh.
+    //   3. Call BuildLayerStackFull() — computes offsets fresh; safe with no single/barrier.
     void FillBoxArrays(ParamVector& g);           // serial setup only, no omp pragma
     void GenerateEDPCooperative(ParamVector& g);  // omp for only, no serial omp singles
 
@@ -79,7 +81,9 @@ class CEDP
 
     // Like BuildLayerStack but computes sup/sub offsets fresh from m_DEDP — use
     // in the cooperative SA path where GenerateEDPCooperative skipped GetOffSets.
-    // Const (m_supOff/m_subOff are mutable); call from within an omp single.
+    // Does NOT touch the m_supOff/m_subOff cache (unlike GenerateEDP), so every
+    // thread in the team may call this redundantly with no shared write — no
+    // omp single/barrier needed.
     LayerStack BuildLayerStackFull() const;
 
     vector<std::complex<double>> m_EDP;

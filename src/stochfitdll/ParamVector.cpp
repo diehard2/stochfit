@@ -55,8 +55,9 @@ ParamVector::ParamVector(const ReflSettings& s)
     SetSubphase(s.SubSLD / s.FilmSLD);
     SetRoughness(2.0);
 
-    for (int i = 0; i < m_boxes; i++)
+    for (int i = 0; i < m_boxes; i++) {
         SetMutatableParameter(i, 1.0);
+    }
 }
 
 void ParamVector::SetBounds(double lowrough, double highrough, double highimp, double highabs)
@@ -100,14 +101,16 @@ double ParamVector::GetMutatableParameter(int i) const
 
 void ParamVector::SetMutatableParameter(int i, double val)
 {
-    if (i >= m_paramCount)
+    if (i >= m_paramCount) {
         return;
+    }
 
     const double clamped = std::clamp(val, m_low[i], m_high[i]);
     m_mutableParams[i] = clamped;
 
-    if (i < m_boxes)
+    if (i < m_boxes) {
         m_edpValues[i + 1] = clamped;
+    }
 }
 
 double ParamVector::GetUpperBounds(int index) const
@@ -127,8 +130,9 @@ double ParamVector::GetRoughness() const
 
 void ParamVector::SetRoughness(double rough)
 {
-    if (m_fixRoughness)
+    if (m_fixRoughness) {
         return;
+    }
     m_mutableParams[m_roughnessIdx] = std::clamp(rough, m_low[m_roughnessIdx], m_high[m_roughnessIdx]);
 }
 
@@ -139,8 +143,9 @@ double ParamVector::GetImpNorm() const
 
 void ParamVector::SetImpNorm(double norm)
 {
-    if (!m_fixImpNorm)
+    if (!m_fixImpNorm) {
         return;
+    }
     m_mutableParams[m_impNormIdx] = std::clamp(norm, m_low[m_impNormIdx], m_high[m_impNormIdx]);
 }
 
@@ -151,7 +156,8 @@ double ParamVector::GetSurfAbs() const
 
 void ParamVector::SetSurfAbs(double surfabs)
 {
-    if (!m_useSurfAbs)
+    if (!m_useSurfAbs) {
         return;
+    }
     m_mutableParams[m_surfAbsIdx] = std::clamp(surfabs, m_low[m_surfAbsIdx], m_high[m_surfAbsIdx]);
 }

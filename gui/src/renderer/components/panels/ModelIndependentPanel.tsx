@@ -9,8 +9,8 @@ import { applyForceNormalization } from '../../lib/forcenorm';
 import { POLLING_INTERVAL_MS } from '../../lib/constants';
 import { BoxParameterTable, type BoxRow } from '../shared/BoxParameterTable';
 import { Field } from '../shared/Field';
-import type { FitResult, SAParams } from '../../lib/types';
-import type { ReflSettingsInput, StochRunStateOutput, StochFitOutput } from '../../../main/native/stochfit-api';
+import type { FitResult, SAParams, StochFitOutput } from '../../lib/types';
+import type { ReflSettingsInput, StochRunStateOutput } from '../../../main/native/stochfit-api';
 import type { BoxReflSettingsInput, LMFitResult } from '../../../main/native/levmar-api';
 import { computeBoxStepEDP } from '../../lib/edp-utils';
 
@@ -226,7 +226,7 @@ export function ModelIndependentPanel() {
         version: 2,
         savedAt: new Date().toISOString(),
         dataFile,
-        settings: { ...settings } as Record<string, unknown>,
+        settings: { ...settings },
         saState,
         fitResult: {
           zRange: currentResult.zRange,

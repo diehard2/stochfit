@@ -5,8 +5,9 @@
 
 static std::vector<double> copy_fbs_vec(const flatbuffers::Vector<double>* v)
 {
-    if (!v || v->size() == 0)
+    if (!v || v->size() == 0) {
         return {};
+    }
     return std::vector<double>(v->data(), v->data() + v->size());
 }
 

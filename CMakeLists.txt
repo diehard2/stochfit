@@ -175,14 +175,26 @@ if(MSVC AND OpenMP_CXX_FOUND)
             list(GET _vcomp_glob_hits 0 VCOMP_DLL)
         endif()
     endif()
-    if(VCOMP_DLL)
-        message(STATUS "Will copy OpenMP DLL: ${VCOMP_DLL}")
+    # clang-cl builds link LLVM's libomp, not MSVC's vcomp — ship libomp.dll from
+    # the LLVM toolchain instead. (Deliberately NOT the libomp140.x86_64.dll that
+    # MSVC's own libomp.lib would import: that one lives only in System32 or under
+    # Redist/.../debug_nonredist, which is non-redistributable. See
+    # env/cmake/ClangClEnvironment.cmake.)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        if(STOCHFIT_LLVM_BIN_DIR AND EXISTS "${STOCHFIT_LLVM_BIN_DIR}/libomp.dll")
+            set(OPENMP_RUNTIME_DLL "${STOCHFIT_LLVM_BIN_DIR}/libomp.dll")
+        endif()
+    else()
+        set(OPENMP_RUNTIME_DLL "${VCOMP_DLL}")
+    endif()
+    if(OPENMP_RUNTIME_DLL)
+        message(STATUS "Will copy OpenMP DLL: ${OPENMP_RUNTIME_DLL}")
         add_custom_command(TARGET stochfit_core POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${VCOMP_DLL}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
-            COMMENT "Copying OpenMP runtime DLL (vcomp*.dll)")
+                "${OPENMP_RUNTIME_DLL}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+            COMMENT "Copying OpenMP runtime DLL")
     else()
-        message(STATUS "OpenMP DLL not found in Redist (${_redist}) — add the VS Redist's x64/Microsoft.VC*.OpenMP dir to PATH if smoke test fails")
+        message(STATUS "OpenMP DLL not found — add the OpenMP runtime dir to PATH if smoke test fails")
     endif()
 
     # The x64-windows-static-md triplet links the CRT dynamically (/MD), so

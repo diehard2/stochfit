@@ -1,5 +1,5 @@
 ---
-Checks: '-*,readability-*,performance-*,bugprone-*,modernize-*,-modernize-use-trailing-return-type'
+Checks: '-*,readability-*,performance-*,bugprone-*,modernize-*,-modernize-use-trailing-return-type,-readability-identifier-length,-readability-magic-numbers,-modernize-return-braced-init-list'
 HeaderFilterRegex: 'include/(stochfit|levmar)/.*\.h'
 WarningsAsErrors: ''
 FormatStyle: file

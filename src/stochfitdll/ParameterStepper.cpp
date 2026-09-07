@@ -19,8 +19,8 @@ void ParameterStepper::Step(ParamVector& params)
         params.SetMutatableParameter(ii, std::uniform_real_distribution<double>(params.GetMutatableParameter(ii) - m_cfg.stepSize,
                                                                                 params.GetMutatableParameter(ii) + m_cfg.stepSize)(m_rng));
     } else if (perc <= sigmaTop) {
-        params.SetRoughness(std::uniform_real_distribution<double>(params.GetRoughness() * (1.0 - kRoughMult * m_cfg.stepSize),
-                                                                   params.GetRoughness() * (1.0 + kRoughMult * m_cfg.stepSize))(m_rng));
+        params.SetRoughness(std::uniform_real_distribution<double>(params.GetRoughness() * (1.0 - (kRoughMult * m_cfg.stepSize)),
+                                                                   params.GetRoughness() * (1.0 + (kRoughMult * m_cfg.stepSize)))(m_rng));
     } else if (perc <= absTop) {
         params.SetSurfAbs(std::uniform_real_distribution<double>(params.GetSurfAbs() * (1.0 - m_cfg.stepSize),
                                                                  params.GetSurfAbs() * (1.0 + m_cfg.stepSize))(m_rng));

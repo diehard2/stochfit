@@ -10,22 +10,22 @@
     "lint": "eslint src"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^7.11.2",
-    "@electron-forge/maker-dmg": "^7.11.2",
-    "@electron-forge/maker-squirrel": "^7.11.2",
+    "@electron-forge/cli": "^8.0.1",
+    "@electron-forge/maker-dmg": "^8.0.1",
+    "@electron-forge/maker-squirrel": "^8.0.1",
     "electron-winstaller": "^5.4.4",
-    "@electron-forge/maker-zip": "^7.11.2",
-    "@electron-forge/plugin-vite": "^7.11.2",
+    "@electron-forge/maker-zip": "^8.0.1",
+    "@electron-forge/plugin-vite": "^8.0.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/react-plotly.js": "^2.6.4",
     "@vitejs/plugin-react": "^6.1.1",
     "autoprefixer": "^10.6.1",
-    "electron": "^44.4.5",
+    "electron": "^44.5.1",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.2.2",
     "typescript": "^7.0.2",
-    "vite": "^8.3.1"
+    "vite": "^8.3.2"
   },
   "overrides": {
     "@tootallnate/once": "^3.0.1",
@@ -39,7 +39,7 @@
     "h5wasm": "^0.10.3",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
-    "koffi": "^3.3.1",
+    "koffi": "^3.3.2",
     "plotly.js": "^4.1.1",
     "plotly.js-dist-min": "^4.1.1",
     "react": "^19.3.0",

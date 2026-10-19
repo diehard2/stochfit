@@ -21,8 +21,8 @@
     "@types/react-plotly.js": "^2.6.4",
     "@vitejs/plugin-react": "^6.1.2",
     "autoprefixer": "^10.6.1",
-    "electron": "^44.7.0",
-    "postcss": "^8.5.29",
+    "electron": "^44.7.2",
+    "postcss": "^8.5.30",
     "tailwindcss": "^4.2.2",
     "typescript": "^7.0.2",
     "vite": "^8.3.4"
@@ -38,12 +38,12 @@
     "flatbuffers": "25.9.23",
     "h5wasm": "^0.10.3",
     "jspdf": "^4.2.1",
-    "jspdf-autotable": "^5.0.8",
-    "koffi": "^3.3.2",
+    "jspdf-autotable": "^5.0.9",
+    "koffi": "^3.3.3",
     "plotly.js": "^4.1.2",
     "plotly.js-dist-min": "^4.1.2",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-plotly.js": "^4.1.0",
     "zustand": "^5.0.15"
   }

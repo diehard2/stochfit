@@ -21,11 +21,11 @@
     "@types/react-plotly.js": "^2.6.4",
     "@vitejs/plugin-react": "^6.1.2",
     "autoprefixer": "^10.6.1",
-    "electron": "^44.7.2",
-    "postcss": "^8.5.30",
+    "electron": "^45.0.0",
+    "postcss": "^8.5.31",
     "tailwindcss": "^4.2.2",
     "typescript": "^7.0.2",
-    "vite": "^8.3.4"
+    "vite": "^8.3.5"
   },
   "overrides": {
     "@tootallnate/once": "^3.0.1",
@@ -45,6 +45,6 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-plotly.js": "^4.1.0",
-    "zustand": "^5.0.15"
+    "zustand": "^5.0.16"
   }
 }

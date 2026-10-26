@@ -27,6 +27,8 @@
 // On stop: call Stop() to block until worker exits, then GetRunState() to read
 // the raw internal values, then Destroy() to clean up the object.
 
+#include <stochfit/SettingsStruct.h>
+
 #include <atomic>
 #include <memory>
 #include <mutex>
@@ -42,92 +44,103 @@
 #include "ParameterStepper.h"
 #include "ReflectivityObjective.h"
 #include "UnifiedReflectivity.h"
-#include <stochfit/SettingsStruct.h>
 
-using AnnealVariant = std::variant<Anneal<GreedyPolicy>,
-                                   Anneal<SimulatedPolicy>, Anneal<StunPolicy>>;
+using AnnealVariant = std::variant<Anneal<GreedyPolicy>, Anneal<SimulatedPolicy>, Anneal<StunPolicy>>;
 
-struct DataSnapshot {
-  std::vector<double> Q;
-  std::vector<double> refl;
-  std::vector<double> z;
-  std::vector<double> rho;
-  double roughness     = 0.0;
-  double chiSquare     = 0.0;
-  double goodnessOfFit = 0.0;
-  bool   isFinished    = false;
-  int    iteration     = 0;
+struct DataSnapshot
+{
+    std::vector<double> Q;
+    std::vector<double> refl;
+    std::vector<double> z;
+    std::vector<double> rho;
+    double roughness = 0.0;
+    double chiSquare = 0.0;
+    double goodnessOfFit = 0.0;
+    bool isFinished = false;
+    int iteration = 0;
 };
 
-class StochFit {
-public:
-  StochFit(const ReflSettings &InitStruct,
-           const std::unique_ptr<StochRunState> &state = {});
-  ~StochFit();
-  int Start(int iterations);
-  int Cancel();
-  void Stop();
-  DataSnapshot GetData();
-  StochRunState GetRunState();
-  tl::expected<void, std::string> GetInitError() const { return m_initError; }
+class StochFit
+{
+  public:
+    StochFit(const ReflSettings& InitStruct, const std::unique_ptr<StochRunState>& state = {});
+    ~StochFit();
+    int Start(int iterations);
+    int Cancel();
+    void Stop();
+    DataSnapshot GetData();
+    StochRunState GetRunState();
+    tl::expected<void, std::string> GetInitError() const
+    {
+        return m_initError;
+    }
 
-  const ReflSettings& Settings()      const { return m_initStruct; }
-  int                 GetDataCount()  const { return m_datapoints; }
+    const ReflSettings& Settings() const
+    {
+        return m_initStruct;
+    }
+    int GetDataCount() const
+    {
+        return m_datapoints;
+    }
 
-  // GetTemperature()    = 1/β  (display value, same as old Get_Temp())
-  // GetRawTemperature() = β    (for session save, same as old Get_RawTemp())
-  // SetTemperature(β)   = set β directly (session restore)
-  double GetTemperature() const;
-  double GetRawTemperature() const;
-  void SetTemperature(double t);
-  double GetLowestEnergy() const;
-  double GetAverageFSTUN() const;
-  void SetAverageFSTUN(double f);
+    // GetTemperature()    = 1/β  (display value, same as old Get_Temp())
+    // GetRawTemperature() = β    (for session save, same as old Get_RawTemp())
+    // SetTemperature(β)   = set β directly (session restore)
+    double GetTemperature() const;
+    double GetRawTemperature() const;
+    void SetTemperature(double t);
+    double GetLowestEnergy() const;
+    double GetAverageFSTUN() const;
+    void SetAverageFSTUN(double f);
 
-private:
-  DataSnapshot GetCurrentState();
-  int Processing();
+  private:
+    DataSnapshot GetCurrentState();
+    int Processing();
 
-  tl::expected<void, std::string> m_initError;
+    tl::expected<void, std::string> m_initError;
 
-  std::thread m_thread;
-  std::atomic<bool> m_stop_requested;
-  std::atomic<int>  m_icurrentiteration{0};
+    std::thread m_thread;
+    std::atomic<bool> m_stop_requested;
+    std::atomic<int> m_icurrentiteration{0};
 
-  string m_Directory;
-  int m_itotaliterations = 0;
+    string m_Directory;
+    int m_itotaliterations = 0;
 
-  // m_initStruct must be declared before m_parratt, which holds a const ref to it.
-  ReflSettings m_initStruct;
+    // m_initStruct must be declared before m_parratt, which holds a const ref to it.
+    ReflSettings m_initStruct;
 
-  // Measured data sliced by CritEdgeOffset/HighQOffset, owned by StochFit.
-  int m_datapoints = 0;
-  std::vector<double> m_xi;   // Q values
-  std::vector<double> m_yi;   // reflectivity
-  std::vector<double> m_eyi;  // reflectivity errors
+    // Measured data sliced by CritEdgeOffset/HighQOffset, owned by StochFit.
+    int m_datapoints = 0;
+    std::vector<double> m_xi;   // Q values
+    std::vector<double> m_yi;   // reflectivity
+    std::vector<double> m_eyi;  // reflectivity errors
 
-  CEDP m_cEDP;            // SA scoring     — worker thread only (via annealer)
-  CEDP m_displayEDP;      // display EDP    — main thread only (GetCurrentState)
-  ParamVector params;     // SA state       — worker thread only
+    CEDP m_cEDP;         // SA scoring     — worker thread only (via annealer)
+    CEDP m_displayEDP;   // display EDP    — main thread only (GetCurrentState)
+    ParamVector params;  // SA state       — worker thread only
 
-  // Snapshot of the latest accepted solution, readable from the main thread.
-  // Guarded by m_displayMutex; copy only the minimum inside the lock.
-  struct DisplayState {
-    explicit DisplayState(const ReflSettings &s) : params(s) {}
-    ParamVector params;
-    std::vector<double> refl; // SA-computed reflectivity at accepted solution
-    double chiSquare = 0.0;
-    double goF       = 0.0;
-  };
-  mutable std::mutex m_displayMutex;
-  DisplayState m_displayState;
+    // Snapshot of the latest accepted solution, readable from the main thread.
+    // Guarded by m_displayMutex; copy only the minimum inside the lock.
+    struct DisplayState
+    {
+        explicit DisplayState(const ReflSettings& s) : params(s)
+        {
+        }
+        ParamVector params;
+        std::vector<double> refl;  // SA-computed reflectivity at accepted solution
+        double chiSquare = 0.0;
+        double goF = 0.0;
+    };
+    mutable std::mutex m_displayMutex;
+    DisplayState m_displayState;
 
-  ParrattReflectivity m_parratt;
-  ReflectivityObjective m_objective;
-  ParameterStepper m_stepper;
+    ParrattReflectivity m_parratt;
+    ReflectivityObjective m_objective;
+    ParameterStepper m_stepper;
 
-  std::optional<AnnealVariant> m_annealer;
+    std::optional<AnnealVariant> m_annealer;
 
-  // SA scratch buffer (one entry per measured Q point)
-  std::vector<double> m_saReflBuf;
+    // SA scratch buffer (one entry per measured Q point)
+    std::vector<double> m_saReflBuf;
 };

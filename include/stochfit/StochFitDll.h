@@ -29,13 +29,14 @@
 // GetRunState() → Destroy() Cancel (no save):  Init() → Start() → Cancel()
 
 #pragma once
-#include "platform.h"
 #include <cstdint>
 
+#include "platform.h"
+
 // SA lifecycle
-extern "C" EXPORT void Init(const uint8_t *buf,
-                            int len); // StochFitProto::InitRequest
-extern "C" EXPORT const char *GetInitError();
+extern "C" EXPORT void Init(const uint8_t* buf,
+                            int len);  // StochFitProto::InitRequest
+extern "C" EXPORT const char* GetInitError();
 extern "C" EXPORT void Start(int iterations);
 extern "C" EXPORT void Stop();
 extern "C" EXPORT void Destroy();
@@ -43,8 +44,7 @@ extern "C" EXPORT void Cancel();
 
 // SA polling — returns bytes written into outBuf; outBuf must be pre-allocated
 // by caller
-extern "C" EXPORT int GetData(uint8_t *outBuf, int maxLen); // → GetDataResult
-extern "C" EXPORT int
-GetRunState(uint8_t *outBuf,
-            int maxLen); // → GetRunStateResult (call after Stop())
-extern "C" EXPORT int SAParams(uint8_t *outBuf, int maxLen); // → SAParamsResult
+extern "C" EXPORT int GetData(uint8_t* outBuf, int maxLen);  // → GetDataResult
+extern "C" EXPORT int GetRunState(uint8_t* outBuf,
+                                  int maxLen);                // → GetRunStateResult (call after Stop())
+extern "C" EXPORT int SAParams(uint8_t* outBuf, int maxLen);  // → SAParamsResult

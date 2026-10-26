@@ -1,6 +1,6 @@
 ---
 Language: Cpp
-Standard: c++23
+Standard: Latest
 BasedOnStyle: LLVM
 
 # Indentation
@@ -31,8 +31,7 @@ AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 
 # Pointers and references
-PointerAlignment: Right
-DereferenceBindsToType: true
+PointerAlignment: Left
 ReferenceAlignment: Pointer
 
 # Line breaks
@@ -50,7 +49,7 @@ IncludeCategories:
     Priority: 3
 
 # Constructor initialization
-ConstructorInitializerAllOnOneLineIfFitsOnLine: false
+PackConstructorInitializers: CurrentLine
 ConstructorInitializerIndentWidth: 4
 
 # Penalty adjustments

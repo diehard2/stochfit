@@ -1,37 +1,39 @@
 #pragma once
 
+#include <limits>
+#include <random>
+#include <ranges>
+#include <span>
+
 #include "AnnealPolicies.h"
 #include "CEDP.h"
 #include "ParameterStepper.h"
 #include "ReflectivityObjective.h"
 #include "UnifiedReflectivity.h"
 
-#include <limits>
-#include <random>
-#include <ranges>
-#include <span>
-
-struct AnnealDeps {
+struct AnnealDeps
+{
     std::span<const double> yi, eyi;
-    std::span<double>       reflBuf;
+    std::span<double> reflBuf;
     bool impNorm = false;
 };
 
-template <class Policy>
-class Anneal {
-public:
+template <class Policy> class Anneal
+{
+  public:
     template <class... PolicyArgs>
-    Anneal(CEDP& edp,
-           ParrattReflectivity& parratt,
-           const ReflectivityObjective& objective,
-           ParameterStepper& stepper,
-           const ParamVector& initParams,
-           AnnealDeps deps,
-           PolicyArgs&&... policyArgs)
-        : m_edp(&edp), m_parratt(&parratt), m_objective(&objective),
-          m_stepper(&stepper), m_tempParams(initParams), m_deps(std::move(deps)),
+    Anneal(CEDP& edp, ParrattReflectivity& parratt, const ReflectivityObjective& objective, ParameterStepper& stepper,
+           const ParamVector& initParams, AnnealDeps deps, PolicyArgs&&... policyArgs)
+        : m_edp(&edp),
+          m_parratt(&parratt),
+          m_objective(&objective),
+          m_stepper(&stepper),
+          m_tempParams(initParams),
+          m_deps(std::move(deps)),
           m_rng(std::random_device{}()),
-          m_policy(std::forward<PolicyArgs>(policyArgs)...) {}
+          m_policy(std::forward<PolicyArgs>(policyArgs)...)
+    {
+    }
 
     void InitEnergy(ParamVector& params);
 
@@ -44,50 +46,75 @@ public:
     void ComputeSharedRefl();
     bool EvaluateAndAccept(ParamVector& params);
 
-    double GetTemperature() const    { return m_policy.GetTemperature(); }
-    void   SetTemperature(double t)  { m_policy.SetTemperature(t); }
-    double GetRawTemperature() const { return m_policy.GetRawTemperature(); }
-    double GetAverageFSTUN() const   { return m_policy.GetAverageFSTUN(); }
-    void   SetAverageFSTUN(double f) { m_policy.SetAverageFSTUN(f); }
-    double GetLowestEnergy() const   { return m_bestEnergy; }
-    double GetCurrentEnergy() const  { return m_currentEnergy; }
-    double GetLastChiSquare() const  { return m_lastChiSquare; }
+    double GetTemperature() const
+    {
+        return m_policy.GetTemperature();
+    }
+    void SetTemperature(double t)
+    {
+        m_policy.SetTemperature(t);
+    }
+    double GetRawTemperature() const
+    {
+        return m_policy.GetRawTemperature();
+    }
+    double GetAverageFSTUN() const
+    {
+        return m_policy.GetAverageFSTUN();
+    }
+    void SetAverageFSTUN(double f)
+    {
+        m_policy.SetAverageFSTUN(f);
+    }
+    double GetLowestEnergy() const
+    {
+        return m_bestEnergy;
+    }
+    double GetCurrentEnergy() const
+    {
+        return m_currentEnergy;
+    }
+    double GetLastChiSquare() const
+    {
+        return m_lastChiSquare;
+    }
 
-private:
-    CEDP*                        m_edp;
-    ParrattReflectivity*         m_parratt;
+  private:
+    CEDP* m_edp;
+    ParrattReflectivity* m_parratt;
     const ReflectivityObjective* m_objective;
-    ParameterStepper*            m_stepper;
-    ParamVector                  m_tempParams;
-    AnnealDeps                   m_deps;
-    std::mt19937                 m_rng;
-    double m_bestEnergy    = std::numeric_limits<double>::max();
+    ParameterStepper* m_stepper;
+    ParamVector m_tempParams;
+    AnnealDeps m_deps;
+    std::mt19937 m_rng;
+    double m_bestEnergy = std::numeric_limits<double>::max();
     double m_currentEnergy = std::numeric_limits<double>::max();
     double m_lastChiSquare = 0.0;
     [[no_unique_address]] Policy m_policy;
 
-    void ComputeModel(ParamVector& p) {
+    void ComputeModel(ParamVector& p)
+    {
         auto result = m_parratt->CalculateReflectivity(*m_edp);
         std::ranges::copy(result, m_deps.reflBuf.begin());
         if (m_deps.impNorm) {
-            for (auto& v : m_deps.reflBuf) v *= p.GetImpNorm();
+            for (auto& v : m_deps.reflBuf)
+                v *= p.GetImpNorm();
         }
     }
 };
 
-template <class Policy>
-void Anneal<Policy>::InitEnergy(ParamVector& params) {
+template <class Policy> void Anneal<Policy>::InitEnergy(ParamVector& params)
+{
     m_edp->GenerateEDP(params);
     ComputeModel(params);
-    m_bestEnergy = m_currentEnergy =
-        m_objective->Evaluate(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
+    m_bestEnergy = m_currentEnergy = m_objective->Evaluate(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
     m_lastChiSquare = ComputeChiSquare(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
 }
 
 // ── Cooperative methods for persistent OMP parallel regions ──────────────────
 
-template <class Policy>
-void Anneal<Policy>::PrepareCandidate(ParamVector& params) {
+template <class Policy> void Anneal<Policy>::PrepareCandidate(ParamVector& params)
+{
 #pragma omp single
     {
         m_tempParams = params;
@@ -100,20 +127,21 @@ void Anneal<Policy>::PrepareCandidate(ParamVector& params) {
     // implicit barrier: all threads see completed EDP
 }
 
-template <class Policy>
-void Anneal<Policy>::ComputeSharedRefl() {
+template <class Policy> void Anneal<Policy>::ComputeSharedRefl()
+{
     auto result = m_parratt->CalculateReflectivityCooperative(*m_edp);
 #pragma omp single
     {
         std::ranges::copy(result, m_deps.reflBuf.begin());
         if (m_deps.impNorm) {
-            for (auto& v : m_deps.reflBuf) v *= m_tempParams.GetImpNorm();
+            for (auto& v : m_deps.reflBuf)
+                v *= m_tempParams.GetImpNorm();
         }
     }
 }
 
-template <class Policy>
-bool Anneal<Policy>::EvaluateAndAccept(ParamVector& params) {
+template <class Policy> bool Anneal<Policy>::EvaluateAndAccept(ParamVector& params)
+{
     const double candE = m_objective->Evaluate(m_deps.reflBuf, m_deps.yi, m_deps.eyi);
 
     if (candE < m_bestEnergy) {
@@ -132,4 +160,3 @@ bool Anneal<Policy>::EvaluateAndAccept(ParamVector& params) {
 
     return false;
 }
-
